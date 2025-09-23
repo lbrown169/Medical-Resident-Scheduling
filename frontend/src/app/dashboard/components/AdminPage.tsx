@@ -123,6 +123,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
     setGenerating(true);
     setMessage("");
     try {
+      // TODO: Year is hardcoded in front end but passed as a variable to backend
       const response = await fetch(`${config.apiUrl}/api/algorithm/training/2025`, { method: "POST" });
       if (!response.ok) throw new Error("Failed to generate schedule");
       setMessage("New schedule generated successfully!");

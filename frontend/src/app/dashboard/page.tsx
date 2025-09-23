@@ -1063,6 +1063,7 @@ function Dashboard() {
   };
 
   // Handler to clear all requests
+  // TODO: Need to create and implement a backend endpoint to support this
   const handleClearRequests = () => {
     setMyTimeOffRequests([]);
   };
