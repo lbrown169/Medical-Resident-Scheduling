@@ -9,6 +9,19 @@ import { config } from '../../../config';
 import { toast } from "../../../lib/use-toast";
 import { useMemo } from "react";
 import { Dialog } from "../../../components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
+import { Trash2 } from "lucide-react";
+
 
 interface AdminPageProps {
   residents: { id: string; name: string }[];
@@ -96,6 +109,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
   onClearRequests,
   onNavigateToCalendar,
   userId,
+  latestVersion,
 }) => {
   console.log('AdminPage props - users:', users);
   console.log('AdminPage props - users length:', users.length);
@@ -116,6 +130,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
   const [showAnnouncementConfirm, setShowAnnouncementConfirm] = useState(false);
   const [deletingAnnouncement, setDeletingAnnouncement] = useState<string | null>(null);
   const [switchingRole, setSwitchingRole] = useState<string | null>(null);
+  const [deletingSchedule, setDeletingSchedule] = useState(false);
 
 
 
@@ -140,6 +155,45 @@ const AdminPage: React.FC<AdminPageProps> = ({
       setGenerating(false);
     }
   };
+
+  const handleDeleteSchedule = async () => {
+  if (!latestVersion) {
+    toast({
+      title: "No current schedule",
+      description: "There’s no current schedule to delete.",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  setDeletingSchedule(true);
+  try {
+    const res = await fetch(`${config.apiUrl}/api/schedules/${latestVersion}`, {
+      method: "DELETE",
+    });
+
+  if (res.status === 204) {
+    toast({ title: "Schedule deleted", description: "The current schedule was deleted successfully.", variant: "success" });
+    onNavigateToCalendar?.(); // Navigate to Calendar after successful deletion
+    return;
+  } else {
+      const text = await res.text();
+      toast({
+        title: "Delete failed",
+        description: text || `Unexpected error (${res.status}).`,
+        variant: "destructive",
+      });
+    }
+  } catch {
+    toast({
+      title: "Network error",
+      description: "Could not reach the server. Please try again.",
+      variant: "destructive",
+    });
+  } finally {
+    setDeletingSchedule(false);
+  }
+};
 
   useEffect(() => {
     // Ping backend API
@@ -511,6 +565,33 @@ const AdminPage: React.FC<AdminPageProps> = ({
             <Button onClick={handleGenerateSchedule} disabled={generating} className="px-1 sm:px-6 py-1 sm:py-3 bg-blue-600 text-white font-semibold rounded-xl shadow hover:bg-blue-700 transition whitespace-nowrap w-full sm:w-auto text-xs sm:text-sm lg:text-base">
               {generating ? "Generating..." : "Generate New Schedule"}
             </Button>
+            <AlertDialog>
+  <AlertDialogTrigger asChild>
+    <Button
+      variant="outline"
+      disabled={!latestVersion}
+      className="mt-2 px-1 sm:px-6 py-1 sm:py-3 border-red-600 text-red-600 font-semibold rounded-xl shadow hover:bg-red-600 hover:text-white transition whitespace-nowrap w-full sm:w-auto text-xs sm:text-sm lg:text-base"
+    >
+      <Trash2 className="h-4 w-4 mr-2" />
+      Delete Current Schedule
+    </Button>
+  </AlertDialogTrigger>
+  <AlertDialogContent>
+    <AlertDialogHeader>
+      <AlertDialogTitle>Delete current schedule?</AlertDialogTitle>
+      <AlertDialogDescription>
+        This action <strong>cannot</strong> be undone. The schedule will be permanently removed.
+      </AlertDialogDescription>
+    </AlertDialogHeader>
+    <AlertDialogFooter>
+      <AlertDialogCancel>Cancel</AlertDialogCancel>
+      <AlertDialogAction onClick={handleDeleteSchedule}>
+        {deletingSchedule ? "Deleting…" : "Delete"}
+      </AlertDialogAction>
+    </AlertDialogFooter>
+  </AlertDialogContent>
+</AlertDialog>
+
           </div>
         </div>
       </Card>
