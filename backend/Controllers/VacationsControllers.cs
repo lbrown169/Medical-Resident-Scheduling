@@ -81,35 +81,35 @@ namespace MedicalDemo.Controllers
             return Ok(vacations);
         }
 
-// PUT: api/vacations/group/{groupId}/status
-[HttpPut("group/{groupId}/status")]
-public async Task<IActionResult> UpdateStatusByGroup(string groupId, [FromBody] UpdateStatusDto input)
-{
-    Console.WriteLine("Received groupId: " + groupId);
+        // PUT: api/vacations/group/{groupId}/status
+        [HttpPut("group/{groupId}/status")]
+        public async Task<IActionResult> UpdateStatusByGroup(string groupId, [FromBody] UpdateStatusDto input)
+        {
+            Console.WriteLine("Received groupId: " + groupId);
 
-    if (string.IsNullOrWhiteSpace(input.Status))
+            if (string.IsNullOrWhiteSpace(input.Status))
             {
                 return BadRequest("Status is required.");
             }
 
-    var matchingRequests = await _context.vacations
-        .Where(v => v.GroupId == groupId)
-        .ToListAsync();
+            var matchingRequests = await _context.vacations
+                .Where(v => v.GroupId == groupId)
+                .ToListAsync();
 
-    if (!matchingRequests.Any())
-    {
-        return NotFound($"No vacation requests found for groupId '{groupId}'.");
-    }
+            if (!matchingRequests.Any())
+            {
+                return NotFound($"No vacation requests found for groupId '{groupId}'.");
+            }
 
-    foreach (var request in matchingRequests)
-    {
-        request.Status = input.Status;
-    }
+            foreach (var request in matchingRequests)
+            {
+                request.Status = input.Status;
+            }
 
-    await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
-    return Ok(new { message = $"Status updated to '{input.Status}' for groupId '{groupId}'." });
-}
+            return Ok(new { message = $"Status updated to '{input.Status}' for groupId '{groupId}'." });
+        }
 
 
 
@@ -122,40 +122,40 @@ public async Task<IActionResult> UpdateStatusByGroup(string groupId, [FromBody] 
             [FromQuery] string? status)
         {
            var query = _context.vacations
-    .Join(_context.residents,
-        v => v.ResidentId,
-        r => r.resident_id,
-        (v, r) => new VacationWithResidentDto
-        {
-            VacationId = v.VacationId,
-            ResidentId = v.ResidentId,
-            FirstName = r.first_name,
-            LastName = r.last_name,
-            Date = v.Date,
-            Reason = v.Reason,
-            Status = v.Status,
-            Details = v.Details,
-            GroupId = v.GroupId 
-        });
+            .Join(_context.residents,
+            v => v.ResidentId,
+            r => r.resident_id,
+            (v, r) => new VacationWithResidentDto
+            {
+                VacationId = v.VacationId,
+                ResidentId = v.ResidentId,
+                FirstName = r.first_name,
+                LastName = r.last_name,
+                Date = v.Date,
+                Reason = v.Reason,
+                Status = v.Status,
+                Details = v.Details,
+                GroupId = v.GroupId 
+            });
 
-if (!string.IsNullOrEmpty(residentId))
-    query = query.Where(v => v.ResidentId == residentId);
+            if (!string.IsNullOrEmpty(residentId))
+                query = query.Where(v => v.ResidentId == residentId);
 
-if (date.HasValue)
-    query = query.Where(v => v.Date.Date == date.Value.Date);
+            if (date.HasValue)
+                query = query.Where(v => v.Date.Date == date.Value.Date);
 
-if (!string.IsNullOrEmpty(reason))
-    query = query.Where(v => v.Reason == reason);
+            if (!string.IsNullOrEmpty(reason))
+                query = query.Where(v => v.Reason == reason);
 
-if (!string.IsNullOrEmpty(status))
-    query = query.Where(v => v.Status == status);
+            if (!string.IsNullOrEmpty(status))
+                query = query.Where(v => v.Status == status);
 
-var results = await query.ToListAsync();
+            var results = await query.ToListAsync();
 
-if (results.Count == 0)
-    return NotFound("No matching vacation records found.");
+            if (results.Count == 0)
+                return NotFound("No matching vacation records found.");
 
-return Ok(results);
+            return Ok(results);
 
         }
 
@@ -206,5 +206,26 @@ return Ok(results);
 
     		return NoContent(); // 204 No Content
 		}
+        
+        // DELETE: api/vacations/
+        [HttpDelete]
+        public async Task<IActionResult> DeleteAllVacations([FromBody] List<Guid> vacationsIds)
+        {
+            var failedDeletedIds = new List<Guid>();
+
+            foreach (var id in vacationsIds)
+            {
+                var result = await DeleteVacation(id);
+
+                if (result is NotFoundObjectResult)
+                {
+                    failedDeletedIds.Add(id);
+                }
+            }
+
+            var response = new { notDeleted = failedDeletedIds };
+            
+            return  Ok(response);
+        }
     }
 }
