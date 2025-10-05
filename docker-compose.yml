@@ -21,10 +21,11 @@ services:
     environment:
       DB_CONNECTION_STRING: "Server=psycall-db;Port=3306;Database=psycalldb;User=psycalluser;Password=psycallpass;"
       SEED: "true"
+      ASPNETCORE_ENVIRONMENT: "Development"
     depends_on:
       - db
     ports:
-      - "5109:5109"  # host:container
+      - "5109:5109"  
 
   frontend:
     build: ./frontend

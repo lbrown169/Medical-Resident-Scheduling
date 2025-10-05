@@ -1,3 +1,43 @@
+SETUP AND INSTALLATION
+
+1. Download Docker Desktop using: https://www.docker.com/products/docker-desktop/
+
+2. Clone the repository
+
+3. Open up terminal or cmd and go to the the project folder 
+
+4. From there run: 	docker compose up --build		<-the build for the frontend, backend and db gets started
+
+!!!For those of you on windows, your firewall may block some processes so you’re gonna have to take care of that!!!
+
+!!!Also, the first time you build it, it could take a few minutes!!!
+
+ACCESS POINTS
+Go to http://localhost:3000/ to access the website
+Go to http://localhost:5109/swagger to access all the API endpoints
+
+
+COMMANDS:
+
+docker compose up --build    <- Builds frontend, backend and db
+
+docker ps  <- You can verify all the containers are running 
+
+
+REBUILDS EVERYTHING FROM SCRATCH:
+docker compose down -v
+docker compose build --no-cache
+docker compose up --build
+
+You can access MYSQL manually: 
+docker exec -it psycall-db mysql -u psycalluser -p     <-Password: psycallpass, name of db: psycalldb
+
+
+
+-------------------------------------------------------------------------------------------------------
+
+
+
 PITCH
 * Create a scheduling application for medical residents that auto-generates a call schedule:
 * Residents schedule changes monthly

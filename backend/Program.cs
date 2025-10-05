@@ -72,16 +72,25 @@ app.MapControllers();
 
 // 5) Configure host port (from env or default)
 var port = Environment.GetEnvironmentVariable("BACKEND_PORT") ?? "5109";
-app.Urls.Add($"http://0.0.0.0:{port}");
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
+
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+app.UseRouting();
+app.UseCors("AllowFrontend");
+app.MapControllers();
 
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<MedicalContext>();
 
-    // Apply EF Core migrations
-//    db.Database.Migrate();
-
-    // Run seeding if SEED=true
     var seedEnv = Environment.GetEnvironmentVariable("SEED");
     if (seedEnv == "true")
     {
@@ -89,6 +98,5 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-
-
 app.Run();
+
