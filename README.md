@@ -13,7 +13,9 @@ SETUP AND INSTALLATION
 !!!Also, the first time you build it, it could take a few minutes!!!
 
 ACCESS POINTS
+
 Go to http://localhost:3000/ to access the website
+
 Go to http://localhost:5109/swagger to access all the API endpoints
 
 
@@ -25,11 +27,15 @@ docker ps  <- You can verify all the containers are running
 
 
 REBUILDS EVERYTHING FROM SCRATCH:
+
 docker compose down -v
+
 docker compose build --no-cache
+
 docker compose up --build
 
 You can access MYSQL manually: 
+
 docker exec -it psycall-db mysql -u psycalluser -p     <-Password: psycallpass, name of db: psycalldb
 
 
