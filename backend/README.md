@@ -1,7 +1,9 @@
 # PSYCALL Backend Setup
+
 Simple script to start the backend server.
 
 ## Usage
+
 ```bash
 
 # Run server
@@ -9,16 +11,19 @@ dotnet run
 ```
 
 ## What it does
+
 - Connects to SQL Server database
 - Starts API server on port 7000
 - Handles authentication and scheduling requests
 
 ## Requirements
+
 - .NET 8 SDK
 - SQL Server 2019+
 - Database connection string in appsettings.json
 
 ## Setup Environment
+
 ```bash
 # Create .env
 .env

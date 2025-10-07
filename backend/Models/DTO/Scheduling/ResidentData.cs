@@ -1,4 +1,4 @@
-﻿namespace MedicalDemo.Models.DTO.Scheduling;
+namespace MedicalDemo.Models.DTO.Scheduling;
 
 public class ResidentData
 {
