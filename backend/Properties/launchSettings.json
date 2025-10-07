@@ -15,7 +15,8 @@
       "launchBrowser": true,
       "applicationUrl": "http://localhost:5109",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "DB_CONNECTION_STRING": "Server=YOUR_SERVER;Port=YOUR_PORT;Database=YOUR_DB;User=YOUR_USER;Password=YOUR_PASSWORD;"
       }
     },
     "https": {
@@ -39,8 +40,8 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "POSTMARK_API_KEY": "1d025633-72fd-4627-b022-f49b44e0e450",
-        "FROM_EMAIL":        "na638630@ucf.edu",
-        "FROM_NAME":         "Psycall Admin"
+        "FROM_EMAIL": "na638630@ucf.edu",
+        "FROM_NAME": "Psycall Admin"
       }
     }
   }
