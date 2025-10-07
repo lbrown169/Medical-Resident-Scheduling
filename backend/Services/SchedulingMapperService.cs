@@ -87,7 +87,7 @@ public class SchedulingMapperService
         }).ToList();
     }
 
-    private HospitalRole[] MapRotationsToRoles(List<Rotations> rotations)
+    private static HospitalRole[] MapRotationsToRoles(List<Rotations> rotations)
     {
         HospitalRole[] roles = new HospitalRole[12];
 

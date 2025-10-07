@@ -31,4 +31,4 @@ jobs:
 
             - name: Verify formatting
               run: |
-                  dotnet format MedicalDemo.csproj --verify-no-changes --severity info
+                  dotnet format MedicalDemo.sln --verify-no-changes --severity error
