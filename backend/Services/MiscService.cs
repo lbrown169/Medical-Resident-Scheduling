@@ -1,121 +1,101 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using MedicalDemo.Algorithm;
-using MedicalDemo.Data;
-using MedicalDemo.Data.Models;
-using MedicalDemo.Models.DTO.Scheduling;
+﻿using MedicalDemo.Data.Models;
 using Microsoft.EntityFrameworkCore;
 
+namespace MedicalDemo.Services;
 
-namespace MedicalDemo.Services
+public class MiscService
 {
-    public class MiscService
+    private readonly MedicalContext _context;
+
+    public MiscService(MedicalContext context)
     {
+        _context = context;
+    }
 
-        private readonly MedicalContext _context;
+    public async Task<List<Residents>> FindTotalHours()
+    {
+        List<Residents> residents = await _context.residents.ToListAsync();
+        List<Dates> dates = await _context.dates.ToListAsync();
 
-        public MiscService(MedicalContext context)
+        List<Dates> datesForCurrentYear = dates;
+
+        List<ResidentWithDates> residentsWithDates = new();
+
+
+        foreach (Residents resident in residents)
         {
-            _context = context;
-        }
+            List<Dates> datesForResident = datesForCurrentYear
+                .Where(d => d.ResidentId == resident.resident_id)
+                .ToList();
 
-        public async Task<List<Residents>> FindTotalHours()
-        {
-            var residents = await _context.residents.ToListAsync();
-            var dates = await _context.dates.ToListAsync();
-
-            var datesForCurrentYear = dates;
-
-            var residentsWithDates = new List<ResidentWithDates>();
-
-
-            foreach (var resident in residents) {
-                var datesForResident = datesForCurrentYear
-                          .Where(d => d.ResidentId == resident.resident_id)
-                          .ToList();
-
-                int totalHours = 0;
-                foreach (var date in datesForResident)
-                {
-                    totalHours += HoursByCallType(date.CallType);
-                }
-
-                resident.total_hours = totalHours;
-
+            int totalHours = 0;
+            foreach (Dates date in datesForResident)
+            {
+                totalHours += HoursByCallType(date.CallType);
             }
 
-          
-
-            // saves to db
-            await _context.SaveChangesAsync();
-
-            return residents;
+            resident.total_hours = totalHours;
         }
 
-        public async Task<List<Residents>> FindBiYearlyHours(int year)
+
+        // saves to db
+        await _context.SaveChangesAsync();
+
+        return residents;
+    }
+
+    public async Task<List<Residents>> FindBiYearlyHours(int year)
+    {
+        List<Residents> residents = await _context.residents.ToListAsync();
+        List<Dates> dates = await _context.dates.ToListAsync();
+
+        List<Dates> filteredDates = dates
+            .Where(d =>
+                d.Date.Year == year && d.Date.Month >= 7 && d.Date.Month <= 12)
+            .ToList();
+
+
+        List<ResidentWithDates> residentsWithDates = new();
+
+
+        foreach (Residents resident in residents)
         {
-            var residents = await _context.residents.ToListAsync();
-            var dates = await _context.dates.ToListAsync();
+            List<Dates> datesForResident = filteredDates
+                .Where(d => d.ResidentId == resident.resident_id)
+                .ToList();
 
-            var filteredDates = dates
-                    .Where(d => d.Date.Year == year && d.Date.Month >= 7 && d.Date.Month <= 12)
-                    .ToList();
-
-
-
-            var residentsWithDates = new List<ResidentWithDates>();
-
-
-            foreach (var resident in residents)
+            int totalHours = 0;
+            foreach (Dates date in datesForResident)
             {
-                var datesForResident = filteredDates
-                          .Where(d => d.ResidentId == resident.resident_id)
-                          .ToList();
-
-                int totalHours = 0;
-                foreach (var date in datesForResident)
-                {
-                    totalHours += HoursByCallType(date.CallType);
-                }
-
-                resident.bi_yearly_hours = totalHours;
-
+                totalHours += HoursByCallType(date.CallType);
             }
 
-            
-
-            // saves to db
-            await _context.SaveChangesAsync();
-
-            return residents;
-
-
-
+            resident.bi_yearly_hours = totalHours;
         }
 
-        // call types to total hours by call types
-        private int HoursByCallType(string callType)
+
+        // saves to db
+        await _context.SaveChangesAsync();
+
+        return residents;
+    }
+
+    // call types to total hours by call types
+    private int HoursByCallType(string callType)
+    {
+        return callType switch
         {
-            return callType switch
-            {
-                "Short" => 3,
-                "12h" => 12,
-                "24h" => 24,
-                _ => 0
-            };
-        }
+            "Short" => 3,
+            "12h" => 12,
+            "24h" => 24,
+            _ => 0
+        };
+    }
 
 
-        public class ResidentWithDates
-        {
-            public Residents Resident { get; set; }
-            public List<Dates> Dates { get; set; }
-        }
-
-
-
-
+    public class ResidentWithDates
+    {
+        public Residents Resident { get; set; }
+        public List<Dates> Dates { get; set; }
     }
 }
