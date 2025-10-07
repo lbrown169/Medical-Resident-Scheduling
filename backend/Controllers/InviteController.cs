@@ -1,5 +1,5 @@
+using MedicalDemo.Interfaces;
 using MedicalDemo.Models;
-using MedicalDemo.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,9 +10,9 @@ namespace MedicalDemo.Controllers;
 public class InviteController : ControllerBase
 {
     private readonly MedicalContext _context;
-    private readonly PostmarkService _postmark;
+    private readonly IEmailSendService _postmark;
 
-    public InviteController(MedicalContext context, PostmarkService postmark)
+    public InviteController(MedicalContext context, IEmailSendService postmark)
     {
         _context = context;
         _postmark = postmark;
