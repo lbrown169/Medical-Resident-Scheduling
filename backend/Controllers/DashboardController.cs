@@ -1,4 +1,4 @@
-using MedicalDemo.Data.Models;
+using MedicalDemo.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 // Added for Where, ToList, Any, Select
 
-namespace MedicalDemo.Server.Controllers;
+namespace MedicalDemo.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

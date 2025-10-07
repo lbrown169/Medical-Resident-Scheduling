@@ -1,4 +1,4 @@
-﻿using MedicalDemo.Data.Models;
+using MedicalDemo.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 

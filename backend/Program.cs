@@ -1,5 +1,5 @@
 using DotNetEnv;
-using MedicalDemo.Data.Models;
+using MedicalDemo.Models;
 using MedicalDemo.Services;
 using Microsoft.EntityFrameworkCore;
 

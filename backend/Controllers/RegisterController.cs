@@ -1,8 +1,8 @@
-using MedicalDemo.Data.Models;
+using MedicalDemo.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace MedicalDemo.Server.Controllers;
+namespace MedicalDemo.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -30,7 +30,7 @@ public class RegisterController : ControllerBase
         if (invitation == null)
         {
             return NotFound(new
-                { message = "Invitation not found or expired." });
+            { message = "Invitation not found or expired." });
         }
 
         Residents? resident = !string.IsNullOrEmpty(invitation.resident_id)
@@ -62,7 +62,7 @@ public class RegisterController : ControllerBase
             string.IsNullOrEmpty(request.Password))
         {
             return BadRequest(new
-                { message = "Missing required fields." });
+            { message = "Missing required fields." });
         }
 
         Invitation? invitation = await _context.Invitations
@@ -73,7 +73,7 @@ public class RegisterController : ControllerBase
         if (invitation == null)
         {
             return NotFound(new
-                { message = "Invalid or expired invitation." });
+            { message = "Invalid or expired invitation." });
         }
 
         if (string.IsNullOrEmpty(invitation.resident_id))
@@ -115,7 +115,7 @@ public class RegisterController : ControllerBase
             string.IsNullOrEmpty(request.Password))
         {
             return BadRequest(new
-                { message = "Missing required fields." });
+            { message = "Missing required fields." });
         }
 
         Invitation? invitation = await _context.Invitations
@@ -126,7 +126,7 @@ public class RegisterController : ControllerBase
         if (invitation == null)
         {
             return NotFound(new
-                { message = "Invalid or expired invitation." });
+            { message = "Invalid or expired invitation." });
         }
 
         Residents? existingResident
@@ -135,7 +135,7 @@ public class RegisterController : ControllerBase
         if (existingResident != null)
         {
             return BadRequest(new
-                { message = "A resident with this email already exists." });
+            { message = "A resident with this email already exists." });
         }
 
         Residents newResident = new()
@@ -161,7 +161,7 @@ public class RegisterController : ControllerBase
             new { message = "New resident registered successfully." });
     }
 
-    private string HashPassword(string password)
+    private static string HashPassword(string password)
     {
         return BCrypt.Net.BCrypt.HashPassword(password);
     }

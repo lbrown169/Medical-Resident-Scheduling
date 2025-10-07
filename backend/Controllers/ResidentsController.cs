@@ -1,10 +1,10 @@
-﻿using MedicalDemo.Data.Models;
+using MedicalDemo.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 // Adjust namespace based on your project
 
-namespace MedicalDemo.Server.Controllers;
+namespace MedicalDemo.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -219,10 +219,5 @@ public class ResidentsController : ControllerBase
         await _context.SaveChangesAsync();
 
         return NoContent();
-    }
-
-    private bool ResidentExists(string id)
-    {
-        return _context.residents.Any(e => e.resident_id == id);
     }
 }

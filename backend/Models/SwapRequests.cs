@@ -1,12 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace MedicalDemo.Data.Models;
+namespace MedicalDemo.Models;
 
 [Table("swap_requests")]
 public class SwapRequest
 {
-    [Key] [Column("idswap_requests")] public Guid SwapId { get; set; }
+    [Key][Column("idswap_requests")] public Guid SwapId { get; set; }
 
     [Required]
     [Column("schedule_swap_id")]
@@ -35,9 +35,9 @@ public class SwapRequest
     [MaxLength(45)]
     public string Status { get; set; } = "Pending";
 
-    [Required] [Column("created_at")] public DateTime CreatedAt { get; set; }
+    [Required][Column("created_at")] public DateTime CreatedAt { get; set; }
 
-    [Required] [Column("updated_at")] public DateTime UpdatedAt { get; set; }
+    [Required][Column("updated_at")] public DateTime UpdatedAt { get; set; }
 
-    [Column("details")] [MaxLength(150)] public string? Details { get; set; }
+    [Column("details")][MaxLength(150)] public string? Details { get; set; }
 }

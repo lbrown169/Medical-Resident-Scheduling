@@ -1,4 +1,5 @@
-﻿using MedicalDemo.Data.Models;
+using MedicalDemo.Algorithm;
+using MedicalDemo.Models;
 using MedicalDemo.Models.DTO.Scheduling;
 using Microsoft.EntityFrameworkCore;
 
@@ -61,7 +62,7 @@ public class SchedulerService
 
                 // Save schedule record
                 Schedules schedule = new()
-                    { ScheduleId = Guid.NewGuid(), Status = "Under Review" };
+                { ScheduleId = Guid.NewGuid(), Status = "Under Review" };
                 _context.schedules.Add(schedule);
                 await _context.SaveChangesAsync();
 
@@ -105,7 +106,7 @@ public class SchedulerService
             "Failed after to generate a viable schedule. Try again.");
     }
 
-    private PGY1 MapToPGY1(PGY1DTO dto)
+    private static PGY1 MapToPGY1(PGY1DTO dto)
     {
         PGY1 model = new(dto.Name)
         {
@@ -132,7 +133,7 @@ public class SchedulerService
         return model;
     }
 
-    private PGY2 MapToPGY2(PGY2DTO dto)
+    private static PGY2 MapToPGY2(PGY2DTO dto)
     {
         PGY2 model = new(dto.Name)
         {
@@ -158,7 +159,7 @@ public class SchedulerService
         return model;
     }
 
-    private PGY3 MapToPGY3(PGY3DTO dto)
+    private static PGY3 MapToPGY3(PGY3DTO dto)
     {
         PGY3 model = new(dto.Name)
         {

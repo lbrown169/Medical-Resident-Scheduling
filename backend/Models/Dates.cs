@@ -1,13 +1,13 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 
-namespace MedicalDemo.Data.Models;
+namespace MedicalDemo.Models;
 
 [Table("dates")]
 public class Dates
 {
-    [Key] [Column("date_id")] public Guid DateId { get; set; }
+    [Key][Column("date_id")] public Guid DateId { get; set; }
 
     [Column("schedule_id")] public Guid ScheduleId { get; set; }
 
@@ -17,7 +17,7 @@ public class Dates
 
     [Column("date")] public DateTime Date { get; set; }
 
-    [Column("call_type")] [MaxLength(45)] public string CallType { get; set; }
+    [Column("call_type")][MaxLength(45)] public string CallType { get; set; }
 
     [ForeignKey("ResidentId")]
     [ValidateNever]

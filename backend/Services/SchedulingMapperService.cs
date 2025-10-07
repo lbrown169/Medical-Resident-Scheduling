@@ -1,5 +1,5 @@
-﻿using System.Globalization;
-using MedicalDemo.Data.Models;
+using System.Globalization;
+using MedicalDemo.Algorithm;
 using MedicalDemo.Models;
 using MedicalDemo.Models.DTO.Scheduling;
 
@@ -104,7 +104,7 @@ public class SchedulingMapperService
         return roles;
     }
 
-    private HospitalRole MapRotationNameToRole(string rotationName)
+    private static HospitalRole MapRotationNameToRole(string rotationName)
     {
         if (string.IsNullOrWhiteSpace(rotationName))
         {

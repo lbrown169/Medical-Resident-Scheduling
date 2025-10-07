@@ -1,5 +1,5 @@
-﻿using MedicalDemo.Data.Models;
-using MedicalDemo.Data.Models.DTOs;
+using MedicalDemo.Models;
+using MedicalDemo.Models.DTO;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 

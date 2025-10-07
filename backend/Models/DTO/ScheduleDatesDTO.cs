@@ -1,4 +1,4 @@
-﻿namespace MedicalDemo.Data.Models.DTOs;
+namespace MedicalDemo.Models.DTO;
 
 public class ScheduleDatesDTO
 {

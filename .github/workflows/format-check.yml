@@ -1,0 +1,34 @@
+name: Check .editorconfig Compliance
+
+on:
+    push:
+        paths:
+            - "backend/**"
+    pull_request:
+        paths:
+            - "backend/**"
+
+jobs:
+    editorconfig-check:
+        name: Verify .editorconfig Formatting
+        runs-on: ubuntu-latest
+
+        defaults:
+            run:
+                working-directory: backend
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Setup .NET SDK
+              uses: actions/setup-dotnet@v4
+              with:
+                  dotnet-version: "8.0.x" # adjust to your project’s version
+
+            - name: Restore dependencies
+              run: dotnet restore
+
+            - name: Verify formatting
+              run: |
+                  dotnet format backend/MedicalDemo.csproj --verify-no-changes --severity info
