@@ -1,4 +1,7 @@
 using MedicalDemo.Models;
+using MedicalDemo.Models.DTO.Scheduling;
+
+namespace MedicalDemo.Algorithm;
 
 public class PGY2
 {
@@ -10,8 +13,8 @@ public class PGY2
 
     private readonly HashSet<DateTime> vacationRequests;
 
-    private int hoursWorked6months;
-    private int hoursWorkedTotal;
+    private readonly int hoursWorked6months;
+    private readonly int hoursWorkedTotal;
 
     public string id;
 
@@ -220,8 +223,8 @@ public class PGY2
     public void saveWorkDays()
     {
         foreach (DateTime curDay in allWorkDates)
-            // TODO: save the work day to a file or database
-            // this is a placeholder for the actual implementation
+        // TODO: save the work day to a file or database
+        // this is a placeholder for the actual implementation
         {
             commitedWorkDays.Add(curDay);
         }

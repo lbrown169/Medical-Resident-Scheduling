@@ -1,8 +1,8 @@
-using MedicalDemo.Data.Models;
+using MedicalDemo.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace MedicalDemo.Server.Controllers;
+namespace MedicalDemo.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -30,7 +30,7 @@ public class AuthController : ControllerBase
         if (exists)
         {
             return Conflict(new
-                { success = false, message = "Email already registered" });
+            { success = false, message = "Email already registered" });
         }
 
         string? hashedPassword
@@ -74,7 +74,7 @@ public class AuthController : ControllerBase
                 if (!passwordMatch)
                 {
                     return Unauthorized(new
-                        { success = false, message = "Invalid credentials" });
+                    { success = false, message = "Invalid credentials" });
                 }
 
                 string token = Guid.NewGuid().ToString();
@@ -108,7 +108,7 @@ public class AuthController : ControllerBase
                 if (!passwordMatch)
                 {
                     return Unauthorized(new
-                        { success = false, message = "Invalid credentials" });
+                    { success = false, message = "Invalid credentials" });
                 }
 
                 string token = Guid.NewGuid().ToString();
@@ -131,14 +131,15 @@ public class AuthController : ControllerBase
 
             //Not found in either
             return Unauthorized(new
-                { success = false, message = "Invalid credentials" });
+            { success = false, message = "Invalid credentials" });
         }
         catch (Exception ex)
         {
             return StatusCode(500,
                 new
                 {
-                    success = false, message = $"Login error: {ex.Message}"
+                    success = false,
+                    message = $"Login error: {ex.Message}"
                 });
         }
     }

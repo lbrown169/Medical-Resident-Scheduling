@@ -34,7 +34,6 @@ public class TrainingCalendar : PSYCallCalendar
     public TrainingCalendar(int year)
     {
         // training happens in july and august!
-        int trainingDays = 31 + 31; // days in july and days in august
 
         dayOfWeekAmt = new int[7]; // array of 7 days
 
@@ -56,7 +55,7 @@ public class TrainingCalendar : PSYCallCalendar
                 dayOfWeek ==
                 DayOfWeek
                     .Thursday) // if it is tues, wed, or thurs TODODODODODODO
-                // TO DO, DO NOT HARD CODE THIS^ IN CASE WE WANT MONDAY AND FRIDAY TO BE OPTIONAL
+                               // TO DO, DO NOT HARD CODE THIS^ IN CASE WE WANT MONDAY AND FRIDAY TO BE OPTIONAL
             {
                 shortCallDaysList.Add(currentDay);
             }

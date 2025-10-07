@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 
-namespace MedicalDemo.Data.Models;
+namespace MedicalDemo.Models;
 
 public class MedicalContext : DbContext
 {

@@ -1,9 +1,9 @@
-using MedicalDemo.Data.Models;
+using MedicalDemo.Models;
 using MedicalDemo.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace MedicalDemo.Server.Controllers;
+namespace MedicalDemo.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

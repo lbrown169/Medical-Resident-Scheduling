@@ -1,4 +1,4 @@
-﻿using MedicalDemo.Services;
+using MedicalDemo.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MedicalDemo.Controllers;

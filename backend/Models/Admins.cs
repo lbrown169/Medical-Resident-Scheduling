@@ -1,11 +1,11 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace MedicalDemo.Data.Models;
+namespace MedicalDemo.Models;
 
 public class Admins
 {
-    [Key] [Column("admin_id")] public string admin_id { get; set; }
+    [Key][Column("admin_id")] public string admin_id { get; set; }
 
     [Column("first_name")] public string first_name { get; set; }
 
