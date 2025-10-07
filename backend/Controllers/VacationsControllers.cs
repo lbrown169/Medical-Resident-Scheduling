@@ -1,4 +1,5 @@
-﻿using MedicalDemo.Data.Models;
+using MedicalDemo.Models;
+using MedicalDemo.Models.DTO;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -89,7 +90,7 @@ public class VacationsController : ControllerBase
         return Ok(vacations);
     }
 
-// PUT: api/vacations/group/{groupId}/status
+    // PUT: api/vacations/group/{groupId}/status
     [HttpPut("group/{groupId}/status")]
     public async Task<IActionResult> UpdateStatusByGroup(string groupId,
         [FromBody] UpdateStatusDto input)

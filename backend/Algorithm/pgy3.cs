@@ -5,8 +5,8 @@ public class PGY3
 
     private readonly HashSet<DateTime> vacationRequests;
 
-    private int hoursWorked6months;
-    private int hoursWorkedTotal;
+    private readonly int hoursWorked6months;
+    private readonly int hoursWorkedTotal;
 
     public string id;
 

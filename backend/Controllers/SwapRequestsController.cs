@@ -1,4 +1,4 @@
-﻿using MedicalDemo.Data.Models;
+using MedicalDemo.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,7 +24,7 @@ public class SwapRequestsController : ControllerBase
         // Console.WriteLine("Received swap request: " + System.Text.Json.JsonSerializer.Serialize(swapRequest));
 
         if (swapRequest == null)
-            // Console.WriteLine("SwapRequest object is null.");
+        // Console.WriteLine("SwapRequest object is null.");
         {
             return BadRequest("SwapRequest object is null.");
         }
@@ -41,14 +41,14 @@ public class SwapRequestsController : ControllerBase
                 r.resident_id == swapRequest.RequesteeId);
         // Console.WriteLine($"Requester: {requester?.resident_id}, PGY: {requester?.graduate_yr}; Requestee: {requestee?.resident_id}, PGY: {requestee?.graduate_yr}");
         if (requester == null || requestee == null)
-            // Console.WriteLine("Requester or requestee not found.");
+        // Console.WriteLine("Requester or requestee not found.");
         {
             return BadRequest("Requester or requestee not found.");
         }
 
         // Check PGY (graduate_yr)
         if (requester.graduate_yr != requestee.graduate_yr)
-            // Console.WriteLine($"PGY mismatch: {requester.graduate_yr} vs {requestee.graduate_yr}");
+        // Console.WriteLine($"PGY mismatch: {requester.graduate_yr} vs {requestee.graduate_yr}");
         {
             return BadRequest(
                 "Both residents must be the same PGY level to swap.");
@@ -66,7 +66,7 @@ public class SwapRequestsController : ControllerBase
         // Console.WriteLine($"DB Query for requester: ResidentId={swapRequest.RequesterId}, Date={swapRequest.RequesterDate:yyyy-MM-dd} => Found: {(requesterDate != null ? "Yes" : "No")}");
         // Console.WriteLine($"DB Query for requestee: ResidentId={swapRequest.RequesteeId}, Date={swapRequest.RequesteeDate:yyyy-MM-dd} => Found: {(requesteeDate != null ? "Yes" : "No")}");
         if (requesterDate == null || requesteeDate == null)
-            // Console.WriteLine("Could not find both shift dates for the swap.");
+        // Console.WriteLine("Could not find both shift dates for the swap.");
         {
             return BadRequest(
                 "Could not find both shift dates for the swap.");
@@ -75,7 +75,7 @@ public class SwapRequestsController : ControllerBase
         // Check shift type
         if (!AreEquivalentCallTypes(requesterDate.CallType,
                 requesteeDate.CallType))
-            // Console.WriteLine($"Shift type mismatch: {requesterDate.CallType} vs {requesteeDate.CallType}");
+        // Console.WriteLine($"Shift type mismatch: {requesterDate.CallType} vs {requesteeDate.CallType}");
         {
             return BadRequest(
                 "Both shifts must be the same type (e.g., Sunday with Sunday, Saturday with Saturday, Short with Short).");
@@ -219,7 +219,7 @@ public class SwapRequestsController : ControllerBase
         }
 
         // Helper to match callType robustly
-        bool CallTypeMatches(string a, string b)
+        static bool CallTypeMatches(string a, string b)
         {
             HashSet<string> sundaySet = new() { "Sunday", "12h" };
             HashSet<string> saturdaySet = new() { "Saturday", "24h" };
@@ -272,10 +272,7 @@ public class SwapRequestsController : ControllerBase
         }
 
         // Swap the resident IDs
-        string tempResidentId = requesterDate.ResidentId;
-        requesterDate.ResidentId = requesteeDate.ResidentId;
-        requesteeDate.ResidentId = tempResidentId;
-
+        (requesteeDate.ResidentId, requesterDate.ResidentId) = (requesterDate.ResidentId, requesteeDate.ResidentId);
         swap.Status = "Approved";
         swap.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
@@ -319,7 +316,7 @@ public class SwapRequestsController : ControllerBase
     }
 
     // Helper to compare call types
-    private bool AreEquivalentCallTypes(string a, string b)
+    private static bool AreEquivalentCallTypes(string a, string b)
     {
         string[] sundayTypes = { "Sunday", "12h" };
         string[] saturdayTypes = { "Saturday", "24h" };

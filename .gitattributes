@@ -1,0 +1,8 @@
+# Use LF for all text files
+* text eol=lf
+
+# Make sure C# and related code always uses LF
+*.cs text eol=lf
+*.csproj text eol=lf
+*.sln text eol=lf
+*.editorconfig text eol=lf

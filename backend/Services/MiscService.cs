@@ -1,4 +1,4 @@
-﻿using MedicalDemo.Data.Models;
+using MedicalDemo.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace MedicalDemo.Services;
@@ -81,7 +81,7 @@ public class MiscService
     }
 
     // call types to total hours by call types
-    private int HoursByCallType(string callType)
+    private static int HoursByCallType(string callType)
     {
         return callType switch
         {

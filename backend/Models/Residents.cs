@@ -1,11 +1,11 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace MedicalDemo.Data.Models;
+namespace MedicalDemo.Models;
 
 public class Residents
 {
-    [Key] [Column("resident_id")] public string resident_id { get; set; }
+    [Key][Column("resident_id")] public string resident_id { get; set; }
 
     [Column("first_name")] public string first_name { get; set; }
 

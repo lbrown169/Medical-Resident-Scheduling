@@ -1,8 +1,9 @@
 using System.Collections;
-using MedicalDemo.Algorithm;
 using MedicalDemo.Models.DTO.Scheduling;
 
 //for array min/max
+
+namespace MedicalDemo.Algorithm;
 
 internal class Schedule
 {
@@ -64,39 +65,41 @@ internal class Schedule
         //source node, pgy1 index, days pgy1s need to work
 
         for (int i = 0; i < pgy1; i++)
-        for (int j = 0;
-             j < shortCallAmt;
-             j++) // TO DO: THIS IS WHERE VACATION TIME WILL GO!!!!
         {
-            // what month are we in
-            int month = tCalendar.whatShortDayIsIt(j).Month;
-
-            // DEBUG Console.WriteLine(month);
-            //are we in july?
-            if (month == 7)
+            for (int j = 0;
+                 j < shortCallAmt;
+                 j++) // TO DO: THIS IS WHERE VACATION TIME WILL GO!!!!
             {
-                if (((PGY1)AllPgy1s[i]).rolePerMonth[0].DoesShort == false &&
-                    ((PGY1)AllPgy1s[i]).rolePerMonth[0].FlexShort ==
-                    false) // if their role doesnt do short calls this month
-                {
-                    continue;
-                }
-            }
-            // then skip over them and dont add the edge because they cant be used
+                // what month are we in
+                int month = tCalendar.whatShortDayIsIt(j).Month;
 
-            // are we in august?
-            if (month == 8)
-            {
-                if (((PGY1)AllPgy1s[i]).rolePerMonth[1].DoesShort == false &&
-                    ((PGY1)AllPgy1s[i]).rolePerMonth[1].FlexShort == false)
+                // DEBUG Console.WriteLine(month);
+                //are we in july?
+                if (month == 7)
                 {
-                    continue;
+                    if (((PGY1)AllPgy1s[i]).rolePerMonth[0].DoesShort == false &&
+                        ((PGY1)AllPgy1s[i]).rolePerMonth[0].FlexShort ==
+                        false) // if their role doesnt do short calls this month
+                    {
+                        continue;
+                    }
                 }
-            }
-            // same as above
+                // then skip over them and dont add the edge because they cant be used
 
-            shortCallGraph.addEdge(shortCallAmt * 2 + pgy3 + i, 2 * j,
-                1); //each pgy1 has an edge between them and a training day
+                // are we in august?
+                if (month == 8)
+                {
+                    if (((PGY1)AllPgy1s[i]).rolePerMonth[1].DoesShort == false &&
+                        ((PGY1)AllPgy1s[i]).rolePerMonth[1].FlexShort == false)
+                    {
+                        continue;
+                    }
+                }
+                // same as above
+
+                shortCallGraph.addEdge(shortCallAmt * 2 + pgy3 + i, 2 * j,
+                    1); //each pgy1 has an edge between them and a training day
+            }
         }
 
         for (int i = 0; i < shortCallAmt; i++)
@@ -107,11 +110,13 @@ internal class Schedule
         // connecting split nodes.
 
         for (int i = 0; i < shortCallAmt; i++)
-        for (int j = 0;
-             j < pgy3;
-             j++) // TO DO: THIS IS WHERE VACATION TIME WILL GO!!!!
         {
-            shortCallGraph.addEdge(i * 2 + 1, shortCallAmt * 2 + j, 1);
+            for (int j = 0;
+                 j < pgy3;
+                 j++) // TO DO: THIS IS WHERE VACATION TIME WILL GO!!!!
+            {
+                shortCallGraph.addEdge(i * 2 + 1, shortCallAmt * 2 + j, 1);
+            }
         }
         //each pgy3 can only train once per day
 
@@ -145,7 +150,7 @@ internal class Schedule
                 Edge? currEdge = (Edge)curList[j];
                 // check if flow is leaving the current edge
                 if (currEdge.flow() > 0)
-                    //Console.WriteLine($"  Day {tCalendar.whatShortDayIsIt(currEdge.destination / 2)}");
+                //Console.WriteLine($"  Day {tCalendar.whatShortDayIsIt(currEdge.destination / 2)}");
                 {
                     ((PGY1)AllPgy1s[i]).addWorkDay(
                         tCalendar.whatShortDayIsIt(currEdge.destination / 2));
@@ -164,7 +169,7 @@ internal class Schedule
                 Edge? currEdge = (Edge)curList[j];
                 // check if the flow is negative
                 if (currEdge.flow() < 0)
-                    //Console.WriteLine($"  Day {tCalendar.whatShortDayIsIt(currEdge.destination / 2)}");
+                //Console.WriteLine($"  Day {tCalendar.whatShortDayIsIt(currEdge.destination / 2)}");
                 {
                     ((PGY3)AllPgy3s[i]).addWorkDay(
                         tCalendar.whatShortDayIsIt(currEdge.destination / 2));
@@ -186,39 +191,41 @@ internal class Schedule
         //source node, pgy1 index, days pgy1s need to work
 
         for (int i = 0; i < pgy1; i++)
-        for (int j = 0;
-             j < Sat24hCallAmt;
-             j++) // TO DO: THIS IS WHERE VACATION TIME WILL GO!!!!
         {
-            // what month are we in
-            int month = tCalendar.whatSaturdayIsIt(j).Month;
-
-            // DEBUG Console.WriteLine(month);
-            //are we in july?
-            if (month == 7)
+            for (int j = 0;
+                 j < Sat24hCallAmt;
+                 j++) // TO DO: THIS IS WHERE VACATION TIME WILL GO!!!!
             {
-                if (((PGY1)AllPgy1s[i]).rolePerMonth[0].DoesLong == false &&
-                    ((PGY1)AllPgy1s[i]).rolePerMonth[0].FlexLong ==
-                    false) // if their role doesnt do long calls this month
-                {
-                    continue;
-                }
-            }
-            // then skip over them and dont add the edge because they cant be used
+                // what month are we in
+                int month = tCalendar.whatSaturdayIsIt(j).Month;
 
-            // are we in august?
-            if (month == 8)
-            {
-                if (((PGY1)AllPgy1s[i]).rolePerMonth[1].DoesLong == false &&
-                    ((PGY1)AllPgy1s[i]).rolePerMonth[1].FlexLong == false)
+                // DEBUG Console.WriteLine(month);
+                //are we in july?
+                if (month == 7)
                 {
-                    continue;
+                    if (((PGY1)AllPgy1s[i]).rolePerMonth[0].DoesLong == false &&
+                        ((PGY1)AllPgy1s[i]).rolePerMonth[0].FlexLong ==
+                        false) // if their role doesnt do long calls this month
+                    {
+                        continue;
+                    }
                 }
-            }
-            // same as above
+                // then skip over them and dont add the edge because they cant be used
 
-            saturdayCallGraph.addEdge(Sat24hCallAmt * 2 + pgy2 + i, 2 * j,
-                1); //each pgy1 has an edge between them and a training day
+                // are we in august?
+                if (month == 8)
+                {
+                    if (((PGY1)AllPgy1s[i]).rolePerMonth[1].DoesLong == false &&
+                        ((PGY1)AllPgy1s[i]).rolePerMonth[1].FlexLong == false)
+                    {
+                        continue;
+                    }
+                }
+                // same as above
+
+                saturdayCallGraph.addEdge(Sat24hCallAmt * 2 + pgy2 + i, 2 * j,
+                    1); //each pgy1 has an edge between them and a training day
+            }
         }
 
         for (int i = 0; i < Sat24hCallAmt; i++)
@@ -228,40 +235,42 @@ internal class Schedule
         // connecting split nodes.
 
         for (int i = 0; i < pgy2; i++)
-        for (int j = 0;
-             j < Sat24hCallAmt;
-             j++) // TO DO: THIS IS WHERE VACATION TIME WILL GO!!!!
         {
-            // what month are we in
-            int month = tCalendar.whatSaturdayIsIt(j).Month;
-
-            // DEBUG Console.WriteLine(month);
-            //are we in july?
-            if (month == 7)
+            for (int j = 0;
+                 j < Sat24hCallAmt;
+                 j++) // TO DO: THIS IS WHERE VACATION TIME WILL GO!!!!
             {
-                if (((PGY2)AllPgy2s[i]).rolePerMonth[0].DoesLong == false &&
-                    ((PGY2)AllPgy2s[i]).rolePerMonth[0].FlexLong ==
-                    false) // if their role doesnt do long calls this month
-                {
-                    continue;
-                }
-            }
-            // then skip over them and dont add the edge because they cant be used
+                // what month are we in
+                int month = tCalendar.whatSaturdayIsIt(j).Month;
 
-            // are we in august?
-            if (month == 8)
-            {
-                if (((PGY2)AllPgy2s[i]).rolePerMonth[1].DoesLong == false &&
-                    ((PGY2)AllPgy2s[i]).rolePerMonth[1].FlexLong == false)
+                // DEBUG Console.WriteLine(month);
+                //are we in july?
+                if (month == 7)
                 {
-                    continue;
+                    if (((PGY2)AllPgy2s[i]).rolePerMonth[0].DoesLong == false &&
+                        ((PGY2)AllPgy2s[i]).rolePerMonth[0].FlexLong ==
+                        false) // if their role doesnt do long calls this month
+                    {
+                        continue;
+                    }
                 }
-            }
-            // same as above
+                // then skip over them and dont add the edge because they cant be used
 
-            saturdayCallGraph.addEdge(2 * i + 1, Sat24hCallAmt * 2 + j,
-                1); //each pgy2 can only train once per day
-            //source node, pgy2 index, days pgy1s need to work
+                // are we in august?
+                if (month == 8)
+                {
+                    if (((PGY2)AllPgy2s[i]).rolePerMonth[1].DoesLong == false &&
+                        ((PGY2)AllPgy2s[i]).rolePerMonth[1].FlexLong == false)
+                    {
+                        continue;
+                    }
+                }
+                // same as above
+
+                saturdayCallGraph.addEdge(2 * i + 1, Sat24hCallAmt * 2 + j,
+                    1); //each pgy2 can only train once per day
+                //source node, pgy2 index, days pgy1s need to work
+            }
         }
 
         int estPgy2Training
@@ -339,39 +348,41 @@ internal class Schedule
         //source node, pgy1 index, days pgy1s need to work
 
         for (int i = 0; i < pgy1; i++)
-        for (int j = 0;
-             j < Sun12hCallAmt;
-             j++) // TO DO: THIS IS WHERE VACATION TIME WILL GO!!!!
         {
-            // what month are we in
-            int month = tCalendar.whatSundayIsIt(j).Month;
-
-            // DEBUG Console.WriteLine(month);
-            //are we in july?
-            if (month == 7)
+            for (int j = 0;
+                 j < Sun12hCallAmt;
+                 j++) // TO DO: THIS IS WHERE VACATION TIME WILL GO!!!!
             {
-                if (((PGY1)AllPgy1s[i]).rolePerMonth[0].DoesLong == false &&
-                    ((PGY1)AllPgy1s[i]).rolePerMonth[0].FlexLong ==
-                    false) // if their role doesnt do long calls this month
-                {
-                    continue;
-                }
-            }
-            // then skip over them and dont add the edge because they cant be used
+                // what month are we in
+                int month = tCalendar.whatSundayIsIt(j).Month;
 
-            // are we in august?
-            if (month == 8)
-            {
-                if (((PGY1)AllPgy1s[i]).rolePerMonth[1].DoesLong == false &&
-                    ((PGY1)AllPgy1s[i]).rolePerMonth[1].FlexLong == false)
+                // DEBUG Console.WriteLine(month);
+                //are we in july?
+                if (month == 7)
                 {
-                    continue;
+                    if (((PGY1)AllPgy1s[i]).rolePerMonth[0].DoesLong == false &&
+                        ((PGY1)AllPgy1s[i]).rolePerMonth[0].FlexLong ==
+                        false) // if their role doesnt do long calls this month
+                    {
+                        continue;
+                    }
                 }
-            }
-            // same as above
+                // then skip over them and dont add the edge because they cant be used
 
-            sundaysCallGraph.addEdge(Sun12hCallAmt * 2 + pgy2 + i, 2 * j,
-                1); //each pgy1 has an edge between them and a training day
+                // are we in august?
+                if (month == 8)
+                {
+                    if (((PGY1)AllPgy1s[i]).rolePerMonth[1].DoesLong == false &&
+                        ((PGY1)AllPgy1s[i]).rolePerMonth[1].FlexLong == false)
+                    {
+                        continue;
+                    }
+                }
+                // same as above
+
+                sundaysCallGraph.addEdge(Sun12hCallAmt * 2 + pgy2 + i, 2 * j,
+                    1); //each pgy1 has an edge between them and a training day
+            }
         }
 
         for (int i = 0; i < Sun12hCallAmt; i++)
@@ -382,40 +393,42 @@ internal class Schedule
         // connecting split nodes. OTHERWISE THERE WOULD BE 0 FLOW IN THE GRAPH
 
         for (int i = 0; i < pgy2; i++)
-        for (int j = 0;
-             j < Sun12hCallAmt;
-             j++) // TO DO: THIS IS WHERE VACATION TIME WILL GO!!!!
         {
-            // what month are we in
-            int month = tCalendar.whatSundayIsIt(j).Month;
-
-            // DEBUG Console.WriteLine(month);
-            //are we in july?
-            if (month == 7)
+            for (int j = 0;
+                 j < Sun12hCallAmt;
+                 j++) // TO DO: THIS IS WHERE VACATION TIME WILL GO!!!!
             {
-                if (((PGY2)AllPgy2s[i]).rolePerMonth[0].DoesLong == false &&
-                    ((PGY2)AllPgy2s[i]).rolePerMonth[0].FlexLong ==
-                    false) // if their role doesnt do long calls this month
-                {
-                    continue;
-                }
-            }
-            // then skip over them and dont add the edge because they cant be used
+                // what month are we in
+                int month = tCalendar.whatSundayIsIt(j).Month;
 
-            // are we in august?
-            if (month == 8)
-            {
-                if (((PGY2)AllPgy2s[i]).rolePerMonth[1].DoesLong == false &&
-                    ((PGY2)AllPgy2s[i]).rolePerMonth[1].FlexLong == false)
+                // DEBUG Console.WriteLine(month);
+                //are we in july?
+                if (month == 7)
                 {
-                    continue;
+                    if (((PGY2)AllPgy2s[i]).rolePerMonth[0].DoesLong == false &&
+                        ((PGY2)AllPgy2s[i]).rolePerMonth[0].FlexLong ==
+                        false) // if their role doesnt do long calls this month
+                    {
+                        continue;
+                    }
                 }
-            }
-            // same as above
+                // then skip over them and dont add the edge because they cant be used
 
-            sundaysCallGraph.addEdge(2 * i + 1, Sun12hCallAmt * 2 + j,
-                1); //each pgy2 can only train once per day
-            //source node, pgy2 index, days pgy1s need to work
+                // are we in august?
+                if (month == 8)
+                {
+                    if (((PGY2)AllPgy2s[i]).rolePerMonth[1].DoesLong == false &&
+                        ((PGY2)AllPgy2s[i]).rolePerMonth[1].FlexLong == false)
+                    {
+                        continue;
+                    }
+                }
+                // same as above
+
+                sundaysCallGraph.addEdge(2 * i + 1, Sun12hCallAmt * 2 + j,
+                    1); //each pgy2 can only train once per day
+                //source node, pgy2 index, days pgy1s need to work
+            }
         }
 
         //int estPgy2Training = ((pgy1+pgy2-1)/pgy2); // ceiling division to get capacity amount (estimated amount of time pgy2 must train someone) for sink
@@ -561,23 +574,25 @@ internal class Schedule
     public static bool Part2(int year, ArrayList pgy1s, ArrayList pgy2s)
     {
         Console.WriteLine("part 2: normal schedule (january through june)");
-        int pgy1 = 8;
-        int pgy2 = 8;
         ArrayList AllPgy1s = pgy1s;
         ArrayList AllPgy2s = pgy2s;
 
         // store days currently worked by anyone
         HashSet<DateTime> workedDays = new();
         foreach (PGY1 res in AllPgy1s)
-        foreach (DateTime curDay in res.workDaySet())
         {
-            workedDays.Add(curDay);
+            foreach (DateTime curDay in res.workDaySet())
+            {
+                workedDays.Add(curDay);
+            }
         }
 
         foreach (PGY2 res in AllPgy2s)
-        foreach (DateTime curDay in res.workDaySet())
         {
-            workedDays.Add(curDay);
+            foreach (DateTime curDay in res.workDaySet())
+            {
+                workedDays.Add(curDay);
+            }
         }
 
         DateTime startDay = new(year + 1, 1, 1);
@@ -658,15 +673,19 @@ internal class Schedule
         // store days currently worked by anyone
         HashSet<DateTime> workedDays = new();
         foreach (PGY1 res in AllPgy1s)
-        foreach (DateTime curDay in res.workDaySet())
         {
-            workedDays.Add(curDay);
+            foreach (DateTime curDay in res.workDaySet())
+            {
+                workedDays.Add(curDay);
+            }
         }
 
         foreach (PGY2 res in AllPgy2s)
-        foreach (DateTime curDay in res.workDaySet())
         {
-            workedDays.Add(curDay);
+            foreach (DateTime curDay in res.workDaySet())
+            {
+                workedDays.Add(curDay);
+            }
         }
 
         DateTime startDay = new(year, 7, 7);
@@ -780,7 +799,7 @@ internal class Schedule
             // Create a random ratio for each shift type
             double ratio = rand.NextDouble(); // random ratio between 0 and 1
             for (int i = 0; i < shiftTypeCount[shift]; i++)
-                // randomly select a pgy1 or pgy2 to assign the shift to
+            // randomly select a pgy1 or pgy2 to assign the shift to
             {
                 if (rand.NextDouble() < ratio) // 50% chance to assign to pgy1
                 {
@@ -1065,19 +1084,23 @@ internal class Schedule
         // initialize data for each resident
         for (int i = 0; i < pgy1s.Count; i++)
         {
-            pgy1ShiftCount[i] = new Dictionary<int, int>();
-            pgy1ShiftCount[i][3] = 0;
-            pgy1ShiftCount[i][12] = 0;
-            pgy1ShiftCount[i][24] = 0;
+            pgy1ShiftCount[i] = new Dictionary<int, int>
+            {
+                [3] = 0,
+                [12] = 0,
+                [24] = 0
+            };
             allowedCallTypes[i] = new Dictionary<int, int>();
         }
 
         for (int i = 0; i < pgy2s.Count; i++)
         {
-            pgy2ShiftCount[i] = new Dictionary<int, int>();
-            pgy2ShiftCount[i][3] = 0;
-            pgy2ShiftCount[i][12] = 0;
-            pgy2ShiftCount[i][24] = 0;
+            pgy2ShiftCount[i] = new Dictionary<int, int>
+            {
+                [3] = 0,
+                [12] = 0,
+                [24] = 0
+            };
             allowedCallTypes[i + pgy1s.Count] = new Dictionary<int, int>();
         }
 
@@ -1154,7 +1177,7 @@ internal class Schedule
             {
                 ct2++;
                 if (ct2 > 100) // prevent infinite loop
-                    //Console.WriteLine("Failed to find a valid assignment within 24-hour window after 100 attempts.");
+                               //Console.WriteLine("Failed to find a valid assignment within 24-hour window after 100 attempts.");
                 {
                     return
                         false;
@@ -1192,19 +1215,23 @@ internal class Schedule
 
             // make an edge from the source to each residents shift type with capacity based on the chosen shifts to work
             for (int i = 0; i < pgy1s.Count; i++)
-            for (int type = 0; type < 3; type++)
             {
-                int shiftDuration = type == 0 ? 3 : type == 1 ? 12 : 24;
-                g.addEdge(srcIndex, i * 3 + type,
-                    pgy1ShiftCount[i][shiftDuration]);
+                for (int type = 0; type < 3; type++)
+                {
+                    int shiftDuration = type == 0 ? 3 : type == 1 ? 12 : 24;
+                    g.addEdge(srcIndex, i * 3 + type,
+                        pgy1ShiftCount[i][shiftDuration]);
+                }
             }
 
             for (int i = 0; i < pgy2s.Count; i++)
-            for (int type = 0; type < 3; type++)
             {
-                int shiftDuration = type == 0 ? 3 : type == 1 ? 12 : 24;
-                g.addEdge(srcIndex, (pgy1s.Count + i) * 3 + type,
-                    pgy2ShiftCount[i][shiftDuration]);
+                for (int type = 0; type < 3; type++)
+                {
+                    int shiftDuration = type == 0 ? 3 : type == 1 ? 12 : 24;
+                    g.addEdge(srcIndex, (pgy1s.Count + i) * 3 + type,
+                        pgy2ShiftCount[i][shiftDuration]);
+                }
             }
 
             ArrayList dayList = new();
@@ -1357,7 +1384,7 @@ internal class Schedule
                                     .ContainsKey(kvp.Key) &&
                                 allowedCallTypes[residentIndex][kvp.Key] >
                                 pgy1ShiftCount[residentIndex][kvp.Key])
-                                // assign the shift to this resident
+                            // assign the shift to this resident
                             {
                                 pgy1ShiftCount[residentIndex][kvp.Key]++;
                             }
@@ -1373,7 +1400,7 @@ internal class Schedule
                                 allowedCallTypes[residentIndex][kvp.Key] >
                                 pgy2ShiftCount[residentIndex - pgy1s.Count][
                                     kvp.Key])
-                                // assign the shift to this resident
+                            // assign the shift to this resident
                             {
                                 pgy2ShiftCount[residentIndex - pgy1s.Count][
                                     kvp.Key]++;
@@ -1418,36 +1445,40 @@ internal class Schedule
 
             // add worked days
             for (int i = 0; i < pgy1s.Count; i++)
-            for (int type = 0; type < 3; type++)
             {
-                int shiftDuration = type == 0 ? 3 : type == 1 ? 12 : 24;
-                ArrayList? curList = (ArrayList)g.adjList[i * 3 + type];
-                foreach (Edge edge in curList)
+                for (int type = 0; type < 3; type++)
                 {
-                    if (edge.flow() >
-                        0) // if the flow is positive, this resident works this day
+                    int shiftDuration = type == 0 ? 3 : type == 1 ? 12 : 24;
+                    ArrayList? curList = (ArrayList)g.adjList[i * 3 + type];
+                    foreach (Edge edge in curList)
                     {
-                        DateTime workDay = (DateTime)dayList[
-                            edge.destination - (pgy1s.Count + pgy2s.Count) * 3];
-                        ((PGY1)pgy1s[i]).addWorkDay(workDay);
+                        if (edge.flow() >
+                            0) // if the flow is positive, this resident works this day
+                        {
+                            DateTime workDay = (DateTime)dayList[
+                                edge.destination - (pgy1s.Count + pgy2s.Count) * 3];
+                            ((PGY1)pgy1s[i]).addWorkDay(workDay);
+                        }
                     }
                 }
             }
 
             for (int i = 0; i < pgy2s.Count; i++)
-            for (int type = 0; type < 3; type++)
             {
-                int shiftDuration = type == 0 ? 3 : type == 1 ? 12 : 24;
-                ArrayList? curList
-                    = (ArrayList)g.adjList[(pgy1s.Count + i) * 3 + type];
-                foreach (Edge edge in curList)
+                for (int type = 0; type < 3; type++)
                 {
-                    if (edge.flow() >
-                        0) // if the flow is positive, this resident works this day
+                    int shiftDuration = type == 0 ? 3 : type == 1 ? 12 : 24;
+                    ArrayList? curList
+                        = (ArrayList)g.adjList[(pgy1s.Count + i) * 3 + type];
+                    foreach (Edge edge in curList)
                     {
-                        DateTime workDay = (DateTime)dayList[
-                            edge.destination - (pgy1s.Count + pgy2s.Count) * 3];
-                        ((PGY2)pgy2s[i]).addWorkDay(workDay);
+                        if (edge.flow() >
+                            0) // if the flow is positive, this resident works this day
+                        {
+                            DateTime workDay = (DateTime)dayList[
+                                edge.destination - (pgy1s.Count + pgy2s.Count) * 3];
+                            ((PGY2)pgy2s[i]).addWorkDay(workDay);
+                        }
                     }
                 }
             }
@@ -1512,7 +1543,7 @@ internal class Schedule
             for (DateTime curDay = firstDay;
                  curDay <= lastDay;
                  curDay = curDay.AddDays(1))
-                // check if the day is a conflict
+            // check if the day is a conflict
             {
                 if (res.isWorking(curDay) && !res.canWork(curDay) &&
                     !res.commitedWorkDay(curDay))
@@ -1579,7 +1610,7 @@ internal class Schedule
             for (DateTime curDay = firstDay;
                  curDay <= lastDay;
                  curDay = curDay.AddDays(1))
-                // check if the day is a conflict
+            // check if the day is a conflict
             {
                 if (res.isWorking(curDay) && !res.canWork(curDay) &&
                     !res.commitedWorkDay(curDay))
@@ -1670,7 +1701,7 @@ internal class Schedule
             for (DateTime curDay = firstDay;
                  curDay <= lastDay;
                  curDay = curDay.AddDays(1))
-                // check if the day is a conflict
+            // check if the day is a conflict
             {
                 if (res.isWorking(curDay) && !res.canWork(curDay) &&
                     !res.commitedWorkDay(curDay))
@@ -1780,7 +1811,7 @@ internal class Schedule
             for (DateTime curDay = firstDay;
                  curDay <= lastDay;
                  curDay = curDay.AddDays(1))
-                // check if the day is a conflict
+            // check if the day is a conflict
             {
                 if (res.isWorking(curDay) && !res.canWork(curDay))
                 {
@@ -1837,46 +1868,52 @@ internal class Schedule
         List<DatesDTO> dateRecords = new();
 
         foreach (PGY1 res in pgy1s)
-        foreach (DateTime day in res.workDaySet())
         {
-            dateRecords.Add(new DatesDTO
+            foreach (DateTime day in res.workDaySet())
             {
-                DateId = Guid.NewGuid(),
-                ScheduleId = scheduleId,
-                ResidentId
-                    = res.id, // Assuming `id` exists in PGY1 class and maps to the backend
-                Date = day,
-                CallType = GetCallType(day),
-                IsCommitted = true
-            });
+                dateRecords.Add(new DatesDTO
+                {
+                    DateId = Guid.NewGuid(),
+                    ScheduleId = scheduleId,
+                    ResidentId
+                        = res.id, // Assuming `id` exists in PGY1 class and maps to the backend
+                    Date = day,
+                    CallType = GetCallType(day),
+                    IsCommitted = true
+                });
+            }
         }
 
         foreach (PGY2 res in pgy2s)
-        foreach (DateTime day in res.workDaySet())
         {
-            dateRecords.Add(new DatesDTO
+            foreach (DateTime day in res.workDaySet())
             {
-                DateId = Guid.NewGuid(),
-                ScheduleId = scheduleId,
-                ResidentId = res.id,
-                Date = day,
-                CallType = GetCallType(day),
-                IsCommitted = true
-            });
+                dateRecords.Add(new DatesDTO
+                {
+                    DateId = Guid.NewGuid(),
+                    ScheduleId = scheduleId,
+                    ResidentId = res.id,
+                    Date = day,
+                    CallType = GetCallType(day),
+                    IsCommitted = true
+                });
+            }
         }
 
         foreach (PGY3 res in pgy3s)
-        foreach (DateTime day in res.workDaySet())
         {
-            dateRecords.Add(new DatesDTO
+            foreach (DateTime day in res.workDaySet())
             {
-                DateId = Guid.NewGuid(),
-                ScheduleId = scheduleId,
-                ResidentId = res.id,
-                Date = day,
-                CallType = GetCallType(day),
-                IsCommitted = true
-            });
+                dateRecords.Add(new DatesDTO
+                {
+                    DateId = Guid.NewGuid(),
+                    ScheduleId = scheduleId,
+                    ResidentId = res.id,
+                    Date = day,
+                    CallType = GetCallType(day),
+                    IsCommitted = true
+                });
+            }
         }
 
         return dateRecords;

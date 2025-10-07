@@ -1,7 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
-namespace MedicalDemo.Data.Models;
+namespace MedicalDemo.Models;
 
 // Adjust the namespace to match your actual structure
 public class MedicalContextFactory : IDesignTimeDbContextFactory<MedicalContext>

@@ -117,9 +117,7 @@ public class Graph
             // now swap
             if (i != j)
             {
-                object? tmp = edgeList[i];
-                edgeList[i] = edgeList[j];
-                edgeList[j] = tmp;
+                (edgeList[j], edgeList[i]) = (edgeList[i], edgeList[j]);
             }
 
             (int, int, int) edge = (ValueTuple<int, int, int>)edgeList[i];
