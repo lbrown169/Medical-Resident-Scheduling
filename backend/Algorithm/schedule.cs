@@ -786,7 +786,7 @@ internal class Schedule
         }
     }
 
-
+#pragma warning disable IDE0060
     public static void initialShiftAssignment(ArrayList pgy1s, ArrayList pgy2s,
         DateTime startDay, DateTime endDay,
         Dictionary<int, int> shiftTypeCount,
@@ -860,6 +860,8 @@ internal class Schedule
             }
         }
     }
+
+#pragma warning restore IDE0060
 
     public static void swapSomeShiftCount(ArrayList pgy1s, ArrayList pgy2s,
         Dictionary<int, int>[] pgy1ShiftCount,
