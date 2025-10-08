@@ -1,7 +1,7 @@
-using MedicalDemo.Models;
-using Microsoft.EntityFrameworkCore;
 using DotNetEnv;
+using MedicalDemo.Models;
 using MedicalDemo.Services;
+using Microsoft.EntityFrameworkCore;
 
 // Load .env file
 DotNetEnv.Env.Load(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
@@ -22,8 +22,8 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.SetIsOriginAllowed(origin => 
-            origin.StartsWith("https://psycall.net") || 
+        policy.SetIsOriginAllowed(origin =>
+            origin.StartsWith("https://psycall.net") ||
             origin.StartsWith("https://www.psycall.net") ||
             origin.StartsWith("https://backend.psycall.net") ||
             origin.StartsWith("http://localhost"))
@@ -99,4 +99,3 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
-

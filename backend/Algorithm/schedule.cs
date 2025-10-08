@@ -1448,7 +1448,7 @@ internal class Schedule
             {
                 for (int type = 0; type < 3; type++)
                 {
-                    int shiftDuration = type == 0 ? 3 : type == 1 ? 12 : 24;
+                    _ = type == 0 ? 3 : type == 1 ? 12 : 24;
                     ArrayList? curList = (ArrayList)g.adjList[i * 3 + type];
                     foreach (Edge edge in curList)
                     {
@@ -1467,7 +1467,7 @@ internal class Schedule
             {
                 for (int type = 0; type < 3; type++)
                 {
-                    int shiftDuration = type == 0 ? 3 : type == 1 ? 12 : 24;
+                    _ = type == 0 ? 3 : type == 1 ? 12 : 24;
                     ArrayList? curList
                         = (ArrayList)g.adjList[(pgy1s.Count + i) * 3 + type];
                     foreach (Edge edge in curList)

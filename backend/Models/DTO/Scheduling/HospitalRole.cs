@@ -58,7 +58,7 @@ public class HospitalRole
     public static HospitalRole
         random() // THIS IS PURELY FOR TESTING I NED TO REMOVE IT
     {
-        int seed = (int)DateTime.Now.Ticks;
+        _ = (int)DateTime.Now.Ticks;
         Random rnd = new();
         int index = rnd.Next(0, 8);
         return index switch
