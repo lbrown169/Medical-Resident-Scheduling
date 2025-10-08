@@ -1,3 +1,5 @@
+namespace MedicalDemo.Models.DTO;
+
 public class VacationWithResidentDto
 {
     public Guid VacationId { get; set; }

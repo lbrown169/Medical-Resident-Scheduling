@@ -1,113 +1,134 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using MedicalDemo.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using MedicalDemo.Data;
-using MedicalDemo.Data.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace MedicalDemo.Controllers
+namespace MedicalDemo.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+public class AnnouncementsController : ControllerBase
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class AnnouncementsController : ControllerBase
+    private readonly MedicalContext _context;
+
+    public AnnouncementsController(MedicalContext context)
     {
-        private readonly MedicalContext _context;
+        _context = context;
+    }
 
-        public AnnouncementsController(MedicalContext context)
+    // POST: api/announcements
+    [HttpPost]
+    public async Task<IActionResult> CreateAnnouncement(
+        [FromBody] Announcements announcement)
+    {
+        if (announcement == null)
         {
-            _context = context;
+            return BadRequest("Announcement object is null.");
         }
 
-        // POST: api/announcements
-        [HttpPost]
-        public async Task<IActionResult> CreateAnnouncement([FromBody] Announcements announcement)
+        if (announcement.AnnouncementId == Guid.Empty)
         {
-            if (announcement == null)
-                return BadRequest("Announcement object is null.");
-
-            if (announcement.AnnouncementId == Guid.Empty)
-                announcement.AnnouncementId = Guid.NewGuid();
-
-            // Set default author if not provided
-            if (string.IsNullOrEmpty(announcement.AuthorId))
-                announcement.AuthorId = "Admin";
-            announcement.CreatedAt = DateTime.UtcNow;
-
-            _context.announcements.Add(announcement);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(FilterAnnouncements), new { id = announcement.AnnouncementId }, announcement);
+            announcement.AnnouncementId = Guid.NewGuid();
         }
 
-        // GET: api/announcements
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Announcements>>> GetAllAnnouncements()
+        // Set default author if not provided
+        if (string.IsNullOrEmpty(announcement.AuthorId))
         {
-            var announcements = await _context.announcements
-                .OrderByDescending(a => a.CreatedAt)
-                .ToListAsync();
-
-            return Ok(announcements);
+            announcement.AuthorId = "Admin";
         }
 
-        // GET: api/announcements/filter?author_id=
-        [HttpGet("filter")]
-        public async Task<ActionResult<IEnumerable<Announcements>>> FilterAnnouncements(
+        announcement.CreatedAt = DateTime.UtcNow;
+
+        _context.announcements.Add(announcement);
+        await _context.SaveChangesAsync();
+
+        return CreatedAtAction(nameof(FilterAnnouncements),
+            new { id = announcement.AnnouncementId }, announcement);
+    }
+
+    // GET: api/announcements
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<Announcements>>>
+        GetAllAnnouncements()
+    {
+        List<Announcements> announcements = await _context.announcements
+            .OrderByDescending(a => a.CreatedAt)
+            .ToListAsync();
+
+        return Ok(announcements);
+    }
+
+    // GET: api/announcements/filter?author_id=
+    [HttpGet("filter")]
+    public async Task<ActionResult<IEnumerable<Announcements>>>
+        FilterAnnouncements(
             [FromQuery] string author_id)
+    {
+        IQueryable<Announcements> query
+            = _context.announcements.AsQueryable();
+
+        if (!string.IsNullOrEmpty(author_id))
         {
-            var query = _context.announcements.AsQueryable();
-
-            if (!string.IsNullOrEmpty(author_id))
-                query = query.Where(a => a.AuthorId == author_id);
-
-            var results = await query.OrderByDescending(a => a.CreatedAt).ToListAsync();
-
-            if (!results.Any())
-                return NotFound("No announcements matched the filter.");
-
-            return Ok(results);
-        }
-        
-        // PUT: api/announcements/{id}
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateAnnouncement(Guid id, [FromBody] Announcements updated)
-        {
-            if (id != updated.AnnouncementId)
-                return BadRequest("ID mismatch between URL and body.");
-
-            var existing = await _context.announcements.FindAsync(id);
-            if (existing == null)
-                return NotFound("Announcement not found.");
-
-            existing.Message = updated.Message;
-            existing.AuthorId = updated.AuthorId;
-            // You typically wouldn't update CreatedAt, so we leave it as-is
-
-            try
-            {
-                await _context.SaveChangesAsync();
-                return Ok(existing);
-            }
-            catch (DbUpdateException ex)
-            {
-                return StatusCode(500, $"Error updating announcement: {ex.Message}");
-            }
+            query = query.Where(a => a.AuthorId == author_id);
         }
 
-        // DELETE: api/announcements/{id}
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteAnnouncement(Guid id)
-        {
-            var existing = await _context.announcements.FindAsync(id);
-            if (existing == null)
-                return NotFound("Announcement not found.");
+        List<Announcements> results
+            = await query.OrderByDescending(a => a.CreatedAt).ToListAsync();
 
-            _context.announcements.Remove(existing);
+        if (!results.Any())
+        {
+            return NotFound("No announcements matched the filter.");
+        }
+
+        return Ok(results);
+    }
+
+    // PUT: api/announcements/{id}
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateAnnouncement(Guid id,
+        [FromBody] Announcements updated)
+    {
+        if (id != updated.AnnouncementId)
+        {
+            return BadRequest("ID mismatch between URL and body.");
+        }
+
+        Announcements? existing
+            = await _context.announcements.FindAsync(id);
+        if (existing == null)
+        {
+            return NotFound("Announcement not found.");
+        }
+
+        existing.Message = updated.Message;
+        existing.AuthorId = updated.AuthorId;
+        // You typically wouldn't update CreatedAt, so we leave it as-is
+
+        try
+        {
             await _context.SaveChangesAsync();
-
-            return NoContent();
+            return Ok(existing);
         }
+        catch (DbUpdateException ex)
+        {
+            return StatusCode(500,
+                $"Error updating announcement: {ex.Message}");
+        }
+    }
+
+    // DELETE: api/announcements/{id}
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteAnnouncement(Guid id)
+    {
+        Announcements? existing
+            = await _context.announcements.FindAsync(id);
+        if (existing == null)
+        {
+            return NotFound("Announcement not found.");
+        }
+
+        _context.announcements.Remove(existing);
+        await _context.SaveChangesAsync();
+
+        return NoContent();
     }
 }

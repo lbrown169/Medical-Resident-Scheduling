@@ -6,12 +6,13 @@ namespace MedicalDemo.Algorithm;
 public class PSYCallCalendar
 {
     // default constructor
-    public PSYCallCalendar() {}
+    public PSYCallCalendar()
+    {
+    }
 
     // constructor that takes in a year
     public PSYCallCalendar(int year) //constructor
     {
-
     }
 
     //determine year
@@ -21,62 +22,82 @@ public class PSYCallCalendar
     //what days are saturday, sunday, or weekdays 
 }
 
-public class TrainingCalendar: PSYCallCalendar
+public class TrainingCalendar : PSYCallCalendar
 {
     public int[] dayOfWeekAmt;
-    public ArrayList shortCallDaysList;
     public ArrayList saturdayCallDaysList;
+    public ArrayList shortCallDaysList;
+
     public ArrayList sundayCallDaysList;
     //public HashMap dayToShortCallIndex;
 
     public TrainingCalendar(int year)
     {
         // training happens in july and august!
-        int trainingDays = 31 + 31; // days in july and days in august
 
         dayOfWeekAmt = new int[7]; // array of 7 days
 
         Calendar calendar = new GregorianCalendar();
-        DateTime currentDay = new DateTime(year, 7, 7); // second week of july of whatever year passed in
+        DateTime
+            currentDay
+                = new(year, 7,
+                    7); // second week of july of whatever year passed in
 
         shortCallDaysList = new ArrayList();
         saturdayCallDaysList = new ArrayList();
         sundayCallDaysList = new ArrayList();
 
-        while(currentDay.Month < 9)
+        while (currentDay.Month < 9)
         {
             DayOfWeek dayOfWeek = calendar.GetDayOfWeek(currentDay);
-            if(dayOfWeek == DayOfWeek.Tuesday || dayOfWeek == DayOfWeek.Wednesday || dayOfWeek == DayOfWeek.Thursday) // if it is tues, wed, or thurs TODODODODODODO
+            if (dayOfWeek == DayOfWeek.Tuesday ||
+                dayOfWeek == DayOfWeek.Wednesday ||
+                dayOfWeek ==
+                DayOfWeek
+                    .Thursday) // if it is tues, wed, or thurs TODODODODODODO
+                               // TO DO, DO NOT HARD CODE THIS^ IN CASE WE WANT MONDAY AND FRIDAY TO BE OPTIONAL
             {
-                // TO DO, DO NOT HARD CODE THIS^ IN CASE WE WANT MONDAY AND FRIDAY TO BE OPTIONAL
-                shortCallDaysList.Add(currentDay); 
+                shortCallDaysList.Add(currentDay);
             }
-            if(dayOfWeek == DayOfWeek.Saturday)
+
+            if (dayOfWeek == DayOfWeek.Saturday)
             {
                 saturdayCallDaysList.Add(currentDay);
             }
-            if(dayOfWeek == DayOfWeek.Sunday)
+
+            if (dayOfWeek == DayOfWeek.Sunday)
             {
                 sundayCallDaysList.Add(currentDay);
             }
-            dayOfWeekAmt[(int)dayOfWeek]++; // amount of mon, tues, wed, etc that are available in a training period
-            currentDay = currentDay.AddDays(1); // move to the next day of the week
+
+            dayOfWeekAmt[
+                    (int)dayOfWeek]
+                ++; // amount of mon, tues, wed, etc that are available in a training period
+            currentDay
+                = currentDay.AddDays(1); // move to the next day of the week
         }
     }
 
     // Input: a day as an integer (0-indexed)
     // Output: DateTime for the day index
-    public DateTime whatShortDayIsIt(int day) // short call training day that cooresponds with an actual calendar day
+    public DateTime
+        whatShortDayIsIt(
+            int day) // short call training day that cooresponds with an actual calendar day
     {
-        return (DateTime)(shortCallDaysList[day]); // returns a day month year
+        return
+            (DateTime)shortCallDaysList[day]; // returns a day month year
     }
-    public DateTime whatSaturdayIsIt(int day) 
+
+    public DateTime whatSaturdayIsIt(int day)
     {
-        return (DateTime)(saturdayCallDaysList[day]); // returns a day month year
+        return
+            (DateTime)saturdayCallDaysList[day]; // returns a day month year
     }
-    public DateTime whatSundayIsIt(int day) 
+
+    public DateTime whatSundayIsIt(int day)
     {
-        return (DateTime)(sundayCallDaysList[day]); // returns a day month year
+        return
+            (DateTime)sundayCallDaysList[day]; // returns a day month year
     }
     // Input: a day as month, day, year
     // Ouput: the day as an integer (0-indexed)
@@ -94,10 +115,7 @@ public class TrainingCalendar: PSYCallCalendar
         Console.WriteLine($"Saturday AMT is: {dayOfWeekAmt[6]}");
     }
     //*/
-
 }
-
-
 
 /* public class CalendarExample
     {
