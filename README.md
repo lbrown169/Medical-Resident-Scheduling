@@ -7,7 +7,7 @@
 
 4. You will see a file called ***locked_psycall_prod_dump.sql.enc***, it is an encrypted file of the database, you would need to unlock it using (copy and paste): ***openssl enc -d -aes-256-cbc -pbkdf2 -in locked_psycall_prod_dump.sql.enc -out psycall_prod_dump.sql && echo "✅ Decrypted Success! psycall_prod_dump.sql created"***
   
-- ⚠️ It will ask you for the password, I will pin it the discord gc
+- ⚠️ It will ask you for the password, it will be in the discord gc
   
 - ⚠️ It will create a file called ***psycall_prod_dump.sql***, this will be the decrypted file docker will use to seed the tables. You can delete ***locked_psycall_prod_dump.sql.enc***
 
@@ -48,7 +48,7 @@
 #***⚠️ Decryption (Just copy and paste):***
 - ***openssl enc -d -aes-256-cbc -pbkdf2 -in locked_psycall_prod_dump.sql.enc -out psycall_prod_dump.sql && echo "✅ Decryption Success! psycall_prod_dump.sql created"***
 
-- Password is pinned discord gc
+- Password is in discord gc
 
 - Encrypted File: locked_psycall_prod_dump.sql.enc
 - Decrypted File: psycall_prod_dump.sql
