@@ -1,4 +1,4 @@
-using MedicalDemo.Data.Models;
+using MedicalDemo.Models;
 using Microsoft.EntityFrameworkCore;
 using DotNetEnv;
 using MedicalDemo.Services;

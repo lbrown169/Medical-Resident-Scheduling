@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
-using MedicalDemo.Data.Models;
+using MedicalDemo.Models;
+
 
 namespace MedicalDemo.Services
 {

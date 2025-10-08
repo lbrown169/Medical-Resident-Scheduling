@@ -1,7 +1,7 @@
 SETUP AND INSTALLATION
 
 1. Download Docker Desktop using: https://www.docker.com/products/docker-desktop/
-2. Clone the repository
+2. Clone the repository(PSY-8 branch)
 3. Open up terminal or cmd and go to the the project folder 
 
 
@@ -10,9 +10,12 @@ SETUP AND INSTALLATION
 
 4. You will see a file called locked_psycall_prod_dump.sql.enc, it is an encrypted file of the database, you would need to unlock it using: 
 
-openssl enc -d -aes-256-cbc -pbkdf2 -in locked_psycall_prod_dump.sql.enc -out psycall_prod_dump.sql && echo "✅ Decrypted locked_psycall_prod_dump.sql.enc → psycall_prod_dump.sql"
+openssl enc -d -aes-256-cbc -pbkdf2 -in locked_psycall_prod_dump.sql.enc -out psycall_prod_dump.sql && echo "✅ Decrypted Success! psycall_prod_dump.sql created"
 
 For the password, I will pin it on discord
+
+
+It will create a file called psycall_prod_dump.sql, this will be the decrypted file docker will use to seed the tables
 
 
 
@@ -20,9 +23,11 @@ For the password, I will pin it on discord
 
 5. From there run: 	docker compose up --build		<-the build for the frontend, backend and db gets started
 
-!!!For those of you on windows, your firewall may block some processes so you’re gonna have to take care of that!!!
+***For those of you on windows, your firewall may block some processes so you’re gonna have to take care of that***
 
-!!!Also, the first time you build it, it could take a few minutes!!!
+***Also, the first time you build it, it could take a few minutes***
+
+
 
 
 
@@ -48,21 +53,24 @@ docker compose down -v
 docker compose build --no-cache
 docker compose up --build
 
+
 You can access MYSQL manually: 
 docker exec -it psycall-db mysql -u psycalluser -p     <-Password: psycallpass, name of db: psycalldb
 
 
 
-Encryption:
-openssl enc -aes-256-cbc -pbkdf2 -salt -in psycall_prod_dump.sql -out locked_psycall_prod_dump.sql.enc && echo "✅ Encrypted psycall_prod_dump.sql → locked_psycall_prod_dump.sql.enc"
+******Encryption****** (Just copy and paste):
+openssl enc -aes-256-cbc -pbkdf2 -salt -in psycall_prod_dump.sql -out locked_psycall_prod_dump.sql.enc && echo "✅ Encryption Success! locked_psycall_prod_dump.sql.enc created"
 
 
 
-Decryption:
-openssl enc -d -aes-256-cbc -pbkdf2 -in locked_psycall_prod_dump.sql.enc -out psycall_prod_dump.sql && echo "✅ Decrypted locked_psycall_prod_dump.sql.enc → psycall_prod_dump.sql"
+******Decryption******:
+openssl enc -d -aes-256-cbc -pbkdf2 -in locked_psycall_prod_dump.sql.enc -out psycall_prod_dump.sql && echo "✅ Decryption Success! psycall_prod_dump.sql created"
 
 #Password is pinned discord gc
 
+Encrypted File: locked_psycall_prod_dump.sql.enc
+Decrypted File: psycall_prod_dump.sql
 
 -------------------------------------------------------------------------------------------------------
 
