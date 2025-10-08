@@ -1,16 +1,14 @@
-SETUP AND INSTALLATION
+***SETUP AND INSTALLATION***
 
 1. Download Docker Desktop using: https://www.docker.com/products/docker-desktop/
 2. Clone the repository(PSY-8 branch)
 3. Open up terminal or cmd and go to the the project folder 
 
 
-
-
-
 4. You will see a file called locked_psycall_prod_dump.sql.enc, it is an encrypted file of the database, you would need to unlock it using: 
 
 openssl enc -d -aes-256-cbc -pbkdf2 -in locked_psycall_prod_dump.sql.enc -out psycall_prod_dump.sql && echo "✅ Decrypted Success! psycall_prod_dump.sql created"
+
 
 For the password, I will pin it on discord
 
@@ -40,7 +38,6 @@ Go to http://localhost:5109/swagger to access all the API endpoints
 
 
 COMMANDS:
-
 docker compose up --build    <- Builds frontend, backend and db
 
 docker ps  <- You can verify all the containers are running 
@@ -64,10 +61,10 @@ openssl enc -aes-256-cbc -pbkdf2 -salt -in psycall_prod_dump.sql -out locked_psy
 
 
 
-******Decryption******:
+******Decryption****** (Just copy and paste):
 openssl enc -d -aes-256-cbc -pbkdf2 -in locked_psycall_prod_dump.sql.enc -out psycall_prod_dump.sql && echo "✅ Decryption Success! psycall_prod_dump.sql created"
 
-#Password is pinned discord gc
+***Password is pinned discord gc
 
 Encrypted File: locked_psycall_prod_dump.sql.enc
 Decrypted File: psycall_prod_dump.sql
