@@ -1,22 +1,37 @@
 SETUP AND INSTALLATION
 
 1. Download Docker Desktop using: https://www.docker.com/products/docker-desktop/
-
 2. Clone the repository
-
 3. Open up terminal or cmd and go to the the project folder 
 
-4. From there run: 	docker compose up --build		<-the build for the frontend, backend and db gets started
+
+
+
+
+4. You will see a file called locked_psycall_prod_dump.sql.enc, it is an encrypted file of the database, you would need to unlock it using: 
+
+openssl enc -d -aes-256-cbc -pbkdf2 -in locked_psycall_prod_dump.sql.enc -out psycall_prod_dump.sql && echo "✅ Decrypted locked_psycall_prod_dump.sql.enc → psycall_prod_dump.sql"
+
+For the password, I will pin it on discord
+
+
+
+
+
+5. From there run: 	docker compose up --build		<-the build for the frontend, backend and db gets started
 
 !!!For those of you on windows, your firewall may block some processes so you’re gonna have to take care of that!!!
 
 !!!Also, the first time you build it, it could take a few minutes!!!
 
+
+
+
 ACCESS POINTS
-
 Go to http://localhost:3000/ to access the website
-
 Go to http://localhost:5109/swagger to access all the API endpoints
+
+
 
 
 COMMANDS:
@@ -26,18 +41,27 @@ docker compose up --build    <- Builds frontend, backend and db
 docker ps  <- You can verify all the containers are running 
 
 
+
+
 REBUILDS EVERYTHING FROM SCRATCH:
-
 docker compose down -v
-
 docker compose build --no-cache
-
 docker compose up --build
 
 You can access MYSQL manually: 
-
 docker exec -it psycall-db mysql -u psycalluser -p     <-Password: psycallpass, name of db: psycalldb
 
+
+
+Encryption:
+openssl enc -aes-256-cbc -pbkdf2 -salt -in psycall_prod_dump.sql -out locked_psycall_prod_dump.sql.enc && echo "✅ Encrypted psycall_prod_dump.sql → locked_psycall_prod_dump.sql.enc"
+
+
+
+Decryption:
+openssl enc -d -aes-256-cbc -pbkdf2 -in locked_psycall_prod_dump.sql.enc -out psycall_prod_dump.sql && echo "✅ Decrypted locked_psycall_prod_dump.sql.enc → psycall_prod_dump.sql"
+
+#Password is pinned discord gc
 
 
 -------------------------------------------------------------------------------------------------------
