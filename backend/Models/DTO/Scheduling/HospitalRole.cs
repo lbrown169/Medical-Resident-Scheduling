@@ -2,6 +2,7 @@ namespace MedicalDemo.Models.DTO.Scheduling;
 
 public class HospitalRole
 {
+#pragma warning disable IDE0060
     private HospitalRole(string name, bool doesShort, bool doesLong,
         bool flexShort, bool flexLong)
     {
@@ -10,6 +11,7 @@ public class HospitalRole
         FlexShort = flexShort;
         FlexLong = flexLong;
     }
+#pragma warning restore IDE0060
 
     public string name { get; set; }
     public bool DoesShort { get; }
@@ -58,7 +60,7 @@ public class HospitalRole
     public static HospitalRole
         random() // THIS IS PURELY FOR TESTING I NED TO REMOVE IT
     {
-        int seed = (int)DateTime.Now.Ticks;
+        _ = (int)DateTime.Now.Ticks;
         Random rnd = new();
         int index = rnd.Next(0, 8);
         return index switch

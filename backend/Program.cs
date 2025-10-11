@@ -4,9 +4,9 @@ using MedicalDemo.Services;
 using Microsoft.EntityFrameworkCore;
 
 // Load .env file
-Env.Load(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
+DotNetEnv.Env.Load(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
 
-WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
 builder.Services.AddControllers();
@@ -23,34 +23,31 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy.SetIsOriginAllowed(origin =>
-                origin.StartsWith("https://psycall.net") ||
-                origin.StartsWith("https://www.psycall.net") ||
-                origin.StartsWith("https://backend.psycall.net") ||
-                origin.StartsWith("http://localhost"))
-            .AllowAnyMethod()
-            .AllowAnyHeader()
-            .AllowCredentials();
+            origin.StartsWith("https://psycall.net") ||
+            origin.StartsWith("https://www.psycall.net") ||
+            origin.StartsWith("https://backend.psycall.net") ||
+            origin.StartsWith("http://localhost"))
+        .AllowAnyMethod()
+        .AllowAnyHeader()
+        .AllowCredentials();
     });
 });
 
 // Connect to DB
-string? MySqlConnectString
-    = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
+var MySqlConnectString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
 Console.WriteLine($"Loaded DB_CONNECTION_STRING: {MySqlConnectString}");
 if (string.IsNullOrEmpty(MySqlConnectString))
 {
-    throw new Exception(
-        "Database connection string is not configured. Please set DB_CONNECTION_STRING environment variable.");
+    throw new Exception("Database connection string is not configured. Please set DB_CONNECTION_STRING environment variable.");
 }
 
 builder.Services.AddDbContext<MedicalContext>(options =>
 {
     Console.WriteLine("Attempting to connect to database...");
-    options.UseMySql(MySqlConnectString,
-        ServerVersion.AutoDetect(MySqlConnectString));
+    options.UseMySql(MySqlConnectString, ServerVersion.AutoDetect(MySqlConnectString));
 });
 
-WebApplication app = builder.Build();
+var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -58,6 +55,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
 
 
 // 1) Redirect HTTP → HTTPS
@@ -73,8 +71,31 @@ app.UseCors("AllowFrontend");
 app.MapControllers();
 
 // 5) Configure host port (from env or default)
-string port = Environment.GetEnvironmentVariable("BACKEND_PORT") ?? "5109";
-app.Urls.Add($"http://0.0.0.0:{port}");
+var port = Environment.GetEnvironmentVariable("BACKEND_PORT") ?? "5109";
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+app.UseRouting();
+app.UseCors("AllowFrontend");
+app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<MedicalContext>();
+
+    var seedEnv = Environment.GetEnvironmentVariable("SEED");
+    if (seedEnv == "true")
+    {
+        DatabaseSeeder.Seed(db);
+    }
+}
 
 app.Run();

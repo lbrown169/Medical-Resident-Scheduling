@@ -93,7 +93,7 @@ public class SchedulingMapperService
 
         foreach (Rotations rotation in rotations)
         {
-            string? key = rotation.Rotation?.Trim().ToLowerInvariant();
+            _ = rotation.Rotation?.Trim().ToLowerInvariant();
             int month = DateTime.ParseExact(rotation.Month.Trim(), "MMMM",
                 CultureInfo.InvariantCulture).Month;
             int academicMonthIndex = (month + 5) % 12;
