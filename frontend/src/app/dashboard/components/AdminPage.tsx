@@ -540,6 +540,13 @@ const AdminPage: React.FC<AdminPageProps> = ({
           User Management
         </Button>
         <Button
+          variant={activeTab === 'residents' ? 'default' : 'outline'}
+          className={`flex-1 rounded-b-none text-xs sm:text-sm py-1 sm:py-2 ${activeTab === 'residents' ? 'shadow-md' : ''}`}
+          onClick={() => setActiveTab('residents')}
+        >
+          Resident Information
+        </Button>
+        <Button
           variant={activeTab === 'announcements' ? 'default' : 'outline'}
           className={`flex-1 rounded-b-none text-xs sm:text-sm py-1 sm:py-2 ${activeTab === 'announcements' ? 'shadow-md' : ''}`}
           onClick={() => setActiveTab('announcements')}
