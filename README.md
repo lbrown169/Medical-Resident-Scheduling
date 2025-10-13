@@ -5,6 +5,10 @@
 3. Open up terminal or cmd and go to the the project folder 
 4. From the root of the project run: ***docker compose up --build***		(builds the frontend, backend and db)
 
+#***Password***
+
+The hashed password for all accounts: password123
+
 
 #***ACCESS POINTS***
 - Go to http://localhost:3000/ to access the website
