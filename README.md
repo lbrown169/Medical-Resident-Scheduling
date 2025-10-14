@@ -3,22 +3,16 @@
 1. Download Docker Desktop using: https://www.docker.com/products/docker-desktop/
 2. Clone the repository (PSY-8 branch)
 3. Open up terminal or cmd and go to the the project folder 
+4. From the root of the project run: ***docker compose up --build***		(builds the frontend, backend and db)
 
+#***Password***
 
-4. You will see a file called ***locked_psycall_prod_dump.sql.enc***, it is an encrypted file of the database, you would need to unlock it using (copy and paste): ***openssl enc -d -aes-256-cbc -pbkdf2 -in locked_psycall_prod_dump.sql.enc -out psycall_prod_dump.sql && echo "✅ Decrypted Success! psycall_prod_dump.sql created"***
-  
-- ⚠️ It will ask you for the password, it will be in the discord gc
-  
-- ⚠️ It will create a file called ***psycall_prod_dump.sql***, this will be the decrypted file docker will use to seed the tables. You can delete ***locked_psycall_prod_dump.sql.enc***
-
-
-5. From the root of the project run: ***docker compose up --build***		(builds the frontend, backend and db)
+The hashed password for all accounts: password123
 
 
 #***ACCESS POINTS***
 - Go to http://localhost:3000/ to access the website
 - Go to http://localhost:5109/swagger to access all the API endpoints
-
 
 
 
@@ -39,19 +33,6 @@
 - docker exec -it psycall-db mysql -u psycalluser -p     <-Password: psycallpass, name of db: psycalldb
 
 
-
-#***⚠️ Encryption (Just copy and paste):***
-- ***openssl enc -aes-256-cbc -pbkdf2 -salt -in psycall_prod_dump.sql -out locked_psycall_prod_dump.sql.enc && echo "✅ Encryption Success! locked_psycall_prod_dump.sql.enc created"***
-
-
-
-#***⚠️ Decryption (Just copy and paste):***
-- ***openssl enc -d -aes-256-cbc -pbkdf2 -in locked_psycall_prod_dump.sql.enc -out psycall_prod_dump.sql && echo "✅ Decryption Success! psycall_prod_dump.sql created"***
-
-- Password is in discord gc
-
-- Encrypted File: locked_psycall_prod_dump.sql.enc
-- Decrypted File: psycall_prod_dump.sql
 
 -------------------------------------------------------------------------------------------------------
 
