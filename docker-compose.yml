@@ -19,7 +19,8 @@ services:
     container_name: psycall-backend
     restart: always
     environment:
-      DB_CONNECTION_STRING: "Server=psycall-db;Port=3306;Database=psycalldb;User=psycalluser;Password=psycallpass;"
+      DB_CONNECTION_STRING: "Server=db;Port=3306;Database=psycalldb;User=psycalluser;Password=psycallpass;"
+
       SEED: "true"
       ASPNETCORE_ENVIRONMENT: "Development"
     depends_on:
