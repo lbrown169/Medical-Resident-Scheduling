@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 // Load .env file
 DotNetEnv.Env.Load(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
 builder.Services.AddControllers();
@@ -34,7 +34,7 @@ builder.Services.AddCors(options =>
 });
 
 // Connect to DB
-var MySqlConnectString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
+string? MySqlConnectString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
 Console.WriteLine($"Loaded DB_CONNECTION_STRING: {MySqlConnectString}");
 if (string.IsNullOrEmpty(MySqlConnectString))
 {
@@ -47,7 +47,7 @@ builder.Services.AddDbContext<MedicalContext>(options =>
     options.UseMySql(MySqlConnectString, ServerVersion.AutoDetect(MySqlConnectString));
 });
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -71,7 +71,7 @@ app.UseCors("AllowFrontend");
 app.MapControllers();
 
 // 5) Configure host port (from env or default)
-var port = Environment.GetEnvironmentVariable("BACKEND_PORT") ?? "5109";
+string port = Environment.GetEnvironmentVariable("BACKEND_PORT") ?? "5109";
 builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
 
@@ -87,11 +87,11 @@ app.UseRouting();
 app.UseCors("AllowFrontend");
 app.MapControllers();
 
-using (var scope = app.Services.CreateScope())
+using (IServiceScope scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<MedicalContext>();
+    MedicalContext db = scope.ServiceProvider.GetRequiredService<MedicalContext>();
 
-    var seedEnv = Environment.GetEnvironmentVariable("SEED");
+    string? seedEnv = Environment.GetEnvironmentVariable("SEED");
     if (seedEnv == "true")
     {
         DatabaseSeeder.Seed(db);
