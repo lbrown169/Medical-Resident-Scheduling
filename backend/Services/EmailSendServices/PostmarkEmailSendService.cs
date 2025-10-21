@@ -1,8 +1,9 @@
+using MedicalDemo.Interfaces;
 using PostmarkDotNet;
 
-namespace MedicalDemo.Services;
+namespace MedicalDemo.Services.EmailSendServices;
 
-public class PostmarkService
+public class PostmarkEmailSendService : IEmailSendService
 {
     private readonly string apiKey;
     private readonly PostmarkClient client;
@@ -10,7 +11,7 @@ public class PostmarkService
     private readonly string fromName;
 
 
-    public PostmarkService(IConfiguration config)
+    public PostmarkEmailSendService(IConfiguration config)
     {
         apiKey = config["POSTMARK_API_KEY"];
         fromEmail = config["FROM_EMAIL"];

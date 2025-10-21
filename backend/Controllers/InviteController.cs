@@ -1,5 +1,5 @@
+using MedicalDemo.Interfaces;
 using MedicalDemo.Models;
-using MedicalDemo.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,12 +10,12 @@ namespace MedicalDemo.Controllers;
 public class InviteController : ControllerBase
 {
     private readonly MedicalContext _context;
-    private readonly PostmarkService _postmark;
+    private readonly IEmailSendService _emailSendService;
 
-    public InviteController(MedicalContext context, PostmarkService postmark)
+    public InviteController(MedicalContext context, IEmailSendService emailSendService)
     {
         _context = context;
-        _postmark = postmark;
+        _emailSendService = emailSendService;
     }
 
     [HttpPost("send")]
@@ -57,7 +57,7 @@ public class InviteController : ControllerBase
 
         //Send email
         bool success
-            = await _postmark.SendInvitationEmailAsync(request.Email, url);
+            = await _emailSendService.SendInvitationEmailAsync(request.Email, url);
 
         if (!success)
         {

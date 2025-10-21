@@ -1,6 +1,8 @@
 using DotNetEnv;
+using MedicalDemo.Interfaces;
 using MedicalDemo.Models;
 using MedicalDemo.Services;
+using MedicalDemo.Services.EmailSendServices;
 using Microsoft.EntityFrameworkCore;
 
 // Load .env file
@@ -14,8 +16,20 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<SchedulingMapperService>();
 builder.Services.AddScoped<SchedulerService>();
-builder.Services.AddScoped<PostmarkService>();
 builder.Services.AddScoped<MiscService>();
+
+builder.Services.AddScoped<IEmailSendService>(sp =>
+{
+    IWebHostEnvironment environment = sp.GetRequiredService<IWebHostEnvironment>();
+    if (environment.IsDevelopment())
+    {
+        ILogger<DevelopmentEmailSendService> logger = sp.GetRequiredService<ILogger<DevelopmentEmailSendService>>();
+        return new DevelopmentEmailSendService(logger);
+    }
+
+    IConfiguration config = sp.GetRequiredService<IConfiguration>();
+    return new PostmarkEmailSendService(config);
+});
 
 // Add CORS configuration
 builder.Services.AddCors(options =>
