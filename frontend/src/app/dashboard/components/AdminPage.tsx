@@ -66,6 +66,10 @@ interface Announcement {
   createdAt?: string;
 }
 
+interface DateEntry {
+    scheduleId?: string;
+    date?: string;
+  }
 
 // Modal component
 function Modal({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: React.ReactNode }) {
@@ -141,11 +145,6 @@ const AdminPage: React.FC<AdminPageProps> = ({
       setGenerating(false);
     }
   };
-
-  interface DateEntry {
-    scheduleId?: string;
-    date?: string;
-  }
 
   // Helper to get id needed for schedule deletion
   const getLatestScheduleId = async (): Promise<string | null> => {
