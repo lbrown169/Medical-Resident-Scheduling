@@ -1,6 +1,8 @@
 using DotNetEnv;
+using MedicalDemo.Interfaces;
 using MedicalDemo.Models;
 using MedicalDemo.Services;
+using MedicalDemo.Services.EmailSendServices;
 using Microsoft.EntityFrameworkCore;
 
 // Load .env file
@@ -25,8 +27,20 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<SchedulingMapperService>();
 builder.Services.AddScoped<SchedulerService>();
-builder.Services.AddScoped<PostmarkService>();
 builder.Services.AddScoped<MiscService>();
+
+builder.Services.AddScoped<IEmailSendService>(sp =>
+{
+    IWebHostEnvironment environment = sp.GetRequiredService<IWebHostEnvironment>();
+    if (environment.IsDevelopment())
+    {
+        ILogger<DevelopmentEmailSendService> logger = sp.GetRequiredService<ILogger<DevelopmentEmailSendService>>();
+        return new DevelopmentEmailSendService(logger);
+    }
+
+    IConfiguration config = sp.GetRequiredService<IConfiguration>();
+    return new PostmarkEmailSendService(config);
+});
 
 // Add CORS configuration
 builder.Services.AddCors(options =>
@@ -34,13 +48,13 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy.SetIsOriginAllowed(origin =>
-                origin.StartsWith("https://psycall.net") ||
-                origin.StartsWith("https://www.psycall.net") ||
-                origin.StartsWith("https://backend.psycall.net") ||
-                origin.StartsWith("http://localhost"))
-            .AllowAnyMethod()
-            .AllowAnyHeader()
-            .AllowCredentials();
+            origin.StartsWith("https://psycall.net") ||
+            origin.StartsWith("https://www.psycall.net") ||
+            origin.StartsWith("https://backend.psycall.net") ||
+            origin.StartsWith("http://localhost"))
+        .AllowAnyMethod()
+        .AllowAnyHeader()
+        .AllowCredentials();
     });
 });
 
@@ -85,7 +99,30 @@ app.MapControllers();
 
 // 5) Configure host port (from env or default)
 string port = Environment.GetEnvironmentVariable("BACKEND_PORT") ?? "5109";
-app.Urls.Add($"http://0.0.0.0:{port}");
+builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+app.UseRouting();
+app.UseCors("AllowFrontend");
+app.MapControllers();
+
+using (IServiceScope scope = app.Services.CreateScope())
+{
+    MedicalContext db = scope.ServiceProvider.GetRequiredService<MedicalContext>();
+
+    string? seedEnv = Environment.GetEnvironmentVariable("SEED");
+    if (seedEnv == "true")
+    {
+        DatabaseSeeder.Seed(db);
+    }
+}
 
 app.Run();
