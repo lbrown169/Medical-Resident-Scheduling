@@ -235,4 +235,26 @@ public class VacationsController : ControllerBase
 
         return NoContent(); // 204 No Content
     }
+
+    // DELETE: api/vacations/
+    [HttpDelete]
+    public async Task<IActionResult> DeleteAllVacations(
+        [FromBody] List<Guid> vacationsIds)
+    {
+        List<Guid> failedDeletedIds = new();
+
+        foreach (Guid id in vacationsIds)
+        {
+            IActionResult result = await DeleteVacation(id);
+
+            if (result is NotFoundObjectResult)
+            {
+                failedDeletedIds.Add(id);
+            }
+        }
+
+        var response = new { notDeleted = failedDeletedIds };
+
+        return Ok(response);
+    }
 }
