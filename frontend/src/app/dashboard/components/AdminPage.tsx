@@ -67,9 +67,9 @@ interface Announcement {
 }
 
 interface DateEntry {
-    scheduleId?: string;
-    date?: string;
-  }
+  scheduleId?: string;
+  date?: string;
+}
 
 // Modal component
 function Modal({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: React.ReactNode }) {
@@ -180,7 +180,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
           description: "Couldn’t determine a schedule ID to delete.",
           variant: "destructive",
         });
-        return; 
+        return;
       }
 
       const res = await fetch(`${config.apiUrl}/api/schedules/${encodeURIComponent(id)}`, { method: "DELETE" });
