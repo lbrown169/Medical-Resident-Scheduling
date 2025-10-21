@@ -1,3 +1,5 @@
+using System.Net.Http.Headers;
+using System.Text;
 using DotNetEnv;
 using MedicalDemo.Interfaces;
 using MedicalDemo.Models;
@@ -6,7 +8,7 @@ using MedicalDemo.Services.EmailSendServices;
 using Microsoft.EntityFrameworkCore;
 
 // Load .env file
-DotNetEnv.Env.Load(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
+Env.Load(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -18,17 +20,29 @@ builder.Services.AddScoped<SchedulingMapperService>();
 builder.Services.AddScoped<SchedulerService>();
 builder.Services.AddScoped<MiscService>();
 
-builder.Services.AddScoped<IEmailSendService>(sp =>
+// Email
+if (builder.Environment.IsDevelopment())
 {
-    IWebHostEnvironment environment = sp.GetRequiredService<IWebHostEnvironment>();
-    if (environment.IsDevelopment())
+    builder.Services.AddScoped<IEmailSendService, DevelopmentEmailSendService>();
+}
+else
+{
+    builder.Services.AddScoped<IEmailSendService, MailgunEmailSendService>();
+}
+builder.Services.AddHttpClient(nameof(MailgunEmailSendService), client =>
+{
+    string? apiKey = builder.Configuration.GetValue<string>("Mailgun:ApiKey");
+    string? domain = builder.Configuration.GetValue<string>("Mailgun:Domain");
+    if (apiKey == null || domain == null)
     {
-        ILogger<DevelopmentEmailSendService> logger = sp.GetRequiredService<ILogger<DevelopmentEmailSendService>>();
-        return new DevelopmentEmailSendService(logger);
+        throw new Exception(
+            "Mailgun API key/domain was not set, but HTTP client was created"
+        );
     }
+    string base64Auth = Convert.ToBase64String(Encoding.ASCII.GetBytes($"api:{apiKey}"));
 
-    IConfiguration config = sp.GetRequiredService<IConfiguration>();
-    return new PostmarkEmailSendService(config);
+    client.BaseAddress = new Uri($"https://api.mailgun.net/v3/{domain}/messages");
+    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", base64Auth);
 });
 
 // Add CORS configuration
