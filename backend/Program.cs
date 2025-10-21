@@ -6,9 +6,20 @@ using MedicalDemo.Services.EmailSendServices;
 using Microsoft.EntityFrameworkCore;
 
 // Load .env file
-DotNetEnv.Env.Load(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
+Env.Load(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+// Set configuration path
+builder.WebHost.ConfigureAppConfiguration((hostingContext, config) =>
+    {
+        string path = Path.Combine(Directory.GetCurrentDirectory(), "Configuration");
+        config
+            .SetBasePath(path)
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .AddJsonFile($"appsettings.{hostingContext.HostingEnvironment.EnvironmentName}.json", optional: true);
+    }
+);
 
 // Add services to the container
 builder.Services.AddControllers();
@@ -47,18 +58,21 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Connect to DB
-string? MySqlConnectString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
-Console.WriteLine($"Loaded DB_CONNECTION_STRING: {MySqlConnectString}");
-if (string.IsNullOrEmpty(MySqlConnectString))
+builder.Services.AddDbContext<MedicalContext>((sp, options) =>
 {
-    throw new Exception("Database connection string is not configured. Please set DB_CONNECTION_STRING environment variable.");
-}
+    IConfiguration configuration = sp.GetRequiredService<IConfiguration>();
+    string? mySqlConnectionString = configuration.GetConnectionString("MySqlConn");
 
-builder.Services.AddDbContext<MedicalContext>(options =>
-{
+    if (string.IsNullOrEmpty(mySqlConnectionString))
+    {
+        throw new Exception(
+            "Database connection string is not configured. Please set ConnectionStrings.MySqlConn in appsettings.json");
+    }
+
+    Console.WriteLine($"Loaded DB_CONNECTION_STRING: {mySqlConnectionString}");
     Console.WriteLine("Attempting to connect to database...");
-    options.UseMySql(MySqlConnectString, ServerVersion.AutoDetect(MySqlConnectString));
+    options.UseMySql(mySqlConnectionString,
+        ServerVersion.AutoDetect(mySqlConnectionString));
 });
 
 WebApplication app = builder.Build();
@@ -69,7 +83,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
 
 
 // 1) Redirect HTTP → HTTPS
