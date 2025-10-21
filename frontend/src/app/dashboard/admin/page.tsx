@@ -107,7 +107,6 @@ export default function Page() {
   const handleSendInvite = () => {};
   const handleResendInvite = () => {};
   const handleDeleteUser = () => {};
-  const handleClearRequests = () => setMyTimeOffRequests([]);
 
   // Wrapper function to handle type mismatch
   const handleSetInviteRole = (value: string) => {
@@ -130,7 +129,6 @@ export default function Page() {
       handleDeleteUser={handleDeleteUser}
       inviteRole={inviteRole}
       setInviteRole={handleSetInviteRole}
-      onClearRequests={handleClearRequests}
       onNavigateToCalendar={() => window.location.href = '/dashboard?view=Calendar'}
       userId="admin" // Since this is the admin page, we'll use a default admin ID
     />
