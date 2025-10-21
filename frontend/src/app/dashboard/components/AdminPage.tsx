@@ -119,8 +119,6 @@ const AdminPage: React.FC<AdminPageProps> = ({
   const [deletingAnnouncement, setDeletingAnnouncement] = useState<string | null>(null);
   const [switchingRole, setSwitchingRole] = useState<string | null>(null);
   const [deletingSchedule, setDeletingSchedule] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-
 
   const handleGenerateSchedule = async () => {
     setGenerating(true);
@@ -149,7 +147,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
     date?: string;
   }
 
-  //helper to get id needed for schedule deletion
+  // Helper to get id needed for schedule deletion
   const getLatestScheduleId = async (): Promise<string | null> => {
     try {
       const res = await fetch(`${config.apiUrl}/api/dates`);
@@ -183,7 +181,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
           description: "Couldn’t determine a schedule ID to delete.",
           variant: "destructive",
         });
-        return; // <-- return void, don't return the toast value
+        return; 
       }
 
       const res = await fetch(`${config.apiUrl}/api/schedules/${encodeURIComponent(id)}`, { method: "DELETE" });

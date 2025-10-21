@@ -1,25 +1,4 @@
 "use client";
-/*Example:
-
-import { ConfirmDialog } from "@/app/dashboard/components/ConfirmDialog";
-
-    <ConfirmDialog
-      triggerText={
-        <span className="flex items-center">
-          <Trash2 className="h-4 w-4 mr-2" />
-          Delete Current Schedule
-        </span>
-      }
-
-      title="Delete current schedule?"
-      message="This action cannot be undone."
-      confirmText="Delete"
-      cancelText="Cancel"
-      onConfirm={handleDeleteSchedule}
-      loading={deletingSchedule}
-      variant="danger" // "default" = blue, "danger" = red, "outline" = gray
-    />
-*/
 import React from "react";
 import {
   AlertDialog,
@@ -58,8 +37,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   className,
 }) => {
   const [open, setOpen] = React.useState(false);
-
-  // match the Generate button sizing/shape exactly
+  
   const baseBtnClass =
     "px-1 sm:px-6 py-1 sm:py-3 font-semibold rounded-xl shadow transition " +
     "whitespace-nowrap w-full sm:w-auto text-xs sm:text-sm lg:text-base flex items-center justify-center";
