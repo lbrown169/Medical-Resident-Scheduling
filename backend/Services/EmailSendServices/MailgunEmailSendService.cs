@@ -46,7 +46,7 @@ public class MailgunEmailSendService : IEmailSendService
             """)
         ]);
 
-        HttpResponseMessage response = await httpClient.PostAsync((string?) null, formData);
+        HttpResponseMessage response = await httpClient.PostAsync((string?)null, formData);
         if (response.IsSuccessStatusCode)
         {
             return true;
