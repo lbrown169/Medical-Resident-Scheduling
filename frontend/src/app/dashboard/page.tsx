@@ -1106,6 +1106,10 @@ case "Home":
         inviteRole={inviteRole}
         setInviteRole={setInviteRole}
         onClearRequests={handleClearRequests}
+        onNavigateToCalendar={() => {
+          setSelected("Calendar");
+          fetchCalendarEvents();
+        }}
         userId={user?.id || ""}
       />
     );
@@ -1246,6 +1250,10 @@ case "Home":
             inviteRole={inviteRole}
             setInviteRole={setInviteRole}
             onClearRequests={handleClearRequests}
+            onNavigateToCalendar={() => {
+              setSelected("Calendar");
+              fetchCalendarEvents();
+            }}
             userId={user?.id || ""}
           />
         );
