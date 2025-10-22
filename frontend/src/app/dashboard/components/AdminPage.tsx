@@ -135,9 +135,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
 
       // Navigate to calendar view after successful generation
       if (onNavigateToCalendar) {
-        setTimeout(() => {
-          onNavigateToCalendar();
-        }, 1500); // Wait 1.5 seconds to show success message
+        onNavigateToCalendar();
       }
     } catch {
       setMessage("Error generating schedule. Please try again.");
@@ -195,7 +193,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
       });
 
       if (ok && onNavigateToCalendar) {
-        setTimeout(() => onNavigateToCalendar(), 1500);
+        onNavigateToCalendar();
       }
     } finally {
       setDeletingSchedule(false);
