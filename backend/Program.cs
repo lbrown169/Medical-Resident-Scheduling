@@ -8,9 +8,9 @@ using MedicalDemo.Services.EmailSendServices;
 using Microsoft.EntityFrameworkCore;
 
 // Load .env file
-DotNetEnv.Env.Load(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
+Env.Load(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
 builder.Services.AddControllers();
@@ -75,7 +75,7 @@ builder.Services.AddDbContext<MedicalContext>(options =>
     options.UseMySql(MySqlConnectString, ServerVersion.AutoDetect(MySqlConnectString));
 });
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
