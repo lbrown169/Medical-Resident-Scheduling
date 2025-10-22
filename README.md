@@ -11,10 +11,12 @@ Now, there are 2 Docker Compose Files, each serve different purposes:
 2. Clone the repository (PSY-8 branch)
 3. Open up terminal or cmd and go to the the project folder 
 
-For live development:
+***For live development:***
+
 4. From the root of the project run: ***docker compose -f docker-compose.dev.yml up --build*** (builds the frontend, backend and db)
 
-For production:
+***For production:***
+
 4. From the root of the project run: ***docker compose up --build*** (builds the frontend, backend and db)
 
 
