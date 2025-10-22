@@ -11,6 +11,8 @@ namespace MedicalDemo.Controllers;
 public class ResidentsController : ControllerBase
 {
     private readonly MedicalContext _context;
+    
+
 
     public ResidentsController(MedicalContext context)
     {

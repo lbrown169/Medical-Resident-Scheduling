@@ -1335,6 +1335,7 @@ case "Home":
     return <div>Loading...</div>;
   }
 
+
   return (
     <ProtectedRoute>
       <SidebarProvider defaultOpen={true}>

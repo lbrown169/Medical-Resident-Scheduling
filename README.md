@@ -1,32 +1,50 @@
+
+#***CHANGES***
+Now, there are 2 Docker Compose Files, each serve different purposes:
+1) docker-compose.dev.yml - This will be used for live development. File changes update the containers immediately no need to restart the containers everytime.
+2) docker-compose.yml - This will be used for production 
+
+
 #***SETUP AND INSTALLATION***
 
 1. Download Docker Desktop using: https://www.docker.com/products/docker-desktop/
 2. Clone the repository (PSY-8 branch)
 3. Open up terminal or cmd and go to the the project folder 
-4. From the root of the project run: ***docker compose up --build***		(builds the frontend, backend and db)
+
+For live development:
+4. From the root of the project run: ***docker compose -f docker-compose.dev.yml up --build*** (builds the frontend, backend and db)
+
+For production:
+4. From the root of the project run: ***docker compose up --build*** (builds the frontend, backend and db)
+
+
 
 #***Password***
 
 The hashed password for all accounts: password123
 
 
-#***ACCESS POINTS***
+#***ACCESS POINTS FOR LIVE DEVELOPMENT***
+- Go to http://localhost:3001/ to access the website
+- Go to http://localhost:5109/swagger to access all the API endpoints
+
+
+#***ACCESS POINTS FOR PRODUCTION***
 - Go to http://localhost:3000/ to access the website
 - Go to http://localhost:5109/swagger to access all the API endpoints
 
 
 
-#***COMMANDS:***
-- ***docker compose up --build*** (Builds frontend, backend and db)
+#***COMMANDS FOR LIVE DEVELOPMENT:***
+-***docker compose -f docker-compose.dev.yml up --build*** (builds the frontend, backend and db)
+-***docker compose -f docker-compose.dev.yml up -v*** (stops and removes the frontend, backend and db)
 - ***docker ps***  (You can verify all the containers are running)
 
 
-
-
-#***REBUILDS EVERYTHING FROM SCRATCH:***
-- docker compose down -v
-- docker compose build --no-cache
-- docker compose up --build
+#***COMMANDS FOR PRODUCTION:***
+- ***docker compose up --build*** (Builds frontend, backend and db)
+- ***docker compose down -v*** (stops and removes frontend, backend and db)
+- ***docker ps***  (You can verify all the containers are running)
 
 
 #***MYSQL MANUAL ACCESS:***
