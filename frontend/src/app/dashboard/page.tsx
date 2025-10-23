@@ -181,7 +181,7 @@ function Dashboard() {
 
   // Add state for adminSwapRequests, myTimeOffRequests, and shifts
   const [myTimeOffRequests, setMyTimeOffRequests] = useState<{
-    id: string;
+    vacationId: string;
     date: string;
     reason: string;
     status: string;
@@ -1062,12 +1062,6 @@ function Dashboard() {
     }
   };
 
-  // Handler to clear all requests
-  // TODO: Need to create and implement a backend endpoint to support this
-  const handleClearRequests = () => {
-    setMyTimeOffRequests([]);
-  };
-
   // const refreshCalendar = async () => {
   //   await fetchCalendarEvents();
   // };
@@ -1083,7 +1077,7 @@ case "Home":
       <AdminPage
         residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}` }))}
         myTimeOffRequests={myTimeOffRequests.map(r => ({
-          id: r.id,
+          id: r.vacationId,
           startDate: r.date || '',
           endDate: r.date || '',
           resident: r.residentId || '',
@@ -1105,7 +1099,6 @@ case "Home":
         handleDeleteUser={handleDeleteUser}
         inviteRole={inviteRole}
         setInviteRole={setInviteRole}
-        onClearRequests={handleClearRequests}
         onNavigateToCalendar={() => {
           setSelected("Calendar");
           fetchCalendarEvents();
@@ -1227,7 +1220,7 @@ case "Home":
           <AdminPage
             residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}` }))}
             myTimeOffRequests={myTimeOffRequests.map(r => ({
-              id: r.id,
+              id: r.vacationId,
               startDate: r.date || '',
               endDate: r.date || '',
               resident: r.residentId || '',
@@ -1249,7 +1242,6 @@ case "Home":
             handleDeleteUser={handleDeleteUser}
             inviteRole={inviteRole}
             setInviteRole={setInviteRole}
-            onClearRequests={handleClearRequests}
             onNavigateToCalendar={() => {
               setSelected("Calendar");
               fetchCalendarEvents();
