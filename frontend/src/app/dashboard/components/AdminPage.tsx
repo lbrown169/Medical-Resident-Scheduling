@@ -755,15 +755,25 @@ const AdminPage: React.FC<AdminPageProps> = ({
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
               <h2 className="text-lg sm:text-xl font-bold">Time Off Requests</h2>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="flex items-center gap-2"
+                <Button variant="outline" className="flex items-center gap-2 px-1 sm:px-6 py-1 sm:py-3 text-xs sm:text-sm lg:text-base"
                   onClick={() => setShowRequestsModal(true)}>
                   <CalendarDays className="h-4 w-4" />
                   <span>View All</span>
                 </Button>
-                <Button variant="outline" size="sm" className="flex items-center gap-2 text-red-600 border-red-600 hover:bg-red-500 hover:text-white" onClick={handleClearAllRequests}>
-                  <X className="h-4 w-4" />
-                  <span>Clear</span>
-                </Button>
+                <ConfirmDialog
+                  triggerText={
+                    <>
+                      <X className="h-4 w-4" />
+                      <span>Clear</span>
+                    </>
+                  }
+                  title="Clear all vacation requests?"
+                  message="This action cannot be undone."
+                  confirmText="Clear"
+                  cancelText="Cancel"
+                  onConfirm={handleClearAllRequests}
+                  variant="danger"
+                />
               </div>
             </div>
             <div className="overflow-x-auto max-h-96 overflow-y-auto w-full">
