@@ -9,6 +9,8 @@ import { config } from '../../../config';
 import { toast } from "../../../lib/use-toast";
 import { useMemo } from "react";
 import { Dialog } from "../../../components/ui/dialog";
+import { ConfirmDialog } from "./ConfirmDialog";
+import { Trash2 } from "lucide-react";
 
 interface AdminPageProps {
   residents: { id: string; name: string }[];
@@ -64,6 +66,10 @@ interface Announcement {
   createdAt?: string;
 }
 
+interface DateEntry {
+  scheduleId?: string;
+  date?: string;
+}
 
 // Modal component
 function Modal({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: React.ReactNode }) {
@@ -99,7 +105,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
 }) => {
   console.log('AdminPage props - users:', users);
   console.log('AdminPage props - users length:', users.length);
-  
+
   const [generating, setGenerating] = useState(false);
   const [message, setMessage] = useState("");
   const [showRequestsModal, setShowRequestsModal] = useState(false);
@@ -116,8 +122,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
   const [showAnnouncementConfirm, setShowAnnouncementConfirm] = useState(false);
   const [deletingAnnouncement, setDeletingAnnouncement] = useState<string | null>(null);
   const [switchingRole, setSwitchingRole] = useState<string | null>(null);
-
-
+  const [deletingSchedule, setDeletingSchedule] = useState(false);
 
   const handleGenerateSchedule = async () => {
     setGenerating(true);
@@ -127,17 +132,71 @@ const AdminPage: React.FC<AdminPageProps> = ({
       const response = await fetch(`${config.apiUrl}/api/algorithm/training/2025`, { method: "POST" });
       if (!response.ok) throw new Error("Failed to generate schedule");
       setMessage("New schedule generated successfully!");
-      
+
       // Navigate to calendar view after successful generation
       if (onNavigateToCalendar) {
-        setTimeout(() => {
-          onNavigateToCalendar();
-        }, 1500); // Wait 1.5 seconds to show success message
+        onNavigateToCalendar();
       }
     } catch {
       setMessage("Error generating schedule. Please try again.");
     } finally {
       setGenerating(false);
+    }
+  };
+
+  // Helper to get id needed for schedule deletion
+  const getLatestScheduleId = async (): Promise<string | null> => {
+    try {
+      const res = await fetch(`${config.apiUrl}/api/dates`);
+      if (!res.ok) return null;
+      const dates: DateEntry[] = await res.json();
+      const map: Record<string, number> = {};
+
+      for (const d of dates) {
+        if (!d.scheduleId || !d.date) continue;
+        const t = new Date(d.date).getTime();
+        if (!map[d.scheduleId] || t > map[d.scheduleId]) {
+          map[d.scheduleId] = t;
+        }
+      }
+
+      const latest = Object.entries(map).sort((a, b) => b[1] - a[1])[0]?.[0];
+      return latest ?? null;
+    } catch (e) {
+      console.error("getLatestScheduleId error:", e);
+      return null;
+    }
+  };
+
+  const handleDeleteSchedule = async (): Promise<void> => {
+    setDeletingSchedule(true);
+    try {
+      const id = await getLatestScheduleId();
+      if (!id) {
+        toast({
+          title: "No schedule found",
+          description: "Couldn’t determine a schedule ID to delete.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const res = await fetch(`${config.apiUrl}/api/schedules/${encodeURIComponent(id)}`, { method: "DELETE" });
+      const ok = res.status === 204;
+
+      toast({
+        title: ok ? "Schedule deleted" : "Delete failed",
+        description: ok
+          ? "The current schedule was deleted successfully."
+          : (await res.text()) || `Unexpected error (${res.status}).`,
+        variant: ok ? "success" : "destructive",
+      });
+
+      if (ok && onNavigateToCalendar) {
+        onNavigateToCalendar();
+      }
+    } finally {
+      setDeletingSchedule(false);
     }
   };
 
@@ -205,7 +264,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
         setSwapHistory([]);
       });
   }, []);
-  
+
   // Refetch swapHistory when switching to the swaps tab
   useEffect(() => {
     if (activeTab === 'swaps') {
@@ -247,9 +306,9 @@ const AdminPage: React.FC<AdminPageProps> = ({
   // Group vacation requests by resident and reason into date ranges
   function groupRequests(requests: Request[]) {
     if (!requests || requests.length === 0) return [];
-  
+
     const groupedMap = new Map<string, Request[]>();
-  
+
     for (const req of requests) {
       const key = `${req.firstName} ${req.lastName}||${req.reason}`;
       if (!groupedMap.has(key)) {
@@ -257,20 +316,20 @@ const AdminPage: React.FC<AdminPageProps> = ({
       }
       groupedMap.get(key)!.push(req);
     }
-  
+
     const result = [];
-  
+
     for (const [, entries] of groupedMap.entries()) {
       const sorted = entries.sort((a, b) =>
         new Date(a.startDate || "").getTime() - new Date(b.startDate || "").getTime()
       );
-  
+
       let i = 0;
       while (i < sorted.length) {
         const current = sorted[i];
         const start = current.startDate!;
         let end = current.endDate!;
-  
+
         let j = i + 1;
         while (
           j < sorted.length &&
@@ -279,7 +338,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
           end = sorted[j].endDate!;
           j++;
         }
-  
+
         result.push({
           id: current.id,
           residentId: current.residentId,
@@ -289,18 +348,18 @@ const AdminPage: React.FC<AdminPageProps> = ({
           status: current.status,
           startDate: start,
           endDate: end,
-          groupId:   current.groupId,
+          groupId: current.groupId,
         });
-        
-  
+
+
         i = j;
       }
     }
-  
+
     return result;
   }
-  
-  
+
+
 
   const groupedRequests = groupRequests(myTimeOffRequests);
   console.log("Grouped requests:", groupedRequests);
@@ -310,7 +369,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
     console.log('Creating idToName mapping with users:', users);
     console.log('Users array length:', users.length);
     console.log('First few users:', users.slice(0, 3));
-    
+
     const mapping: { [key: string]: string } = {};
     users.forEach(user => {
       console.log('Processing user:', user);
@@ -360,7 +419,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
     }
     return 'N/A';
   };
-  
+
 
   // Helper to get resident name
   const getResidentName = (request: Request) => {
@@ -394,9 +453,9 @@ const AdminPage: React.FC<AdminPageProps> = ({
       const res = await fetch(`${config.apiUrl}/api/announcements`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           message: announcementText,
-          authorId: userId 
+          authorId: userId
         }),
       });
       if (!res.ok) throw new Error('Failed to post');
@@ -436,7 +495,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
   const handleSwitchRole = async (user: { id: string; first_name: string; last_name: string; email: string; role: string }, newRole: string) => {
     // Don't do anything if the role hasn't actually changed
     if (user.role === newRole) return;
-    
+
     setSwitchingRole(user.id);
     try {
       const endpoint = user.role === 'admin' ? 'Residents/demote-admin' : 'Admins/promote-resident';
@@ -478,7 +537,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
   return (
     <div className="w-full pt-4 h-[calc(100vh-4rem)] flex flex-col items-center px-4 md:pl-8">
       {/* Dashboard Overview Card */}
-              <Card className="mb-8 p-6 flex flex-col gap-4 items-center justify-between bg-white dark:bg-neutral-900 shadow-lg rounded-2xl border border-gray-200 dark:border-gray-800">
+      <Card className="mb-8 p-6 flex flex-col gap-4 items-center justify-between bg-white dark:bg-neutral-900 shadow-lg rounded-2xl border border-gray-200 dark:border-gray-800">
         <h2 className="text-2xl font-bold flex items-center gap-2 justify-center w-full mb-2">
           <Shield className="w-6 h-6 text-blue-600" />
           Admin Dashboard
@@ -493,24 +552,55 @@ const AdminPage: React.FC<AdminPageProps> = ({
               </div>
               <span className="text-xs text-gray-500">Residents</span>
             </div>
-                          <div className="flex flex-col items-center border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-700 pt-4 sm:pt-0 sm:pl-8">
-                <div className="flex items-center gap-2 mb-1">
-                  <Repeat2 className="w-5 h-5 text-yellow-500" />
-                  <span className="text-2xl font-bold text-gray-900 dark:text-white">{pendingSwapsCount}</span>
-                </div>
-                <span className="text-xs text-gray-500">Pending Swaps</span>
+            <div className="flex flex-col items-center border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-700 pt-4 sm:pt-0 sm:pl-8">
+              <div className="flex items-center gap-2 mb-1">
+                <Repeat2 className="w-5 h-5 text-yellow-500" />
+                <span className="text-2xl font-bold text-gray-900 dark:text-white">{pendingSwapsCount}</span>
               </div>
-                          <div className="flex flex-col items-center border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-700 pt-4 sm:pt-0 sm:pl-8">
-                <div className="flex items-center gap-2 mb-1">
-                  <CalendarDays className="w-5 h-5 text-green-500" />
-                  <span className="text-2xl font-bold text-gray-900 dark:text-white">{pendingRequestsCount}</span>
-                </div>
-                <span className="text-xs text-gray-500">Pending Time Off</span>
+              <span className="text-xs text-gray-500">Pending Swaps</span>
+            </div>
+            <div className="flex flex-col items-center border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-700 pt-4 sm:pt-0 sm:pl-8">
+              <div className="flex items-center gap-2 mb-1">
+                <CalendarDays className="w-5 h-5 text-green-500" />
+                <span className="text-2xl font-bold text-gray-900 dark:text-white">{pendingRequestsCount}</span>
               </div>
+              <span className="text-xs text-gray-500">Pending Time Off</span>
+            </div>
             <div className="h-6 sm:h-10 border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-700 mx-0 sm:mx-4 lg:mx-6 hidden sm:block" />
-            <Button onClick={handleGenerateSchedule} disabled={generating} className="px-1 sm:px-6 py-1 sm:py-3 bg-blue-600 text-white font-semibold rounded-xl shadow hover:bg-blue-700 transition whitespace-nowrap w-full sm:w-auto text-xs sm:text-sm lg:text-base">
-              {generating ? "Generating..." : "Generate New Schedule"}
-            </Button>
+            {/* Generate Schedule */}
+            <ConfirmDialog
+              triggerText={
+                <span className="flex items-center">
+                  {generating ? "Generating..." : "Generate New Schedule"}
+                </span>
+              }
+              title="Generate new schedule?"
+              message="This will overwrite the current schedule. Continue?"
+              confirmText="Generate"
+              cancelText="Cancel"
+              onConfirm={handleGenerateSchedule}
+              loading={generating}
+              variant="default"
+            />
+            {/* Delete Schedule */}
+            <ConfirmDialog
+              triggerText={
+                <>
+                  <span className="flex items-center justify-center">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Current Schedule
+                  </span>
+                </>
+              }
+              title="Delete current schedule?"
+              message="This action cannot be undone."
+              confirmText="Delete"
+              cancelText="Cancel"
+              onConfirm={handleDeleteSchedule}
+              loading={deletingSchedule}
+              variant="danger"
+            />
+
           </div>
         </div>
       </Card>
@@ -572,26 +662,25 @@ const AdminPage: React.FC<AdminPageProps> = ({
                       console.log('swap.RequesteeId:', swap.RequesteeId);
                       console.log('finalIdToName[swap.RequesterId]:', finalIdToName[swap.RequesterId]);
                       console.log('finalIdToName[swap.RequesteeId]:', finalIdToName[swap.RequesteeId]);
-                      
+
                       return (
-                      <tr key={swap.SwapId || idx} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
-                        <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                          {finalIdToName[swap.RequesterId] || `Resident ${swap.RequesterId}`}
-                        </td>
-                        <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                          {finalIdToName[swap.RequesteeId] || `Resident ${swap.RequesteeId}`}
-                        </td>
-                        <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.RequesterDate ? new Date(swap.RequesterDate).toLocaleDateString() : ''}</td>
-                        <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.RequesteeDate ? new Date(swap.RequesteeDate).toLocaleDateString() : ''}</td>
-                        <td className={`px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm font-semibold ${
-                          swap.Status === 'Approved' ? 'text-green-600' : 
-                          swap.Status === 'Denied' ? 'text-red-600' : 
-                          'text-yellow-600'
-                        }`}>
-                          {swap.Status}
-                        </td>
-                        <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.Details || '-'}</td>
-                      </tr>
+                        <tr key={swap.SwapId || idx} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
+                          <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                            {finalIdToName[swap.RequesterId] || `Resident ${swap.RequesterId}`}
+                          </td>
+                          <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                            {finalIdToName[swap.RequesteeId] || `Resident ${swap.RequesteeId}`}
+                          </td>
+                          <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.RequesterDate ? new Date(swap.RequesterDate).toLocaleDateString() : ''}</td>
+                          <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.RequesteeDate ? new Date(swap.RequesteeDate).toLocaleDateString() : ''}</td>
+                          <td className={`px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm font-semibold ${swap.Status === 'Approved' ? 'text-green-600' :
+                            swap.Status === 'Denied' ? 'text-red-600' :
+                              'text-yellow-600'
+                            }`}>
+                            {swap.Status}
+                          </td>
+                          <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.Details || '-'}</td>
+                        </tr>
                       );
                     })
                   ) : (
@@ -606,8 +695,8 @@ const AdminPage: React.FC<AdminPageProps> = ({
         )}
         {activeTab === 'requests' && (
           <Card className="p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-4 mb-6 sm:mb-8 border border-gray-200 dark:border-gray-800">
-                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
-                <h2 className="text-lg sm:text-xl font-bold">Time Off Requests</h2>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+              <h2 className="text-lg sm:text-xl font-bold">Time Off Requests</h2>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" className="flex items-center gap-2"
                   onClick={() => setShowRequestsModal(true)}>
@@ -637,7 +726,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
                   {groupedRequests.length > 0 ? (
                     groupedRequests.map((request: Request, idx: number) => (
                       <tr key={request.id || `${request.startDate || request.date || ''}-${getResidentName(request)}-${idx}`}
-                          className="hover:bg-gray-50 dark:hover:bg-neutral-800">
+                        className="hover:bg-gray-50 dark:hover:bg-neutral-800">
                         <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{getRequestDate(request)}</td>
                         <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{getResidentName(request)}</td>
                         <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{request.reason}</td>
@@ -852,7 +941,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
               {groupedRequests.length > 0 ? (
                 groupedRequests.map((request: Request, idx: number) => (
                   <tr key={request.id || `${request.startDate || request.date || ''}-${getResidentName(request)}-${idx}`}
-                      className="hover:bg-gray-50 dark:hover:bg-neutral-800">
+                    className="hover:bg-gray-50 dark:hover:bg-neutral-800">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{getRequestDate(request)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{getResidentName(request)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{request.reason}</td>
@@ -939,7 +1028,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
         </div>
       </Modal>
 
-      
+
     </div>
   )
 }
