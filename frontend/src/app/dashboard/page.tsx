@@ -1099,6 +1099,10 @@ case "Home":
         handleDeleteUser={handleDeleteUser}
         inviteRole={inviteRole}
         setInviteRole={setInviteRole}
+        onNavigateToCalendar={() => {
+          setSelected("Calendar");
+          fetchCalendarEvents();
+        }}
         userId={user?.id || ""}
       />
     );
@@ -1238,6 +1242,10 @@ case "Home":
             handleDeleteUser={handleDeleteUser}
             inviteRole={inviteRole}
             setInviteRole={setInviteRole}
+            onNavigateToCalendar={() => {
+              setSelected("Calendar");
+              fetchCalendarEvents();
+            }}
             userId={user?.id || ""}
           />
         );
