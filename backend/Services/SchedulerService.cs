@@ -179,7 +179,7 @@ public class SchedulerService
         return model;
     }
 
-
+#pragma warning disable IDE0060
     private async Task<ResidentData> LoadResidentData(int year)
     {
         List<Residents> residents = await _context.residents.ToListAsync();
@@ -212,4 +212,5 @@ public class SchedulerService
 
         return new ResidentData { PGY1s = pgy1s, PGY2s = pgy2s, PGY3s = pgy3s };
     }
+#pragma warning restore IDE0060
 }
