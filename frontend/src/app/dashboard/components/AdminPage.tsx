@@ -114,7 +114,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
   console.log("RAW REQUESTS:", myTimeOffRequests);
   const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; user: { id: string; first_name: string; last_name: string; email: string; role: string } | null }>({ open: false, user: null });
   const [swapHistory, setSwapHistory] = useState<SwapRequest[]>([]);
-  const [activeTab, setActiveTab] = useState<'swaps' | 'requests' | 'users' | 'announcements'>('swaps');
+  const [activeTab, setActiveTab] = useState<'swaps' | 'requests' | 'users' | 'residents' | 'announcements'>('swaps');
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [announcementText, setAnnouncementText] = useState('');
   const [posting, setPosting] = useState(false);
