@@ -27,7 +27,6 @@ interface AdminPageProps {
   setInviteRole: (value: string) => void;
   users: { id: string; first_name: string; last_name: string; email: string; role: string }[];
   handleDeleteUser: (user: { id: string; first_name: string; last_name: string; email: string; role: string }) => void;
-  onClearRequests?: () => void;
   latestVersion?: string;
   onNavigateToCalendar?: () => void;
   userId: string;
@@ -99,7 +98,6 @@ const AdminPage: React.FC<AdminPageProps> = ({
   // setInviteRole,
   users,
   handleDeleteUser,
-  onClearRequests,
   onNavigateToCalendar,
   userId,
 }) => {
@@ -214,7 +212,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
       });
   }, []);
 
-  useEffect(() => {
+  const fetchVacations = () => {
     fetch(`${config.apiUrl}/api/vacations`)
       .then(res => res.json())
       .then((data) => {
@@ -243,7 +241,66 @@ const AdminPage: React.FC<AdminPageProps> = ({
         }));
         setMyTimeOffRequests(mapped);
       });
+  };
+
+  useEffect(() => {
+    fetchVacations();
   }, []);
+
+  const handleClearAllRequests = async () => {
+    const vacationIds = myTimeOffRequests.map(request => request.id);
+
+    if (vacationIds.length === 0) {
+      toast({
+        title: 'No requests to clear',
+        description: 'There are no vacation requests to delete.',
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch(`${config.apiUrl}/api/vacations`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(vacationIds),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+
+        if (result.notDeleted && result.notDeleted.length > 0) {
+          toast({
+            title: 'Partial success',
+            description: `${vacationIds.length - result.notDeleted.length} requests cleared. ${result.notDeleted.length} failed to delete.`,
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: 'Success',
+            description: 'All vacation requests have been cleared.',
+          });
+        }
+
+        // Refresh the vacation requests list
+        fetchVacations();
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to clear vacation requests.',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error clearing vacation requests:', error);
+      toast({
+        title: 'Error',
+        description: 'An error occurred while clearing requests.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   useEffect(() => {
     fetch(`${config.apiUrl}/api/swaprequests`)
@@ -698,17 +755,25 @@ const AdminPage: React.FC<AdminPageProps> = ({
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
               <h2 className="text-lg sm:text-xl font-bold">Time Off Requests</h2>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="flex items-center gap-2"
+                <Button variant="outline" className="flex items-center gap-2 px-1 sm:px-6 py-1 sm:py-3 text-xs sm:text-sm lg:text-base"
                   onClick={() => setShowRequestsModal(true)}>
                   <CalendarDays className="h-4 w-4" />
                   <span>View All</span>
                 </Button>
-                {onClearRequests && (
-                  <Button variant="outline" size="sm" className="flex items-center gap-2 text-red-600 border-red-600 hover:bg-red-500 hover:text-white" onClick={onClearRequests}>
-                    <X className="h-4 w-4" />
-                    <span>Clear</span>
-                  </Button>
-                )}
+                <ConfirmDialog
+                  triggerText={
+                    <>
+                      <X className="h-4 w-4" />
+                      <span>Clear</span>
+                    </>
+                  }
+                  title="Clear all vacation requests?"
+                  message="This action cannot be undone."
+                  confirmText="Clear"
+                  cancelText="Cancel"
+                  onConfirm={handleClearAllRequests}
+                  variant="danger"
+                />
               </div>
             </div>
             <div className="overflow-x-auto max-h-96 overflow-y-auto w-full">
