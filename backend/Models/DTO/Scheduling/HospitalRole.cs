@@ -4,20 +4,20 @@ public class HospitalRole
 {
 #pragma warning disable IDE0060
     private HospitalRole(string name, bool doesShort, bool doesLong,
-        bool flexShort, bool flexLong)
+        bool doesTrainingShort, bool doesTrainingLong)
     {
         DoesShort = doesShort;
         DoesLong = doesLong;
-        FlexShort = flexShort;
-        FlexLong = flexLong;
+        DoesTrainingShort = doesTrainingShort;
+        DoesTrainingLong = doesTrainingLong;
     }
 #pragma warning restore IDE0060
 
     public string name { get; set; }
     public bool DoesShort { get; }
     public bool DoesLong { get; }
-    public bool FlexShort { get; }
-    public bool FlexLong { get; }
+    public bool DoesTrainingShort { get; }
+    public bool DoesTrainingLong { get; }
 
     public static HospitalRole Inpatient =>
         new("Inpatient", true, true, false, false);
