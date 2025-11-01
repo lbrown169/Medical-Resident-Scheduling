@@ -182,15 +182,14 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
             <div className="flex flex-col sm:flex-row gap-3">
               <input
                 type="text"
-                value="" // TODO: Replace with actual tutorial URL
+                value="https://www.youtube.com/watch?v=eUoo2_Zgknk" // TODO: Replace with updated tutorial later
                 disabled
                 className="flex-1 px-3 py-2 text-sm border border-border rounded-lg bg-muted text-muted-foreground cursor-not-allowed focus:outline-none"
                 placeholder=""
               />
               <Button 
-                onClick={() => window.open('https://example.com/tutorial', '_blank')} // TODO: Replace with actual tutorial URL
+                onClick={() => window.open('https://www.youtube.com/watch?v=eUoo2_Zgknk')} // TODO: Replace with updated tutorial later
                 className="px-4 py-2 text-sm bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap"
-                disabled // TODO: Remove disabled when tutorial URL is available
               >
                 <ExternalLink className="h-4 w-4" />
                 Open Tutorial
@@ -207,15 +206,14 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
               <div className="flex flex-col sm:flex-row gap-3">
                 <input
                   type="text"
-                  value="" // TODO: Replace with actual admin tutorial URL
+                  value="https://www.youtube.com/watch?v=CQYruboTEgk" // TODO: Replace with updated tutorial later
                   disabled
                   className="flex-1 px-3 py-2 text-sm border border-border rounded-lg bg-muted text-muted-foreground cursor-not-allowed focus:outline-none"
                   placeholder=""
                 />
                 <Button 
-                  onClick={() => window.open('https://example.com/admin-tutorial', '_blank')} // TODO: Replace with actual admin tutorial URL
+                  onClick={() => window.open('https://www.youtube.com/watch?v=CQYruboTEgk')} // TODO: Replace with updated tutorial later
                   className="px-4 py-2 text-sm bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap"
-                  disabled // TODO: Remove disabled when admin tutorial URL is available
                 >
                   <ExternalLink className="h-4 w-4" />
                   Open Admin Tutorial
