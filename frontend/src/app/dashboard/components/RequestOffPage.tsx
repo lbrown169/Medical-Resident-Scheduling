@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { Calendar, Clock, FileText, Send, AlertTriangle, CalendarX } from "lucide-react";
+import { config } from '../../../config';
 
 interface RequestOffPageProps {
+  userId: string;
   startDate: string;
   setStartDate: (value: string) => void;
   endDate: string;
@@ -18,7 +20,28 @@ interface RequestOffPageProps {
   handleSubmitRequestOff: () => void;
 }
 
+type ApiVacation = {
+  vacationId: string;
+  residentId: string;
+  firstName: string;
+  lastName: string;
+  date: string;
+  reason: string;
+  status: "Pending" | "Approved" | "Denied" | string;
+  details?: string | null;
+  groupId?: string | null;
+};
+
+type GroupedRequest = {
+  groupId: string;
+  reason: string;
+  status: string;
+  details?: string | null;
+  dates: string[];
+};
+
 const RequestOffPage: React.FC<RequestOffPageProps> = ({
+  userId,
   startDate,
   setStartDate,
   endDate,
@@ -32,6 +55,93 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
 }) => {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const isFormValid = startDate && endDate && reason;
+
+  // Fetched requests state
+  const [loadingRequests, setLoadingRequests] = useState(false);
+  const [requests, setRequests] = useState<ApiVacation[]>([]);
+  const [errorRequests, setErrorRequests] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Fetch this resident's requests
+  useEffect(() => {
+    if (!userId) {
+      setRequests([]);
+      setErrorRequests("Missing residentId.");
+      return;
+    }
+
+    let abort = false;
+    (async () => {
+      setLoadingRequests(true);
+      setErrorRequests(null);
+      try {
+        const url = `${config.apiUrl}/api/vacations/filter?residentId=${encodeURIComponent(userId)}`;
+        const res = await fetch(url, { cache: "no-store" });
+
+        if (res.status === 404) {
+          if (!abort) setRequests([]);
+          return;
+        }
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error(txt || `HTTP ${res.status}`);
+        }
+
+        const raw = await res.json();
+        const arr: ApiVacation[] = (Array.isArray(raw) ? raw : [raw]).map((d: any) => ({
+          vacationId: d.vacationId ?? d.VacationId,
+          residentId: d.residentId ?? d.ResidentId,
+          firstName: d.firstName ?? d.FirstName,
+          lastName: d.lastName ?? d.LastName,
+          date: d.date ?? d.Date,
+          reason: d.reason ?? d.Reason,
+          status: d.status ?? d.Status,
+          details: d.details ?? d.Details ?? null,
+          groupId: d.groupId ?? d.GroupId ?? null,
+        }));
+
+        if (!abort) setRequests(arr);
+      } catch (e: any) {
+        if (!abort) setErrorRequests(e?.message ?? "Failed to load requests.");
+      } finally {
+        if (!abort) setLoadingRequests(false);
+      }
+    })();
+
+    return () => {
+      abort = true;
+    };
+  }, [userId, refreshKey]);
+
+  // Group by submission (GroupId), newest group last-date first
+  const grouped: GroupedRequest[] = useMemo(() => {
+    const mp = new Map<string, GroupedRequest>();
+    for (const v of requests) {
+      const key = v.groupId || v.vacationId; // single-day fallback
+      const g = mp.get(key);
+      if (!g) {
+        mp.set(key, {
+          groupId: key,
+          reason: v.reason,
+          status: v.status,
+          details: v.details ?? null,
+          dates: [v.date],
+        });
+      } else {
+        g.dates.push(v.date);
+        // normalize status: Denied > Pending > Approved
+        if (v.status === "Denied") g.status = "Denied";
+        else if (v.status === "Pending" && g.status !== "Denied") g.status = "Pending";
+      }
+    }
+    const arr = Array.from(mp.values());
+    arr.forEach((g) => g.dates.sort((a, b) => +new Date(a) - +new Date(b)));
+    arr.sort(
+      (A, B) =>
+        +new Date(B.dates[B.dates.length - 1]) - +new Date(A.dates[A.dates.length - 1])
+    );
+    return arr;
+  }, [requests]);
 
   const handleInitialSubmit = () => {
     if (isFormValid) {
@@ -59,6 +169,34 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
     }
     return 0;
   };
+
+  const StatusPill: React.FC<{ status: string }> = ({ status }) => {
+    const base = "px-2 py-0.5 text-xs font-semibold rounded-full border";
+    if (status === "Approved")
+      return (
+        <span className={`${base} bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300`}>
+          Approved
+        </span>
+      );
+    if (status === "Denied")
+      return (
+        <span className={`${base} bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300`}>
+          Denied
+        </span>
+      );
+    return (
+      <span className={`${base} bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300`}>
+        Pending
+      </span>
+    );
+  };
+
+  const fmt = (d: string) =>
+    new Date(d).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
 
   return (
     <div className="w-full h-full bg-background p-4 overflow-hidden">
@@ -258,6 +396,77 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
                 </div>
               </div>
             )}
+
+          {/* Resident Submitted Requests */}
+            <div className="mt-6">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg font-semibold">Your Submitted Requests</h2>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setRefreshKey((k) => k + 1)}
+                  className="gap-1"
+                  title="Refresh"
+                >
+                  Refresh
+                </Button>
+              </div>
+
+              <Card className="p-3 shadow-lg border border-border">
+                {loadingRequests ? (
+                  <div className="text-sm text-muted-foreground p-3">Loading your requests…</div>
+                ) : errorRequests ? (
+                  <div className="text-sm text-rose-600 p-3">Error: {errorRequests}</div>
+                ) : grouped.length === 0 ? (
+                  <div className="text-sm text-muted-foreground p-3">
+                    No requests yet. Your submissions will appear here.
+                  </div>
+                ) : (
+                  <ul className="space-y-2">
+                    {grouped.map((g) => {
+                      const start = g.dates[0];
+                      const end = g.dates[g.dates.length - 1];
+                      const days = g.dates.length;
+                      return (
+                        <li
+                          key={g.groupId}
+                          className="border border-border rounded-lg p-3 hover:bg-muted/40 transition-colors"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="space-y-0.5">
+                              <div className="flex items-center gap-2">
+                                <Calendar className="h-4 w-4 text-primary" />
+                                <span className="font-medium">
+                                  {fmt(start)}
+                                  {end !== start ? ` — ${fmt(end)}` : ""}
+                                </span>
+                                <span className="text-xs text-muted-foreground">
+                                  • {days} day{days !== 1 ? "s" : ""}
+                                </span>
+                              </div>
+                              <div className="text-sm">
+                                <span className="text-muted-foreground">Reason: </span>
+                                <span className="font-medium">{g.reason}</span>
+                              </div>
+                              {g.details ? (
+                                <div className="text-xs text-muted-foreground">
+                                  {g.details.length > 100
+                                    ? g.details.slice(0, 100) + "…"
+                                    : g.details}
+                                </div>
+                              ) : null}
+                            </div>
+                            <StatusPill status={g.status} />
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </Card>
+            </div>
           </div>
         </Card>
       </div>
