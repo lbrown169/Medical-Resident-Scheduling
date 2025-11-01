@@ -1189,6 +1189,7 @@ case "Home":
       case "Request Off":
         return (
           <RequestOffPage
+            userId={user?.id || ""}
             startDate={startDate}
             setStartDate={setStartDate}
             endDate={endDate}
