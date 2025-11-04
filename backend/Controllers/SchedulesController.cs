@@ -7,6 +7,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MedicalDemo.Controllers;
 
+public class UpdateScheduleStatusDto
+{
+    public string Status { get; set; } = string.Empty;
+}
+
 [ApiController]
 [Route("api/[controller]")]
 public class SchedulesController : ControllerBase
@@ -131,12 +136,32 @@ public class SchedulesController : ControllerBase
             return BadRequest("Schedule ID in URL and body do not match.");
         }
 
-        Schedules? existingSchedule
-            = await _context.schedules.FindAsync(id);
+        Schedules? existingSchedule = await _context.schedules.FindAsync(id);
 
         if (existingSchedule == null)
         {
             return NotFound("Schedule not found.");
+        }
+
+        //List<string> validStatuses = new List<string> { "generated", "under review", "published", "archived" };
+        List<string> validStatuses = new List<string> {"under review", "published"};
+        if (!validStatuses.Contains(updatedSchedule.Status.ToLower()))
+        {
+            return BadRequest($"Invalid status.");
+        }
+
+        // only publish one schedule at a time, no year attribute
+        if (updatedSchedule.Status.ToLower() == "published")
+        {
+            Schedules? existingPublishedSchedule = await _context.schedules
+                .FirstOrDefaultAsync(s =>
+                    s.Status.ToLower() == "published" &&
+                    s.ScheduleId != id);
+
+            if (existingPublishedSchedule != null)
+            {
+                return Conflict("Another schedule has already been published.");
+            }
         }
 
         existingSchedule.Status = updatedSchedule.Status;
