@@ -144,7 +144,7 @@ public class SchedulesController : ControllerBase
         }
 
         //List<string> validStatuses = new List<string> { "generated", "under review", "published", "archived" };
-        List<string> validStatuses = new List<string> {"under review", "published"};
+        List<string> validStatuses = new List<string> { "under review", "published" };
         if (!validStatuses.Contains(updatedSchedule.Status.ToLower()))
         {
             return BadRequest($"Invalid status.");
