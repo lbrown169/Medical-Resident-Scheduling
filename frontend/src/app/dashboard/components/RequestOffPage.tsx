@@ -63,55 +63,45 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
   const [refreshKey, setRefreshKey] = useState(0);
 
   // Fetch this resident's requests
-  useEffect(() => {
-    if (!userId) {
-      setRequests([]);
-      setErrorRequests("Missing residentId.");
-      return;
-    }
+ useEffect(() => {
+  if (!userId) {
+    setRequests([]);
+    setErrorRequests("Missing userId.");
+    return;
+  }
 
-    let abort = false;
-    (async () => {
-      setLoadingRequests(true);
-      setErrorRequests(null);
-      try {
-        const url = `${config.apiUrl}/api/vacations/filter?residentId=${encodeURIComponent(userId)}`;
-        const res = await fetch(url, { cache: "no-store" });
+  let abort = false;
 
-        if (res.status === 404) {
-          if (!abort) setRequests([]);
-          return;
-        }
-        if (!res.ok) {
-          const txt = await res.text();
-          throw new Error(txt || `HTTP ${res.status}`);
-        }
+  (async () => {
+    setLoadingRequests(true);
+    setErrorRequests(null);
+    try {
+      const url = `${config.apiUrl}/api/vacations/filter?residentId=${encodeURIComponent(userId)}`;
+      const res = await fetch(url, { cache: "no-store" });
 
-        const raw = await res.json();
-        const arr: ApiVacation[] = (Array.isArray(raw) ? raw : [raw]).map((d: any) => ({
-          vacationId: d.vacationId ?? d.VacationId,
-          residentId: d.residentId ?? d.ResidentId,
-          firstName: d.firstName ?? d.FirstName,
-          lastName: d.lastName ?? d.LastName,
-          date: d.date ?? d.Date,
-          reason: d.reason ?? d.Reason,
-          status: d.status ?? d.Status,
-          details: d.details ?? d.Details ?? null,
-          groupId: d.groupId ?? d.GroupId ?? null,
-        }));
-
-        if (!abort) setRequests(arr);
-      } catch (e: any) {
-        if (!abort) setErrorRequests(e?.message ?? "Failed to load requests.");
-      } finally {
-        if (!abort) setLoadingRequests(false);
+      if (res.status === 404) {
+        if (!abort) setRequests([]);
+        return;
       }
-    })();
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(txt || `HTTP ${res.status}`);
+      }
 
-    return () => {
-      abort = true;
-    };
-  }, [userId, refreshKey]);
+      const data: ApiVacation[] = await res.json();
+      if (!abort) setRequests(Array.isArray(data) ? data : [data]);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Failed to load requests.";
+      if (!abort) setErrorRequests(msg);
+    } finally {
+      if (!abort) setLoadingRequests(false);
+    }
+  })();
+
+  return () => {
+    abort = true;
+  };
+}, [userId, refreshKey]);
 
   // Group by submission (GroupId), newest group last-date first
   const grouped: GroupedRequest[] = useMemo(() => {
