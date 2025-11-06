@@ -26,7 +26,11 @@ public class MailgunEmailSendService : IEmailSendService
         string? fromEmail = _configuration.GetValue<string>("Mailgun:FromEmail");
         if (fromEmail == null)
         {
-            throw new Exception("Mailgun:FromEmail is not set");
+            fromEmail = Environment.GetEnvironmentVariable("Mailgun:FromEmail");
+            if (fromEmail == null)
+            {
+                throw new Exception("Mailgun:FromEmail is not set");
+            }
         }
 
         FormUrlEncodedContent formData = new([
