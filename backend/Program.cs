@@ -35,8 +35,8 @@ builder.Services.AddHttpClient(nameof(MailgunEmailSendService), client =>
     string? domain = builder.Configuration.GetValue<string>("Mailgun:Domain");
     if (apiKey == null || domain == null)
     {
-        apiKey = Environment.GetEnvironmentVariable("Mailgun:ApiKey");
-        domain = Environment.GetEnvironmentVariable("Mailgun:Domain");
+        apiKey = Environment.GetEnvironmentVariable("MailgunApiKey");
+        domain = Environment.GetEnvironmentVariable("MailgunDomain");
 
         if (apiKey == null || domain == null)
         {
