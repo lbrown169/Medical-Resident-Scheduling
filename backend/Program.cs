@@ -35,9 +35,15 @@ builder.Services.AddHttpClient(nameof(MailgunEmailSendService), client =>
     string? domain = builder.Configuration.GetValue<string>("Mailgun:Domain");
     if (apiKey == null || domain == null)
     {
-        throw new Exception(
-            "Mailgun API key/domain was not set, but HTTP client was created"
-        );
+        apiKey = Environment.GetEnvironmentVariable("Mailgun:ApiKey");
+        domain = Environment.GetEnvironmentVariable("Mailgun:Domain");
+
+        if (apiKey == null || domain == null)
+        {
+            throw new Exception(
+                "Mailgun API key/domain was not set, but HTTP client was created"
+            );
+        }
     }
     string base64Auth = Convert.ToBase64String(Encoding.ASCII.GetBytes($"api:{apiKey}"));
 
