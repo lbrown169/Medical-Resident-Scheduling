@@ -33,7 +33,7 @@ public class MailgunEmailSendService : IEmailSendService
             }
         }
 
-        FormUrlEncodedContent formData = new([
+        FormUrlEncodedContent formData = new(new []{
             new KeyValuePair<string, string>("from", $"Psycall <{fromEmail}>"),
             new KeyValuePair<string, string>("to", toEmail),
             new KeyValuePair<string, string>("subject", "Psycall Invitation to " +
@@ -41,14 +41,14 @@ public class MailgunEmailSendService : IEmailSendService
             new KeyValuePair<string, string>("text", $"Hello,\n\nAdmin would " +
                 $"like you to create a Psycall account.\n\nPlease use the " +
                 $"following link:\n{link}\n\nThank you,\nPsycall Admin"),
-            new KeyValuePair<string, string>("html", $"""
-                <h3>Hello!</h3>
-                <p>Admin would like you to create a Psycall account.</p>
-                <p>Please click this link to complete your registration:</p>
-                <a href='{link}'>{link}</a>
-                <p>Thank you,<br/>Psycall Admin</p>
-            """)
-        ]);
+            new KeyValuePair<string, string>("html",
+                "<h3>Hello!</h3><br />" +
+                "<p>Admin would like you to create a Psycall account.</p><br />" +
+                "<p>Please click this link to complete your registration:</p><br />" +
+                $"<a href='{link}'>{link}</a><br />" +
+                "<p>Thank you,<br/>Psycall Admin</p>"
+            )
+        });
 
         HttpResponseMessage response = await httpClient.PostAsync((string?)null, formData);
         if (response.IsSuccessStatusCode)
