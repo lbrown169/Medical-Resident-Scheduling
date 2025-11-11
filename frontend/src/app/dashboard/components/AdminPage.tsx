@@ -736,35 +736,35 @@ const AdminPage: React.FC<AdminPageProps> = ({
       <div className="w-full max-w-6xl flex flex-col sm:flex-row gap-1 sm:gap-2 mb-4 sm:mb-6">
         <Button
           variant={activeTab === 'swaps' ? 'default' : 'outline'}
-          className={`flex-1 rounded-b-none sm:rounded-br-none text-xs sm:text-sm py-1 sm:py-2 ${activeTab === 'swaps' ? 'shadow-md' : ''}`}
+          className={`flex-1 cursor-pointer rounded-b-none sm:rounded-br-none text-xs sm:text-sm py-1 sm:py-2 ${activeTab === 'swaps' ? 'shadow-md' : ''}`}
           onClick={() => setActiveTab('swaps')}
         >
           Swap Call History
         </Button>
         <Button
           variant={activeTab === 'requests' ? 'default' : 'outline'}
-          className={`flex-1 rounded-b-none text-xs sm:text-sm py-1 sm:py-2 ${activeTab === 'requests' ? 'shadow-md' : ''}`}
+          className={`flex-1 cursor-pointer rounded-b-none text-xs sm:text-sm py-1 sm:py-2 ${activeTab === 'requests' ? 'shadow-md' : ''}`}
           onClick={() => setActiveTab('requests')}
         >
           Time Off Requests
         </Button>
         <Button
           variant={activeTab === 'users' ? 'default' : 'outline'}
-          className={`flex-1 rounded-b-none text-xs sm:text-sm py-1 sm:py-2 ${activeTab === 'users' ? 'shadow-md' : ''}`}
+          className={`flex-1 cursor-pointer rounded-b-none text-xs sm:text-sm py-1 sm:py-2 ${activeTab === 'users' ? 'shadow-md' : ''}`}
           onClick={() => setActiveTab('users')}
         >
           User Management
         </Button>
         <Button
           variant={activeTab === 'residents' ? 'default' : 'outline'}
-          className={`flex-1 rounded-b-none text-xs sm:text-sm py-1 sm:py-2 ${activeTab === 'residents' ? 'shadow-md' : ''}`}
+          className={`flex-1 cursor-pointer rounded-b-none text-xs sm:text-sm py-1 sm:py-2 ${activeTab === 'residents' ? 'shadow-md' : ''}`}
           onClick={() => setActiveTab('residents')}
         >
           Resident Information
         </Button>
         <Button
           variant={activeTab === 'announcements' ? 'default' : 'outline'}
-          className={`flex-1 rounded-b-none text-xs sm:text-sm py-1 sm:py-2 ${activeTab === 'announcements' ? 'shadow-md' : ''}`}
+          className={`flex-1 cursor-pointer rounded-b-none text-xs sm:text-sm py-1 sm:py-2 ${activeTab === 'announcements' ? 'shadow-md' : ''}`}
           onClick={() => setActiveTab('announcements')}
         >
           Announcements
@@ -1025,22 +1025,31 @@ const AdminPage: React.FC<AdminPageProps> = ({
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-start mb-4 gap-2">
               <h2 className="text-lg sm:text-xl font-bold">Resident Information</h2>
               <div className="flex flex-col items-start gap-2 sm:items-end">
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" className="flex items-center gap-2"
-                    onClick={() => setShowRequestsModal(true)}> {/* Change to a dropdown menu of years */}
+                <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                  {/*<Button variant="outline" size="sm" className="flex items-center gap-2 cursor-pointer"
+                    onClick={() => { } }> */}{/* Change to a dropdown menu of years */}{/*
                     <CalendarDays className="h-4 w-4" />
-                    {/* Name will reflect selected schedule name */} <span>NOT IMPLEMENTED</span>
-                  </Button>
+                    */}{/* Name will reflect selected schedule name */}{/* <span>Current Year</span>
+                  </Button>*/}
+                  <CalendarDays className="h-4 w-4" /> Show hours from:
+                  <select
+                    value="Current Year"
+                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                  >
+                    <option value="2024-2025">2024-2025</option>
+                    <option value="Current Year">Current Year</option>
+                    <option value="2024-2025">2026-2027</option>
+                  </select>
                 </div>
                 <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
                   <input
                     type="checkbox"
                     defaultChecked
-                    className="w-3 h-3 accent-blue-600 rounded border-gray-300 dark:border-gray-600"
+                    className="w-3 h-3 accent-blue-600 rounded border-gray-300 dark:border-gray-600 cursor-pointer"
                     /* Implement function checked={ } 
                     onChange={(e) => setIncludeUnscheduled(e.target.checked)} */
                   />
-                  NOT IMPLEMENTED
+                  Include unscheduled residents
                 </label>
               </div>
             </div>
@@ -1050,8 +1059,8 @@ const AdminPage: React.FC<AdminPageProps> = ({
                   <tr>
                     <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resident</th>
                     <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                    <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PGY Status</th>
-                    <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hours</th>
+                    <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current PGY Status</th>
+                    <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hours Scheduled</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
@@ -1067,14 +1076,14 @@ const AdminPage: React.FC<AdminPageProps> = ({
                             value={resident.pgyLevel ?? 1}
                             onChange={(e) => handleUpdatePGY(resident.id, Number(e.target.value))}
                             disabled={!!savingPGY[resident.id]}
-                            className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                           >
                             {[1, 2, 3, 4].map(n => (
                               <option key={n} value={n}>PGY {n}</option>
                             ))}
                           </select>
                         </td>
-                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">NOT IMPLEMENTED</td>
+                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">--</td>
                       </tr>
                     ))
                   ) : (
