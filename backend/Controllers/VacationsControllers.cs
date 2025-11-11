@@ -241,17 +241,18 @@ public class VacationsController : ControllerBase
     public async Task<IActionResult> DeleteAllVacations(
         [FromBody] List<Guid> vacationsIds)
     {
-        List<Guid> failedDeletedIds = new();
+        // Fetch all vacations that exist in the database
+        List<Vacations> vacationsToDelete = await _context.vacations
+            .Where(v => vacationsIds.Contains(v.VacationId))
+            .ToListAsync();
 
-        foreach (Guid id in vacationsIds)
-        {
-            IActionResult result = await DeleteVacation(id);
+        // Find which IDs were not found
+        List<Guid> foundIds = vacationsToDelete.Select(v => v.VacationId).ToList();
+        List<Guid> failedDeletedIds = vacationsIds.Except(foundIds).ToList();
 
-            if (result is NotFoundObjectResult)
-            {
-                failedDeletedIds.Add(id);
-            }
-        }
+        // Remove all found vacations in one operation
+        _context.vacations.RemoveRange(vacationsToDelete);
+        await _context.SaveChangesAsync();
 
         var response = new { notDeleted = failedDeletedIds };
 

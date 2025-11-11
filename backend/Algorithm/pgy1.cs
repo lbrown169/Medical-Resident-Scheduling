@@ -93,7 +93,7 @@ public class PGY1
     // return true if the pgy1 can work on curDay
     public bool
         canWork(
-            DateTime curDay) // function fixes the sponsors desires to not have 
+            DateTime curDay) // function fixes the sponsors desires to not have
     {
         // back to back days worked. also handles vacations
         // check if the PGY1 is in training and not on vacation
@@ -117,7 +117,7 @@ public class PGY1
             // check if the role allows for long call
             if (!rolePerMonth[(curDay.Month + 5) % 12].DoesLong &&
                 (!inTraining || !rolePerMonth[(curDay.Month + 5) % 12]
-                    .FlexLong))
+                    .DoesTrainingLong))
             {
                 return false;
             }
@@ -141,7 +141,7 @@ public class PGY1
             // check if the role allows for short call
             if (!rolePerMonth[(curDay.Month + 5) % 12].DoesShort &&
                 (!inTraining || !rolePerMonth[(curDay.Month + 5) % 12]
-                    .FlexShort))
+                    .DoesTrainingShort))
             {
                 return false;
             }

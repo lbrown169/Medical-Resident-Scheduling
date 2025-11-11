@@ -18,7 +18,7 @@ dotnet run
 
 ## Requirements
 
-- .NET 8 SDK
+- .NET 6 SDK
 - SQL Server 2019+
 - Database connection string in appsettings.json
 

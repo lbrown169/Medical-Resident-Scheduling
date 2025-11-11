@@ -112,7 +112,7 @@ public class PGY2
             // check if the role allows for long call
             if (!rolePerMonth[(curDay.Month + 5) % 12].DoesLong &&
                 (!inTraining || !rolePerMonth[(curDay.Month + 5) % 12]
-                    .FlexLong))
+                    .DoesTrainingLong))
             {
                 return false;
             }
@@ -136,7 +136,7 @@ public class PGY2
             // check if the role allows for short call
             if (!rolePerMonth[(curDay.Month + 5) % 12].DoesShort &&
                 (!inTraining || !rolePerMonth[(curDay.Month + 5) % 12]
-                    .FlexShort))
+                    .DoesTrainingShort))
             {
                 return false;
             }

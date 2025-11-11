@@ -21,7 +21,7 @@ public class PGY2DTO : ResidentDTO
 
         if (curDay.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
         {
-            if (!role.DoesLong && (!InTraining || !role.FlexLong))
+            if (!role.DoesLong && (!InTraining || !role.DoesTrainingLong))
             {
                 return false;
             }
@@ -36,7 +36,7 @@ public class PGY2DTO : ResidentDTO
         }
         else // Weekday
         {
-            if (!role.DoesShort && (!InTraining || !role.FlexShort))
+            if (!role.DoesShort && (!InTraining || !role.DoesTrainingShort))
             {
                 return false;
             }

@@ -78,7 +78,7 @@ internal class Schedule
                 if (month == 7)
                 {
                     if (((PGY1)AllPgy1s[i]).rolePerMonth[0].DoesShort == false &&
-                        ((PGY1)AllPgy1s[i]).rolePerMonth[0].FlexShort ==
+                        ((PGY1)AllPgy1s[i]).rolePerMonth[0].DoesTrainingShort ==
                         false) // if their role doesnt do short calls this month
                     {
                         continue;
@@ -90,7 +90,7 @@ internal class Schedule
                 if (month == 8)
                 {
                     if (((PGY1)AllPgy1s[i]).rolePerMonth[1].DoesShort == false &&
-                        ((PGY1)AllPgy1s[i]).rolePerMonth[1].FlexShort == false)
+                        ((PGY1)AllPgy1s[i]).rolePerMonth[1].DoesTrainingShort == false)
                     {
                         continue;
                     }
@@ -204,7 +204,7 @@ internal class Schedule
                 if (month == 7)
                 {
                     if (((PGY1)AllPgy1s[i]).rolePerMonth[0].DoesLong == false &&
-                        ((PGY1)AllPgy1s[i]).rolePerMonth[0].FlexLong ==
+                        ((PGY1)AllPgy1s[i]).rolePerMonth[0].DoesTrainingLong ==
                         false) // if their role doesnt do long calls this month
                     {
                         continue;
@@ -216,7 +216,7 @@ internal class Schedule
                 if (month == 8)
                 {
                     if (((PGY1)AllPgy1s[i]).rolePerMonth[1].DoesLong == false &&
-                        ((PGY1)AllPgy1s[i]).rolePerMonth[1].FlexLong == false)
+                        ((PGY1)AllPgy1s[i]).rolePerMonth[1].DoesTrainingLong == false)
                     {
                         continue;
                     }
@@ -248,7 +248,7 @@ internal class Schedule
                 if (month == 7)
                 {
                     if (((PGY2)AllPgy2s[i]).rolePerMonth[0].DoesLong == false &&
-                        ((PGY2)AllPgy2s[i]).rolePerMonth[0].FlexLong ==
+                        ((PGY2)AllPgy2s[i]).rolePerMonth[0].DoesTrainingLong ==
                         false) // if their role doesnt do long calls this month
                     {
                         continue;
@@ -260,7 +260,7 @@ internal class Schedule
                 if (month == 8)
                 {
                     if (((PGY2)AllPgy2s[i]).rolePerMonth[1].DoesLong == false &&
-                        ((PGY2)AllPgy2s[i]).rolePerMonth[1].FlexLong == false)
+                        ((PGY2)AllPgy2s[i]).rolePerMonth[1].DoesTrainingLong == false)
                     {
                         continue;
                     }
@@ -361,7 +361,7 @@ internal class Schedule
                 if (month == 7)
                 {
                     if (((PGY1)AllPgy1s[i]).rolePerMonth[0].DoesLong == false &&
-                        ((PGY1)AllPgy1s[i]).rolePerMonth[0].FlexLong ==
+                        ((PGY1)AllPgy1s[i]).rolePerMonth[0].DoesTrainingLong ==
                         false) // if their role doesnt do long calls this month
                     {
                         continue;
@@ -373,7 +373,7 @@ internal class Schedule
                 if (month == 8)
                 {
                     if (((PGY1)AllPgy1s[i]).rolePerMonth[1].DoesLong == false &&
-                        ((PGY1)AllPgy1s[i]).rolePerMonth[1].FlexLong == false)
+                        ((PGY1)AllPgy1s[i]).rolePerMonth[1].DoesTrainingLong == false)
                     {
                         continue;
                     }
@@ -406,7 +406,7 @@ internal class Schedule
                 if (month == 7)
                 {
                     if (((PGY2)AllPgy2s[i]).rolePerMonth[0].DoesLong == false &&
-                        ((PGY2)AllPgy2s[i]).rolePerMonth[0].FlexLong ==
+                        ((PGY2)AllPgy2s[i]).rolePerMonth[0].DoesTrainingLong ==
                         false) // if their role doesnt do long calls this month
                     {
                         continue;
@@ -418,7 +418,7 @@ internal class Schedule
                 if (month == 8)
                 {
                     if (((PGY2)AllPgy2s[i]).rolePerMonth[1].DoesLong == false &&
-                        ((PGY2)AllPgy2s[i]).rolePerMonth[1].FlexLong == false)
+                        ((PGY2)AllPgy2s[i]).rolePerMonth[1].DoesTrainingLong == false)
                     {
                         continue;
                     }

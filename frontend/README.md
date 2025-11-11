@@ -1,6 +1,6 @@
 # PSYCALL Frontend
 
-Simple script to start the frontend development server.
+Simple script to start the frontend development server
 
 ## Usage
 ```bash
