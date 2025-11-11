@@ -13,7 +13,7 @@ import { ConfirmDialog } from "./ConfirmDialog";
 import { Trash2 } from "lucide-react";
 
 interface AdminPageProps {
-  residents: { id: string; name: string }[];
+  residents: { id: string; name: string; email: string; pgyLevel: number | string }[];
   myTimeOffRequests: { id: string; startDate: string; endDate: string; resident: string; reason: string; status: string; }[];
   shifts: { id: string; name: string }[];
   handleApproveRequest: (id: string) => void;
@@ -345,6 +345,75 @@ const AdminPage: React.FC<AdminPageProps> = ({
         });
     }
   }, [activeTab]);
+
+  // Local copy of residents for optimistic update
+  const [residentRows, setResidentRows] = useState(residents);
+  useEffect(() => setResidentRows(residents), [residents]);
+
+  const [savingPGY, setSavingPGY] = useState<Record<string, boolean>>({});
+
+  // Updates the PGY year when selected by administrators on the Resident Info tab
+  const handleUpdatePGY = async (residentId: string, newPGY: number) => {
+    setSavingPGY(prev => ({ ...prev, [residentId]: true }));
+    // Optimistic update
+    setResidentRows(prev => prev.map(r => r.id === residentId ? { ...r, pgyLevel: newPGY } : r));
+
+    try {
+      // First, get the current resident data
+      const getResponse = await fetch(`${config.apiUrl}/api/residents/filter?resident_id=${residentId}`);
+      if (!getResponse.ok) {
+        throw new Error('Failed to fetch current resident data');
+      }
+
+      const residentsData = await getResponse.json();
+      if (!residentsData || residentsData.length === 0) {
+        throw new Error('Resident not found');
+      }
+
+      const currentResident = residentsData[0];
+
+      // Update with existing data but new phone number
+      const res= await fetch(`${config.apiUrl}/api/residents/${residentId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          resident_id: currentResident.resident_id,
+          first_name: currentResident.first_name,
+          last_name: currentResident.last_name,
+          email: currentResident.email,
+          password: currentResident.password,
+          phone_num: currentResident.phone_num,
+          graduate_yr: newPGY, // Update PGY
+          weekly_hours: currentResident.weekly_hours,
+          total_hours: currentResident.total_hours,
+          bi_yearly_hours: currentResident.bi_yearly_hours
+        })
+      });
+
+      if (!res.ok) {
+        const msg = await res.text();
+        throw new Error(msg || 'Failed to update PGY');
+      }
+
+      toast({
+        title: 'PGY updated',
+        description: `Resident set to PGY ${newPGY}.`,
+        variant: 'success',
+      });
+    } catch (error) {
+      // Roll back on error
+      setResidentRows(prev => prev.map(r => r.id === residentId ? { ...r, pgyLevel: residents.find(x => x.id === residentId)?.pgyLevel ?? r.pgyLevel } : r));
+      toast({
+        title: 'Update failed',
+        description: error?.message || 'Could not update PGY.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSavingPGY(prev => ({ ...prev, [residentId]: false }));
+    }
+  };
 
   // Fetch announcements when switching to the announcements tab
   useEffect(() => {
@@ -952,15 +1021,27 @@ const AdminPage: React.FC<AdminPageProps> = ({
 
 
         {activeTab === 'residents' && (
-          <Card className="p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-8 mb-8 border border-gray-200 dark:border-gray-800">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+          <Card className="p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-1 mb-8 border border-gray-200 dark:border-gray-800">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-start mb-4 gap-2">
               <h2 className="text-lg sm:text-xl font-bold">Resident Information</h2>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="flex items-center gap-2"
-                  onClick={() => setShowRequestsModal(true)}>
-                  <CalendarDays className="h-4 w-4" />
-                  {/* Name will reflect selected schedule name */} <span>Current Year</span>
-                </Button>
+              <div className="flex flex-col items-start gap-2 sm:items-end">
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" className="flex items-center gap-2"
+                    onClick={() => setShowRequestsModal(true)}> {/* Change to a dropdown menu of years */}
+                    <CalendarDays className="h-4 w-4" />
+                    {/* Name will reflect selected schedule name */} <span>NOT IMPLEMENTED</span>
+                  </Button>
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
+                  <input
+                    type="checkbox"
+                    defaultChecked
+                    className="w-3 h-3 accent-blue-600 rounded border-gray-300 dark:border-gray-600"
+                    /* Implement function checked={ } 
+                    onChange={(e) => setIncludeUnscheduled(e.target.checked)} */
+                  />
+                  NOT IMPLEMENTED
+                </label>
               </div>
             </div>
             <div className="overflow-x-auto max-h-96 overflow-y-auto w-full">
@@ -974,19 +1055,31 @@ const AdminPage: React.FC<AdminPageProps> = ({
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
-                  {groupedRequests.length > 0 ? (
-                    groupedRequests.map((request: Request, idx: number) => (
-                      <tr key={request.id || `${request.startDate || request.date || ''}-${getResidentName(request)}-${idx}`}
-                        className="hover:bg-gray-50 dark:hover:bg-neutral-800">
-                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{getResidentName(request)}</td>
-                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{getRequestDate(request)}</td>
-                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{request.reason}</td>
-                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{request.status}</td>
+                  {residentRows.length > 0 ? (
+                    [...residentRows]
+                    .sort((a, b) => a.name.localeCompare(b.name))
+                    .map((resident) => (
+                      <tr key={resident.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
+                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{resident.name}</td>
+                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{resident.email}</td>
+                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          <select
+                            value={resident.pgyLevel ?? 1}
+                            onChange={(e) => handleUpdatePGY(resident.id, Number(e.target.value))}
+                            disabled={!!savingPGY[resident.id]}
+                            className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            {[1, 2, 3, 4].map(n => (
+                              <option key={n} value={n}>PGY {n}</option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">NOT IMPLEMENTED</td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={6} className="px-6 py-4 text-center text-gray-500 italic">No time off requests found.</td>
+                      <td colSpan={6} className="px-6 py-4 text-center text-gray-500 italic">No residents found.</td>
                     </tr>
                   )}
                 </tbody>
