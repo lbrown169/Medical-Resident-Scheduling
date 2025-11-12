@@ -1075,7 +1075,7 @@ case "Home":
     console.log('Rendering AdminPage with users length:', users.length);
     return (
       <AdminPage
-        residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}` }))}
+        residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr }))}
         myTimeOffRequests={myTimeOffRequests.map(r => ({
           id: r.vacationId,
           startDate: r.date || '',
@@ -1219,7 +1219,7 @@ case "Home":
         }
         return (
           <AdminPage
-            residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}` }))}
+            residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr }))}
             myTimeOffRequests={myTimeOffRequests.map(r => ({
               id: r.vacationId,
               startDate: r.date || '',
