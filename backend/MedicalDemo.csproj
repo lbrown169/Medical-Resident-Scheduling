@@ -7,6 +7,13 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<Compile Remove="MedicalDemo.Tests/**" />
+		<Content Remove="MedicalDemo.Tests/**" />
+		<EmbeddedResource Remove="MedicalDemo.Tests/**" />
+		<None Remove="MedicalDemo.Tests/**" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="BCrypt.Net-Next" Version="4.0.3"/>
 		<PackageReference Include="DotNetEnv" Version="3.1.1"/>
 		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.25"/>
