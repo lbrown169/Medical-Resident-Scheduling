@@ -17,7 +17,7 @@ interface RequestOffPageProps {
   leaveReasons: { id: string; name: string }[];
   description: string;
   setDescription: (value: string) => void;
-  handleSubmitRequestOff: () => void;
+  handleSubmitRequestOff: () => Promise<void>;
 }
 
 type ApiVacation = {
@@ -61,47 +61,48 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
   const [requests, setRequests] = useState<ApiVacation[]>([]);
   const [errorRequests, setErrorRequests] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
 
   // Fetch this resident's requests
- useEffect(() => {
-  if (!userId) {
-    setRequests([]);
-    setErrorRequests("Missing userId.");
-    return;
-  }
-
-  let abort = false;
-
-  (async () => {
-    setLoadingRequests(true);
-    setErrorRequests(null);
-    try {
-      const url = `${config.apiUrl}/api/vacations/filter?residentId=${encodeURIComponent(userId)}`;
-      const res = await fetch(url, { cache: "no-store" });
-
-      if (res.status === 404) {
-        if (!abort) setRequests([]);
-        return;
-      }
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(txt || `HTTP ${res.status}`);
-      }
-
-      const data: ApiVacation[] = await res.json();
-      if (!abort) setRequests(Array.isArray(data) ? data : [data]);
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Failed to load requests.";
-      if (!abort) setErrorRequests(msg);
-    } finally {
-      if (!abort) setLoadingRequests(false);
+  useEffect(() => {
+    if (!userId) {
+      setRequests([]);
+      setErrorRequests("Missing userId.");
+      return;
     }
-  })();
 
-  return () => {
-    abort = true;
-  };
-}, [userId, refreshKey]);
+    let abort = false;
+
+    (async () => {
+      setLoadingRequests(true);
+      setErrorRequests(null);
+      try {
+        const url = `${config.apiUrl}/api/vacations/filter?residentId=${encodeURIComponent(userId)}`;
+        const res = await fetch(url, { cache: "no-store" });
+
+        if (res.status === 404) {
+          if (!abort) setRequests([]);
+          return;
+        }
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error(txt || `HTTP ${res.status}`);
+        }
+
+        const data: ApiVacation[] = await res.json();
+        if (!abort) setRequests(Array.isArray(data) ? data : [data]);
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : "Failed to load requests.";
+        if (!abort) setErrorRequests(msg);
+      } finally {
+        if (!abort) setLoadingRequests(false);
+      }
+    })();
+
+    return () => {
+      abort = true;
+    };
+  }, [userId, refreshKey]);
 
   // Group by submission (GroupId), newest group last-date first
   const grouped: GroupedRequest[] = useMemo(() => {
@@ -139,9 +140,15 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
     }
   };
 
-  const handleConfirmSubmit = () => {
-    handleSubmitRequestOff();
-    setShowConfirmation(false);
+  const handleConfirmSubmit = async () => {
+    try {
+      setSubmitting(true);
+      await handleSubmitRequestOff();
+      setShowConfirmation(false);
+      setRefreshKey((k) => k + 1);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleCancelSubmit = () => {
@@ -295,8 +302,8 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Start Date:</span>
                     <span className="font-medium text-foreground">
-                      {new Date(startDate).toLocaleDateString('en-US', { 
-                        month: 'short', 
+                      {new Date(startDate).toLocaleDateString('en-US', {
+                        month: 'short',
                         day: 'numeric',
                         timeZone: 'UTC'
                       })}
@@ -305,10 +312,10 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">End Date:</span>
                     <span className="font-medium text-foreground">
-                      {new Date(endDate).toLocaleDateString('en-US', { 
-                        month: 'short', 
+                      {new Date(endDate).toLocaleDateString('en-US', {
+                        month: 'short',
                         day: 'numeric',
-                        timeZone: 'UTC' 
+                        timeZone: 'UTC'
                       })}
                     </span>
                   </div>
@@ -333,8 +340,8 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
           <div className="pt-3 mt-auto">
             {!showConfirmation ? (
               <>
-                <Button 
-                  onClick={handleInitialSubmit} 
+                <Button
+                  onClick={handleInitialSubmit}
                   className="w-full py-2 text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200"
                   disabled={!isFormValid}
                 >
@@ -360,50 +367,42 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
                     Are you sure you want to submit this time off request? This will be sent to your supervisor for approval.
                   </p>
                   <div className="text-xs text-yellow-600 dark:text-yellow-400">
-                    <strong>Duration:</strong> {new Date(startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })} - {new Date(endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })} ({calculateDays()} day{calculateDays() !== 1 ? 's' : ''})<br/>
+                    <strong>Duration:</strong> {new Date(startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })} - {new Date(endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })} ({calculateDays()} day{calculateDays() !== 1 ? 's' : ''})<br />
                     <strong>Reason:</strong> {reason}
                     {description && (
                       <>
-                        <br/>
+                        <br />
                         <strong>Details:</strong> {description.length > 40 ? description.substring(0, 40) + '...' : description}
                       </>
                     )}
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button 
+                  <Button
                     onClick={handleCancelSubmit}
                     variant="outline"
                     className="flex-1 py-2 text-sm"
                   >
                     Cancel
                   </Button>
-                  <Button 
+                  <Button
                     onClick={handleConfirmSubmit}
+                    disabled={submitting}
                     className="flex-1 py-2 text-sm font-semibold flex items-center justify-center gap-2"
                   >
                     <Send className="h-3.5 w-3.5" />
-                    Confirm & Send
+                    {submitting ? "Submitting…" : "Confirm & Send"}
                   </Button>
                 </div>
               </div>
             )}
 
-          {/* Resident Submitted Requests */}
+            {/* Resident Submitted Requests */}
             <div className="mt-6">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg font-semibold">Your Submitted Requests</h2>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setRefreshKey((k) => k + 1)}
-                  className="gap-1"
-                  title="Refresh"
-                >
-                  Refresh
-                </Button>
               </div>
 
               <Card className="p-3 shadow-lg border border-border">

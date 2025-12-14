@@ -22,7 +22,7 @@ useEffect(() => {
     setUser(getUser()); 
   }, []);
 
-  const handleSubmitRequestOff = () => {
+  const handleSubmitRequestOff = async (): Promise<void> => {
     // You can implement the real submit logic here
     alert("Request submitted! (implement real logic)");
   };
