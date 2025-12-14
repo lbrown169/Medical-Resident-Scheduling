@@ -1,5 +1,6 @@
 # Use LF for all text files
 * text eol=lf
+*.png binary
 
 # Make sure C# and related code always uses LF
 *.cs text eol=lf

@@ -181,6 +181,7 @@ function RegisterContent() {
                             type="text"
                             value={resident?.residentId || ""}
                             disabled
+                            placeholder="3-4 ID"
                             className="mt-1 block w-full px-3 py-2 border border-gray-500 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400 text-black dark:text-white bg-white dark:bg-neutral-800"
                         />
                         <input

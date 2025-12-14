@@ -297,7 +297,8 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
                     <span className="font-medium text-foreground">
                       {new Date(startDate).toLocaleDateString('en-US', { 
                         month: 'short', 
-                        day: 'numeric' 
+                        day: 'numeric',
+                        timeZone: 'UTC'
                       })}
                     </span>
                   </div>
@@ -306,7 +307,8 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
                     <span className="font-medium text-foreground">
                       {new Date(endDate).toLocaleDateString('en-US', { 
                         month: 'short', 
-                        day: 'numeric' 
+                        day: 'numeric',
+                        timeZone: 'UTC' 
                       })}
                     </span>
                   </div>
@@ -358,7 +360,7 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
                     Are you sure you want to submit this time off request? This will be sent to your supervisor for approval.
                   </p>
                   <div className="text-xs text-yellow-600 dark:text-yellow-400">
-                    <strong>Duration:</strong> {new Date(startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - {new Date(endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} ({calculateDays()} day{calculateDays() !== 1 ? 's' : ''})<br/>
+                    <strong>Duration:</strong> {new Date(startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })} - {new Date(endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })} ({calculateDays()} day{calculateDays() !== 1 ? 's' : ''})<br/>
                     <strong>Reason:</strong> {reason}
                     {description && (
                       <>
