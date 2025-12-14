@@ -33,7 +33,7 @@ public class MailgunEmailSendService : IEmailSendService
             }
         }
 
-        FormUrlEncodedContent formData = new(new []{
+        FormUrlEncodedContent formData = new(new[]{
             new KeyValuePair<string, string>("from", $"Psycall <{fromEmail}>"),
             new KeyValuePair<string, string>("to", toEmail),
             new KeyValuePair<string, string>("subject", "Psycall Invitation to " +
