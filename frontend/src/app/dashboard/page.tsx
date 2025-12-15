@@ -80,6 +80,7 @@ interface Resident {
   graduate_yr: number;
   email: string;
   phone_number?: string;
+  hospital_role_profile?: number;
 }
 
 interface Admin {
@@ -1075,7 +1076,7 @@ case "Home":
     console.log('Rendering AdminPage with users length:', users.length);
     return (
       <AdminPage
-        residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr }))}
+        residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr, hospitalRole: r.hospital_role_profile ?? 0 }))}
         myTimeOffRequests={myTimeOffRequests.map(r => ({
           id: r.vacationId,
           startDate: r.date || '',
@@ -1219,7 +1220,7 @@ case "Home":
         }
         return (
           <AdminPage
-            residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr }))}
+            residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr, hospitalRole: r.hospital_role_profile ?? 0 }))}
             myTimeOffRequests={myTimeOffRequests.map(r => ({
               id: r.vacationId,
               startDate: r.date || '',

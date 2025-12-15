@@ -130,6 +130,7 @@ public class ResidentsController : ControllerBase
         existingResident.weekly_hours = updatedResident.weekly_hours;
         existingResident.total_hours = updatedResident.total_hours;
         existingResident.bi_yearly_hours = updatedResident.bi_yearly_hours;
+        existingResident.hospital_role_profile = updatedResident.hospital_role_profile;
 
         try
         {
