@@ -35,12 +35,6 @@ public class PGY2
         hoursWorkedTotal = 0;
         inTraining = true;
         commitedWorkDays = new HashSet<DateTime>();
-
-        // TODO: remove this assigned random roles for testing
-        for (int i = 0; i < 12; i++)
-        {
-            rolePerMonth[i] = HospitalRole.random();
-        }
     }
 
 
@@ -229,6 +223,6 @@ public class PGY2
             commitedWorkDays.Add(curDay);
         }
 
-        Console.WriteLine("SAVE WORK DAYS NOT FULLY IMPLEMENTED");
+        // Console.WriteLine("SAVE WORK DAYS NOT FULLY IMPLEMENTED");
     }
 }

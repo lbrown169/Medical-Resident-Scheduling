@@ -5,10 +5,17 @@ using MedicalDemo.Models.DTO.Scheduling;
 
 namespace MedicalDemo.Algorithm;
 
-internal class Schedule
+public class AlgorithmService
 {
+    private readonly ILogger<AlgorithmService> _logger;
+
+    public AlgorithmService(ILogger<AlgorithmService> logger)
+    {
+        _logger = logger;
+    }
+
     // === NEW OVERLOAD METHODS FOR BACKEND INTEGRATION ===
-    public static bool Training(int year, List<PGY1> pgy1s, List<PGY2> pgy2s,
+    public bool Training(int year, List<PGY1> pgy1s, List<PGY2> pgy2s,
         List<PGY3> pgy3s)
     {
         ArrayList pgys1 = new(pgy1s);
@@ -17,21 +24,21 @@ internal class Schedule
         return Training(year, pgys1, pgys2, pgys3);
     }
 
-    public static bool Part1(int year, List<PGY1> pgy1s, List<PGY2> pgy2s)
+    public bool Part1(int year, List<PGY1> pgy1s, List<PGY2> pgy2s)
     {
         ArrayList pgys1 = new(pgy1s);
         ArrayList pgys2 = new(pgy2s);
         return Part1(year, pgys1, pgys2);
     }
 
-    public static bool Part2(int year, List<PGY1> pgy1s, List<PGY2> pgy2s)
+    public bool Part2(int year, List<PGY1> pgy1s, List<PGY2> pgy2s)
     {
         ArrayList pgys1 = new(pgy1s);
         ArrayList pgys2 = new(pgy2s);
         return Part2(year, pgys1, pgys2);
     }
 
-    public static bool Training(int year, ArrayList pgy1s, ArrayList pgy2s,
+    public bool Training(int year, ArrayList pgy1s, ArrayList pgy2s,
         ArrayList pgy3s)
     {
         int pgy1 = 8;
@@ -177,7 +184,7 @@ internal class Schedule
             }
         }
 
-        // make sure a pgy1 is with a pgy2 on a 24h saturday 
+        // make sure a pgy1 is with a pgy2 on a 24h saturday
         nodeAmt = Sat24hCallAmt * 2 /* split node */ + pgy2 + pgy1 +
                   2 /*source & sink*/; // !!!!node id order!!!!
         sourceIndex = nodeAmt - 2; // -2 for 0 indexing
@@ -485,14 +492,14 @@ internal class Schedule
         FixWeekends2(AllPgy2s);
 
         // debug print for verification
-        print(AllPgy1s, AllPgy2s, AllPgy3s);
+        Print(AllPgy1s, AllPgy2s, AllPgy3s);
 
-        // save content
-        save(AllPgy1s, AllPgy2s, AllPgy3s);
+        // savecontent
+        Save(AllPgy1s, AllPgy2s, AllPgy3s);
         return true;
     }
 
-    public static void save(ArrayList pgy1s, ArrayList pgy2s, ArrayList pgy3s)
+    public void Save(ArrayList pgy1s, ArrayList pgy2s, ArrayList pgy3s)
     {
         // save the work days of each resident to a file
         foreach (PGY1 res in pgy1s)
@@ -511,11 +518,11 @@ internal class Schedule
         }
     }
 
-    public static void print(ArrayList pgy1s, ArrayList pgy2s, ArrayList pgy3s)
+    public void Print(ArrayList pgy1s, ArrayList pgy2s, ArrayList pgy3s)
     {
         foreach (PGY1 res in pgy1s)
         {
-            Console.WriteLine($"PGY1 {res.name} works:");
+            _logger.LogDebug("PGY1 {ResName} works:", res.name);
             // print all their work days in sorted order
             ArrayList workedDays = new();
             foreach (DateTime curDay in res.workDaySet())
@@ -528,13 +535,13 @@ internal class Schedule
 
             foreach (DateTime curDay in workedDays)
             {
-                Console.WriteLine($"  {curDay} {curDay.DayOfWeek}");
+                _logger.LogDebug("  {DateTime} {CurDayDayOfWeek}", curDay, curDay.DayOfWeek);
             }
         }
 
         foreach (PGY2 res in pgy2s)
         {
-            Console.WriteLine($"PGY2 {res.name} works:");
+            _logger.LogDebug("PGY2 {ResName} works:", res.name);
             // print all their work days in sorted order
             ArrayList workedDays = new();
             foreach (DateTime curDay in res.workDaySet())
@@ -547,13 +554,13 @@ internal class Schedule
 
             foreach (DateTime curDay in workedDays)
             {
-                Console.WriteLine($"  {curDay} {curDay.DayOfWeek}");
+                _logger.LogDebug("  {DateTime} {CurDayDayOfWeek}", curDay, curDay.DayOfWeek);
             }
         }
 
         foreach (PGY3 res in pgy3s)
         {
-            Console.WriteLine($"PGY3 {res.name} works:");
+            _logger.LogDebug("PGY3 {ResName} works:", res.name);
             // print all their work days in sorted order
             ArrayList workedDays = new();
             foreach (DateTime curDay in res.workDaySet())
@@ -566,12 +573,12 @@ internal class Schedule
 
             foreach (DateTime curDay in workedDays)
             {
-                Console.WriteLine($"  {curDay} {curDay.DayOfWeek}");
+                _logger.LogDebug("  {DateTime} {CurDayDayOfWeek}", curDay, curDay.DayOfWeek);
             }
         }
     }
 
-    public static bool Part2(int year, ArrayList pgy1s, ArrayList pgy2s)
+    public bool Part2(int year, ArrayList pgy1s, ArrayList pgy2s)
     {
         Console.WriteLine("part 2: normal schedule (january through june)");
         ArrayList AllPgy1s = pgy1s;
@@ -599,7 +606,7 @@ internal class Schedule
         DateTime endDay = new(year + 1, 6, 30);
 
         // compute how many days of each shift type there are
-        Dictionary<int, int> shiftTypeCount = new();
+        Dictionary<CallShiftType, int> shiftTypeCount = new();
         for (DateTime curDay = startDay;
              curDay <= endDay;
              curDay = curDay.AddDays(1))
@@ -611,15 +618,17 @@ internal class Schedule
             }
             // skip this day if someone already works it
 
-            int shiftTypeValue = shiftType(curDay);
-            if (!shiftTypeCount.ContainsKey(shiftTypeValue))
-            {
-                shiftTypeCount[shiftTypeValue] = 0;
-            }
+            List<CallShiftType> shifts
+                = CallShiftTypeExtensions.GetAllCallShiftTypesForDate(curDay);
 
-            // initialize the count for this shift
-            shiftTypeCount[
-                shiftTypeValue]++; // increment the count for this shift type
+            foreach (CallShiftType shiftType in shifts)
+            {
+                bool wasNew = shiftTypeCount.TryAdd(shiftType, 1);
+                if (!wasNew)
+                {
+                    shiftTypeCount[shiftType]++;
+                }
+            }
         }
 
         // randomly assign shifts until one works
@@ -627,30 +636,30 @@ internal class Schedule
         bool assigned = false;
         for (int attempt = 0; attempt < maxTries && !assigned; attempt++)
         {
-            assigned = randomAssignment(AllPgy1s, AllPgy2s, startDay, endDay,
+            assigned = RandomAssignment(AllPgy1s, AllPgy2s, startDay, endDay,
                 shiftTypeCount, workedDays);
         }
 
         if (!assigned)
         {
-            Console.WriteLine(
+            _logger.LogError(
                 "[ERROR] Could not assign random shifts after retries");
             return false;
         }
 
         // save (and commit)
-        save(AllPgy1s, AllPgy2s,
+        Save(AllPgy1s, AllPgy2s,
             new ArrayList()); // PGY3s are not used in part 1
-        Console.WriteLine("Part 2 completed successfully.");
+        _logger.LogInformation("Part 2 completed successfully.");
         // Print
-        print(AllPgy1s, AllPgy2s,
+        Print(AllPgy1s, AllPgy2s,
             new ArrayList()); // PGY3s are not used in part 1
         return true;
     }
 
-    public static bool Part1(int year, ArrayList pgy1s, ArrayList pgy2s)
+    public bool Part1(int year, ArrayList pgy1s, ArrayList pgy2s)
     {
-        Console.WriteLine("part 1: normal schedule (july through december)");
+        _logger.LogInformation("part 1: normal schedule (july through december)");
         int pgy1 = 8;
         int pgy2 = 8;
         ArrayList AllPgy1s = pgy1s;
@@ -692,7 +701,7 @@ internal class Schedule
         DateTime endDay = new(year, 12, 31);
 
         // compute how many days of each shift type there are
-        Dictionary<int, int> shiftTypeCount = new();
+        Dictionary<CallShiftType, int> shiftTypeCount = new();
         for (DateTime curDay = startDay;
              curDay <= endDay;
              curDay = curDay.AddDays(1))
@@ -704,15 +713,17 @@ internal class Schedule
             }
             // skip this day if someone already works it
 
-            int shiftTypeValue = shiftType(curDay);
-            if (!shiftTypeCount.ContainsKey(shiftTypeValue))
-            {
-                shiftTypeCount[shiftTypeValue] = 0;
-            }
+            List<CallShiftType> shifts
+                = CallShiftTypeExtensions.GetAllCallShiftTypesForDate(curDay);
 
-            // initialize the count for this shift
-            shiftTypeCount[
-                shiftTypeValue]++; // increment the count for this shift type
+            foreach (CallShiftType shiftType in shifts)
+            {
+                bool wasNew = shiftTypeCount.TryAdd(shiftType, 1);
+                if (!wasNew)
+                {
+                    shiftTypeCount[shiftType]++;
+                }
+            }
         }
 
         // randomly assign shifts until one works
@@ -720,48 +731,51 @@ internal class Schedule
         bool assigned = false;
         for (int attempt = 0; attempt < maxTries && !assigned; attempt++)
         {
-            assigned = randomAssignment(AllPgy1s, AllPgy2s, startDay, endDay,
+            assigned = RandomAssignment(AllPgy1s, AllPgy2s, startDay, endDay,
                 shiftTypeCount, workedDays);
         }
 
         if (!assigned)
         {
-            Console.WriteLine(
+            _logger.LogError(
                 "[ERROR] Could not assign random shifts after retries");
             return false;
         }
 
         // save (and commit)
-        save(AllPgy1s, AllPgy2s,
+        Save(AllPgy1s, AllPgy2s,
             new ArrayList()); // PGY3s are not used in part 1
-        Console.WriteLine("Part 1 completed successfully.");
+        _logger.LogInformation("Part 1 completed successfully.");
         // Print
-        print(AllPgy1s, AllPgy2s,
+        Print(AllPgy1s, AllPgy2s,
             new ArrayList()); // PGY3s are not used in part 1
         return true;
     }
 
 
-    public static void computeWorkTime(ArrayList pgy1s, ArrayList pgy2s,
+    public void ComputeWorkTime(ArrayList pgy1s, ArrayList pgy2s,
         int[] pgy1WorkTime, int[] pgy2WorkTime,
-        Dictionary<int, int>[] pgy1ShiftCount,
-        Dictionary<int, int>[] pgy2ShiftCount)
+        Dictionary<CallShiftType, int>[] pgy1ShiftCount,
+        Dictionary<CallShiftType, int>[] pgy2ShiftCount)
     {
         for (int i = 0; i < pgy1s.Count; i++)
         {
             pgy1WorkTime[i] = 0;
-            PGY1? res = (PGY1)pgy1s[i];
-            foreach (DateTime workDay in
-                     res.workDaySet())
-            {
-                pgy1WorkTime[i] += shiftType(workDay);
-            }
+            // PGY1? res = (PGY1)pgy1s[i];
+            // foreach (DateTime workDay in
+            //          res.workDaySet())
+            // {
+            //     CallShiftType shiftType
+            //         = CallShiftTypeExtensions.GetCallShiftTypeForDate(workDay,
+            //             1);
+            //     pgy1WorkTime[i] += shiftType.GetHours();
+            // }
 
             // add the shift type time to the work time
-            foreach (int shift in
+            foreach (CallShiftType shift in
                      pgy1ShiftCount[i].Keys)
             {
-                pgy1WorkTime[i] += shift * pgy1ShiftCount[i][shift];
+                pgy1WorkTime[i] += shift.GetHours() * pgy1ShiftCount[i][shift];
             }
             // add the assigned shifts to the work time
         }
@@ -769,39 +783,44 @@ internal class Schedule
         for (int i = 0; i < pgy2s.Count; i++)
         {
             pgy2WorkTime[i] = 0;
-            PGY2? res = (PGY2)pgy2s[i];
-            foreach (DateTime workDay in
-                     res.workDaySet())
-            {
-                pgy2WorkTime[i] += shiftType(workDay);
-            }
+            // PGY2? res = (PGY2)pgy2s[i];
+            // foreach (DateTime workDay in
+            //          res.workDaySet())
+            // {
+            //     CallShiftType shiftType
+            //         = CallShiftTypeExtensions.GetCallShiftTypeForDate(workDay,
+            //             2);
+            //     pgy2WorkTime[i] += shiftType.GetHours();
+            // }
 
             // add the shift type time to the work time
-            foreach (int shift in
+            foreach (CallShiftType shift in
                      pgy2ShiftCount[i].Keys)
             {
-                pgy2WorkTime[i] += shift * pgy2ShiftCount[i][shift];
+                pgy2WorkTime[i] += shift.GetHours() * pgy2ShiftCount[i][shift];
             }
             // add the assigned shifts to the work time
         }
     }
 
 #pragma warning disable IDE0060
-    public static void initialShiftAssignment(ArrayList pgy1s, ArrayList pgy2s,
-        DateTime startDay, DateTime endDay,
-        Dictionary<int, int> shiftTypeCount,
-        Dictionary<int, int>[] pgy1ShiftCount,
-        Dictionary<int, int>[] pgy2ShiftCount, Random rand,
-        Dictionary<int, int>[] allowedCallTypes)
+    public void InitialShiftAssignment(ArrayList pgy1s, ArrayList pgy2s,
+        Dictionary<CallShiftType, int> shiftTypeCount,
+        Dictionary<CallShiftType, int>[] pgy1ShiftCount,
+        Dictionary<CallShiftType, int>[] pgy2ShiftCount, Random rand,
+        Dictionary<CallShiftType, int>[] allowedCallTypes)
     {
-        foreach (int shift in shiftTypeCount.Keys)
+        foreach (CallShiftType shift in shiftTypeCount.Keys)
         {
             // Create a random ratio for each shift type
-            double ratio = rand.NextDouble(); // random ratio between 0 and 1
+            double ratio = 50; // random ratio between 0 and 1
             for (int i = 0; i < shiftTypeCount[shift]; i++)
             // randomly select a pgy1 or pgy2 to assign the shift to
             {
-                if (rand.NextDouble() < ratio) // 50% chance to assign to pgy1
+                int? requiredYear = shift.GetRequiredYear();
+                int usingYear
+                    = requiredYear ?? (rand.NextDouble() < 0.50 ? 1 : 2); // 50% chance to assign to pgy1
+                if (usingYear == 1)
                 {
                     int pgy1Index = rand.Next(pgy1s.Count);
                     if (!allowedCallTypes[pgy1Index]
@@ -863,13 +882,38 @@ internal class Schedule
 
 #pragma warning restore IDE0060
 
-    public static void swapSomeShiftCount(ArrayList pgy1s, ArrayList pgy2s,
-        Dictionary<int, int>[] pgy1ShiftCount,
-        Dictionary<int, int>[] pgy2ShiftCount, Random rand, int[] pgy1WorkTime,
+    public void SwapSomeShiftCount(ArrayList pgy1s, ArrayList pgy2s,
+        Dictionary<CallShiftType, int>[] pgy1ShiftCount,
+        Dictionary<CallShiftType, int>[] pgy2ShiftCount, Random rand, int[] pgy1WorkTime,
         int[] pgy2WorkTime,
-        Dictionary<int, int>[] allowedCallTypes)
+        Dictionary<CallShiftType, int>[] allowedCallTypes)
     {
-        // find the person who worked the most
+        // First root the person who worked the most
+        bool success = SwapWithGiverRooted(pgy1s, pgy2s, pgy1ShiftCount,
+            pgy2ShiftCount, rand, pgy1WorkTime, pgy2WorkTime, allowedCallTypes);
+
+        if (success)
+        {
+            return;
+        }
+
+        success = SwapWithReceiverRooted(pgy1s, pgy2s, pgy1ShiftCount,
+            pgy2ShiftCount, rand, pgy1WorkTime, pgy2WorkTime, allowedCallTypes);
+
+        if (!success)
+        {
+            _logger.LogError("Failed");
+        }
+    }
+
+    public bool SwapWithGiverRooted(ArrayList pgy1s, ArrayList pgy2s,
+        Dictionary<CallShiftType, int>[] pgy1ShiftCount,
+        Dictionary<CallShiftType, int>[] pgy2ShiftCount, Random rand,
+        int[] pgy1WorkTime,
+        int[] pgy2WorkTime,
+        Dictionary<CallShiftType, int>[] allowedCallTypes)
+    {
+                // find the person who worked the most
         int giverIndex = 0;
         int giveHour = -1;
         for (int i = 0; i < pgy1s.Count; i++)
@@ -890,184 +934,165 @@ internal class Schedule
             }
         }
 
-        // choose a random giving resident and a random receiving resident
-        int receiverIndex = rand.Next(pgy1s.Count + pgy2s.Count);
+        // Calculate give-able shifts
+        int giverYear = giverIndex < pgy1s.Count ? 1 : 2;
+        int normalizedGiverIndex = giverYear == 1 ? giverIndex : giverIndex - pgy1s.Count;
+        Dictionary<CallShiftType, int> giverShiftCount =
+            giverYear == 1
+                ? pgy1ShiftCount[normalizedGiverIndex]
+                : pgy2ShiftCount[normalizedGiverIndex];
+        List<CallShiftType> giverShiftTypes = giverShiftCount.Where(kvp => kvp.Value > 0).Select(kvp => kvp.Key).ToList();
 
-        // check that giver and receiver are not the same AND that giver works more than receiver
-        int receiveHour = receiverIndex < pgy1s.Count
-            ? pgy1WorkTime[receiverIndex]
-            : pgy2WorkTime[receiverIndex - pgy1s.Count];
-        while (giveHour <= receiveHour + 12 ||
-               giverIndex ==
-               receiverIndex) // ensure that the giver has worked more than the receiver and they are not the same person
+        // ensure that the giver has worked more than the receiver and they are not the same person
+        int count = 0;
+        int receiverIndex;
+        Dictionary<CallShiftType, int> receiverShiftCount;
+        List<CallShiftType> swappableShiftTypes;
+
+        bool needsToCalculate;
+        do
         {
+            count++;
+            // choose a random giving resident and a random receiving resident
             receiverIndex = rand.Next(pgy1s.Count + pgy2s.Count);
 
-
-            receiveHour = receiverIndex < pgy1s.Count
+            // check that giver and receiver are not the same AND that giver works more than receiver
+            int receiveHour = receiverIndex < pgy1s.Count
                 ? pgy1WorkTime[receiverIndex]
                 : pgy2WorkTime[receiverIndex - pgy1s.Count];
-        }
 
-        int ct = 0; // count how many iterations we have done
-        // iterate until we a shift to give
-        while (true)
+            // make sure they have common shift types
+            int receiverYear = receiverIndex < pgy1s.Count ? 1 : 2;
+            int normalizedReceiverIndex = receiverYear == 1 ? receiverIndex : receiverIndex - pgy1s.Count;
+            receiverShiftCount =
+                receiverYear == 1
+                    ? pgy1ShiftCount[normalizedReceiverIndex]
+                    : pgy2ShiftCount[normalizedReceiverIndex];
+            IEnumerable<CallShiftType> receiverShiftTypes = receiverShiftCount
+                .Where(kvp => allowedCallTypes[receiverIndex].ContainsKey(kvp.Key)
+                              && allowedCallTypes[receiverIndex][kvp.Key] > receiverShiftCount[kvp.Key]
+                )
+                .Select(kvp => kvp.Key);
+
+            swappableShiftTypes = giverShiftTypes.Intersect(receiverShiftTypes).ToList();
+
+            needsToCalculate = giveHour <= receiveHour + 12
+                               || giverIndex == receiverIndex
+                               || swappableShiftTypes.Count == 0;
+        } while (needsToCalculate && count < 100);
+
+        if (needsToCalculate)
         {
-            ct++;
-            if (ct > 100) // prevent infinite loop
-            {
-                Console.WriteLine("Failed to swap shifts after 100 attempts.");
-                return; // exit the method if we cannot find a shift to swap
-            }
-
-            // determine a shift type to give
-            int shiftType
-                = rand.Next(0, 3); // shift types are 3, 12, and 24 hours
-            shiftType
-                = shiftType == 0 ? 3 :
-                shiftType == 1 ? 12 : 24; // convert to actual shift type
-            // check if the giver has this shift type
-            // determine if giver has this shift type
-            if (giverIndex < pgy1s.Count) // giver is a pgy1
-            {
-                if (pgy1ShiftCount[giverIndex].ContainsKey(shiftType) &&
-                    pgy1ShiftCount[giverIndex][shiftType] > 0)
-                {
-                    // give it
-                    pgy1ShiftCount[giverIndex][shiftType]--;
-
-                    // determine what resident type is receiving the shift
-                    if (receiverIndex < pgy1s.Count) // receiver is a pgy1
-                    {
-                        // check if the receiver can take this shift type
-                        if (!allowedCallTypes[receiverIndex]
-                                .ContainsKey(shiftType) ||
-                            allowedCallTypes[receiverIndex][shiftType] <=
-                            pgy1ShiftCount[receiverIndex][shiftType])
-                        {
-                            pgy1ShiftCount[giverIndex][
-                                shiftType]++; // uncommit the shift
-                            continue; // skip this iteration if the receiver cannot take this shift type
-                        }
-
-                        if (pgy1ShiftCount[receiverIndex]
-                            .ContainsKey(shiftType))
-                        {
-                            pgy1ShiftCount[receiverIndex][shiftType]++;
-                        }
-                        else
-                        {
-                            pgy1ShiftCount[receiverIndex][shiftType] = 1;
-                        }
-                        // initialize the count for this shift type
-                    }
-                    else // receiver is a pgy2
-                    {
-                        // check if the receiver can take this shift type
-                        if (!allowedCallTypes[receiverIndex]
-                                .ContainsKey(shiftType) ||
-                            allowedCallTypes[receiverIndex][shiftType] <=
-                            pgy2ShiftCount[receiverIndex - pgy1s.Count][
-                                shiftType])
-                        {
-                            pgy1ShiftCount[giverIndex][
-                                shiftType]++; // uncommit the shift
-                            continue; // skip this iteration if the receiver cannot take this shift type
-                        }
-
-                        if (pgy2ShiftCount[receiverIndex - pgy1s.Count]
-                            .ContainsKey(shiftType))
-                        {
-                            pgy2ShiftCount[receiverIndex - pgy1s.Count][
-                                shiftType]++;
-                        }
-                        else
-                        {
-                            pgy2ShiftCount[receiverIndex - pgy1s.Count][
-                                    shiftType] =
-                                1;
-                        }
-                        // initialize the count for this shift type
-                    }
-
-                    return; // exit the loop after a successful swap
-                }
-            }
-            else // giver is a pgy2
-            {
-                if (pgy2ShiftCount[giverIndex - pgy1s.Count]
-                        .ContainsKey(shiftType) &&
-                    pgy2ShiftCount[giverIndex - pgy1s.Count][shiftType] > 0)
-                {
-                    // Give it
-                    pgy2ShiftCount[giverIndex - pgy1s.Count][shiftType]--;
-
-                    // Receive it
-                    if (receiverIndex < pgy1s.Count) // receiver is a pgy1
-                    {
-                        // check if the receiver can take this shift type
-                        if (!allowedCallTypes[receiverIndex]
-                                .ContainsKey(shiftType) ||
-                            allowedCallTypes[receiverIndex][shiftType] <=
-                            pgy1ShiftCount[receiverIndex][shiftType])
-                        {
-                            pgy2ShiftCount[giverIndex - pgy1s.Count][shiftType]
-                                ++; // uncommit the shift
-                            continue; // skip this iteration if the receiver cannot take this shift type
-                        }
-
-                        // Receive it
-                        if (pgy1ShiftCount[receiverIndex]
-                            .ContainsKey(shiftType))
-                        {
-                            pgy1ShiftCount[receiverIndex][shiftType]++;
-                        }
-                        else
-                        {
-                            pgy1ShiftCount[receiverIndex][shiftType] = 1;
-                        }
-                        // initialize the count for this shift type
-                    }
-                    else // receiver is a pgy2
-                    {
-                        // check if the receiver can take this shift type
-                        if (!allowedCallTypes[receiverIndex]
-                                .ContainsKey(shiftType) ||
-                            allowedCallTypes[receiverIndex][shiftType] <=
-                            pgy2ShiftCount[receiverIndex - pgy1s.Count][
-                                shiftType])
-                        {
-                            pgy2ShiftCount[giverIndex - pgy1s.Count][shiftType]
-                                ++; // uncommit the shift
-                            continue; // skip this iteration if the receiver cannot take this shift type
-                        }
-
-                        // receive it
-                        if (pgy2ShiftCount[receiverIndex - pgy1s.Count]
-                            .ContainsKey(shiftType))
-                        {
-                            pgy2ShiftCount[receiverIndex - pgy1s.Count][
-                                shiftType]++;
-                        }
-                        else
-                        {
-                            pgy2ShiftCount[receiverIndex - pgy1s.Count][
-                                    shiftType] =
-                                1;
-                        }
-                        // initialize the count for this shift type
-                    }
-
-                    return; // exit the loop after a successful swap
-                }
-            }
+            // Too many attempts
+            _logger.LogError("Failed to swap shifts with giver rooted after 100 attempts.");
+            return false;
         }
+
+        int shiftIndex = rand.Next(0, swappableShiftTypes.Count);
+        CallShiftType shift = swappableShiftTypes[shiftIndex];
+
+        giverShiftCount[shift]--;
+        receiverShiftCount[shift]++;
+
+        return true;
     }
 
+    public bool SwapWithReceiverRooted(ArrayList pgy1s, ArrayList pgy2s,
+        Dictionary<CallShiftType, int>[] pgy1ShiftCount,
+        Dictionary<CallShiftType, int>[] pgy2ShiftCount, Random rand,
+        int[] pgy1WorkTime,
+        int[] pgy2WorkTime,
+        Dictionary<CallShiftType, int>[] allowedCallTypes)
+    {
+        // find the person who worked the least
+        int receiverIndex = 0;
+        int receiverHour = -1;
+        for (int i = 0; i < pgy1s.Count; i++)
+        {
+            if (receiverHour > pgy1WorkTime[i])
+            {
+                receiverHour = pgy1WorkTime[i];
+                receiverIndex = i;
+            }
+        }
 
-    public static bool randomAssignment(ArrayList pgy1s, ArrayList pgy2s,
+        for (int i = 0; i < pgy2s.Count; i++)
+        {
+            if (receiverHour > pgy2WorkTime[i])
+            {
+                receiverHour = pgy2WorkTime[i];
+                receiverIndex = i + pgy1s.Count;
+            }
+        }
+
+        // Calculate give-able shifts
+        int receiverYear = receiverIndex < pgy1s.Count ? 1 : 2;
+        int normalizedReceiverIndex = receiverYear == 1 ? receiverIndex : receiverIndex - pgy1s.Count;
+        Dictionary<CallShiftType, int> receiverShiftCount =
+            receiverYear == 1
+                ? pgy1ShiftCount[normalizedReceiverIndex]
+                : pgy2ShiftCount[normalizedReceiverIndex];
+        List<CallShiftType> receiverShiftTypes = receiverShiftCount
+            .Where(kvp => allowedCallTypes[receiverIndex].ContainsKey(kvp.Key)
+                          && allowedCallTypes[receiverIndex][kvp.Key] > receiverShiftCount[kvp.Key]
+            )
+            .Select(kvp => kvp.Key)
+            .ToList();
+
+        // ensure that the giver has worked more than the receiver and they are not the same person
+        int count = 0;
+        int giverIndex;
+        Dictionary<CallShiftType, int> giverShiftCount;
+        List<CallShiftType> swappableShiftTypes;
+
+        bool needsToCalculate;
+        do
+        {
+            count++;
+            // choose a random giving resident and a random receiving resident
+            giverIndex = rand.Next(pgy1s.Count + pgy2s.Count);
+
+            // check that giver and receiver are not the same AND that giver works more than receiver
+            int giverHour = giverIndex < pgy1s.Count
+                ? pgy1WorkTime[giverIndex]
+                : pgy2WorkTime[giverIndex - pgy1s.Count];
+
+            // make sure they have common shift types
+            int giverYear = giverIndex < pgy1s.Count ? 1 : 2;
+            int normalizedGiverIndex = giverYear == 1 ? giverIndex : giverIndex - pgy1s.Count;
+            giverShiftCount =
+                giverYear == 1
+                    ? pgy1ShiftCount[normalizedGiverIndex]
+                    : pgy2ShiftCount[normalizedGiverIndex];
+            IEnumerable<CallShiftType> giverShiftTypes = giverShiftCount
+                .Where(kvp => kvp.Value > 0).Select(kvp => kvp.Key);
+
+            swappableShiftTypes = giverShiftTypes.Intersect(receiverShiftTypes).ToList();
+
+            needsToCalculate = giverHour <= receiverHour + 12
+                               || giverIndex == receiverIndex
+                               || swappableShiftTypes.Count == 0;
+        } while (needsToCalculate && count < 100);
+
+        if (needsToCalculate)
+        {
+            // Too many attempts
+            _logger.LogError("Failed to swap shifts with giver rooted after 100 attempts.");
+            return false;
+        }
+
+        int shiftIndex = rand.Next(0, swappableShiftTypes.Count);
+        CallShiftType shift = swappableShiftTypes[shiftIndex];
+
+        giverShiftCount[shift]--;
+        receiverShiftCount[shift]++;
+
+        return true;
+    }
+
+    public bool RandomAssignment(ArrayList pgy1s, ArrayList pgy2s,
         DateTime startDay, DateTime endDay,
-        Dictionary<int, int> shiftTypeCount, HashSet<DateTime> workedDays)
+        Dictionary<CallShiftType, int> shiftTypeCount, HashSet<DateTime> workedDays)
     {
         //Console.WriteLine("[DEBUG] Attempting random assignment of shifts...");
 
@@ -1076,41 +1101,46 @@ internal class Schedule
         Random rand = new(seed);
 
         // track how many shifts of each type are given to each resident
-        Dictionary<int, int>[] pgy1ShiftCount
-            = new Dictionary<int, int>[pgy1s.Count];
-        Dictionary<int, int>[] pgy2ShiftCount
-            = new Dictionary<int, int>[pgy2s.Count];
-        Dictionary<int, int>[] allowedCallTypes
-            = new Dictionary<int, int>[pgy1s.Count + pgy2s.Count];
+        Dictionary<CallShiftType, int>[] pgy1ShiftCount
+            = new Dictionary<CallShiftType, int>[pgy1s.Count];
+        Dictionary<CallShiftType, int>[] pgy2ShiftCount
+            = new Dictionary<CallShiftType, int>[pgy2s.Count];
+        Dictionary<CallShiftType, int>[] allowedCallTypes
+            = new Dictionary<CallShiftType, int>[pgy1s.Count + pgy2s.Count];
 
         // initialize data for each resident
+        // On Saturdays, PGY1s work 24 hours and PGY2s work 12 hours
         for (int i = 0; i < pgy1s.Count; i++)
         {
-            pgy1ShiftCount[i] = new Dictionary<int, int>
+            pgy1ShiftCount[i] = new Dictionary<CallShiftType, int>();
+            allowedCallTypes[i] = new Dictionary<CallShiftType, int>();
+            foreach (CallShiftType shift in CallShiftTypeExtensions
+                         .GetAllCallShiftsForYear(1))
             {
-                [3] = 0,
-                [12] = 0,
-                [24] = 0
-            };
-            allowedCallTypes[i] = new Dictionary<int, int>();
+                pgy1ShiftCount[i][shift] = 0;
+                allowedCallTypes[i][shift] = 0;
+            }
         }
 
         for (int i = 0; i < pgy2s.Count; i++)
         {
-            pgy2ShiftCount[i] = new Dictionary<int, int>
+            pgy2ShiftCount[i] = new Dictionary<CallShiftType, int>();
+            allowedCallTypes[i + pgy1s.Count] = new Dictionary<CallShiftType, int>();
+            foreach (CallShiftType shift in CallShiftTypeExtensions
+                         .GetAllCallShiftsForYear(2))
             {
-                [3] = 0,
-                [12] = 0,
-                [24] = 0
-            };
-            allowedCallTypes[i + pgy1s.Count] = new Dictionary<int, int>();
+                pgy2ShiftCount[i][shift] = 0;
+                allowedCallTypes[i + pgy1s.Count][shift] = 0;
+            }
         }
 
         // iterate through the days and determine the maximum number of shifts for each resident
+        int numberOfShifts = 0;
         for (DateTime curDay = startDay;
              curDay <= endDay;
              curDay = curDay.AddDays(1))
         {
+            numberOfShifts += CallShiftTypeExtensions.GetAllCallShiftTypesForDate(curDay).Count;
             // iterate through each resident and determine if they can work this day
             for (int i = 0; i < pgy1s.Count; i++)
             {
@@ -1118,18 +1148,11 @@ internal class Schedule
                 if (res.canWork(curDay) && !workedDays.Contains(curDay))
                 {
                     // determine the shift type for this day
-                    int shiftTypeValue = shiftType(curDay);
+                    CallShiftType shiftTypeValue
+                        = CallShiftTypeExtensions.GetCallShiftTypeForDate(
+                            curDay, 1);
 
-                    // check if this is a new shift type for this resident
-                    if (!allowedCallTypes[i].ContainsKey(shiftTypeValue))
-                    {
-                        allowedCallTypes[i][shiftTypeValue] = 0;
-                    }
-                    // initialize the count for this shift type
-
-                    // add to the allowed call types for this resident
-                    allowedCallTypes[i][shiftTypeValue]
-                        += 1; // mark that this resident can work this shift type
+                    allowedCallTypes[i][shiftTypeValue]++;
                 }
             }
 
@@ -1139,26 +1162,17 @@ internal class Schedule
                 if (res.canWork(curDay) && !workedDays.Contains(curDay))
                 {
                     // determine the shift type for this day
-                    int shiftTypeValue = shiftType(curDay);
+                    CallShiftType shiftTypeValue
+                        = CallShiftTypeExtensions.GetCallShiftTypeForDate(
+                            curDay, 2);
 
-                    // check if this is a new shift type for this resident
-                    if (!allowedCallTypes[i + pgy1s.Count]
-                            .ContainsKey(shiftTypeValue))
-                    {
-                        allowedCallTypes[i + pgy1s.Count][shiftTypeValue] =
-                            0;
-                    }
-
-                    // initialize the count for this shift type
-                    // add to the allowed call types for this resident
-                    allowedCallTypes[i + pgy1s.Count][shiftTypeValue] +=
-                        1; // mark that this resident can work this shift type
+                    allowedCallTypes[i + pgy1s.Count][shiftTypeValue]++;
                 }
             }
         }
 
         // iterate through all the shift types and assign them to residents randomly
-        initialShiftAssignment(pgy1s, pgy2s, startDay, endDay, shiftTypeCount,
+        InitialShiftAssignment(pgy1s, pgy2s, shiftTypeCount,
             pgy1ShiftCount, pgy2ShiftCount, rand,
             allowedCallTypes);
 
@@ -1169,7 +1183,7 @@ internal class Schedule
             // compute work time for each resident
             int[] pgy1WorkTime = new int[pgy1s.Count];
             int[] pgy2WorkTime = new int[pgy2s.Count];
-            computeWorkTime(pgy1s, pgy2s, pgy1WorkTime, pgy2WorkTime,
+            ComputeWorkTime(pgy1s, pgy2s, pgy1WorkTime, pgy2WorkTime,
                 pgy1ShiftCount, pgy2ShiftCount);
 
             // loop until within 24-hour window
@@ -1181,8 +1195,7 @@ internal class Schedule
                 if (ct2 > 100) // prevent infinite loop
                                //Console.WriteLine("Failed to find a valid assignment within 24-hour window after 100 attempts.");
                 {
-                    return
-                        false;
+                    return false;
                 }
 
                 // exit the method if we cannot swap shifts to reach a valid assignment (within 24-hour window)
@@ -1198,12 +1211,11 @@ internal class Schedule
                 else
                 {
                     // swap a shift count between two residents
-                    swapSomeShiftCount(pgy1s, pgy2s, pgy1ShiftCount,
-                        pgy2ShiftCount, rand, pgy1WorkTime, pgy2WorkTime,
-                        allowedCallTypes);
+                    SwapSomeShiftCount(pgy1s, pgy2s, pgy1ShiftCount,
+                        pgy2ShiftCount, rand, pgy1WorkTime, pgy2WorkTime, allowedCallTypes);
 
                     // recompute work time for each resident
-                    computeWorkTime(pgy1s, pgy2s, pgy1WorkTime, pgy2WorkTime,
+                    ComputeWorkTime(pgy1s, pgy2s, pgy1WorkTime, pgy2WorkTime,
                         pgy1ShiftCount, pgy2ShiftCount);
                 }
             }
@@ -1211,28 +1223,42 @@ internal class Schedule
             // use flow to see if the assignment is possible
 
             // only need nodes for each resident(pgy1+pgy2) for each shit type(3) and for each day (#days in range)
-            Graph g = new(3 * (pgy1s.Count + pgy2s.Count) + 200 + 2);
-            int srcIndex = 3 * (pgy1s.Count + pgy2s.Count) + 200;
+            int numShiftTypes
+                = CallShiftTypeExtensions.GetAllCallShiftTypes().Count;
+
+            // Markers
+            int pgy1start = 0;
+            int pgy2Start = pgy1s.Count * numShiftTypes;
+            int shiftStart = pgy2Start + pgy2s.Count * numShiftTypes;
+
+            int srcIndex = shiftStart + numberOfShifts;
             int snkIndex = srcIndex + 1;
 
+            int totalNodes = snkIndex + 1;
+            Graph g = new(totalNodes);
+
             // make an edge from the source to each residents shift type with capacity based on the chosen shifts to work
+            List<CallShiftType> pgy1ShiftTypes
+                = CallShiftTypeExtensions.GetAllCallShiftsForYear(1);
             for (int i = 0; i < pgy1s.Count; i++)
             {
-                for (int type = 0; type < 3; type++)
+                foreach (CallShiftType shiftType in pgy1ShiftTypes)
                 {
-                    int shiftDuration = type == 0 ? 3 : type == 1 ? 12 : 24;
-                    g.addEdge(srcIndex, i * 3 + type,
-                        pgy1ShiftCount[i][shiftDuration]);
+                    int offset = (int) shiftType;
+                    g.addEdge(srcIndex, i * numShiftTypes + offset,
+                        pgy1ShiftCount[i][shiftType]);
                 }
             }
 
+            List<CallShiftType> pgy2ShiftTypes
+                = CallShiftTypeExtensions.GetAllCallShiftsForYear(2);
             for (int i = 0; i < pgy2s.Count; i++)
             {
-                for (int type = 0; type < 3; type++)
+                foreach (CallShiftType shiftType in pgy2ShiftTypes)
                 {
-                    int shiftDuration = type == 0 ? 3 : type == 1 ? 12 : 24;
-                    g.addEdge(srcIndex, (pgy1s.Count + i) * 3 + type,
-                        pgy2ShiftCount[i][shiftDuration]);
+                    int offset = (int) shiftType;
+                    g.addEdge(srcIndex, pgy2Start + i * numShiftTypes + offset,
+                        pgy2ShiftCount[i][shiftType]);
                 }
             }
 
@@ -1249,45 +1275,53 @@ internal class Schedule
                     continue;
                 }
 
-                // skip this day if someone already works it
-                dayList.Add(curDay);
+                List<CallShiftType> shiftTypes
+                    = CallShiftTypeExtensions.GetAllCallShiftTypesForDate(
+                        curDay);
 
-                // check the shift type and connect accordingly
-                int shiftTypeValue = shiftType(curDay);
-
-                // get the node index offset based on the shift type
-                int nodeIndexOffset = shiftTypeValue == 3 ? 0 :
-                    shiftTypeValue == 12 ? 1 : 2;
-
-                // add edges from each resident's shift type to the day's node
-                for (int i = 0; i < pgy1s.Count; i++)
+                for (int shiftIndex = 0; shiftIndex < shiftTypes.Count; shiftIndex++)
                 {
-                    if (((PGY1)pgy1s[i]).canWork(curDay))
-                    {
-                        g.addEdge(i * 3 + nodeIndexOffset,
-                            (pgy1s.Count + pgy2s.Count) * 3 + dayList.Count - 1,
-                            1);
-                    }
-                }
+                    dayList.Add(curDay);
 
-                for (int i = 0; i < pgy2s.Count; i++)
-                {
-                    if (((PGY2)pgy2s[i]).canWork(curDay))
-                    {
-                        g.addEdge((i + pgy1s.Count) * 3 + nodeIndexOffset,
-                            (pgy1s.Count + pgy2s.Count) * 3 + dayList.Count - 1,
-                            1);
-                    }
-                }
+                    CallShiftType shift = shiftTypes[shiftIndex];
+                    int shiftOffset = (int) shift;
+                    int? reqYear = shift.GetRequiredYear();
 
-                // connect the day to the sink
-                g.addEdge((pgy1s.Count + pgy2s.Count) * 3 + dayList.Count - 1,
-                    snkIndex, 1);
+                    if (reqYear is null or 1)
+                    {
+                        for (int i = 0; i < pgy1s.Count; i++)
+                        {
+                            if (((PGY1)pgy1s[i]).canWork(curDay))
+                            {
+                                g.addEdge(i * numShiftTypes + shiftOffset,
+                                    shiftStart + dayList.Count - 1,
+                                    1);
+                            }
+                        }
+                    }
+
+                    if (reqYear is null or 2)
+                    {
+                        for (int i = 0; i < pgy2s.Count; i++)
+                        {
+                            if (((PGY2)pgy2s[i]).canWork(curDay))
+                            {
+                                g.addEdge(pgy2Start + i * numShiftTypes + shiftOffset,
+                                    shiftStart + dayList.Count - 1,
+                                    1);
+                            }
+                        }
+                    }
+
+                    // connect the day to the sink
+                    g.addEdge(shiftStart + dayList.Count - 1,
+                        snkIndex, 1);
+                }
             }
 
             // run flow
             int flow = g.getFlow(srcIndex, snkIndex);
-            Console.WriteLine($"[DEBUG] flow is {flow} out of {dayList.Count}");
+            _logger.LogDebug($"[DEBUG] flow is {flow} out of {dayList.Count}");
 
             // if unsuccessful, we need to adjust the allowed call types for the residents
             if (flow != dayList.Count)
@@ -1302,7 +1336,7 @@ internal class Schedule
                 for (int I = 0; I < edgesFromSource.Count; I++)
                 {
                     Edge? edge = (Edge)edgesFromSource[I];
-                    int residentIndex = edge.destination / 3;
+                    int residentIndex = edge.destination / numShiftTypes;
                     // Check if the flow is not equal to the assigned shifts
                     if (edge.flow() < edge.originalCap)
                     {
@@ -1312,11 +1346,16 @@ internal class Schedule
                             : ((PGY2)pgy2s[residentIndex - pgy1s.Count]).name;
 
                         // print the resident who did not handle their shifts
-                        Console.WriteLine(
-                            $"[DEBUG] Resident {residentName} did not handle their shifts properly. Assigned: {edge.flow()}, Expected: {edge.originalCap}");
+                        _logger.LogError(
+                            "[DEBUG] Resident {ResidentName} did not handle " +
+                            "their shifts properly. Assigned: {Flow}, Expected: " +
+                            "{EdgeOriginalCap}",
+                            residentName, edge.flow(), edge.originalCap
+                        );
                         return false;
                     }
 
+                    /*
                     // give a different resdient the shifts that were not assigned
                     if (edge.flow() < edge.originalCap)
                     {
@@ -1367,9 +1406,10 @@ internal class Schedule
                             allowedCallTypes[residentIndex][shiftTypeValue]
                                 = edge.flow();
                         }
-                    }
+                    } */
                 }
 
+                /*
                 // iterate through the unhandled shifts
                 foreach (KeyValuePair<int, int> kvp in unhandledShifts)
                 {
@@ -1413,33 +1453,87 @@ internal class Schedule
                             }
                         }
                     }
-                }
+                }*/
 
 
+                /*
                 // print the unhandled shifts
                 Console.WriteLine("[DEBUG] Unhandled shifts:");
                 foreach (KeyValuePair<int, int> kvp in unhandledShifts)
                 {
                     Console.WriteLine(
                         $"Shift {kvp.Key} hours: {kvp.Value} days");
-                }
+                } */
 
                 // print the shift counts for each resident
-                Console.WriteLine("[DEBUG] Shift counts for each resident:");
+                _logger.LogInformation("Shift counts for each resident:");
                 for (int i = 0; i < pgy1s.Count; i++)
                 {
-                    Console.WriteLine(
-                        $"PGY1 {i}: 3h: {pgy1ShiftCount[i][3]}, 12h: {pgy1ShiftCount[i][12]}, 24h: {pgy1ShiftCount[i][24]}");
+                    int totalHours =
+                            pgy1ShiftCount[i][CallShiftType.WeekdayShortCall] * 3
+                            + pgy1ShiftCount[i][CallShiftType.SaturdayFullCall] * 24
+                            + pgy1ShiftCount[i][CallShiftType.SundayHalfCall] * 12;
+
+                    _logger.LogInformation(
+                        "PGY1 {I}: Short: {I1}, Saturday Long: {I2}, Sunday: {I3}, Hours: {hours}",
+                        ((PGY1) pgy1s[i]).name, pgy1ShiftCount[i][CallShiftType.WeekdayShortCall],
+                        pgy1ShiftCount[i][CallShiftType.SaturdayFullCall],
+                        pgy1ShiftCount[i][CallShiftType.SundayHalfCall],
+                        totalHours
+                    );
                 }
 
                 for (int i = 0; i < pgy2s.Count; i++)
                 {
-                    Console.WriteLine(
-                        $"PGY2 {i}: 3h: {pgy2ShiftCount[i][3]}, 12h: {pgy2ShiftCount[i][12]}, 24h: {pgy2ShiftCount[i][24]}");
+                    int totalHours =
+                        pgy2ShiftCount[i][CallShiftType.WeekdayShortCall] * 3
+                        + pgy2ShiftCount[i][CallShiftType.SaturdayHalfCall] * 12
+                        + pgy2ShiftCount[i][CallShiftType.SundayHalfCall] * 12;
+
+                    _logger.LogInformation(
+                        "PGY2 {I}: Short: {I1}, Saturday Long: {I2}, Sunday: {I3}, Hours: {hours}",
+                        ((PGY2) pgy2s[i]).name, pgy2ShiftCount[i][CallShiftType.WeekdayShortCall],
+                        pgy2ShiftCount[i][CallShiftType.SaturdayHalfCall],
+                        pgy2ShiftCount[i][CallShiftType.SundayHalfCall],
+                        totalHours
+                    );
                 }
 
                 /*Console.WriteLine("[ERROR] Not able to make valid assignment based on parameters");*/
                 continue;
+            }
+
+            _logger.LogInformation("Shift counts for each resident:");
+            for (int i = 0; i < pgy1s.Count; i++)
+            {
+                int totalHours =
+                    pgy1ShiftCount[i][CallShiftType.WeekdayShortCall] * 3
+                    + pgy1ShiftCount[i][CallShiftType.SaturdayFullCall] * 24
+                    + pgy1ShiftCount[i][CallShiftType.SundayHalfCall] * 12;
+
+                _logger.LogInformation(
+                    "PGY1 {I}: Short: {I1}, Saturday Long: {I2}, Sunday: {I3}, Hours: {hours}",
+                    ((PGY1) pgy1s[i]).name, pgy1ShiftCount[i][CallShiftType.WeekdayShortCall],
+                    pgy1ShiftCount[i][CallShiftType.SaturdayFullCall],
+                    pgy1ShiftCount[i][CallShiftType.SundayHalfCall],
+                    totalHours
+                );
+            }
+
+            for (int i = 0; i < pgy2s.Count; i++)
+            {
+                int totalHours =
+                    pgy2ShiftCount[i][CallShiftType.WeekdayShortCall] * 3
+                    + pgy2ShiftCount[i][CallShiftType.SaturdayHalfCall] * 12
+                    + pgy2ShiftCount[i][CallShiftType.SundayHalfCall] * 12;
+
+                _logger.LogInformation(
+                    "PGY2 {I}: Short: {I1}, Saturday Long: {I2}, Sunday: {I3}, Hours: {hours}",
+                    ((PGY2) pgy2s[i]).name, pgy2ShiftCount[i][CallShiftType.WeekdayShortCall],
+                    pgy2ShiftCount[i][CallShiftType.SaturdayHalfCall],
+                    pgy2ShiftCount[i][CallShiftType.SundayHalfCall],
+                    totalHours
+                );
             }
 
             // if we reach here, the flow is equal to the number of days, so we can assign the shifts
@@ -1448,17 +1542,17 @@ internal class Schedule
             // add worked days
             for (int i = 0; i < pgy1s.Count; i++)
             {
-                for (int type = 0; type < 3; type++)
+                foreach (CallShiftType shift in pgy1ShiftTypes)
                 {
-                    _ = type == 0 ? 3 : type == 1 ? 12 : 24;
-                    ArrayList? curList = (ArrayList)g.adjList[i * 3 + type];
+                    int offset = (int)shift;
+                    ArrayList? curList = (ArrayList)g.adjList[i * numShiftTypes + offset];
                     foreach (Edge edge in curList)
                     {
                         if (edge.flow() >
                             0) // if the flow is positive, this resident works this day
                         {
                             DateTime workDay = (DateTime)dayList[
-                                edge.destination - (pgy1s.Count + pgy2s.Count) * 3];
+                                edge.destination - shiftStart];
                             ((PGY1)pgy1s[i]).addWorkDay(workDay);
                         }
                     }
@@ -1467,18 +1561,18 @@ internal class Schedule
 
             for (int i = 0; i < pgy2s.Count; i++)
             {
-                for (int type = 0; type < 3; type++)
+                foreach (CallShiftType shift in pgy2ShiftTypes)
                 {
-                    _ = type == 0 ? 3 : type == 1 ? 12 : 24;
+                    int offset = (int)shift;
                     ArrayList? curList
-                        = (ArrayList)g.adjList[(pgy1s.Count + i) * 3 + type];
+                        = (ArrayList)g.adjList[pgy2Start + i * numShiftTypes + offset];
                     foreach (Edge edge in curList)
                     {
                         if (edge.flow() >
                             0) // if the flow is positive, this resident works this day
                         {
                             DateTime workDay = (DateTime)dayList[
-                                edge.destination - (pgy1s.Count + pgy2s.Count) * 3];
+                                edge.destination - shiftStart];
                             ((PGY2)pgy2s[i]).addWorkDay(workDay);
                         }
                     }
@@ -1617,6 +1711,9 @@ internal class Schedule
                 if (res.isWorking(curDay) && !res.canWork(curDay) &&
                     !res.commitedWorkDay(curDay))
                 {
+                    CallShiftType curShiftType
+                        = CallShiftTypeExtensions.GetCallShiftTypeForDate(
+                            curDay, 1);
                     bool found = false;
                     foreach (PGY1 res2 in pgy1s)
                     {
@@ -1638,10 +1735,14 @@ internal class Schedule
                              otherDay <= lastDay2;
                              otherDay = otherDay.AddDays(1))
                         {
-                            if (res2.isWorking(otherDay) && shiftType(curDay) ==
-                                shiftType(otherDay) &&
-                                res.canWork(otherDay) &&
-                                !res2.commitedWorkDay(otherDay))
+                            CallShiftType otherShiftType
+                                = CallShiftTypeExtensions.GetCallShiftTypeForDate(
+                                    curDay, 1);
+
+                            if (res2.isWorking(otherDay)
+                                && curShiftType == otherShiftType
+                                && res.canWork(otherDay)
+                                && !res2.commitedWorkDay(otherDay))
                             {
                                 found = true;
                                 SwapWorkDays1(res, res2, curDay, otherDay);
@@ -1672,10 +1773,13 @@ internal class Schedule
                                  otherDay <= lastDay2;
                                  otherDay = otherDay.AddDays(1))
                             {
-                                if (res2.isWorking(otherDay) &&
-                                    shiftType(curDay) == shiftType(otherDay) &&
-                                    res.canWork(otherDay) &&
-                                    !res2.commitedWorkDay(otherDay))
+                                CallShiftType otherShiftType
+                                    = CallShiftTypeExtensions.GetCallShiftTypeForDate(
+                                        curDay, 2);
+                                if (res2.isWorking(otherDay)
+                                    && curShiftType == otherShiftType
+                                    && res.canWork(otherDay)
+                                    && !res2.commitedWorkDay(otherDay))
                                 {
                                     found = true;
                                     SwapWorkDays12(res, res2, curDay, otherDay);
@@ -1708,6 +1812,10 @@ internal class Schedule
                 if (res.isWorking(curDay) && !res.canWork(curDay) &&
                     !res.commitedWorkDay(curDay))
                 {
+                    CallShiftType curShiftType
+                        = CallShiftTypeExtensions.GetCallShiftTypeForDate(
+                            curDay, 2);
+
                     bool found = false;
                     foreach (PGY2 res2 in pgy2s)
                     {
@@ -1729,10 +1837,13 @@ internal class Schedule
                              otherDay <= lastDay2;
                              otherDay = otherDay.AddDays(1))
                         {
-                            if (res2.isWorking(otherDay) && shiftType(curDay) ==
-                                shiftType(otherDay) &&
-                                res.canWork(otherDay) &&
-                                !res2.commitedWorkDay(otherDay))
+                            CallShiftType otherShiftType
+                                = CallShiftTypeExtensions.GetCallShiftTypeForDate(
+                                    curDay, 2);
+                            if (res2.isWorking(otherDay)
+                                && curShiftType == otherShiftType
+                                && res.canWork(otherDay)
+                                && !res2.commitedWorkDay(otherDay))
                             {
                                 found = true;
                                 SwapWorkDays2(res, res2, curDay, otherDay);
@@ -1763,10 +1874,14 @@ internal class Schedule
                                  otherDay <= lastDay2;
                                  otherDay = otherDay.AddDays(1))
                             {
-                                if (res2.isWorking(otherDay) &&
-                                    shiftType(curDay) == shiftType(otherDay) &&
-                                    res.canWork(otherDay) &&
-                                    !res2.commitedWorkDay(otherDay))
+                                CallShiftType otherShiftType
+                                    = CallShiftTypeExtensions.GetCallShiftTypeForDate(
+                                        curDay, 1);
+
+                                if (res2.isWorking(otherDay)
+                                    && curShiftType == otherShiftType
+                                    && res.canWork(otherDay)
+                                    && !res2.commitedWorkDay(otherDay))
                                 {
                                     found = true;
                                     SwapWorkDays12(res2, res, otherDay, curDay);
@@ -1880,7 +1995,7 @@ internal class Schedule
                     ResidentId
                         = res.id, // Assuming `id` exists in PGY1 class and maps to the backend
                     Date = day,
-                    CallType = GetCallType(day),
+                    CallType = CallShiftTypeExtensions.GetCallShiftTypeForDate(day, 1).GetDescription(),
                     IsCommitted = true
                 });
             }
@@ -1896,7 +2011,7 @@ internal class Schedule
                     ScheduleId = scheduleId,
                     ResidentId = res.id,
                     Date = day,
-                    CallType = GetCallType(day),
+                    CallType = CallShiftTypeExtensions.GetCallShiftTypeForDate(day, 2).GetDescription(),
                     IsCommitted = true
                 });
             }
@@ -1912,7 +2027,7 @@ internal class Schedule
                     ScheduleId = scheduleId,
                     ResidentId = res.id,
                     Date = day,
-                    CallType = GetCallType(day),
+                    CallType = CallShiftTypeExtensions.GetCallShiftTypeForDate(day, 3).GetDescription(),
                     IsCommitted = true
                 });
             }
@@ -1938,5 +2053,5 @@ internal class Schedule
 
 */
 
-// other things to consider : pgy year and where in hospital they work 
+// other things to consider : pgy year and where in hospital they work
 // month by month, positions in hospital change. which means that we will probably have to schedule month by month (at least in the back end)

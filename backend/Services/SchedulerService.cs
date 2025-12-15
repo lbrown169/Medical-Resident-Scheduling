@@ -7,16 +7,25 @@ namespace MedicalDemo.Services;
 
 public class SchedulerService
 {
+    private readonly ILogger<SchedulerService> _logger;
+    private readonly AlgorithmService _algorithmService;
     private readonly MedicalContext _context;
     private readonly SchedulingMapperService _mapper;
     private readonly MiscService _misc;
 
-    public SchedulerService(MedicalContext context,
-        SchedulingMapperService mapper, MiscService misc)
+    public SchedulerService(
+        MedicalContext context,
+        SchedulingMapperService mapper,
+        MiscService misc,
+        AlgorithmService algorithmService,
+        ILogger<SchedulerService> logger
+    )
     {
         _context = context;
         _mapper = mapper;
         _misc = misc;
+        _algorithmService = algorithmService;
+        _logger = logger;
     }
 
     public async Task<(bool Success, string Error)> GenerateFullSchedule(
@@ -35,22 +44,22 @@ public class SchedulerService
 
                 // Map DTOs to original algorithm classes
                 List<PGY1> pgy1Models = residentData.PGY1s
-                    .Select(dto => MapToPGY1(dto)).ToList();
+                    .Select((dto, i) => MapToPGY1(dto, i)).ToList();
                 List<PGY2> pgy2Models = residentData.PGY2s
-                    .Select(dto => MapToPGY2(dto)).ToList();
+                    .Select((dto, i) => MapToPGY2(dto, i)).ToList();
                 List<PGY3> pgy3Models = residentData.PGY3s
                     .Select(dto => MapToPGY3(dto)).ToList();
 
                 bool success =
-                    Schedule.Training(year, pgy1Models, pgy2Models,
+                    _algorithmService.Training(year, pgy1Models, pgy2Models,
                         pgy3Models) &&
-                    Schedule.Part1(year, pgy1Models, pgy2Models) &&
-                    Schedule.Part2(year, pgy1Models, pgy2Models);
+                    _algorithmService.Part1(year, pgy1Models, pgy2Models)
+                    && _algorithmService.Part2(year, pgy1Models, pgy2Models);
 
                 if (!success)
                 {
-                    Console.WriteLine(
-                        $"Attempt #{attempt}: Schedule generation failed logically.");
+                    _logger.LogInformation(
+                        "Attempt #{attempt}: Schedule generation failed logically.", attempt);
                     continue;
                 }
 
@@ -68,7 +77,7 @@ public class SchedulerService
 
                 // Generate DatesDTOs from PGY models
                 List<DatesDTO> dateDTOs =
-                    Schedule.GenerateDateRecords(schedule.ScheduleId,
+                    AlgorithmService.GenerateDateRecords(schedule.ScheduleId,
                         pgy1Models, pgy2Models, pgy3Models);
 
                 // Convert DTOs to Entities
@@ -94,9 +103,7 @@ public class SchedulerService
             }
             catch (Exception ex)
             {
-                error = ex.Message;
-                Console.WriteLine(
-                    $"Attempt #{attempt}: Exception encountered - {error}");
+                _logger.LogError(ex, "Attempt #{attempt}: Exception encountered", attempt);
             }
 
             await Task.Delay(500); // short delay between retries
@@ -106,7 +113,7 @@ public class SchedulerService
             "Failed after to generate a viable schedule. Try again.");
     }
 
-    private static PGY1 MapToPGY1(PGY1DTO dto)
+    private static PGY1 MapToPGY1(PGY1DTO dto, int profileIndex)
     {
         PGY1 model = new(dto.Name)
         {
@@ -114,11 +121,12 @@ public class SchedulerService
             inTraining = dto.InTraining,
             lastTrainingDate = dto.LastTrainingDate
         };
+        model.rolePerMonth = HospitalRole.Profiles[profileIndex];
 
-        for (int i = 0; i < 12; i++)
-        {
-            model.rolePerMonth[i] = dto.RolePerMonth[i];
-        }
+        // for (int i = 0; i < 12; i++)
+        // {
+        //     model.rolePerMonth[i] = dto.RolePerMonth[i];
+        // }
 
         foreach (DateTime v in dto.VacationRequests)
         {
@@ -133,18 +141,19 @@ public class SchedulerService
         return model;
     }
 
-    private static PGY2 MapToPGY2(PGY2DTO dto)
+    private static PGY2 MapToPGY2(PGY2DTO dto, int profileIndex)
     {
         PGY2 model = new(dto.Name)
         {
             id = dto.ResidentId,
             inTraining = dto.InTraining
         };
+        model.rolePerMonth = HospitalRole.GeneralProfile;
 
-        for (int i = 0; i < 12; i++)
-        {
-            model.rolePerMonth[i] = dto.RolePerMonth[i];
-        }
+        // for (int i = 0; i < 12; i++)
+        // {
+        //     model.rolePerMonth[i] = dto.RolePerMonth[i];
+        // }
 
         foreach (DateTime v in dto.VacationRequests)
         {
