@@ -9,4 +9,5 @@ public class DatesWithResidentDTO
     public string LastName { get; set; }
     public DateTime Date { get; set; }
     public string CallType { get; set; }
+    public int Hours { get; set; }
 }

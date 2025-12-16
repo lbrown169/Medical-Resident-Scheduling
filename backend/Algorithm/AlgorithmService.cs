@@ -1986,6 +1986,8 @@ public class AlgorithmService
         {
             foreach (DateTime day in res.workDaySet())
             {
+                CallShiftType shiftType
+                    = CallShiftTypeExtensions.GetCallShiftTypeForDate(day, 1);
                 dateRecords.Add(new DatesDTO
                 {
                     DateId = Guid.NewGuid(),
@@ -1993,7 +1995,8 @@ public class AlgorithmService
                     ResidentId
                         = res.id, // Assuming `id` exists in PGY1 class and maps to the backend
                     Date = day,
-                    CallType = CallShiftTypeExtensions.GetCallShiftTypeForDate(day, 1).GetDescription(),
+                    CallType = shiftType.GetDescription(),
+                    Hours = shiftType.GetHours(),
                     IsCommitted = true
                 });
             }
@@ -2003,13 +2006,16 @@ public class AlgorithmService
         {
             foreach (DateTime day in res.workDaySet())
             {
+                CallShiftType shiftType
+                    = CallShiftTypeExtensions.GetCallShiftTypeForDate(day, 2);
                 dateRecords.Add(new DatesDTO
                 {
                     DateId = Guid.NewGuid(),
                     ScheduleId = scheduleId,
                     ResidentId = res.id,
                     Date = day,
-                    CallType = CallShiftTypeExtensions.GetCallShiftTypeForDate(day, 2).GetDescription(),
+                    CallType = shiftType.GetDescription(),
+                    Hours = shiftType.GetHours(),
                     IsCommitted = true
                 });
             }
@@ -2019,13 +2025,16 @@ public class AlgorithmService
         {
             foreach (DateTime day in res.workDaySet())
             {
+                CallShiftType shiftType
+                    = CallShiftTypeExtensions.GetCallShiftTypeForDate(day, 3);
                 dateRecords.Add(new DatesDTO
                 {
                     DateId = Guid.NewGuid(),
                     ScheduleId = scheduleId,
                     ResidentId = res.id,
                     Date = day,
-                    CallType = CallShiftTypeExtensions.GetCallShiftTypeForDate(day, 3).GetDescription(),
+                    CallType = shiftType.GetDescription(),
+                    Hours = shiftType.GetHours(),
                     IsCommitted = true
                 });
             }

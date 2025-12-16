@@ -7,5 +7,6 @@ public class DatesDTO
     public string ResidentId { get; set; }
     public DateTime Date { get; set; }
     public string CallType { get; set; }
+    public int Hours { get; set; }
     public bool IsCommitted { get; set; }
 }

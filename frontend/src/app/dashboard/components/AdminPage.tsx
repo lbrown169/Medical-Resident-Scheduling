@@ -13,7 +13,7 @@ import { ConfirmDialog } from "./ConfirmDialog";
 import { Trash2 } from "lucide-react";
 
 interface AdminPageProps {
-  residents: { id: string; name: string; email: string; pgyLevel: number | string; hospitalRole?: number }[];
+  residents: { id: string; name: string; email: string; pgyLevel: number | string; hospitalRole?: number; hours: number }[];
   myTimeOffRequests: { id: string; startDate: string; endDate: string; resident: string; reason: string; status: string; }[];
   shifts: { id: string; name: string }[];
   handleApproveRequest: (id: string) => void;
@@ -1177,7 +1177,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
                             <span className="text-gray-400 italic">N/A</span>
                           )}
                         </td>
-                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">--</td>
+                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{resident.hours}</td>
                       </tr>
                     ))
                   ) : (

@@ -19,6 +19,8 @@ public class Dates
 
     [Column("call_type")][MaxLength(45)] public string CallType { get; set; }
 
+    [Column("hours")] public int Hours { get; set; }
+
     [ForeignKey("ResidentId")]
     [ValidateNever]
     public Residents Resident { get; set; } // <-- Navigation property

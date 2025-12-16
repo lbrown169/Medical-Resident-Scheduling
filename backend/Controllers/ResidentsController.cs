@@ -21,7 +21,28 @@ public class ResidentsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Residents>>> GetResidents()
     {
-        return await _context.residents.ToListAsync();
+        List<Residents> residents = await _context.residents.AsNoTracking().ToListAsync();
+        Dictionary<string, int> hoursMapping = (await _context.dates
+                .ToListAsync())
+            .GroupBy(d => d.ResidentId)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Sum(d => d.Hours)
+            );
+
+        foreach (Residents resident in residents)
+        {
+            if (hoursMapping.TryGetValue(resident.resident_id, out int hours))
+            {
+                resident.total_hours = hours;
+            }
+            else
+            {
+                resident.total_hours = 0;
+            }
+        }
+
+        return Ok(residents);
     }
 
     // GET: api/residents/filter?resident_id=&first_name=&last_name=&graduate_yr=2&email=&password=&phone_num=&weekly_hours=&total_hours=&bi_yearly_hours

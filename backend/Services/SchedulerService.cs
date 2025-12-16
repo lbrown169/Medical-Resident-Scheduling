@@ -87,6 +87,7 @@ public class SchedulerService
                     ScheduleId = dto.ScheduleId,
                     ResidentId = dto.ResidentId,
                     Date = dto.Date,
+                    Hours = dto.Hours,
                     CallType = dto.CallType
                 }).ToList();
 
@@ -95,8 +96,8 @@ public class SchedulerService
                 await _context.SaveChangesAsync();
 
                 //add the total and bi-yearly hours for us after the fact lmao
-                await _misc.FindTotalHours();
-                await _misc.FindBiYearlyHours(year);
+                // await _misc.FindTotalHours();
+                // await _misc.FindBiYearlyHours(year);
 
                 Console.WriteLine($"Attempt #{attempt}");
                 return (true, null);
