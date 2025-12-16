@@ -10,7 +10,7 @@ public abstract class ResidentDTO
     public HashSet<DateTime> WorkDays { get; set; } = new();
     public HashSet<DateTime> CommitedWorkDays { get; set; } = new();
 
-    public HospitalRole[] RolePerMonth { get; set; } = new HospitalRole[12];
+    public HospitalRole?[] RolePerMonth { get; set; } = new HospitalRole?[12];
 
     public abstract bool CanWork(DateTime date);
     public abstract void AddWorkDay(DateTime date);

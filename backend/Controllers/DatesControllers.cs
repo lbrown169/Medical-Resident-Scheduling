@@ -52,7 +52,8 @@ public class DatesController : ControllerBase
                 FirstName = d.Resident.first_name,
                 LastName = d.Resident.last_name,
                 Date = d.Date,
-                CallType = d.CallType
+                CallType = d.CallType,
+                Hours = d.Hours
             })
             .ToListAsync();
 
@@ -100,7 +101,8 @@ public class DatesController : ControllerBase
                 FirstName = d.Resident.first_name,
                 LastName = d.Resident.last_name,
                 Date = d.Date,
-                CallType = d.CallType
+                CallType = d.CallType,
+                Hours = d.Hours
             })
             .ToListAsync();
 
@@ -133,6 +135,7 @@ public class DatesController : ControllerBase
         existingDate.ResidentId = updatedDate.ResidentId;
         existingDate.Date = updatedDate.Date;
         existingDate.CallType = updatedDate.CallType;
+        existingDate.Hours = updatedDate.Hours;
 
         try
         {

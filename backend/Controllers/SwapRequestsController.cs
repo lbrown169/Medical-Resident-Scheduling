@@ -73,8 +73,7 @@ public class SwapRequestsController : ControllerBase
         }
 
         // Check shift type
-        if (!AreEquivalentCallTypes(requesterDate.CallType,
-                requesteeDate.CallType))
+        if (requesterDate.CallType != requesteeDate.CallType)
         // Console.WriteLine($"Shift type mismatch: {requesterDate.CallType} vs {requesteeDate.CallType}");
         {
             return BadRequest(
@@ -254,16 +253,8 @@ public class SwapRequestsController : ControllerBase
             .ToListAsync();
 
         // Find the best match in memory
-        Dates? requesterDate =
-            requesterDates.FirstOrDefault(d =>
-                CallTypeMatches(d.CallType,
-                    swap.RequesterDate.ToString("dddd")))
-            ?? requesterDates.FirstOrDefault();
-        Dates? requesteeDate =
-            requesteeDates.FirstOrDefault(d =>
-                CallTypeMatches(d.CallType,
-                    swap.RequesteeDate.ToString("dddd")))
-            ?? requesteeDates.FirstOrDefault();
+        Dates? requesterDate = requesterDates.FirstOrDefault();
+        Dates? requesteeDate = requesteeDates.FirstOrDefault();
 
         if (requesterDate == null || requesteeDate == null)
         {

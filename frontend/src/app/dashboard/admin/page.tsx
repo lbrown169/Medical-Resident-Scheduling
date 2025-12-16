@@ -4,7 +4,7 @@ import AdminPage from '../components/AdminPage';
 import { config } from '../../../config';
 
 // Types
-interface Resident { id: string; name: string; email: string; pgyLevel: number | string; }
+interface Resident { id: string; name: string; email: string; pgyLevel: number | string; hours: number; }
 interface TimeOffRequest { id: string; startDate: string; endDate: string; resident: string; reason: string; status: string; }
 interface Shift { id: string; name: string; }
 interface UserInvitation { id: string; email: string; status: "Pending" | "Member" | "Not Invited"; }
@@ -17,6 +17,7 @@ interface ResidentResponse {
   last_name: string;
   email: string;
   graduate_yr: number | string;
+  total_hours: number;
 }
 
 interface ShiftResponse {
@@ -49,7 +50,7 @@ export default function Page() {
     const response = await fetch(`${config.apiUrl}/api/residents`);
     if (response.ok) {
       const data: ResidentResponse[] = await response.json();
-      setResidents(data.map((r) => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr })));
+      setResidents(data.map((r) => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr, hours: r.total_hours })));
     }
   }, []);
 
