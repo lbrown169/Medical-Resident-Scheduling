@@ -14,7 +14,7 @@ public class SchedulingMapperService
         _context = context;
     }
 
-    public PGY1DTO MapToPGY1DTO(Residents resident, List<Rotations> rotations,
+    public PGY1DTO MapToPGY1DTO(Residents resident, IEnumerable<HospitalRole> rotations,
         List<Vacations> vacations,
         List<DatesDTO> dates)
     {
@@ -29,13 +29,13 @@ public class SchedulingMapperService
             Name = resident.first_name + " " + resident.last_name,
             VacationRequests
                 = new HashSet<DateTime>(vacations.Select(v => v.Date)),
-            RolePerMonth = MapRotationsToRoles(rotations),
+            RolePerMonth = rotations.ToArray(),
             CommitedWorkDays = new HashSet<DateTime>(committedDates),
             InTraining = resident.graduate_yr == 1
         };
     }
 
-    public PGY2DTO MapToPGY2DTO(Residents resident, List<Rotations> rotations,
+    public PGY2DTO MapToPGY2DTO(Residents resident, IEnumerable<HospitalRole> rotations,
         List<Vacations> vacations,
         List<DatesDTO> dates)
     {
@@ -50,7 +50,7 @@ public class SchedulingMapperService
             Name = resident.first_name + " " + resident.last_name,
             VacationRequests
                 = new HashSet<DateTime>(vacations.Select(v => v.Date)),
-            RolePerMonth = MapRotationsToRoles(rotations),
+            RolePerMonth = rotations.ToArray(),
             CommitedWorkDays = new HashSet<DateTime>(committedDates),
             InTraining = resident.graduate_yr == 2
         };

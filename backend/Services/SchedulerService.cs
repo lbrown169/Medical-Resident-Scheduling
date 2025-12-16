@@ -7,16 +7,25 @@ namespace MedicalDemo.Services;
 
 public class SchedulerService
 {
+    private readonly ILogger<SchedulerService> _logger;
+    private readonly AlgorithmService _algorithmService;
     private readonly MedicalContext _context;
     private readonly SchedulingMapperService _mapper;
     private readonly MiscService _misc;
 
-    public SchedulerService(MedicalContext context,
-        SchedulingMapperService mapper, MiscService misc)
+    public SchedulerService(
+        MedicalContext context,
+        SchedulingMapperService mapper,
+        MiscService misc,
+        AlgorithmService algorithmService,
+        ILogger<SchedulerService> logger
+    )
     {
         _context = context;
         _mapper = mapper;
         _misc = misc;
+        _algorithmService = algorithmService;
+        _logger = logger;
     }
 
     public async Task<(bool Success, string Error)> GenerateFullSchedule(
@@ -35,22 +44,23 @@ public class SchedulerService
 
                 // Map DTOs to original algorithm classes
                 List<PGY1> pgy1Models = residentData.PGY1s
-                    .Select(dto => MapToPGY1(dto)).ToList();
+                    .Select(MapToPGY1).ToList();
                 List<PGY2> pgy2Models = residentData.PGY2s
-                    .Select(dto => MapToPGY2(dto)).ToList();
+                    .Select(MapToPGY2).ToList();
                 List<PGY3> pgy3Models = residentData.PGY3s
-                    .Select(dto => MapToPGY3(dto)).ToList();
+                    .Select(MapToPGY3).ToList();
 
+                bool loosely = attempt > 50;
                 bool success =
-                    Schedule.Training(year, pgy1Models, pgy2Models,
+                    _algorithmService.Training(year, pgy1Models, pgy2Models,
                         pgy3Models) &&
-                    Schedule.Part1(year, pgy1Models, pgy2Models) &&
-                    Schedule.Part2(year, pgy1Models, pgy2Models);
+                    _algorithmService.Part1(year, pgy1Models, pgy2Models, loosely)
+                    && _algorithmService.Part2(year, pgy1Models, pgy2Models, loosely);
 
                 if (!success)
                 {
-                    Console.WriteLine(
-                        $"Attempt #{attempt}: Schedule generation failed logically.");
+                    _logger.LogInformation(
+                        "Attempt #{attempt}: Schedule generation failed logically.", attempt);
                     continue;
                 }
 
@@ -68,7 +78,7 @@ public class SchedulerService
 
                 // Generate DatesDTOs from PGY models
                 List<DatesDTO> dateDTOs =
-                    Schedule.GenerateDateRecords(schedule.ScheduleId,
+                    AlgorithmService.GenerateDateRecords(schedule.ScheduleId,
                         pgy1Models, pgy2Models, pgy3Models);
 
                 // Convert DTOs to Entities
@@ -78,6 +88,7 @@ public class SchedulerService
                     ScheduleId = dto.ScheduleId,
                     ResidentId = dto.ResidentId,
                     Date = dto.Date,
+                    Hours = dto.Hours,
                     CallType = dto.CallType
                 }).ToList();
 
@@ -86,17 +97,15 @@ public class SchedulerService
                 await _context.SaveChangesAsync();
 
                 //add the total and bi-yearly hours for us after the fact lmao
-                await _misc.FindTotalHours();
-                await _misc.FindBiYearlyHours(year);
+                // await _misc.FindTotalHours();
+                // await _misc.FindBiYearlyHours(year);
 
                 Console.WriteLine($"Attempt #{attempt}");
                 return (true, null);
             }
             catch (Exception ex)
             {
-                error = ex.Message;
-                Console.WriteLine(
-                    $"Attempt #{attempt}: Exception encountered - {error}");
+                _logger.LogError(ex, "Attempt #{attempt}: Exception encountered", attempt);
             }
 
             await Task.Delay(500); // short delay between retries
@@ -112,12 +121,12 @@ public class SchedulerService
         {
             id = dto.ResidentId,
             inTraining = dto.InTraining,
-            lastTrainingDate = dto.LastTrainingDate
+            lastTrainingDate = dto.LastTrainingDate,
         };
 
         for (int i = 0; i < 12; i++)
         {
-            model.rolePerMonth[i] = dto.RolePerMonth[i];
+            model.rolePerMonth[i] = dto.RolePerMonth[i] ?? HospitalRole.Unassigned;
         }
 
         foreach (DateTime v in dto.VacationRequests)
@@ -143,7 +152,7 @@ public class SchedulerService
 
         for (int i = 0; i < 12; i++)
         {
-            model.rolePerMonth[i] = dto.RolePerMonth[i];
+            model.rolePerMonth[i] = dto.RolePerMonth[i] ?? HospitalRole.Unassigned;
         }
 
         foreach (DateTime v in dto.VacationRequests)
@@ -190,17 +199,16 @@ public class SchedulerService
 
         List<PGY1DTO> pgy1s = residents
             .Where(r => r.graduate_yr == 1)
-            .Select(r => _mapper.MapToPGY1DTO(r,
-                rotations.Where(rot => rot.ResidentId == r.resident_id)
-                    .ToList(),
+            .Select(r => _mapper.MapToPGY1DTO(
+                r,
+                r.hospital_role_profile is { } role ? HospitalRole.Pgy1Profiles[role] : [],
                 vacations.Where(v => v.ResidentId == r.resident_id).ToList(),
                 datesDTOs)).ToList();
 
         List<PGY2DTO> pgy2s = residents
             .Where(r => r.graduate_yr == 2)
             .Select(r => _mapper.MapToPGY2DTO(r,
-                rotations.Where(rot => rot.ResidentId == r.resident_id)
-                    .ToList(),
+                r.hospital_role_profile is { } role ? HospitalRole.Pgy2Profiles[role - 8] : [],
                 vacations.Where(v => v.ResidentId == r.resident_id).ToList(),
                 datesDTOs)).ToList();
 
