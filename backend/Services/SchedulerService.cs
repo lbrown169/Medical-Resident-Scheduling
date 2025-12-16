@@ -44,11 +44,11 @@ public class SchedulerService
 
                 // Map DTOs to original algorithm classes
                 List<PGY1> pgy1Models = residentData.PGY1s
-                    .Select((dto, i) => MapToPGY1(dto, i)).ToList();
+                    .Select(MapToPGY1).ToList();
                 List<PGY2> pgy2Models = residentData.PGY2s
-                    .Select((dto, i) => MapToPGY2(dto, i)).ToList();
+                    .Select(MapToPGY2).ToList();
                 List<PGY3> pgy3Models = residentData.PGY3s
-                    .Select(dto => MapToPGY3(dto)).ToList();
+                    .Select(MapToPGY3).ToList();
 
                 bool success =
                     _algorithmService.Training(year, pgy1Models, pgy2Models,
@@ -113,20 +113,19 @@ public class SchedulerService
             "Failed after to generate a viable schedule. Try again.");
     }
 
-    private static PGY1 MapToPGY1(PGY1DTO dto, int profileIndex)
+    private static PGY1 MapToPGY1(PGY1DTO dto)
     {
         PGY1 model = new(dto.Name)
         {
             id = dto.ResidentId,
             inTraining = dto.InTraining,
-            lastTrainingDate = dto.LastTrainingDate
+            lastTrainingDate = dto.LastTrainingDate,
         };
-        model.rolePerMonth = HospitalRole.Profiles[profileIndex];
 
-        // for (int i = 0; i < 12; i++)
-        // {
-        //     model.rolePerMonth[i] = dto.RolePerMonth[i];
-        // }
+        for (int i = 0; i < 12; i++)
+        {
+            model.rolePerMonth[i] = dto.RolePerMonth[i] ?? HospitalRole.Unassigned;
+        }
 
         foreach (DateTime v in dto.VacationRequests)
         {
@@ -141,19 +140,18 @@ public class SchedulerService
         return model;
     }
 
-    private static PGY2 MapToPGY2(PGY2DTO dto, int profileIndex)
+    private static PGY2 MapToPGY2(PGY2DTO dto)
     {
         PGY2 model = new(dto.Name)
         {
             id = dto.ResidentId,
             inTraining = dto.InTraining
         };
-        model.rolePerMonth = HospitalRole.GeneralProfile;
 
-        // for (int i = 0; i < 12; i++)
-        // {
-        //     model.rolePerMonth[i] = dto.RolePerMonth[i];
-        // }
+        for (int i = 0; i < 12; i++)
+        {
+            model.rolePerMonth[i] = dto.RolePerMonth[i] ?? HospitalRole.Unassigned;
+        }
 
         foreach (DateTime v in dto.VacationRequests)
         {
@@ -199,17 +197,16 @@ public class SchedulerService
 
         List<PGY1DTO> pgy1s = residents
             .Where(r => r.graduate_yr == 1)
-            .Select(r => _mapper.MapToPGY1DTO(r,
-                rotations.Where(rot => rot.ResidentId == r.resident_id)
-                    .ToList(),
+            .Select(r => _mapper.MapToPGY1DTO(
+                r,
+                r.hospital_role_profile is { } role ? HospitalRole.Pgy1Profiles[role] : [],
                 vacations.Where(v => v.ResidentId == r.resident_id).ToList(),
                 datesDTOs)).ToList();
 
         List<PGY2DTO> pgy2s = residents
             .Where(r => r.graduate_yr == 2)
             .Select(r => _mapper.MapToPGY2DTO(r,
-                rotations.Where(rot => rot.ResidentId == r.resident_id)
-                    .ToList(),
+                r.hospital_role_profile is { } role ? HospitalRole.Pgy2Profiles[role - 8] : [],
                 vacations.Where(v => v.ResidentId == r.resident_id).ToList(),
                 datesDTOs)).ToList();
 

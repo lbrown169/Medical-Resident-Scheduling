@@ -19,6 +19,9 @@ public class HospitalRole
     public bool DoesTrainingShort { get; }
     public bool DoesTrainingLong { get; }
 
+    public static HospitalRole Unassigned =>
+        new("Unassigned", true, true, true, true);
+
     public static HospitalRole Inpatient =>
         new("Inpatient", true, true, true, true);
 
@@ -57,7 +60,7 @@ public class HospitalRole
     public static HospitalRole EmergencyMed =>
         new("EmergencyMed", false, false, false, false);
 
-    public static HospitalRole[] Profile1 =
+    public static readonly HospitalRole[] Pgy1Profile1 =
     [
         PsychConsults,
         Inpatient,
@@ -73,7 +76,7 @@ public class HospitalRole
         Neurology
     ];
 
-    public static HospitalRole[] Profile2 =
+    public static readonly HospitalRole[] Pgy1Profile2 =
     [
         Inpatient,
         Inpatient,
@@ -89,7 +92,7 @@ public class HospitalRole
         Neurology
     ];
 
-    public static HospitalRole[] Profile3 =
+    public static readonly HospitalRole[] Pgy1Profile3 =
     [
         Inpatient,
         Inpatient,
@@ -105,7 +108,7 @@ public class HospitalRole
         IMOutpatient
     ];
 
-    public static HospitalRole[] Profile4 =
+    public static readonly HospitalRole[] Pgy1Profile4 =
     [
         Inpatient,
         PsychConsults,
@@ -121,7 +124,7 @@ public class HospitalRole
         EmergencyMed
     ];
 
-    public static HospitalRole[] Profile5 =
+    public static readonly HospitalRole[] Pgy1Profile5 =
     [
         Neurology,
         EmergencyMed,
@@ -137,7 +140,7 @@ public class HospitalRole
         Inpatient
     ];
 
-    public static HospitalRole[] Profile6 =
+    public static readonly HospitalRole[] Pgy1Profile6 =
     [
         Neurology,
         IMOutpatient,
@@ -153,7 +156,7 @@ public class HospitalRole
         Inpatient,
     ];
 
-    public static HospitalRole[] Profile7 =
+    public static readonly HospitalRole[] Pgy1Profile7 =
     [
         IMOutpatient,
         IMInpatient,
@@ -169,7 +172,7 @@ public class HospitalRole
         Inpatient,
     ];
 
-    public static HospitalRole[] Profile8 =
+    public static readonly HospitalRole[] Pgy1Profile8 =
     [
         EmergencyMed,
         Neurology,
@@ -185,10 +188,135 @@ public class HospitalRole
         NightFloat,
     ];
 
-    public static HospitalRole[] GeneralProfile =
+    public static readonly HospitalRole[][] Pgy1Profiles = [Pgy1Profile1, Pgy1Profile2, Pgy1Profile3, Pgy1Profile4, Pgy1Profile5, Pgy1Profile6, Pgy1Profile7, Pgy1Profile8];
+
+    public static readonly HospitalRole[] Pgy2Profile1 =
     [
-        Inpatient, Inpatient, Inpatient, Inpatient, Inpatient, Inpatient,
-        Inpatient, Inpatient, Inpatient, Inpatient, Inpatient, Inpatient,
+        CAP,
+        CAP,
+        CommP,
+        Forensic,
+        Float,
+        Addiction,
+        Inpatient,
+        NightFloat,
+        PHPandIOP,
+        PsychConsults,
+        Geriatric,
+        Inpatient
     ];
-    public static HospitalRole[][] Profiles = [Profile1, Profile2, Profile3, Profile4, Profile5, Profile6, Profile7, Profile8];
+
+    public static readonly HospitalRole[] Pgy2Profile2 =
+    [
+        Addiction,
+        CAP,
+        CAP,
+        Float,
+        Forensic,
+        CommP,
+        NightFloat,
+        Inpatient,
+        PsychConsults,
+        PHPandIOP,
+        Inpatient,
+        Geriatric,
+    ];
+
+    public static readonly HospitalRole[] Pgy2Profile3 =
+    [
+        Forensic,
+        Addiction,
+        CAP,
+        CAP,
+        CommP,
+        Float,
+        Geriatric,
+        NightFloat,
+        Inpatient,
+        Inpatient,
+        PHPandIOP,
+        PsychConsults
+    ];
+
+    public static readonly HospitalRole[] Pgy2Profile4 =
+    [
+        CommP,
+        Forensic,
+        Float,
+        Addiction,
+        CAP,
+        CAP,
+        NightFloat,
+        Geriatric,
+        Inpatient,
+        Inpatient,
+        PsychConsults,
+        PHPandIOP,
+    ];
+
+    public static readonly HospitalRole[] Pgy2Profile5 =
+    [
+        NightFloat,
+        Geriatric,
+        PHPandIOP,
+        Inpatient,
+        Inpatient,
+        PsychConsults,
+        CAP,
+        CAP,
+        Addiction,
+        Float,
+        Forensic,
+        CommP
+    ];
+
+    public static readonly HospitalRole[] Pgy2Profile6 =
+    [
+        NightFloat,
+        Inpatient,
+        Inpatient,
+        PsychConsults,
+        PHPandIOP,
+        Geriatric,
+        Forensic,
+        CommP,
+        Float,
+        Addiction,
+        CAP,
+        CAP
+    ];
+
+    public static readonly HospitalRole[] Pgy2Profile7 =
+    [
+        Inpatient,
+        NightFloat,
+        PsychConsults,
+        PHPandIOP,
+        Geriatric,
+        Inpatient,
+        CommP,
+        Addiction,
+        Forensic,
+        CAP,
+        CAP,
+        Float
+    ];
+
+    public static readonly HospitalRole[] Pgy2Profile8 =
+    [
+        Geriatric,
+        NightFloat,
+        Inpatient,
+        Inpatient,
+        PsychConsults,
+        PHPandIOP,
+        Addiction,
+        CAP,
+        CAP,
+        CommP,
+        Float,
+        Forensic
+    ];
+
+    public static readonly HospitalRole[][] Pgy2Profiles = [Pgy2Profile1, Pgy2Profile2, Pgy2Profile3, Pgy2Profile4, Pgy2Profile5, Pgy2Profile6, Pgy2Profile7, Pgy2Profile8];
 }

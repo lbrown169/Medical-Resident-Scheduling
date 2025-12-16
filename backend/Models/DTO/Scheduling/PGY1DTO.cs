@@ -14,16 +14,9 @@ public class PGY1DTO : ResidentDTO
         int monthIndex = (curDay.Month + 5) % 12;
         HospitalRole? role = RolePerMonth[monthIndex];
 
-        if (role == null)
-        {
-            Console.WriteLine(
-                $"[DEBUG] {Name} has null role for {curDay:MM/dd/yyyy} (index={monthIndex})");
-            return false;
-        }
-
         if (curDay.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
         {
-            if (!role.DoesLong && (!InTraining || !role.DoesTrainingLong))
+            if (role is { DoesLong: false } && (!InTraining || !role.DoesTrainingLong))
             {
                 return false;
             }
@@ -38,7 +31,7 @@ public class PGY1DTO : ResidentDTO
         }
         else // Weekday
         {
-            if (!role.DoesShort && (!InTraining || !role.DoesTrainingShort))
+            if (role is { DoesShort: false } && (!InTraining || !role.DoesTrainingShort))
             {
                 return false;
             }

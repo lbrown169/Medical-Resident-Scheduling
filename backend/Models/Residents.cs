@@ -25,5 +25,5 @@ public class Residents
 
     [Column("bi_yearly_hours")] public int bi_yearly_hours { get; set; }
 
-    [Column("hospital_role_profile")] public int hospital_role_profile { get; set; }
+    [Column("hospital_role_profile")] public int? hospital_role_profile { get; set; }
 }

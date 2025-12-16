@@ -79,7 +79,6 @@ if (string.IsNullOrEmpty(MySqlConnectString))
 
 builder.Services.AddDbContext<MedicalContext>(options =>
 {
-    Console.WriteLine("Attempting to connect to database...");
     options.UseMySql(MySqlConnectString, ServerVersion.AutoDetect(MySqlConnectString));
 });
 
