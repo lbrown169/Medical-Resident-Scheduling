@@ -1202,8 +1202,8 @@ public class AlgorithmService
                 int max = Math.Max(pgy1WorkTime.Max(), pgy2WorkTime.Max());
                 int min = Math.Min(pgy1WorkTime.Min(), pgy2WorkTime.Min());
 
-                // check if the difference is within 24 hours
-                if (max - min <= 24)
+                // check if the difference is within 12 hours
+                if (max - min <= 12)
                 {
                     inWindow = true; // if so, we are done
                 }
