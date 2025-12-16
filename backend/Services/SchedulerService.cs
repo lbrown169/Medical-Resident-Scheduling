@@ -50,11 +50,12 @@ public class SchedulerService
                 List<PGY3> pgy3Models = residentData.PGY3s
                     .Select(MapToPGY3).ToList();
 
+                bool loosely = attempt > 50;
                 bool success =
                     _algorithmService.Training(year, pgy1Models, pgy2Models,
                         pgy3Models) &&
-                    _algorithmService.Part1(year, pgy1Models, pgy2Models)
-                    && _algorithmService.Part2(year, pgy1Models, pgy2Models);
+                    _algorithmService.Part1(year, pgy1Models, pgy2Models, loosely)
+                    && _algorithmService.Part2(year, pgy1Models, pgy2Models, loosely);
 
                 if (!success)
                 {

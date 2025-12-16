@@ -24,18 +24,18 @@ public class AlgorithmService
         return Training(year, pgys1, pgys2, pgys3);
     }
 
-    public bool Part1(int year, List<PGY1> pgy1s, List<PGY2> pgy2s)
+    public bool Part1(int year, List<PGY1> pgy1s, List<PGY2> pgy2s, bool loosely)
     {
         ArrayList pgys1 = new(pgy1s);
         ArrayList pgys2 = new(pgy2s);
-        return Part1(year, pgys1, pgys2);
+        return Part1(year, pgys1, pgys2, loosely);
     }
 
-    public bool Part2(int year, List<PGY1> pgy1s, List<PGY2> pgy2s)
+    public bool Part2(int year, List<PGY1> pgy1s, List<PGY2> pgy2s, bool loosely)
     {
         ArrayList pgys1 = new(pgy1s);
         ArrayList pgys2 = new(pgy2s);
-        return Part2(year, pgys1, pgys2);
+        return Part2(year, pgys1, pgys2, loosely);
     }
 
     public bool Training(int year, ArrayList pgy1s, ArrayList pgy2s,
@@ -578,7 +578,7 @@ public class AlgorithmService
         }
     }
 
-    public bool Part2(int year, ArrayList pgy1s, ArrayList pgy2s)
+    public bool Part2(int year, ArrayList pgy1s, ArrayList pgy2s, bool loosely)
     {
         Console.WriteLine("part 2: normal schedule (january through june)");
         ArrayList AllPgy1s = pgy1s;
@@ -637,7 +637,7 @@ public class AlgorithmService
         for (int attempt = 0; attempt < maxTries && !assigned; attempt++)
         {
             assigned = RandomAssignment(AllPgy1s, AllPgy2s, startDay, endDay,
-                shiftTypeCount, workedDays);
+                shiftTypeCount, workedDays, loosely);
         }
 
         if (!assigned)
@@ -657,7 +657,7 @@ public class AlgorithmService
         return true;
     }
 
-    public bool Part1(int year, ArrayList pgy1s, ArrayList pgy2s)
+    public bool Part1(int year, ArrayList pgy1s, ArrayList pgy2s, bool loosely)
     {
         _logger.LogInformation("part 1: normal schedule (july through december)");
         int pgy1 = 8;
@@ -732,7 +732,7 @@ public class AlgorithmService
         for (int attempt = 0; attempt < maxTries && !assigned; attempt++)
         {
             assigned = RandomAssignment(AllPgy1s, AllPgy2s, startDay, endDay,
-                shiftTypeCount, workedDays);
+                shiftTypeCount, workedDays, loosely);
         }
 
         if (!assigned)
@@ -756,20 +756,23 @@ public class AlgorithmService
     public void ComputeWorkTime(ArrayList pgy1s, ArrayList pgy2s,
         int[] pgy1WorkTime, int[] pgy2WorkTime,
         Dictionary<CallShiftType, int>[] pgy1ShiftCount,
-        Dictionary<CallShiftType, int>[] pgy2ShiftCount)
+        Dictionary<CallShiftType, int>[] pgy2ShiftCount, bool loosely)
     {
         for (int i = 0; i < pgy1s.Count; i++)
         {
             pgy1WorkTime[i] = 0;
-            // PGY1? res = (PGY1)pgy1s[i];
-            // foreach (DateTime workDay in
-            //          res.workDaySet())
-            // {
-            //     CallShiftType shiftType
-            //         = CallShiftTypeExtensions.GetCallShiftTypeForDate(workDay,
-            //             1);
-            //     pgy1WorkTime[i] += shiftType.GetHours();
-            // }
+            if (!loosely)
+            {
+                PGY1? res = (PGY1)pgy1s[i];
+                foreach (DateTime workDay in
+                         res.workDaySet())
+                {
+                    CallShiftType shiftType
+                        = CallShiftTypeExtensions.GetCallShiftTypeForDate(workDay,
+                            1);
+                    pgy1WorkTime[i] += shiftType.GetHours();
+                }
+            }
 
             // add the shift type time to the work time
             foreach (CallShiftType shift in
@@ -783,15 +786,19 @@ public class AlgorithmService
         for (int i = 0; i < pgy2s.Count; i++)
         {
             pgy2WorkTime[i] = 0;
-            // PGY2? res = (PGY2)pgy2s[i];
-            // foreach (DateTime workDay in
-            //          res.workDaySet())
-            // {
-            //     CallShiftType shiftType
-            //         = CallShiftTypeExtensions.GetCallShiftTypeForDate(workDay,
-            //             2);
-            //     pgy2WorkTime[i] += shiftType.GetHours();
-            // }
+
+            if (!loosely)
+            {
+                PGY2? res = (PGY2)pgy2s[i];
+                foreach (DateTime workDay in
+                         res.workDaySet())
+                {
+                    CallShiftType shiftType
+                        = CallShiftTypeExtensions.GetCallShiftTypeForDate(workDay,
+                            2);
+                    pgy2WorkTime[i] += shiftType.GetHours();
+                }
+            }
 
             // add the shift type time to the work time
             foreach (CallShiftType shift in
@@ -1091,7 +1098,7 @@ public class AlgorithmService
 
     public bool RandomAssignment(ArrayList pgy1s, ArrayList pgy2s,
         DateTime startDay, DateTime endDay,
-        Dictionary<CallShiftType, int> shiftTypeCount, HashSet<DateTime> workedDays)
+        Dictionary<CallShiftType, int> shiftTypeCount, HashSet<DateTime> workedDays, bool loosely)
     {
         //Console.WriteLine("[DEBUG] Attempting random assignment of shifts...");
 
@@ -1183,7 +1190,7 @@ public class AlgorithmService
             int[] pgy1WorkTime = new int[pgy1s.Count];
             int[] pgy2WorkTime = new int[pgy2s.Count];
             ComputeWorkTime(pgy1s, pgy2s, pgy1WorkTime, pgy2WorkTime,
-                pgy1ShiftCount, pgy2ShiftCount);
+                pgy1ShiftCount, pgy2ShiftCount, loosely);
 
             // loop until within 24-hour window
             bool inWindow = false;
@@ -1202,8 +1209,9 @@ public class AlgorithmService
                 int max = Math.Max(pgy1WorkTime.Max(), pgy2WorkTime.Max());
                 int min = Math.Min(pgy1WorkTime.Min(), pgy2WorkTime.Min());
 
-                // check if the difference is within 12 hours
-                if (max - min <= 12)
+                // check if within range
+                // if algorithm has run more than 50 times, only concern ourselves with matching up hours in each part of schedule
+                if (max - min <= (loosely ? 12 : 24))
                 {
                     inWindow = true; // if so, we are done
                 }
@@ -1215,7 +1223,7 @@ public class AlgorithmService
 
                     // recompute work time for each resident
                     ComputeWorkTime(pgy1s, pgy2s, pgy1WorkTime, pgy2WorkTime,
-                        pgy1ShiftCount, pgy2ShiftCount);
+                        pgy1ShiftCount, pgy2ShiftCount, loosely);
                 }
             }
 
