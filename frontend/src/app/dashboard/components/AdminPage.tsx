@@ -1149,16 +1149,33 @@ const AdminPage: React.FC<AdminPageProps> = ({
                           </select>
                         </td>
                         <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          <select
-                            value={resident.hospitalRole ?? 0}
-                            onChange={(e) => handleUpdateHospitalRole(resident.id, Number(e.target.value))}
-                            disabled={!!savingHospitalRole[resident.id]}
-                            className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                          >
-                            {[0, 1, 2, 3, 4, 5, 6, 7].map(n => (
-                              <option key={n} value={n}>Profile {n + 1}</option>
-                            ))}
-                          </select>
+                          {resident.pgyLevel === 1 ? (
+                            <select
+                              value={resident.hospitalRole ?? ""}
+                              onChange={(e) => handleUpdateHospitalRole(resident.id, Number(e.target.value))}
+                              disabled={!!savingHospitalRole[resident.id]}
+                              className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                            >
+                              <option value="" disabled>Select Profile</option>
+                              {[0, 1, 2, 3, 4, 5, 6, 7].map(n => (
+                                <option key={n} value={n}>Profile {n + 1}</option>
+                              ))}
+                            </select>
+                          ) : resident.pgyLevel === 2 ? (
+                            <select
+                              value={resident.hospitalRole ?? ""}
+                              onChange={(e) => handleUpdateHospitalRole(resident.id, Number(e.target.value))}
+                              disabled={!!savingHospitalRole[resident.id]}
+                              className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                            >
+                              <option value="" disabled>Select Profile</option>
+                              {[8, 9, 10, 11, 12, 13, 14, 15].map(n => (
+                                <option key={n} value={n}>Profile {n + 1}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span className="text-gray-400 italic">N/A</span>
+                          )}
                         </td>
                         <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">--</td>
                       </tr>
