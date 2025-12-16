@@ -14,15 +14,17 @@ import {
 import { Button } from "@/components/ui/button";
 
 interface ConfirmDialogProps {
-  triggerText: React.ReactNode;
+  triggerText?: React.ReactNode;
   confirmText?: React.ReactNode;
   cancelText?: React.ReactNode;
   title?: React.ReactNode;
   message?: React.ReactNode;
-  onConfirm: () => Promise<void> | void;
+  onConfirm: () => Promise<void> | void; 
   loading?: boolean;
   variant?: "default" | "danger" | "outline";
-  className?: string; // optional external override
+  className?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
@@ -35,9 +37,15 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   loading = false,
   variant = "default",
   className,
+  open,
+  onOpenChange,
 }) => {
-  const [open, setOpen] = React.useState(false);
-  
+  const [internalOpen, setInternalOpen] = React.useState(false);
+  const controlled = open !== undefined;
+
+  const dialogOpen = controlled ? (open as boolean) : internalOpen;
+  const setDialogOpen = controlled ? (onOpenChange as (o: boolean) => void) : setInternalOpen;
+
   const baseBtnClass =
     "px-1 sm:px-6 py-1 sm:py-3 font-semibold rounded-xl shadow transition " +
     "whitespace-nowrap w-full sm:w-auto text-xs sm:text-sm lg:text-base flex items-center justify-center";
@@ -50,16 +58,19 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       : "bg-blue-600 text-white hover:bg-blue-700";
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger asChild>
-        <Button
-          className={`${baseBtnClass} ${colorClass} ${className ?? ""}`}
-          onClick={() => setOpen(true)}
-          disabled={loading}
-        >
-          {triggerText}
-        </Button>
-      </AlertDialogTrigger>
+    <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      {/* Render the trigger only if provided */}
+      {triggerText && (
+        <AlertDialogTrigger asChild>
+          <Button
+            className={`${baseBtnClass} ${colorClass} ${className ?? ""}`}
+            onClick={() => setDialogOpen(true)}
+            disabled={loading}
+          >
+            {triggerText}
+          </Button>
+        </AlertDialogTrigger>
+      )}
 
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -71,7 +82,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           <AlertDialogAction
             onClick={async () => {
               await onConfirm();
-              setOpen(false);
+              setDialogOpen(false);
             }}
             disabled={loading}
           >
