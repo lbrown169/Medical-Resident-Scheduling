@@ -813,7 +813,6 @@ public class AlgorithmService
         foreach (CallShiftType shift in shiftTypeCount.Keys)
         {
             // Create a random ratio for each shift type
-            double ratio = 50; // random ratio between 0 and 1
             for (int i = 0; i < shiftTypeCount[shift]; i++)
             // randomly select a pgy1 or pgy2 to assign the shift to
             {
@@ -913,7 +912,7 @@ public class AlgorithmService
         int[] pgy2WorkTime,
         Dictionary<CallShiftType, int>[] allowedCallTypes)
     {
-                // find the person who worked the most
+        // find the person who worked the most
         int giverIndex = 0;
         int giveHour = -1;
         for (int i = 0; i < pgy1s.Count; i++)
@@ -1227,7 +1226,6 @@ public class AlgorithmService
                 = CallShiftTypeExtensions.GetAllCallShiftTypes().Count;
 
             // Markers
-            int pgy1start = 0;
             int pgy2Start = pgy1s.Count * numShiftTypes;
             int shiftStart = pgy2Start + pgy2s.Count * numShiftTypes;
 
@@ -1244,7 +1242,7 @@ public class AlgorithmService
             {
                 foreach (CallShiftType shiftType in pgy1ShiftTypes)
                 {
-                    int offset = (int) shiftType;
+                    int offset = (int)shiftType;
                     g.addEdge(srcIndex, i * numShiftTypes + offset,
                         pgy1ShiftCount[i][shiftType]);
                 }
@@ -1256,7 +1254,7 @@ public class AlgorithmService
             {
                 foreach (CallShiftType shiftType in pgy2ShiftTypes)
                 {
-                    int offset = (int) shiftType;
+                    int offset = (int)shiftType;
                     g.addEdge(srcIndex, pgy2Start + i * numShiftTypes + offset,
                         pgy2ShiftCount[i][shiftType]);
                 }
@@ -1284,7 +1282,7 @@ public class AlgorithmService
                     dayList.Add(curDay);
 
                     CallShiftType shift = shiftTypes[shiftIndex];
-                    int shiftOffset = (int) shift;
+                    int shiftOffset = (int)shift;
                     int? reqYear = shift.GetRequiredYear();
 
                     if (reqYear is null or 1)
@@ -1476,7 +1474,7 @@ public class AlgorithmService
 
                     _logger.LogInformation(
                         "PGY1 {I}: Short: {I1}, Saturday Long: {I2}, Sunday: {I3}, Hours: {hours}",
-                        ((PGY1) pgy1s[i]).name, pgy1ShiftCount[i][CallShiftType.WeekdayShortCall],
+                        ((PGY1)pgy1s[i]).name, pgy1ShiftCount[i][CallShiftType.WeekdayShortCall],
                         pgy1ShiftCount[i][CallShiftType.SaturdayFullCall],
                         pgy1ShiftCount[i][CallShiftType.SundayHalfCall],
                         totalHours
@@ -1492,7 +1490,7 @@ public class AlgorithmService
 
                     _logger.LogInformation(
                         "PGY2 {I}: Short: {I1}, Saturday Long: {I2}, Sunday: {I3}, Hours: {hours}",
-                        ((PGY2) pgy2s[i]).name, pgy2ShiftCount[i][CallShiftType.WeekdayShortCall],
+                        ((PGY2)pgy2s[i]).name, pgy2ShiftCount[i][CallShiftType.WeekdayShortCall],
                         pgy2ShiftCount[i][CallShiftType.SaturdayHalfCall],
                         pgy2ShiftCount[i][CallShiftType.SundayHalfCall],
                         totalHours
@@ -1513,7 +1511,7 @@ public class AlgorithmService
 
                 _logger.LogInformation(
                     "PGY1 {I}: Short: {I1}, Saturday Long: {I2}, Sunday: {I3}, Hours: {hours}",
-                    ((PGY1) pgy1s[i]).name, pgy1ShiftCount[i][CallShiftType.WeekdayShortCall],
+                    ((PGY1)pgy1s[i]).name, pgy1ShiftCount[i][CallShiftType.WeekdayShortCall],
                     pgy1ShiftCount[i][CallShiftType.SaturdayFullCall],
                     pgy1ShiftCount[i][CallShiftType.SundayHalfCall],
                     totalHours
@@ -1529,7 +1527,7 @@ public class AlgorithmService
 
                 _logger.LogInformation(
                     "PGY2 {I}: Short: {I1}, Saturday Long: {I2}, Sunday: {I3}, Hours: {hours}",
-                    ((PGY2) pgy2s[i]).name, pgy2ShiftCount[i][CallShiftType.WeekdayShortCall],
+                    ((PGY2)pgy2s[i]).name, pgy2ShiftCount[i][CallShiftType.WeekdayShortCall],
                     pgy2ShiftCount[i][CallShiftType.SaturdayHalfCall],
                     pgy2ShiftCount[i][CallShiftType.SundayHalfCall],
                     totalHours
