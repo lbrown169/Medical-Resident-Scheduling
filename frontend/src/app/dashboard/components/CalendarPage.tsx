@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { ChevronLeft, ChevronRight, CalendarDays, Home, Repeat2, Calendar, User, Settings as SettingsIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarDays, Home, Repeat2, Calendar, UserCheck, CalendarX, User, Settings as SettingsIcon } from "lucide-react";
 
 interface CalendarEvent {
   id: string;
@@ -376,13 +376,13 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
             {/* Request Off button: only show if not admin */}
             {!isAdmin && (
               <button onClick={onNavigateToRequestOff} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground">
-                <Calendar className="w-5 h-5" /> Request Off
+                <CalendarX className="w-5 h-5" /> Request Off
               </button>
             )}
             {/* Check My Schedule button: only show if not admin */}
             {!isAdmin && (
               <button onClick={onNavigateToCheckSchedule} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground">
-                <User className="w-5 h-5" /> Check My Schedule
+                <UserCheck className="w-5 h-5" /> Check My Schedule
               </button>
             )}
             {isAdmin && (
