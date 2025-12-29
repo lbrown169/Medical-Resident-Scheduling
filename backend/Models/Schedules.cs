@@ -10,6 +10,6 @@ public class Schedules
 
     [Column("status")][MaxLength(45)] public string Status { get; set; }
     
-    [Column("generated_year")] public int GeneratedYear { get; set; }
+    [Column("GeneratedYear")] public int GeneratedYear { get; set; }
 
 }
