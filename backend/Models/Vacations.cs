@@ -21,4 +21,7 @@ public class Vacations
     [Column("details")][MaxLength(255)] public string? Details { get; set; }
 
     [Column("groupId")][MaxLength(45)] public string GroupId { get; set; }
+    
+    [Column("half_day")][MaxLength(1)] public string? HalfDay { get; set; }
+
 }
