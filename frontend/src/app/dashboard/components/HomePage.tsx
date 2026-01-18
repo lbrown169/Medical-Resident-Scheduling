@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
-import { Calendar, CalendarX, Clock, UserCheck, RotateCcw, Repeat, CalendarCheck, Bell, Users, User } from "lucide-react";
+import { Calendar, CalendarX, Clock, UserCheck, RotateCcw, Repeat, CalendarCheck, Bell, Users } from "lucide-react";
 import { config } from "../../../config";
 import { Dialog } from "../../../components/ui/dialog";
 import { toast } from "../../../lib/use-toast";

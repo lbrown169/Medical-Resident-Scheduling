@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
-import { CalendarDays, Send, Check, X, Shield, Users, Trash2, Repeat2 } from "lucide-react";
+import { CalendarDays, CalendarX, Send, Check, X, Shield, Users, Trash2, Repeat } from "lucide-react";
 import { differenceInCalendarDays, parseISO } from 'date-fns';
 import { config } from '../../../config';
 import { toast } from "../../../lib/use-toast";
@@ -747,14 +747,14 @@ const AdminPage: React.FC<AdminPageProps> = ({
             </div>
             <div className="flex flex-col items-center border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-700 pt-4 sm:pt-0 sm:pl-8">
               <div className="flex items-center gap-2 mb-1">
-                <Repeat2 className="w-5 h-5 text-yellow-500" />
+                <Repeat className="w-5 h-5 text-yellow-500" />
                 <span className="text-2xl font-bold text-gray-900 dark:text-white">{pendingSwapsCount}</span>
               </div>
               <span className="text-xs text-gray-500">Pending Swaps</span>
             </div>
             <div className="flex flex-col items-center border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-700 pt-4 sm:pt-0 sm:pl-8">
               <div className="flex items-center gap-2 mb-1">
-                <CalendarDays className="w-5 h-5 text-green-500" />
+                <CalendarX className="w-5 h-5 text-green-500" />
                 <span className="text-2xl font-bold text-gray-900 dark:text-white">{pendingRequestsCount}</span>
               </div>
               <span className="text-xs text-gray-500">Pending Time Off</span>

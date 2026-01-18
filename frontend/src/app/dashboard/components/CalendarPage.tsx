@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { ChevronLeft, ChevronRight, CalendarDays, Home, Repeat2, Calendar, UserCheck, CalendarX, User, Settings as SettingsIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarDays, Home, Repeat2, UserCheck, CalendarX, Settings as SettingsIcon } from "lucide-react";
 
 interface CalendarEvent {
   id: string;
