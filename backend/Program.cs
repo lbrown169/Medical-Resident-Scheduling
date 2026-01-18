@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Text;
 using DotNetEnv;
+using MedicalDemo.Algorithm;
 using MedicalDemo.Interfaces;
 using MedicalDemo.Models;
 using MedicalDemo.Services;
@@ -18,6 +19,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<SchedulingMapperService>();
 builder.Services.AddScoped<SchedulerService>();
+builder.Services.AddScoped<AlgorithmService>();
 builder.Services.AddScoped<MiscService>();
 
 // Email
@@ -77,7 +79,6 @@ if (string.IsNullOrEmpty(MySqlConnectString))
 
 builder.Services.AddDbContext<MedicalContext>(options =>
 {
-    Console.WriteLine("Attempting to connect to database...");
     options.UseMySql(MySqlConnectString, ServerVersion.AutoDetect(MySqlConnectString));
 });
 

@@ -1,4 +1,5 @@
 using MedicalDemo.Models;
+using MedicalDemo.Models.DTO.Scheduling;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -46,35 +47,34 @@ public class DashboardController : ControllerBase
                 DateTime.Now.ToString("MM/yyyy") // "12/2024"
             };
 
-            Rotations? currentRotation = await _context.rotations
-                .FirstOrDefaultAsync(r =>
-                    r.ResidentId == residentId &&
-                    currentMonthFormats.Contains(r.Month));
+            Residents? resident = await _context.residents.FirstOrDefaultAsync(r => r.resident_id == residentId);
 
-            if (currentRotation != null)
+            if (resident == null)
             {
-                dashboardData.CurrentRotation = currentRotation.Rotation;
+                return NotFound("Resident not found");
+            }
+
+            HospitalRole role = HospitalRole.Unassigned;
+            int monthIndex = (DateTime.Now.Month + 5) % 12;
+
+            if (resident.hospital_role_profile is { } profile)
+            {
+                role = resident.hospital_role_profile switch
+                {
+                    1 => HospitalRole.Pgy1Profiles[profile][monthIndex],
+                    2 => HospitalRole.Pgy2Profiles[profile - 8][monthIndex],
+                    _ => role
+                };
+            }
+
+            dashboardData.CurrentRotation = role.name;
+
+            if (role != HospitalRole.Unassigned)
+            {
                 DateTime endOfMonth
                     = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1)
                         .AddMonths(1).AddDays(-1);
                 dashboardData.RotationEndDate = $"Ends {endOfMonth:MM/dd/yyyy}";
-            }
-            else
-            {
-                // Get all rotations for this resident to see what format is used
-                List<Rotations> allRotations = await _context.rotations
-                    .Where(r => r.ResidentId == residentId)
-                    .ToListAsync();
-
-                if (allRotations.Any())
-                {
-                    // Console.WriteLine($"Found {allRotations.Count} rotations for resident {residentId}:");
-                    // foreach (var rot in allRotations)
-                    // {
-                    //     Console.WriteLine($"  Month: '{rot.Month}', Rotation: '{rot.Rotation}'");
-                    // }
-                }
-                // Console.WriteLine($"No rotations found for resident {residentId}");
             }
 
             // Get dates for this resident
@@ -87,7 +87,7 @@ public class DashboardController : ControllerBase
                 d.Date.Month == DateTime.Now.Month &&
                 d.Date.Year == DateTime.Now.Year).ToList();
             dashboardData.MonthlyHours
-                = thisMonthDates.Count * 8; // Assuming 8 hours per shift
+                = thisMonthDates.Sum(d => d.Hours);
 
             // Debug: Log the hours calculation
             // Console.WriteLine($"Resident {residentId}: Found {thisMonthDates.Count} dates in {DateTime.Now:MMMM yyyy}, calculated {dashboardData.MonthlyHours} hours");

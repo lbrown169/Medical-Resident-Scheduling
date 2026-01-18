@@ -3,17 +3,18 @@
 import React, { useState, useEffect } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
-import { CalendarDays, Send, Check, X, Shield, Users, Repeat2 } from "lucide-react";
+import { CalendarDays, Send, Check, X, Shield, Users, Trash2, Repeat2 } from "lucide-react";
 import { differenceInCalendarDays, parseISO } from 'date-fns';
 import { config } from '../../../config';
 import { toast } from "../../../lib/use-toast";
 import { useMemo } from "react";
 import { Dialog } from "../../../components/ui/dialog";
 import { ConfirmDialog } from "./ConfirmDialog";
-import { Trash2 } from "lucide-react";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { ChevronDown } from "lucide-react";
 
 interface AdminPageProps {
-  residents: { id: string; name: string; email: string; pgyLevel: number | string }[];
+  residents: { id: string; name: string; email: string; pgyLevel: number | string; hospitalRole?: number; hours: number }[];
   myTimeOffRequests: { id: string; startDate: string; endDate: string; resident: string; reason: string; status: string; }[];
   shifts: { id: string; name: string }[];
   handleApproveRequest: (id: string) => void;
@@ -121,21 +122,24 @@ const AdminPage: React.FC<AdminPageProps> = ({
   const [deletingAnnouncement, setDeletingAnnouncement] = useState<string | null>(null);
   const [switchingRole, setSwitchingRole] = useState<string | null>(null);
   const [deletingSchedule, setDeletingSchedule] = useState(false);
+  const currentYear = new Date().getFullYear();
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [selectedYear, setSelectedYear] = useState<number>(currentYear);
 
-  const handleGenerateSchedule = async () => {
+  const handleGenerateSchedule = async (year: number) => {
     setGenerating(true);
     setMessage("");
     try {
-      // TODO: Year is hardcoded in front end but passed as a variable to backend
-      const response = await fetch(`${config.apiUrl}/api/algorithm/training/2025`, { method: "POST" });
-      if (!response.ok) throw new Error("Failed to generate schedule");
-      setMessage("New schedule generated successfully!");
+      const response = await fetch(`${config.apiUrl}/api/algorithm/training/${year}`, {
+        method: "POST",
+      });
 
-      // Navigate to calendar view after successful generation
-      if (onNavigateToCalendar) {
-        onNavigateToCalendar();
-      }
-    } catch {
+      if (!response.ok) throw new Error("Failed to generate schedule");
+      setMessage(`New schedule for ${year} generated successfully!`);
+
+      if (onNavigateToCalendar) onNavigateToCalendar();
+    } catch (err) {
+      console.error("Error generating schedule:", err);
       setMessage("Error generating schedule. Please try again.");
     } finally {
       setGenerating(false);
@@ -351,6 +355,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
   useEffect(() => setResidentRows(residents), [residents]);
 
   const [savingPGY, setSavingPGY] = useState<Record<string, boolean>>({});
+  const [savingHospitalRole, setSavingHospitalRole] = useState<Record<string, boolean>>({});
 
   // Updates the PGY year when selected by administrators on the Resident Info tab
   const handleUpdatePGY = async (residentId: string, newPGY: number) => {
@@ -412,6 +417,70 @@ const AdminPage: React.FC<AdminPageProps> = ({
       });
     } finally {
       setSavingPGY(prev => ({ ...prev, [residentId]: false }));
+    }
+  };
+
+  // Updates the Hospital Role Profile when selected by administrators on the Resident Info tab
+  const handleUpdateHospitalRole = async (residentId: string, newRole: number) => {
+    setSavingHospitalRole(prev => ({ ...prev, [residentId]: true }));
+    // Optimistic update
+    setResidentRows(prev => prev.map(r => r.id === residentId ? { ...r, hospitalRole: newRole } : r));
+
+    try {
+      // First, get the current resident data
+      const getResponse = await fetch(`${config.apiUrl}/api/residents/filter?resident_id=${residentId}`);
+      if (!getResponse.ok) {
+        throw new Error('Failed to fetch current resident data');
+      }
+
+      const residentsData = await getResponse.json();
+      if (!residentsData || residentsData.length === 0) {
+        throw new Error('Resident not found');
+      }
+
+      const currentResident = residentsData[0];
+
+      // Update with existing data but new hospital role profile
+      const res = await fetch(`${config.apiUrl}/api/residents/${residentId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          resident_id: currentResident.resident_id,
+          first_name: currentResident.first_name,
+          last_name: currentResident.last_name,
+          email: currentResident.email,
+          password: currentResident.password,
+          phone_num: currentResident.phone_num,
+          graduate_yr: currentResident.graduate_yr,
+          weekly_hours: currentResident.weekly_hours,
+          total_hours: currentResident.total_hours,
+          bi_yearly_hours: currentResident.bi_yearly_hours,
+          hospital_role_profile: newRole // Update Hospital Role Profile
+        })
+      });
+
+      if (!res.ok) {
+        const msg = await res.text();
+        throw new Error(msg || 'Failed to update Hospital Role Profile');
+      }
+
+      toast({
+        title: 'Hospital Role Profile updated',
+        description: `Resident set to Profile ${newRole + 1}.`,
+        variant: 'success',
+      });
+    } catch (error) {
+      // Roll back on error
+      setResidentRows(prev => prev.map(r => r.id === residentId ? { ...r, hospitalRole: residents.find(x => x.id === residentId)?.hospitalRole ?? r.hospitalRole } : r));
+      toast({
+        title: 'Update failed',
+        description: error?.message || 'Could not update Hospital Role Profile.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSavingHospitalRole(prev => ({ ...prev, [residentId]: false }));
     }
   };
 
@@ -658,8 +727,6 @@ const AdminPage: React.FC<AdminPageProps> = ({
     }
   };
 
-
-
   return (
     <div className="w-full pt-4 h-[calc(100vh-4rem)] flex flex-col items-center px-4 md:pl-8">
       {/* Dashboard Overview Card */}
@@ -693,21 +760,51 @@ const AdminPage: React.FC<AdminPageProps> = ({
               <span className="text-xs text-gray-500">Pending Time Off</span>
             </div>
             <div className="h-6 sm:h-10 border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-700 mx-0 sm:mx-4 lg:mx-6 hidden sm:block" />
-            {/* Generate Schedule */}
-            <ConfirmDialog
-              triggerText={
-                <span className="flex items-center">
-                  {generating ? "Generating..." : "Generate New Schedule"}
-                </span>
-              }
-              title="Generate new schedule?"
-              message="This will overwrite the current schedule. Continue?"
-              confirmText="Generate"
-              cancelText="Cancel"
-              onConfirm={handleGenerateSchedule}
-              loading={generating}
-              variant="default"
-            />
+            <div className="flex items-center">
+
+              {/* Left: Generate Schedule Button (uses currently selectedYear) */}
+              <Button
+                onClick={() => setConfirmOpen(true)}
+                disabled={generating}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-l-xl rounded-r-none shadow"
+              >
+                {generating ? "Generating..." : `Generate ${selectedYear} Schedule`}
+              </Button>
+              
+              {/* Right: attached dropdown chevron to choose year */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-3 rounded-r-xl rounded-l-none shadow border-l border-blue-500"
+                    disabled={generating}
+                    aria-label="Choose year"
+                  >
+                    <ChevronDown className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem onClick={() => setSelectedYear(currentYear)}>
+                    Generate for {currentYear}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setSelectedYear(currentYear + 1)}>
+                    Generate for {currentYear + 1}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              <ConfirmDialog
+                open={confirmOpen}
+                onOpenChange={setConfirmOpen}
+                title="Generate new schedule?"
+                message={`This will overwrite the current schedule for ${selectedYear}. Continue?`}
+                confirmText="Generate"
+                cancelText="Cancel"
+                onConfirm={() => handleGenerateSchedule(selectedYear)}
+                loading={generating}
+                variant="default"
+              />
+            </div>
+
             {/* Delete Schedule */}
             <ConfirmDialog
               triggerText={
@@ -726,7 +823,6 @@ const AdminPage: React.FC<AdminPageProps> = ({
               loading={deletingSchedule}
               variant="danger"
             />
-
           </div>
         </div>
       </Card>
@@ -1059,6 +1155,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
                     <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resident</th>
                     <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                     <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current PGY Status</th>
+                    <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hospital Role Profile</th>
                     <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hours Scheduled</th>
                   </tr>
                 </thead>
@@ -1082,12 +1179,41 @@ const AdminPage: React.FC<AdminPageProps> = ({
                             ))}
                           </select>
                         </td>
-                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">--</td>
+                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {resident.pgyLevel === 1 ? (
+                            <select
+                              value={resident.hospitalRole ?? ""}
+                              onChange={(e) => handleUpdateHospitalRole(resident.id, Number(e.target.value))}
+                              disabled={!!savingHospitalRole[resident.id]}
+                              className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                            >
+                              <option value="" disabled>Select Profile</option>
+                              {[0, 1, 2, 3, 4, 5, 6, 7].map(n => (
+                                <option key={n} value={n}>Profile {n + 1}</option>
+                              ))}
+                            </select>
+                          ) : resident.pgyLevel === 2 ? (
+                            <select
+                              value={resident.hospitalRole ?? ""}
+                              onChange={(e) => handleUpdateHospitalRole(resident.id, Number(e.target.value))}
+                              disabled={!!savingHospitalRole[resident.id]}
+                              className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                            >
+                              <option value="" disabled>Select Profile</option>
+                              {[8, 9, 10, 11, 12, 13, 14, 15].map(n => (
+                                <option key={n} value={n}>Profile {n + 1}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span className="text-gray-400 italic">N/A</span>
+                          )}
+                        </td>
+                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{resident.hours}</td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={6} className="px-6 py-4 text-center text-gray-500 italic">No residents found.</td>
+                      <td colSpan={5} className="px-6 py-4 text-center text-gray-500 italic">No residents found.</td>
                     </tr>
                   )}
                 </tbody>

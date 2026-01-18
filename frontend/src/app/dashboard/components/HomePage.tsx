@@ -53,7 +53,6 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
   onNavigateToRequestOff,
   onNavigateToSchedule,
   userId,
-  calendarEvents = [], // Accept calendarEvents as prop if available
   onRefreshCalendar,
   isAdmin,
 }) => {
@@ -64,7 +63,6 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
     teamUpdates: []
   });
   const [loading, setLoading] = useState(true);
-  const [hoursThisMonth, setHoursThisMonth] = useState(0);
   const [denyModalOpen, setDenyModalOpen] = useState(false);
   const [denyReason, setDenyReason] = useState("");
   const [pendingDenyId, setPendingDenyId] = useState<string | null>(null);
@@ -170,28 +168,6 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
     }
   }, [userId]);
 
-  useEffect(() => {
-    // Calculate hours from calendarEvents for current user and current month
-    if (calendarEvents && calendarEvents.length > 0) {
-      const now = new Date();
-      const currentMonth = now.getMonth();
-      const currentYear = now.getFullYear();
-      
-      const userEvents = calendarEvents.filter(event => {
-        const eventDate = new Date(event.start);
-        return (
-          eventDate.getMonth() === currentMonth &&
-          eventDate.getFullYear() === currentYear &&
-          event.extendedProps && event.extendedProps.residentId === userId
-        );
-      });
-      
-      setHoursThisMonth(userEvents.length * 8); // 8 hours per event
-    } else {
-      setHoursThisMonth(0);
-    }
-  }, [calendarEvents, userId]);
-
   if (loading) {
     return (
       <div className="w-full pt-4 flex flex-col items-center">
@@ -231,7 +207,7 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
                 Hours This Month
               </h2>
               <p className="text-3xl font-bold text-primary w-full text-center">
-                {hoursThisMonth}
+                {dashboardData.monthlyHours}
               </p>
               <p className="text-sm text-muted-foreground w-full text-center">Total hours</p>
             </div>
