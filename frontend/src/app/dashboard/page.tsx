@@ -14,7 +14,7 @@ import {
   SidebarTrigger,
 } from "../../components/ui/sidebar";
 import { SidebarUserCard } from "./components/SidebarUserCard";
-import { Repeat, CalendarDays, UserCheck, Shield, Settings, Home, LogOut, User as UserIcon, ChevronDown, Moon, Sun, ClipboardList } from "lucide-react";
+import { Repeat, CalendarDays, UserCheck, Shield, Settings, Home, LogOut, User as UserIcon, ChevronDown, Moon, Sun, ClipboardList, CalendarRange } from "lucide-react";
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { useRouter } from "next/navigation";
 import { toast } from '../../lib/use-toast';
@@ -36,6 +36,7 @@ import RequestOffPage from "./components/RequestOffPage";
 import CheckSchedulePage from "./components/CheckSchedulePage";
 import AdminPage from "./components/AdminPage";
 import PGY3RotationForm from "./components/PGY3RotationForm";
+import PGY4RotationPage from "./components/PGY4RotationPage";
 
 import MobileHeader from "./components/MobileHeader";
 import MobileUserMenu from "./components/MobileUserMenu";
@@ -107,6 +108,7 @@ const menuItems: MenuItem[] = [
   { title: "Request Off", icon: <CalendarDays className="w-5 h-5 mr-2" /> },
   { title: "Check My Schedule", icon: <UserCheck className="w-5 h-5 mr-2" /> },
   { title: "PGY-4 Rotation Forms", icon: <ClipboardList className="w-5 h-5 mr-2" /> },
+  { title: "PGY-4 Rotations", icon: <CalendarRange className="w-5 h-5 mr-2" /> },
   { title: "Admin", icon: <Shield className="w-5 h-5 mr-2" /> },
   { title: "Settings", icon: <Settings className="w-5 h-5 mr-2" /> },
 ];
@@ -1260,6 +1262,23 @@ case "Home":
             userPGY={currentUserPGY || 0}
           />
         );
+      
+      case "PGY-4 Rotations":
+          if (!isAdmin) {
+          return (
+            <div className="w-full pt-4 flex flex-col items-center">
+              <h1 className="text-2xl font-bold mb-6">Access Denied</h1>
+              <p className="text-center text-gray-600 dark:text-gray-400">
+                You do not have permission to access the PGY-4 admin panel.
+              </p>
+            </div>
+          );
+        }
+        return (
+          <PGY4RotationPage
+
+          />
+        );
 
       default:
         return null;
@@ -1343,6 +1362,8 @@ case "Home":
     if (item.title === "Check My Schedule") return !isAdmin;
     // Only show PGY-4 Rotation Forms to PGY-3 residents
     if (item.title === "PGY-4 Rotation Forms") return currentUserPGY === 3;
+    //Only show PGY-4 Rotaion Schedule to admins
+    if (item.title === "PGY-4 Rotations") return isAdmin;
     return true;
   });
 
