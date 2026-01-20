@@ -1276,7 +1276,7 @@ case "Home":
         }
         return (
           <PGY4RotationPage
-
+          residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr }))}
           />
         );
 
