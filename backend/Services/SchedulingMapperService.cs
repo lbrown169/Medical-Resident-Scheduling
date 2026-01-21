@@ -87,22 +87,22 @@ public class SchedulingMapperService
         }).ToList();
     }
 
-    private static HospitalRole[] MapRotationsToRoles(List<Rotations> rotations)
-    {
-        HospitalRole[] roles = new HospitalRole[12];
+    // private static HospitalRole[] MapRotationsToRoles(List<Rotations> rotations)
+    // {
+    //     HospitalRole[] roles = new HospitalRole[12];
 
-        foreach (Rotations rotation in rotations)
-        {
-            _ = rotation.Rotation?.Trim().ToLowerInvariant();
-            int month = DateTime.ParseExact(rotation.Month.Trim(), "MMMM",
-                CultureInfo.InvariantCulture).Month;
-            int academicMonthIndex = (month + 5) % 12;
-            roles[academicMonthIndex]
-                = MapRotationNameToRole(rotation.Rotation);
-        }
+    //     foreach (Rotations rotation in rotations)
+    //     {
+    //         _ = rotation.Rotation?.Trim().ToLowerInvariant();
+    //         int month = DateTime.ParseExact(rotation.Month.Trim(), "MMMM",
+    //             CultureInfo.InvariantCulture).Month;
+    //         int academicMonthIndex = (month + 5) % 12;
+    //         roles[academicMonthIndex]
+    //             = MapRotationNameToRole(rotation.Rotation);
+    //     }
 
-        return roles;
-    }
+    //     return roles;
+    // }
 
     private static HospitalRole MapRotationNameToRole(string rotationName)
     {

@@ -49,7 +49,9 @@ public class RotationsController : ControllerBase
     public async Task<ActionResult<IEnumerable<Rotations>>> FilterRotations(
         [FromQuery] string? residentId,
         [FromQuery] string? month,
-        [FromQuery] string? rotation)
+        [FromQuery] int? year,
+        [FromQuery] int? pgyYear,
+        [FromQuery] Guid? rotationTypeId)
     {
         IQueryable<Rotations> query = _context.rotations.AsQueryable();
 
@@ -64,9 +66,12 @@ public class RotationsController : ControllerBase
             ;
         }
 
-        if (!string.IsNullOrEmpty(rotation))
+        // Add query logic for year
+        // Add query logic for pgyYear
+
+        if (rotationTypeId != null)
         {
-            query = query.Where(v => v.Rotation == rotation);
+            query = query.Where(v => v.RotationTypeId == rotationTypeId);
         }
 
         List<Rotations> results = await query.ToListAsync();
@@ -99,7 +104,7 @@ public class RotationsController : ControllerBase
         // Update the fields
         existingRotation.ResidentId = updatedRotation.ResidentId;
         existingRotation.Month = updatedRotation.Month;
-        existingRotation.Rotation = updatedRotation.Rotation;
+        existingRotation.RotationTypeId = updatedRotation.RotationTypeId;
 
         try
         {
