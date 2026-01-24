@@ -95,8 +95,6 @@ public class VacationsController : ControllerBase
     public async Task<IActionResult> UpdateStatusByGroup(string groupId,
         [FromBody] UpdateStatusDto input)
     {
-        Console.WriteLine("Received groupId: " + groupId);
-
         if (string.IsNullOrWhiteSpace(input.Status))
         {
             return BadRequest("Status is required.");
