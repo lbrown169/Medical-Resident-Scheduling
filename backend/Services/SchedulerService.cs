@@ -1,4 +1,5 @@
 using MedicalDemo.Algorithm;
+using MedicalDemo.Enums;
 using MedicalDemo.Models;
 using MedicalDemo.Models.DTO.Scheduling;
 using Microsoft.EntityFrameworkCore;
@@ -64,15 +65,9 @@ public class SchedulerService
                     continue;
                 }
 
-                // Delete existing schedules to ensure only one schedule is in the database at all times
-                List<Schedules> existingSchedules
-                    = await _context.schedules.ToListAsync();
-                _context.schedules.RemoveRange(existingSchedules);
-                await _context.SaveChangesAsync();
-
                 // Save schedule record
                 Schedules schedule = new()
-                { ScheduleId = Guid.NewGuid(), Status = "Under Review" };
+                { ScheduleId = Guid.NewGuid(), Status = ScheduleStatus.UnderReview, GeneratedYear = year};
                 _context.schedules.Add(schedule);
                 await _context.SaveChangesAsync();
 

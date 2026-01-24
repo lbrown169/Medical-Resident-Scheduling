@@ -1,3 +1,4 @@
+using MedicalDemo.Enums;
 using MedicalDemo.Models;
 using MedicalDemo.Models.DTO;
 using Microsoft.AspNetCore.Mvc;
@@ -51,11 +52,11 @@ public class SchedulesController : ControllerBase
     // GET: api/schedules/filter?status=
     [HttpGet("filter")]
     public async Task<ActionResult<IEnumerable<Schedules>>> FilterSchedules(
-        [FromQuery] string? status)
+        [FromQuery] ScheduleStatus? status)
     {
         IQueryable<Schedules> query = _context.schedules.AsQueryable();
 
-        if (!string.IsNullOrWhiteSpace(status))
+        if (status != null)
         {
             query = query.Where(s => s.Status == status);
         }
@@ -79,7 +80,7 @@ public class SchedulesController : ControllerBase
             from d in _context.dates
             join s in _context.schedules on d.ScheduleId equals s
                 .ScheduleId
-            where s.Status.ToLower() == "published"
+            where s.Status == ScheduleStatus.Published
             select new ScheduleDatesDTO
             {
                 Date = d.Date,
@@ -104,7 +105,7 @@ public class SchedulesController : ControllerBase
             from d in _context.dates
             join s in _context.schedules on d.ScheduleId equals s
                 .ScheduleId
-            where s.Status.ToLower() == "under review"
+            where s.Status == ScheduleStatus.UnderReview
             select new ScheduleDatesDTO
             {
                 Date = d.Date,
