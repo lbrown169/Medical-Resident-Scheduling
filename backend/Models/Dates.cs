@@ -23,5 +23,9 @@ public class Dates
 
     [ForeignKey("ResidentId")]
     [ValidateNever]
-    public Residents Resident { get; set; } // <-- Navigation property
+    public Residents Resident { get; set; }
+
+    [ForeignKey("ScheduleId")]
+    [ValidateNever]
+    public Schedules Schedule { get; set; }
 }

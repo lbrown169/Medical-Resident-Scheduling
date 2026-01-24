@@ -67,7 +67,7 @@ public class SchedulerService
 
                 // Save schedule record
                 Schedules schedule = new()
-                { ScheduleId = Guid.NewGuid(), Status = ScheduleStatus.UnderReview, GeneratedYear = year};
+                { ScheduleId = Guid.NewGuid(), Status = ScheduleStatus.UnderReview, GeneratedYear = year };
                 _context.schedules.Add(schedule);
                 await _context.SaveChangesAsync();
 

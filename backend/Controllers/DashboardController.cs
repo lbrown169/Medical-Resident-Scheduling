@@ -1,3 +1,4 @@
+using MedicalDemo.Enums;
 using MedicalDemo.Models;
 using MedicalDemo.Models.DTO.Scheduling;
 using Microsoft.AspNetCore.Mvc;
@@ -79,7 +80,9 @@ public class DashboardController : ControllerBase
 
             // Get dates for this resident
             List<Dates> userDates = await _context.dates
-                .Where(d => d.ResidentId == residentId)
+                .Where(d =>
+                    d.ResidentId == residentId
+                    && d.Schedule.Status == ScheduleStatus.Published)
                 .ToListAsync();
 
             // Calculate this month's hours

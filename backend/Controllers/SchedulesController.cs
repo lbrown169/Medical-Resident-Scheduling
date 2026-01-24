@@ -103,13 +103,8 @@ public class SchedulesController : ControllerBase
     // PUT: api/schedules/{id}
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateSchedule(Guid id,
-        [FromBody] Schedules updatedSchedule)
+        [FromBody] UpdateScheduleDto updateSchedule)
     {
-        if (id != updatedSchedule.ScheduleId)
-        {
-            return BadRequest("Schedule ID in URL and body do not match.");
-        }
-
         Schedules? existingSchedule
             = await _context.schedules.FindAsync(id);
 
@@ -118,7 +113,26 @@ public class SchedulesController : ControllerBase
             return NotFound("Schedule not found.");
         }
 
-        existingSchedule.Status = updatedSchedule.Status;
+        if (existingSchedule.Status == updateSchedule.Status)
+        {
+            return NoContent();
+        }
+
+        // Only one schedule per year can be published
+        if (updateSchedule.Status == ScheduleStatus.Published)
+        {
+            bool isSchedulePublished = await _context.schedules.AnyAsync(s =>
+                s.GeneratedYear == existingSchedule.GeneratedYear
+                && s.Status == ScheduleStatus.Published
+            );
+            if (isSchedulePublished)
+            {
+                return Conflict(
+                    $"A schedule for {existingSchedule.GeneratedYear} is already published");
+            }
+        }
+
+        existingSchedule.Status = updateSchedule.Status;
 
         try
         {

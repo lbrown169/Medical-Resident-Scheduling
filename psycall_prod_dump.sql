@@ -255,7 +255,7 @@ DROP TABLE IF EXISTS `schedules`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `schedules` (
   `schedule_id` binary(16) NOT NULL,
-  `status` varchar(45) NOT NULL,
+  `status` int NOT NULL,
   `GeneratedYear` int NOT NULL,
   PRIMARY KEY (`schedule_id`),
   UNIQUE KEY `schedule_id_UNIQUE` (`schedule_id`)

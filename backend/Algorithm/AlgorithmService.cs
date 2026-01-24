@@ -1333,7 +1333,8 @@ public class AlgorithmService
             if (flow != dayList.Count)
             {
                 // coder's note: this seems unnecessary at this point, but i already coded it, and it can handle the unhandled shifts
-                Dictionary<int, int> unhandledShifts = new();
+                _ = new                // coder's note: this seems unnecessary at this point, but i already coded it, and it can handle the unhandled shifts
+                Dictionary<int, int>();
 
                 // iterate through the edges leaving the source node (to each resident's shift type)
                 ArrayList? edgesFromSource = (ArrayList)g.adjList[srcIndex];
