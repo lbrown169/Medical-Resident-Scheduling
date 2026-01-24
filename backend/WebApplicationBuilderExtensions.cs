@@ -10,6 +10,7 @@ using MedicalDemo.Services.EmailSendServices;
 using Microsoft.EntityFrameworkCore;
 using NLog;
 using NLog.Extensions.Logging;
+using NLog.Web;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace MedicalDemo;
@@ -116,24 +117,15 @@ public static class WebApplicationBuilderExtensions
         this WebApplicationBuilder builder)
     {
         // Nlog
-        builder.Configuration.AddJsonFile(@"Configuration/nlog.json", false,
-            true);
+        builder.Configuration.AddJsonFile(@"Configuration/nlog.json", false, true);
         builder.Logging.ClearProviders();
-
-        if (builder.Configuration.GetSection("NLog").Exists())
-        {
-            builder.Logging.AddNLog(builder.Configuration);
-        }
-        else
-        {
-            builder.Logging.AddNLog();
-        }
+        builder.Host.UseNLog();
 
         GlobalDiagnosticsContext.Set("ApplicationName", GetApplicationName());
         GlobalDiagnosticsContext.Set("ConfigurationName",
             GetConfigurationName());
 
-        // Sentry
+        // Sentry logs
         builder.WebHost.UseSentry(options =>
         {
             string? sentryDsn

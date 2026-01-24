@@ -56,7 +56,7 @@
       },
       "sentry": {
         "type": "Sentry",
-        "initializeSdk": false,
+        "dsn": "${configsetting:item=SentryDsn}",
         "includeEventProperties": true,
         "layout": "${normal}",
         "breadcrumbLayout": "${normal}",
@@ -64,7 +64,11 @@
         "ignoreEventsWithNoException": false,
         "includeEventDataOnBreadcrumbs": true,
         "includeEventPropertiesAsTags": true,
-        "minimumEventLevel": "Info"
+        "minimumEventLevel": "Error",
+        "options": {
+          "attachStacktrace": true,
+          "sendDefaultPii": true
+        }
       }
     },
     "rules": {
@@ -80,6 +84,27 @@
       },
       "90_EntityFramework": {
         "logger": "Microsoft.EntityFrameworkCore.*",
+        "minlevel": "Trace",
+        "maxlevel": "Info",
+        "writeTo": "",
+        "final": true
+      },
+      "90_AspNetCore": {
+        "logger": "Microsoft.AspNetCore.*",
+        "minlevel": "Trace",
+        "maxlevel": "Debug",
+        "writeTo": "",
+        "final": true
+      },
+      "90_AspNetCoreMvc": {
+        "logger": "Microsoft.AspNetCore.Mvc.*",
+        "minlevel": "Trace",
+        "maxlevel": "Info",
+        "writeTo": "",
+        "final": true
+      },
+      "90_AspNetCoreRouting": {
+        "logger": "Microsoft.AspNetCore.Routing.*",
         "minlevel": "Trace",
         "maxlevel": "Info",
         "writeTo": "",
