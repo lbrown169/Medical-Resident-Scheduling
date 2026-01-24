@@ -19,28 +19,6 @@ public class SchedulesController : ControllerBase
         _context = context;
     }
 
-    // POST: api/schedules
-    [HttpPost]
-    public async Task<IActionResult> CreateSchedule(
-        [FromBody] Schedules schedule)
-    {
-        if (schedule == null)
-        {
-            return BadRequest("Schedule object is null.");
-        }
-
-        if (schedule.ScheduleId == Guid.Empty)
-        {
-            schedule.ScheduleId = Guid.NewGuid();
-        }
-
-        _context.schedules.Add(schedule);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetAllSchedules),
-            new { id = schedule.ScheduleId }, schedule);
-    }
-
     // GET: api/schedules
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Schedules>>> GetAllSchedules()
