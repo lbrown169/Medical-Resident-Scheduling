@@ -256,6 +256,7 @@ DROP TABLE IF EXISTS `schedules`;
 CREATE TABLE `schedules` (
   `schedule_id` binary(16) NOT NULL,
   `status` varchar(45) NOT NULL,
+  `GeneratedYear` int NOT NULL,
   PRIMARY KEY (`schedule_id`),
   UNIQUE KEY `schedule_id_UNIQUE` (`schedule_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
