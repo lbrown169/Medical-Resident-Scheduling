@@ -100,7 +100,7 @@ public class SchedulerService
                 // await _misc.FindTotalHours();
                 // await _misc.FindBiYearlyHours(year);
 
-                Console.WriteLine($"Attempt #{attempt}");
+                _logger.LogInformation("Succeeded on attempt #{attempt}", attempt);
                 return (true, null);
             }
             catch (Exception ex)
