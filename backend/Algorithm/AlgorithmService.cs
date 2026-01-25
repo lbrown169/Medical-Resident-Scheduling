@@ -138,13 +138,11 @@ public class AlgorithmService
 
         if (shortCallGraph.getFlow(sourceIndex, sinkIndex) != 3 * pgy1)
         {
-            Console.WriteLine(
-                "[ERROR] Not able to make valid assignment based on parameters");
+            _logger.LogError("Not able to make valid assignment based on parameters");
             return false;
         }
 
-        Console.WriteLine(
-            "Succesfully created pgy3 weekday training assignment");
+        _logger.LogInformation("Successfully created pgy3 weekday training assignment");
         //Console.WriteLine("PGY1 Assignments:");
         for (int i = 0; i < pgy1; i++)
         {
@@ -294,13 +292,11 @@ public class AlgorithmService
         //Console.WriteLine($"The number of pgy1 is {pgy1}");
         if (flow != 1 * pgy1)
         {
-            Console.WriteLine(
-                "[ERROR] Not able to make valid assignment based on parameters");
+            _logger.LogError("Not able to make valid assignment based on parameters");
             return false;
         }
 
-        Console.WriteLine(
-            "Succesfully created PGY2 saturday training assignment");
+        _logger.LogInformation("Successfully created PGY2 saturday training assignment");
         //Console.WriteLine("PGY1 Assignments:");
         for (int i = 0; i < pgy1; i++)
         {
@@ -447,13 +443,11 @@ public class AlgorithmService
 
         if (sundaysCallGraph.getFlow(sourceIndex, sinkIndex) != 1 * pgy1)
         {
-            Console.WriteLine(
-                "[ERROR] Not able to make valid assignment based on parameters");
+            _logger.LogError("Not able to make valid assignment based on parameters");
             return false;
         }
 
-        Console.WriteLine(
-            "Succesfully created PGY2 sunday training assignment");
+        _logger.LogInformation("Successfully created PGY2 sunday training assignment");
         for (int i = 0; i < pgy1; i++)
         {
             ArrayList? curList
@@ -580,7 +574,7 @@ public class AlgorithmService
 
     public bool Part2(int year, ArrayList pgy1s, ArrayList pgy2s, bool loosely)
     {
-        Console.WriteLine("part 2: normal schedule (january through june)");
+        _logger.LogInformation("Generating part 2: normal schedule (january through june)");
         ArrayList AllPgy1s = pgy1s;
         ArrayList AllPgy2s = pgy2s;
 
@@ -1544,7 +1538,7 @@ public class AlgorithmService
             }
 
             // if we reach here, the flow is equal to the number of days, so we can assign the shifts
-            Console.WriteLine("[DEBUG] adding worked days");
+            _logger.LogDebug("Adding worked days");
 
             // add worked days
             for (int i = 0; i < pgy1s.Count; i++)
@@ -1633,7 +1627,7 @@ public class AlgorithmService
         res2.addWorkDay(day1);
     }
 
-    public static void
+    public void
         FixWeekends1(ArrayList pgy1s) // function to fix pgy1 weekends
     {
         foreach (PGY1 res in pgy1s)
@@ -1691,7 +1685,7 @@ public class AlgorithmService
 
                     if (!found)
                     {
-                        Console.WriteLine("Unable to fix weekends for pgy1 :[");
+                        _logger.LogWarning("Unable to fix weekends for pgy1");
                     }
                 }
             }
@@ -1922,7 +1916,7 @@ public class AlgorithmService
         return 3;
     }
 
-    public static void
+    public void
         FixWeekends2(ArrayList pgy2s) // function to fix pgy2 weekens
     {
         foreach (PGY2 res in pgy2s)
@@ -1978,7 +1972,7 @@ public class AlgorithmService
 
                     if (!found)
                     {
-                        Console.WriteLine("Unable to fix weekends for pgy2 :[");
+                        _logger.LogWarning("Unable to fix weekends for pgy2");
                     }
                 }
             }
