@@ -128,9 +128,10 @@ public static class WebApplicationBuilderExtensions
         // Sentry logs
         builder.WebHost.UseSentry(options =>
         {
-            string? sentryDsn
-                = builder.Configuration.GetValue<string>("SentryDsn") ??
-                  Environment.GetEnvironmentVariable("SentryDsn");
+            IConfigurationSection sentrySection = builder.Configuration.GetSection("Sentry");
+            string? sentryDsn =
+                sentrySection.GetValue<string>("Dsn") ??
+                Environment.GetEnvironmentVariable("SentryDsn");
 
             if (string.IsNullOrEmpty(sentryDsn))
             {
@@ -143,7 +144,7 @@ public static class WebApplicationBuilderExtensions
             options.Dsn = sentryDsn;
             options.MinimumBreadcrumbLevel = LogLevel.Information;
             options.MinimumEventLevel = LogLevel.Error;
-            options.EnableLogs = true;
+            options.EnableLogs = sentrySection.GetValue("EnableLogs", true);
         });
 
         return builder;

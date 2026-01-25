@@ -56,7 +56,7 @@
       },
       "sentry": {
         "type": "Sentry",
-        "dsn": "${configsetting:item=SentryDsn}",
+        "dsn": "${configsetting:item=Sentry.Dsn}",
         "includeEventProperties": true,
         "layout": "${normal}",
         "breadcrumbLayout": "${normal}",
