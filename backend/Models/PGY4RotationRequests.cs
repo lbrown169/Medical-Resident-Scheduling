@@ -13,10 +13,12 @@ public class PGY4RotationRequests
     [MaxLength(15)]
     public string ResidentId { get; set; }
 
-    [Column("first_priority")][MaxLength(45)]
+    [Column("first_priority")]
+    [MaxLength(45)]
     public string? FirstPriority { get; set; }
 
-    [Column("second_priority")][MaxLength(45)]
+    [Column("second_priority")]
+    [MaxLength(45)]
     public string? SecondPriority { get; set; }
 
     [Column("third_priority")]
