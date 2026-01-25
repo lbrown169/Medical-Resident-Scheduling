@@ -1,5 +1,8 @@
 "use client";
-import React, { useState } from "react";
+
+import { config } from "../../../config";
+import React, { useState, useEffect } from "react";
+
 import { useRouter } from "next/navigation";
 import { toast } from "../../../lib/use-toast";
 import { Button } from "../../../components/ui/button";
@@ -73,7 +76,7 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) 
   const [alternative1, setAlternative1] = useState("");
   const [alternative2, setAlternative2] = useState("");
   const [alternative3, setAlternative3] = useState("");
-  const [avoid, setAvoid] = useState("");
+  const [avoid1, setAvoid] = useState("");
   const [avoid2, setAvoid2] = useState("");
   const [avoid3, setAvoid3] = useState("");
   const [additionalNotes, setAdditionalNotes] = useState("");
@@ -86,6 +89,48 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) 
   // Deadline configuration (December 12, 2025 at 11:59 PM EST)
   const deadline = new Date("2025-12-12T23:59:00-05:00");
   const isDeadlinePassed = new Date() > deadline;
+
+  useEffect(() => {
+  
+  // Get the existing residents request
+  const loadExistingRequest = async () => {
+    try {
+      const res = await fetch(
+        `${config.apiUrl}/api/PGY4RotationRequests/${userId}`
+      );
+
+      // If no prior submission
+      if (!res.ok) return;
+
+      const data = await res.json();
+
+      setFirstPriority(data.firstPriority ?? "");
+      setSecondPriority(data.secondPriority ?? "");
+      setThirdPriority(data.thirdPriority ?? "");
+      setFourthPriority(data.fourthPriority ?? "");
+      setFifthPriority(data.fifthPriority ?? "");
+      setSixthPriority(data.sixthPriority ?? "");
+      setSeventhPriority(data.seventhPriority ?? "");
+      setEighthPriority(data.eighthPriority ?? "");
+      setAlternative1(data.alternative1 ?? "");
+      setAlternative2(data.alternative2 ?? "");
+      setAlternative3(data.alternative3 ?? "");
+      setAvoid(data.avoid1 ?? "");
+      setAvoid2(data.avoid2 ?? "");
+      setAvoid3(data.avoid3 ?? "");
+      setAdditionalNotes(data.additionalNotes ?? "");
+    } catch {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not load existing rotation request.",
+      });
+    }
+  };
+
+  loadExistingRequest();
+}, [userId]);
+
 
   /**
    * Validates that all priority selections are unique (alternatives and avoid can duplicate)
@@ -126,7 +171,7 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) 
   };
 
   /**
-   * Handles form submission (frontend only - just validates and shows success)
+   * Handles form submission (frontend only - just validates and shows success) - edit: backend included
    */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -153,33 +198,70 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) 
 
     setLoading(true);
 
-    // Simulate API call delay
-    setTimeout(() => {
-      setLoading(false);
-      
-      // Log the data to console for demonstration
-      console.log("Rotation Preferences:", {
-        userId,
-        firstPriority,
-        secondPriority,
-        thirdPriority,
-        fourthPriority,
-        fifthPriority,
-        sixthPriority,
-        seventhPriority,
-        eighthPriority,
-        alternative1,
-        alternative2,
-        alternative3,
-        avoid,
-        avoid2,
-        avoid3,
-        additionalNotes,
-      });
-      
-      // Show success dialog
+    // Try to upload users request after the validation above
+    try {
+      const res = await fetch(
+        `${config.apiUrl}/api/PGY4RotationRequests`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            residentId: userId,
+            firstPriority,
+            secondPriority,
+            thirdPriority,
+            fourthPriority,
+            fifthPriority,
+            sixthPriority,
+            seventhPriority,
+            eighthPriority,
+            alternative1,
+            alternative2,
+            alternative3,
+            avoid1, // Changed this to avoid1 instead of avoid above to allow shorthand. Didn't seem to break anything. Just a note.
+            avoid2,
+            avoid3,
+            additionalNotes,
+          }),
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error("Failed to submit");
+      }
+
+      // Show if successful
       setShowSuccessDialog(true);
-    }, 1000);
+    } catch {
+      toast({
+        variant: "destructive",
+        title: "Submission failed",
+        description: "Unable to save rotation preferences.",
+      });
+    } finally {
+      setLoading(false);
+    }
+
+    // Log the data to console for demonstration (its also posted but for convenience for now), remove this later
+    console.log("Rotation Preferences:", {
+      userId,
+      firstPriority,
+      secondPriority,
+      thirdPriority,
+      fourthPriority,
+      fifthPriority,
+      sixthPriority,
+      seventhPriority,
+      eighthPriority,
+      alternative1,
+      alternative2,
+      alternative3,
+      avoid1,
+      avoid2,
+      avoid3,
+      additionalNotes,
+    });
+    
   };
 
   /**
@@ -391,7 +473,7 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <SelectField
                 label="Avoid 1"
-                value={avoid}
+                value={avoid1}
                 onChange={setAvoid}
                 options={getAllOptions()}
               />

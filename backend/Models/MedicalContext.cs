@@ -18,6 +18,7 @@ public class MedicalContext : DbContext
     public DbSet<Vacations> vacations { get; set; }
     public DbSet<Invitation> Invitations { get; set; }
     public DbSet<SwapRequest> SwapRequests { get; set; }
+    public DbSet<PGY4RotationRequests> PGY4RotationRequests { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -75,6 +76,16 @@ public class MedicalContext : DbContext
         // Map VacationId as binary(16)
         modelBuilder.Entity<Vacations>()
             .Property(v => v.VacationId)
+            .HasColumnType("binary(16)");
+
+        // ResidentId is unique
+        modelBuilder.Entity<PGY4RotationRequests>()
+            .HasIndex(r => r.ResidentId)
+            .IsUnique();
+
+        // Map RequestId as binary(16)
+        modelBuilder.Entity<PGY4RotationRequests>()
+            .Property(p => p.RequestId)
             .HasColumnType("binary(16)");
 
         base.OnModelCreating(modelBuilder);
