@@ -33,12 +33,12 @@ public class SwapRequestsController : ControllerBase
         // Console.WriteLine($"swapRequest.RequesteeId: {swapRequest.RequesteeId}, swapRequest.RequesteeDate: {swapRequest.RequesteeDate:yyyy-MM-dd}");
 
         // Fetch residents
-        Residents? requester =
-            await _context.residents.FirstOrDefaultAsync(r =>
-                r.resident_id == swapRequest.RequesterId);
-        Residents? requestee =
-            await _context.residents.FirstOrDefaultAsync(r =>
-                r.resident_id == swapRequest.RequesteeId);
+        Resident? requester =
+            await _context.Residents.FirstOrDefaultAsync(r =>
+                r.ResidentId == swapRequest.RequesterId);
+        Resident? requestee =
+            await _context.Residents.FirstOrDefaultAsync(r =>
+                r.ResidentId == swapRequest.RequesteeId);
         // Console.WriteLine($"Requester: {requester?.resident_id}, PGY: {requester?.graduate_yr}; Requestee: {requestee?.resident_id}, PGY: {requestee?.graduate_yr}");
         if (requester == null || requestee == null)
         // Console.WriteLine("Requester or requestee not found.");
@@ -47,7 +47,7 @@ public class SwapRequestsController : ControllerBase
         }
 
         // Check PGY (graduate_yr)
-        if (requester.graduate_yr != requestee.graduate_yr)
+        if (requester.GraduateYr != requestee.GraduateYr)
         // Console.WriteLine($"PGY mismatch: {requester.graduate_yr} vs {requestee.graduate_yr}");
         {
             return BadRequest(
@@ -55,14 +55,14 @@ public class SwapRequestsController : ControllerBase
         }
 
         // Fetch dates
-        Dates? requesterDate
-            = await _context.dates.FirstOrDefaultAsync(d =>
+        Date? requesterDate
+            = await _context.Dates.FirstOrDefaultAsync(d =>
                 d.ResidentId == swapRequest.RequesterId &&
-                d.Date.Date == swapRequest.RequesterDate.Date);
-        Dates? requesteeDate
-            = await _context.dates.FirstOrDefaultAsync(d =>
+                d.ShiftDate == swapRequest.RequesterDate);
+        Date? requesteeDate
+            = await _context.Dates.FirstOrDefaultAsync(d =>
                 d.ResidentId == swapRequest.RequesteeId &&
-                d.Date.Date == swapRequest.RequesteeDate.Date);
+                d.ShiftDate == swapRequest.RequesteeDate);
         // Console.WriteLine($"DB Query for requester: ResidentId={swapRequest.RequesterId}, Date={swapRequest.RequesterDate:yyyy-MM-dd} => Found: {(requesterDate != null ? "Yes" : "No")}");
         // Console.WriteLine($"DB Query for requestee: ResidentId={swapRequest.RequesteeId}, Date={swapRequest.RequesteeDate:yyyy-MM-dd} => Found: {(requesteeDate != null ? "Yes" : "No")}");
         if (requesterDate == null || requesteeDate == null)
@@ -80,9 +80,9 @@ public class SwapRequestsController : ControllerBase
                 "Both shifts must be the same type (e.g., Sunday with Sunday, Saturday with Saturday, Short with Short).");
         }
 
-        if (swapRequest.SwapId == Guid.Empty)
+        if (swapRequest.IdswapRequests == Guid.Empty)
         {
-            swapRequest.SwapId = Guid.NewGuid();
+            swapRequest.IdswapRequests = Guid.NewGuid();
         }
 
         swapRequest.CreatedAt = DateTime.UtcNow;
@@ -92,7 +92,7 @@ public class SwapRequestsController : ControllerBase
         await _context.SaveChangesAsync();
 
         return CreatedAtAction(nameof(FilterSwapRequests),
-            new { id = swapRequest.SwapId }, swapRequest);
+            new { id = swapRequest.IdswapRequests }, swapRequest);
     }
 
     // GET: api/swaprequests
@@ -153,7 +153,7 @@ public class SwapRequestsController : ControllerBase
     public async Task<IActionResult> UpdateSwapRequest(Guid id,
         [FromBody] SwapRequest updatedRequest)
     {
-        if (id != updatedRequest.SwapId)
+        if (id != updatedRequest.IdswapRequests)
         {
             return BadRequest("ID in URL and body do not match.");
         }
@@ -241,20 +241,20 @@ public class SwapRequestsController : ControllerBase
         }
 
         // Fetch all candidate dates for each resident/date
-        List<Dates> requesterDates = await _context.dates
+        List<Date> requesterDates = await _context.Dates
             .Where(d =>
                 d.ResidentId == swap.RequesterId &&
-                d.Date.Date == swap.RequesterDate.Date)
+                d.ShiftDate == swap.RequesterDate)
             .ToListAsync();
-        List<Dates> requesteeDates = await _context.dates
+        List<Date> requesteeDates = await _context.Dates
             .Where(d =>
                 d.ResidentId == swap.RequesteeId &&
-                d.Date.Date == swap.RequesteeDate.Date)
+                d.ShiftDate == swap.RequesteeDate)
             .ToListAsync();
 
         // Find the best match in memory
-        Dates? requesterDate = requesterDates.FirstOrDefault();
-        Dates? requesteeDate = requesteeDates.FirstOrDefault();
+        Date? requesterDate = requesterDates.FirstOrDefault();
+        Date? requesteeDate = requesteeDates.FirstOrDefault();
 
         if (requesterDate == null || requesteeDate == null)
         {
@@ -272,7 +272,7 @@ public class SwapRequestsController : ControllerBase
         var response = new
         {
             Message = "Swap approved and calendar updated successfully.",
-            swap.SwapId,
+            swap.IdswapRequests,
             swap.RequesterId,
             swap.RequesteeId
         };

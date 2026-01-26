@@ -23,8 +23,8 @@ public class InviteController : ControllerBase
         [FromBody] InviteRequest request)
     {
         //Check if the email exists already
-        Residents? resident = await _context.residents
-            .FirstOrDefaultAsync(r => r.email == request.Email);
+        Resident? resident = await _context.Residents
+            .FirstOrDefaultAsync(r => r.Email == request.Email);
 
         //Create token and expiration time
         string token = Guid.NewGuid().ToString();
@@ -33,10 +33,10 @@ public class InviteController : ControllerBase
         //Save token to Invitations table
         Invitation invitation = new()
         {
-            token = token,
-            resident_id = resident?.resident_id,
-            expires = expires,
-            used = false
+            Token = token,
+            ResidentId = resident?.ResidentId,
+            Expires = expires,
+            Used = false
         };
 
         _context.Invitations.Add(invitation);

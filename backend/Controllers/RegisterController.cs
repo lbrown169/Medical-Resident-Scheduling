@@ -25,7 +25,7 @@ public class RegisterController : ControllerBase
 
         Invitation? invitation = await _context.Invitations
             .FirstOrDefaultAsync(i =>
-                i.token == token && !i.used && i.expires > DateTime.UtcNow);
+                i.Token == token && !i.Used && i.Expires > DateTime.UtcNow);
 
         if (invitation == null)
         {
@@ -33,9 +33,9 @@ public class RegisterController : ControllerBase
             { message = "Invitation not found or expired." });
         }
 
-        Residents? resident = !string.IsNullOrEmpty(invitation.resident_id)
-            ? await _context.residents.FirstOrDefaultAsync(r =>
-                r.resident_id == invitation.resident_id)
+        Resident? resident = !string.IsNullOrEmpty(invitation.ResidentId)
+            ? await _context.Residents.FirstOrDefaultAsync(r =>
+                r.ResidentId == invitation.ResidentId)
             : null;
 
         return Ok(new
@@ -45,10 +45,10 @@ public class RegisterController : ControllerBase
                 ? null
                 : new
                 {
-                    firstName = resident.first_name,
-                    lastName = resident.last_name,
-                    residentId = resident.resident_id,
-                    resident.email
+                    firstName = resident.FirstName,
+                    lastName = resident.LastName,
+                    residentId = resident.ResidentId,
+                    resident.Email
                 }
         });
     }
@@ -67,8 +67,8 @@ public class RegisterController : ControllerBase
 
         Invitation? invitation = await _context.Invitations
             .FirstOrDefaultAsync(i =>
-                i.token == request.Token && !i.used &&
-                i.expires > DateTime.UtcNow);
+                i.Token == request.Token && !i.Used &&
+                i.Expires > DateTime.UtcNow);
 
         if (invitation == null)
         {
@@ -76,7 +76,7 @@ public class RegisterController : ControllerBase
             { message = "Invalid or expired invitation." });
         }
 
-        if (string.IsNullOrEmpty(invitation.resident_id))
+        if (string.IsNullOrEmpty(invitation.ResidentId))
         {
             return BadRequest(new
             {
@@ -85,17 +85,17 @@ public class RegisterController : ControllerBase
             });
         }
 
-        Residents? resident =
-            await _context.residents.FirstOrDefaultAsync(r =>
-                r.resident_id == invitation.resident_id);
+        Resident? resident =
+            await _context.Residents.FirstOrDefaultAsync(r =>
+                r.ResidentId == invitation.ResidentId);
         if (resident == null)
         {
             return NotFound(new { message = "Resident not found." });
         }
 
-        resident.phone_num = request.Phone;
-        resident.password = HashPassword(request.Password);
-        invitation.used = true;
+        resident.PhoneNum = request.Phone;
+        resident.Password = HashPassword(request.Password);
+        invitation.Used = true;
 
         await _context.SaveChangesAsync();
 
@@ -120,8 +120,8 @@ public class RegisterController : ControllerBase
 
         Invitation? invitation = await _context.Invitations
             .FirstOrDefaultAsync(i =>
-                i.token == request.Token && !i.used &&
-                i.expires > DateTime.UtcNow);
+                i.Token == request.Token && !i.Used &&
+                i.Expires > DateTime.UtcNow);
 
         if (invitation == null)
         {
@@ -129,31 +129,31 @@ public class RegisterController : ControllerBase
             { message = "Invalid or expired invitation." });
         }
 
-        Residents? existingResident
-            = await _context.residents.FirstOrDefaultAsync(r =>
-                r.email == request.Email);
+        Resident? existingResident
+            = await _context.Residents.FirstOrDefaultAsync(r =>
+                r.Email == request.Email);
         if (existingResident != null)
         {
             return BadRequest(new
             { message = "A resident with this email already exists." });
         }
 
-        Residents newResident = new()
+        Resident newResident = new()
         {
-            resident_id = request.ResidentId,
-            first_name = request.FirstName,
-            last_name = request.LastName,
-            email = request.Email,
-            phone_num = request.Phone,
-            password = HashPassword(request.Password),
-            graduate_yr = 1,
-            weekly_hours = 0,
-            total_hours = 0,
-            bi_yearly_hours = 0
+            ResidentId = request.ResidentId,
+            FirstName = request.FirstName,
+            LastName = request.LastName,
+            Email = request.Email,
+            PhoneNum = request.Phone,
+            Password = HashPassword(request.Password),
+            GraduateYr = 1,
+            WeeklyHours = 0,
+            TotalHours = 0,
+            BiYearlyHours = 0
         };
 
-        _context.residents.Add(newResident);
-        invitation.used = true;
+        _context.Residents.Add(newResident);
+        invitation.Used = true;
 
         await _context.SaveChangesAsync();
 

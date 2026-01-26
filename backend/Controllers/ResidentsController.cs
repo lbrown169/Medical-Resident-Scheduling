@@ -19,10 +19,10 @@ public class ResidentsController : ControllerBase
 
     // GET: api/Residents
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Residents>>> GetResidents()
+    public async Task<ActionResult<IEnumerable<Resident>>> GetResidents()
     {
-        List<Residents> residents = await _context.residents.AsNoTracking().ToListAsync();
-        Dictionary<string, int> hoursMapping = (await _context.dates
+        List<Resident> residents = await _context.Residents.AsNoTracking().ToListAsync();
+        Dictionary<string, int> hoursMapping = (await _context.Dates
                 .ToListAsync())
             .GroupBy(d => d.ResidentId)
             .ToDictionary(
@@ -30,15 +30,15 @@ public class ResidentsController : ControllerBase
                 g => g.Sum(d => d.Hours)
             );
 
-        foreach (Residents resident in residents)
+        foreach (Resident resident in residents)
         {
-            if (hoursMapping.TryGetValue(resident.resident_id, out int hours))
+            if (hoursMapping.TryGetValue(resident.ResidentId, out int hours))
             {
-                resident.total_hours = hours;
+                resident.TotalHours = hours;
             }
             else
             {
-                resident.total_hours = 0;
+                resident.TotalHours = 0;
             }
         }
 
@@ -47,7 +47,7 @@ public class ResidentsController : ControllerBase
 
     // GET: api/residents/filter?resident_id=&first_name=&last_name=&graduate_yr=2&email=&password=&phone_num=&weekly_hours=&total_hours=&bi_yearly_hours
     [HttpGet("filter")]
-    public async Task<ActionResult<IEnumerable<Residents>>> FilterResidents(
+    public async Task<ActionResult<IEnumerable<Resident>>> FilterResidents(
         [FromQuery] string? resident_id,
         [FromQuery] string? first_name,
         [FromQuery] string? last_name,
@@ -59,61 +59,61 @@ public class ResidentsController : ControllerBase
         [FromQuery] int? total_hours,
         [FromQuery] int? bi_yearly_hours)
     {
-        IQueryable<Residents> query = _context.residents.AsQueryable();
+        IQueryable<Resident> query = _context.Residents.AsQueryable();
 
         if (!string.IsNullOrEmpty(resident_id))
         {
-            query = query.Where(r => r.resident_id == resident_id);
+            query = query.Where(r => r.ResidentId == resident_id);
         }
 
         if (!string.IsNullOrEmpty(first_name))
         {
-            query = query.Where(r => r.first_name.Contains(first_name));
+            query = query.Where(r => r.FirstName.Contains(first_name));
         }
 
         if (!string.IsNullOrEmpty(last_name))
         {
-            query = query.Where(r => r.last_name.Contains(last_name));
+            query = query.Where(r => r.LastName.Contains(last_name));
         }
 
         if (graduate_yr is not null)
         {
-            query = query.Where(r => r.graduate_yr == graduate_yr);
+            query = query.Where(r => r.GraduateYr == graduate_yr);
         }
 
         if (!string.IsNullOrEmpty(email))
         {
-            query = query.Where(r => r.email.Contains(email));
+            query = query.Where(r => r.Email.Contains(email));
         }
 
         if (!string.IsNullOrEmpty(password))
         {
             query = query.Where(r =>
-                r.password ==
+                r.Password ==
                 password); // Consider not exposing password filters
         }
 
         if (!string.IsNullOrEmpty(phone_num))
         {
-            query = query.Where(r => r.phone_num.Contains(phone_num));
+            query = query.Where(r => r.PhoneNum.Contains(phone_num));
         }
 
         if (weekly_hours is not null)
         {
-            query = query.Where(r => r.weekly_hours == weekly_hours);
+            query = query.Where(r => r.WeeklyHours == weekly_hours);
         }
 
         if (total_hours is not null)
         {
-            query = query.Where(r => r.total_hours == total_hours);
+            query = query.Where(r => r.TotalHours == total_hours);
         }
 
         if (bi_yearly_hours is not null)
         {
-            query = query.Where(r => r.bi_yearly_hours == bi_yearly_hours);
+            query = query.Where(r => r.BiYearlyHours == bi_yearly_hours);
         }
 
-        List<Residents> results = await query.ToListAsync();
+        List<Resident> results = await query.ToListAsync();
 
         if (!results.Any())
         {
@@ -127,31 +127,31 @@ public class ResidentsController : ControllerBase
     // PUT: api/residents/{id}
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateResident(string id,
-        [FromBody] Residents updatedResident)
+        [FromBody] Resident updatedResident)
     {
-        if (id != updatedResident.resident_id)
+        if (id != updatedResident.ResidentId)
         {
             return BadRequest("Resident ID in URL and body do not match.");
         }
 
-        Residents? existingResident
-            = await _context.residents.FindAsync(id);
+        Resident? existingResident
+            = await _context.Residents.FindAsync(id);
         if (existingResident == null)
         {
             return NotFound("Resident not found.");
         }
 
         // Update fields
-        existingResident.first_name = updatedResident.first_name;
-        existingResident.last_name = updatedResident.last_name;
-        existingResident.graduate_yr = updatedResident.graduate_yr;
-        existingResident.email = updatedResident.email;
-        existingResident.password = updatedResident.password;
-        existingResident.phone_num = updatedResident.phone_num;
-        existingResident.weekly_hours = updatedResident.weekly_hours;
-        existingResident.total_hours = updatedResident.total_hours;
-        existingResident.bi_yearly_hours = updatedResident.bi_yearly_hours;
-        existingResident.hospital_role_profile = updatedResident.hospital_role_profile;
+        existingResident.FirstName = updatedResident.FirstName;
+        existingResident.LastName = updatedResident.LastName;
+        existingResident.GraduateYr = updatedResident.GraduateYr;
+        existingResident.Email = updatedResident.Email;
+        existingResident.Password = updatedResident.Password;
+        existingResident.PhoneNum = updatedResident.PhoneNum;
+        existingResident.WeeklyHours = updatedResident.WeeklyHours;
+        existingResident.TotalHours = updatedResident.TotalHours;
+        existingResident.BiYearlyHours = updatedResident.BiYearlyHours;
+        existingResident.HospitalRoleProfile = updatedResident.HospitalRoleProfile;
 
         try
         {
@@ -171,38 +171,38 @@ public class ResidentsController : ControllerBase
     [HttpPost("demote-admin/{adminId}")]
     public async Task<IActionResult> DemoteAdminToResident(string adminId)
     {
-        Admins? admin = await _context.admins.FindAsync(adminId);
+        Admin? admin = await _context.Admins.FindAsync(adminId);
         if (admin == null)
         {
             return NotFound("Admin not found.");
         }
 
         // Check if resident already exists with this ID
-        Residents? existingResident
-            = await _context.residents.FindAsync(adminId);
+        Resident? existingResident
+            = await _context.Residents.FindAsync(adminId);
         if (existingResident != null)
         {
             return BadRequest("Resident already exists with this ID.");
         }
 
         // Create new resident account with default values
-        Residents newResident = new()
+        Resident newResident = new()
         {
-            resident_id = admin.admin_id,
-            first_name = admin.first_name,
-            last_name = admin.last_name,
-            email = admin.email,
-            password = admin.password,
-            phone_num = admin.phone_num,
-            graduate_yr = 1, // Default PGY level
-            weekly_hours = 0,
-            total_hours = 0,
-            bi_yearly_hours = 0
+            ResidentId = admin.AdminId,
+            FirstName = admin.FirstName,
+            LastName = admin.LastName,
+            Email = admin.Email,
+            Password = admin.Password,
+            PhoneNum = admin.PhoneNum,
+            GraduateYr = 1, // Default PGY level
+            WeeklyHours = 0,
+            TotalHours = 0,
+            BiYearlyHours = 0
         };
 
         // Add resident and remove admin
-        _context.residents.Add(newResident);
-        _context.admins.Remove(admin);
+        _context.Residents.Add(newResident);
+        _context.Admins.Remove(admin);
 
         try
         {
@@ -218,26 +218,26 @@ public class ResidentsController : ControllerBase
 
     // POST: api/Residents
     [HttpPost]
-    public async Task<ActionResult<Residents>> PostResident(Residents resident)
+    public async Task<ActionResult<Resident>> PostResident(Resident resident)
     {
-        _context.residents.Add(resident);
+        _context.Residents.Add(resident);
         await _context.SaveChangesAsync();
 
         return CreatedAtAction("GetResident",
-            new { id = resident.resident_id }, resident);
+            new { id = resident.ResidentId }, resident);
     }
 
     // DELETE: api/Residents/5
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteResident(string id)
     {
-        Residents? resident = await _context.residents.FindAsync(id);
+        Resident? resident = await _context.Residents.FindAsync(id);
         if (resident == null)
         {
             return NotFound();
         }
 
-        _context.residents.Remove(resident);
+        _context.Residents.Remove(resident);
         await _context.SaveChangesAsync();
 
         return NoContent();

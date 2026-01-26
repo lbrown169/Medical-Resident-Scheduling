@@ -6,7 +6,7 @@ public class VacationWithResidentDto
     public string ResidentId { get; set; }
     public string FirstName { get; set; }
     public string LastName { get; set; }
-    public DateTime Date { get; set; }
+    public DateOnly Date { get; set; }
     public string Reason { get; set; }
     public string Status { get; set; }
     public string? Details { get; set; }

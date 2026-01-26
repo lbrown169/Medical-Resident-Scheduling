@@ -12,29 +12,29 @@ public class MiscService
         _context = context;
     }
 
-    public async Task<List<Residents>> FindTotalHours()
+    public async Task<List<Resident>> FindTotalHours()
     {
-        List<Residents> residents = await _context.residents.ToListAsync();
-        List<Dates> dates = await _context.dates.ToListAsync();
+        List<Resident> residents = await _context.Residents.ToListAsync();
+        List<Date> dates = await _context.Dates.ToListAsync();
 
-        List<Dates> datesForCurrentYear = dates;
+        List<Date> datesForCurrentYear = dates;
 
         List<ResidentWithDates> residentsWithDates = new();
 
 
-        foreach (Residents resident in residents)
+        foreach (Resident resident in residents)
         {
-            List<Dates> datesForResident = datesForCurrentYear
-                .Where(d => d.ResidentId == resident.resident_id)
+            List<Date> datesForResident = datesForCurrentYear
+                .Where(d => d.ResidentId == resident.ResidentId)
                 .ToList();
 
             int totalHours = 0;
-            foreach (Dates date in datesForResident)
+            foreach (Date date in datesForResident)
             {
                 totalHours += HoursByCallType(date.CallType);
             }
 
-            resident.total_hours = totalHours;
+            resident.TotalHours = totalHours;
         }
 
 
@@ -44,33 +44,24 @@ public class MiscService
         return residents;
     }
 
-    public async Task<List<Residents>> FindBiYearlyHours(int year)
+    public async Task<List<Resident>> FindBiYearlyHours(int year)
     {
-        List<Residents> residents = await _context.residents.ToListAsync();
-        List<Dates> dates = await _context.dates.ToListAsync();
+        List<Resident> residents = await _context.Residents.ToListAsync();
+        List<Date> dates = await _context.Dates.Where(date => date.Schedule.GeneratedYear == year).ToListAsync();
 
-        List<Dates> filteredDates = dates
-            .Where(d =>
-                d.Date.Year == year && d.Date.Month >= 7 && d.Date.Month <= 12)
-            .ToList();
-
-
-        List<ResidentWithDates> residentsWithDates = new();
-
-
-        foreach (Residents resident in residents)
+        foreach (Resident resident in residents)
         {
-            List<Dates> datesForResident = filteredDates
-                .Where(d => d.ResidentId == resident.resident_id)
+            List<Date> datesForResident = dates
+                .Where(d => d.ResidentId == resident.ResidentId)
                 .ToList();
 
             int totalHours = 0;
-            foreach (Dates date in datesForResident)
+            foreach (Date date in datesForResident)
             {
                 totalHours += HoursByCallType(date.CallType);
             }
 
-            resident.bi_yearly_hours = totalHours;
+            resident.BiYearlyHours = totalHours;
         }
 
 
@@ -95,7 +86,7 @@ public class MiscService
 
     public class ResidentWithDates
     {
-        public Residents Resident { get; set; }
-        public List<Dates> Dates { get; set; }
+        public Resident Resident { get; set; }
+        public List<Date> Dates { get; set; }
     }
 }

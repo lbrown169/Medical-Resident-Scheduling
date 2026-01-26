@@ -24,7 +24,7 @@ public class VacationsController : ControllerBase
     // POST: api/vacations
     [HttpPost]
     public async Task<IActionResult> CreateVacation(
-        [FromBody] Vacations vacation)
+        [FromBody] Vacation vacation)
     {
         if (vacation == null)
         {
@@ -43,8 +43,8 @@ public class VacationsController : ControllerBase
 
         // Check if resident exists
         bool residentExists
-            = await _context.residents.AnyAsync(r =>
-                r.resident_id == vacation.ResidentId);
+            = await _context.Residents.AnyAsync(r =>
+                r.ResidentId == vacation.ResidentId);
         if (!residentExists)
         {
             return BadRequest(
@@ -57,7 +57,7 @@ public class VacationsController : ControllerBase
             vacation.VacationId = Guid.NewGuid();
         }
 
-        _context.vacations.Add(vacation);
+        _context.Vacations.Add(vacation);
         await _context.SaveChangesAsync();
 
         return CreatedAtAction(nameof(FilterVacations),
@@ -69,16 +69,16 @@ public class VacationsController : ControllerBase
     public async Task<ActionResult<IEnumerable<VacationWithResidentDto>>>
         GetAllVacations()
     {
-        List<VacationWithResidentDto> vacations = await _context.vacations
-            .Join(_context.residents,
+        List<VacationWithResidentDto> vacations = await _context.Vacations
+            .Join(_context.Residents,
                 v => v.ResidentId,
-                r => r.resident_id,
+                r => r.ResidentId,
                 (v, r) => new VacationWithResidentDto
                 {
                     VacationId = v.VacationId,
-                    ResidentId = r.resident_id,
-                    FirstName = r.first_name,
-                    LastName = r.last_name,
+                    ResidentId = r.ResidentId,
+                    FirstName = r.FirstName,
+                    LastName = r.LastName,
                     Date = v.Date,
                     Reason = v.Reason,
                     Status = v.Status,
@@ -100,7 +100,7 @@ public class VacationsController : ControllerBase
             return BadRequest("Status is required.");
         }
 
-        List<Vacations> matchingRequests = await _context.vacations
+        List<Vacation> matchingRequests = await _context.Vacations
             .Where(v => v.GroupId == groupId)
             .ToListAsync();
 
@@ -110,7 +110,7 @@ public class VacationsController : ControllerBase
                 $"No vacation requests found for groupId '{groupId}'.");
         }
 
-        foreach (Vacations request in matchingRequests)
+        foreach (Vacation request in matchingRequests)
         {
             request.Status = input.Status;
         }
@@ -130,20 +130,20 @@ public class VacationsController : ControllerBase
     public async Task<ActionResult<IEnumerable<VacationWithResidentDto>>>
         FilterVacations(
             [FromQuery] string? residentId,
-            [FromQuery] DateTime? date,
+            [FromQuery] DateOnly? date,
             [FromQuery] string? reason,
             [FromQuery] string? status)
     {
-        IQueryable<VacationWithResidentDto> query = _context.vacations
-            .Join(_context.residents,
+        IQueryable<VacationWithResidentDto> query = _context.Vacations
+            .Join(_context.Residents,
                 v => v.ResidentId,
-                r => r.resident_id,
+                r => r.ResidentId,
                 (v, r) => new VacationWithResidentDto
                 {
                     VacationId = v.VacationId,
                     ResidentId = v.ResidentId,
-                    FirstName = r.first_name,
-                    LastName = r.last_name,
+                    FirstName = r.FirstName,
+                    LastName = r.LastName,
                     Date = v.Date,
                     Reason = v.Reason,
                     Status = v.Status,
@@ -158,7 +158,7 @@ public class VacationsController : ControllerBase
 
         if (date.HasValue)
         {
-            query = query.Where(v => v.Date.Date == date.Value.Date);
+            query = query.Where(v => v.Date == date.Value);
         }
 
         if (!string.IsNullOrEmpty(reason))
@@ -184,15 +184,15 @@ public class VacationsController : ControllerBase
     // PUT: api/vacations/{id}
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateVacation(Guid id,
-        [FromBody] Vacations updatedVacation)
+        [FromBody] Vacation updatedVacation)
     {
         if (id != updatedVacation.VacationId)
         {
             return BadRequest("Vacation ID in URL and body do not match.");
         }
 
-        Vacations? existingVacation
-            = await _context.vacations.FindAsync(id);
+        Vacation? existingVacation
+            = await _context.Vacations.FindAsync(id);
 
         if (existingVacation == null)
         {
@@ -221,14 +221,14 @@ public class VacationsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteVacation(Guid id)
     {
-        Vacations? vacation = await _context.vacations.FindAsync(id);
+        Vacation? vacation = await _context.Vacations.FindAsync(id);
 
         if (vacation == null)
         {
             return NotFound("Vacation not found.");
         }
 
-        _context.vacations.Remove(vacation);
+        _context.Vacations.Remove(vacation);
         await _context.SaveChangesAsync();
 
         return NoContent(); // 204 No Content
@@ -240,7 +240,7 @@ public class VacationsController : ControllerBase
         [FromBody] List<Guid> vacationsIds)
     {
         // Fetch all vacations that exist in the database
-        List<Vacations> vacationsToDelete = await _context.vacations
+        List<Vacation> vacationsToDelete = await _context.Vacations
             .Where(v => vacationsIds.Contains(v.VacationId))
             .ToListAsync();
 
@@ -249,7 +249,7 @@ public class VacationsController : ControllerBase
         List<Guid> failedDeletedIds = vacationsIds.Except(foundIds).ToList();
 
         // Remove all found vacations in one operation
-        _context.vacations.RemoveRange(vacationsToDelete);
+        _context.Vacations.RemoveRange(vacationsToDelete);
         await _context.SaveChangesAsync();
 
         var response = new { notDeleted = failedDeletedIds };

@@ -21,25 +21,25 @@ public class SchedulesController : ControllerBase
 
     // GET: api/schedules
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Schedules>>> GetAllSchedules()
+    public async Task<ActionResult<IEnumerable<Schedule>>> GetAllSchedules()
     {
-        List<Schedules> schedules = await _context.schedules.ToListAsync();
+        List<Schedule> schedules = await _context.Schedules.ToListAsync();
         return Ok(schedules);
     }
 
     // GET: api/schedules/filter?status=
     [HttpGet("filter")]
-    public async Task<ActionResult<IEnumerable<Schedules>>> FilterSchedules(
-        [FromQuery] ScheduleStatus? status)
+    public async Task<ActionResult<IEnumerable<Schedule>>> FilterSchedules(
+        [FromQuery] ScheduleStatus status)
     {
-        IQueryable<Schedules> query = _context.schedules.AsQueryable();
+        IQueryable<Schedule> query = _context.Schedules.AsQueryable();
 
         if (status != null)
         {
             query = query.Where(s => s.Status == status);
         }
 
-        List<Schedules> results = await query.ToListAsync();
+        List<Schedule> results = await query.ToListAsync();
 
         if (results.Count == 0)
         {
@@ -55,13 +55,13 @@ public class SchedulesController : ControllerBase
         GetPublishedDates()
     {
         List<ScheduleDatesDTO> publishedDates = await (
-            from d in _context.dates
-            join s in _context.schedules on d.ScheduleId equals s
+            from d in _context.Dates
+            join s in _context.Schedules on d.ScheduleId equals s
                 .ScheduleId
             where s.Status == ScheduleStatus.Published
             select new ScheduleDatesDTO
             {
-                Date = d.Date,
+                Date = d.ShiftDate,
                 ResidentId = d.ResidentId,
                 CallType = d.CallType
             }).ToListAsync();
@@ -80,13 +80,13 @@ public class SchedulesController : ControllerBase
         GetUnderReviewDates()
     {
         List<ScheduleDatesDTO> underReviewDates = await (
-            from d in _context.dates
-            join s in _context.schedules on d.ScheduleId equals s
+            from d in _context.Dates
+            join s in _context.Schedules on d.ScheduleId equals s
                 .ScheduleId
             where s.Status == ScheduleStatus.UnderReview
             select new ScheduleDatesDTO
             {
-                Date = d.Date,
+                Date = d.ShiftDate,
                 ResidentId = d.ResidentId,
                 CallType = d.CallType
             }).ToListAsync();
@@ -105,8 +105,8 @@ public class SchedulesController : ControllerBase
     public async Task<IActionResult> UpdateSchedule(Guid id,
         [FromBody] UpdateScheduleDto updateSchedule)
     {
-        Schedules? existingSchedule
-            = await _context.schedules.FindAsync(id);
+        Schedule? existingSchedule
+            = await _context.Schedules.FindAsync(id);
 
         if (existingSchedule == null)
         {
@@ -121,7 +121,7 @@ public class SchedulesController : ControllerBase
         // Only one schedule per year can be published
         if (updateSchedule.Status == ScheduleStatus.Published)
         {
-            bool isSchedulePublished = await _context.schedules.AnyAsync(s =>
+            bool isSchedulePublished = await _context.Schedules.AnyAsync(s =>
                 s.GeneratedYear == existingSchedule.GeneratedYear
                 && s.Status == ScheduleStatus.Published
             );
@@ -150,14 +150,14 @@ public class SchedulesController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteSchedule(Guid id)
     {
-        Schedules? schedule = await _context.schedules.FindAsync(id);
+        Schedule? schedule = await _context.Schedules.FindAsync(id);
 
         if (schedule == null)
         {
             return NotFound("Schedule not found.");
         }
 
-        _context.schedules.Remove(schedule);
+        _context.Schedules.Remove(schedule);
         await _context.SaveChangesAsync();
 
         return NoContent(); // 204 No Content

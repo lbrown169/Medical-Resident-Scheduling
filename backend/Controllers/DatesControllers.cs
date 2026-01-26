@@ -18,7 +18,7 @@ public class DatesController : ControllerBase
 
     // POST: api/dates
     [HttpPost]
-    public async Task<IActionResult> CreateDate([FromBody] Dates date)
+    public async Task<IActionResult> CreateDate([FromBody] Date date)
     {
         if (date == null)
         {
@@ -30,7 +30,7 @@ public class DatesController : ControllerBase
             date.DateId = Guid.NewGuid();
         }
 
-        _context.dates.Add(date);
+        _context.Dates.Add(date);
         await _context.SaveChangesAsync();
 
         return CreatedAtAction(nameof(FilterDates),
@@ -42,16 +42,16 @@ public class DatesController : ControllerBase
     public async Task<ActionResult<IEnumerable<DatesWithResidentDTO>>>
         GetDates()
     {
-        List<DatesWithResidentDTO> dates = await _context.dates
+        List<DatesWithResidentDTO> dates = await _context.Dates
             .Include(d => d.Resident) // Join with Residents
             .Select(d => new DatesWithResidentDTO
             {
                 DateId = d.DateId,
                 ScheduleId = d.ScheduleId,
                 ResidentId = d.ResidentId,
-                FirstName = d.Resident.first_name,
-                LastName = d.Resident.last_name,
-                Date = d.Date,
+                FirstName = d.Resident.FirstName,
+                LastName = d.Resident.LastName,
+                Date = d.ShiftDate,
                 CallType = d.CallType,
                 Hours = d.Hours
             })
@@ -66,10 +66,10 @@ public class DatesController : ControllerBase
         FilterDates(
             [FromQuery] Guid? schedule_id,
             [FromQuery] string? resident_id,
-            [FromQuery] DateTime? date,
+            [FromQuery] DateOnly? date,
             [FromQuery] string? call_type)
     {
-        IQueryable<Dates> query = _context.dates.Include(d => d.Resident)
+        IQueryable<Date> query = _context.Dates.Include(d => d.Resident)
             .AsQueryable();
 
         if (schedule_id is not null)
@@ -84,7 +84,7 @@ public class DatesController : ControllerBase
 
         if (date is not null)
         {
-            query = query.Where(d => d.Date.Date == date.Value.Date);
+            query = query.Where(d => d.ShiftDate == date.Value);
         }
 
         if (!string.IsNullOrEmpty(call_type))
@@ -98,9 +98,9 @@ public class DatesController : ControllerBase
                 DateId = d.DateId,
                 ScheduleId = d.ScheduleId,
                 ResidentId = d.ResidentId,
-                FirstName = d.Resident.first_name,
-                LastName = d.Resident.last_name,
-                Date = d.Date,
+                FirstName = d.Resident.FirstName,
+                LastName = d.Resident.LastName,
+                Date = d.ShiftDate,
                 CallType = d.CallType,
                 Hours = d.Hours
             })
@@ -117,14 +117,14 @@ public class DatesController : ControllerBase
     // PUT: api/dates/{id}
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateDate(Guid id,
-        [FromBody] Dates updatedDate)
+        [FromBody] Date updatedDate)
     {
         if (id != updatedDate.DateId)
         {
             return BadRequest("Date ID in URL and body do not match.");
         }
 
-        Dates? existingDate = await _context.dates.FindAsync(id);
+        Date? existingDate = await _context.Dates.FindAsync(id);
         if (existingDate == null)
         {
             return NotFound("Date not found.");
@@ -133,7 +133,7 @@ public class DatesController : ControllerBase
         // Update fields
         existingDate.ScheduleId = updatedDate.ScheduleId;
         existingDate.ResidentId = updatedDate.ResidentId;
-        existingDate.Date = updatedDate.Date;
+        existingDate.ShiftDate = updatedDate.ShiftDate;
         existingDate.CallType = updatedDate.CallType;
         existingDate.Hours = updatedDate.Hours;
 
@@ -153,13 +153,13 @@ public class DatesController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteDate(Guid id)
     {
-        Dates? existingDate = await _context.dates.FindAsync(id);
+        Date? existingDate = await _context.Dates.FindAsync(id);
         if (existingDate == null)
         {
             return NotFound("Date not found.");
         }
 
-        _context.dates.Remove(existingDate);
+        _context.Dates.Remove(existingDate);
         await _context.SaveChangesAsync();
 
         return NoContent(); // 204

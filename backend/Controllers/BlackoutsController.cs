@@ -18,7 +18,7 @@ public class BlackoutsController : ControllerBase
     // POST: api/blackouts
     [HttpPost]
     public async Task<IActionResult> CreateBlackout(
-        [FromBody] Blackouts blackout)
+        [FromBody] Blackout blackout)
     {
         if (blackout == null)
         {
@@ -30,7 +30,7 @@ public class BlackoutsController : ControllerBase
             blackout.BlackoutId = Guid.NewGuid();
         }
 
-        _context.blackouts.Add(blackout);
+        _context.Blackouts.Add(blackout);
         await _context.SaveChangesAsync();
 
         return CreatedAtAction(nameof(FilterBlackouts),
@@ -39,18 +39,18 @@ public class BlackoutsController : ControllerBase
 
     // GET: api/blackouts
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Blackouts>>> GetBlackouts()
+    public async Task<ActionResult<IEnumerable<Blackout>>> GetBlackouts()
     {
-        return await _context.blackouts.ToListAsync();
+        return await _context.Blackouts.ToListAsync();
     }
 
     // GET: api/blackouts/filter?resident_id=&date
     [HttpGet("filter")]
-    public async Task<ActionResult<IEnumerable<Blackouts>>> FilterBlackouts(
+    public async Task<ActionResult<IEnumerable<Blackout>>> FilterBlackouts(
         [FromQuery] string? resident_id,
-        [FromQuery] DateTime? date)
+        [FromQuery] DateOnly? date)
     {
-        IQueryable<Blackouts> query = _context.blackouts.AsQueryable();
+        IQueryable<Blackout> query = _context.Blackouts.AsQueryable();
 
         if (!string.IsNullOrEmpty(resident_id))
         {
@@ -59,10 +59,10 @@ public class BlackoutsController : ControllerBase
 
         if (date.HasValue)
         {
-            query = query.Where(b => b.Date.Date == date.Value.Date);
+            query = query.Where(b => b.Date == date.Value);
         }
 
-        List<Blackouts> results = await query.ToListAsync();
+        List<Blackout> results = await query.ToListAsync();
 
         if (!results.Any())
         {
@@ -75,15 +75,15 @@ public class BlackoutsController : ControllerBase
     // PUT: api/blackouts/{id}
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateBlackout(Guid id,
-        [FromBody] Blackouts updatedBlackout)
+        [FromBody] Blackout updatedBlackout)
     {
         if (id != updatedBlackout.BlackoutId)
         {
             return BadRequest("Blackout ID in URL and body do not match.");
         }
 
-        Blackouts? existingBlackout
-            = await _context.blackouts.FindAsync(id);
+        Blackout? existingBlackout
+            = await _context.Blackouts.FindAsync(id);
         if (existingBlackout == null)
         {
             return NotFound("Blackout not found.");
@@ -109,13 +109,13 @@ public class BlackoutsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteBlackout(Guid id)
     {
-        Blackouts? blackout = await _context.blackouts.FindAsync(id);
+        Blackout? blackout = await _context.Blackouts.FindAsync(id);
         if (blackout == null)
         {
             return NotFound("Blackout not found.");
         }
 
-        _context.blackouts.Remove(blackout);
+        _context.Blackouts.Remove(blackout);
         await _context.SaveChangesAsync();
 
         return NoContent(); // 204

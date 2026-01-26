@@ -15,7 +15,7 @@ public static class CallShiftTypeExtensions
         return Enum.GetValues<CallShiftType>().ToList();
     }
 
-    public static List<CallShiftType> GetAllCallShiftTypesForDate(DateTime date)
+    public static List<CallShiftType> GetAllCallShiftTypesForDate(DateOnly date)
     {
         switch (date.DayOfWeek)
         {
@@ -34,7 +34,7 @@ public static class CallShiftTypeExtensions
         }
     }
 
-    public static CallShiftType GetCallShiftTypeForDate(DateTime date, int year)
+    public static CallShiftType GetCallShiftTypeForDate(DateOnly date, int year)
     {
         switch (date.DayOfWeek)
         {

@@ -519,7 +519,7 @@ public class AlgorithmService
             _logger.LogDebug("PGY1 {ResName} works:", res.name);
             // print all their work days in sorted order
             ArrayList workedDays = new();
-            foreach (DateTime curDay in res.workDaySet())
+            foreach (DateOnly curDay in res.workDaySet())
             {
                 workedDays.Add(curDay);
             }
@@ -538,7 +538,7 @@ public class AlgorithmService
             _logger.LogDebug("PGY2 {ResName} works:", res.name);
             // print all their work days in sorted order
             ArrayList workedDays = new();
-            foreach (DateTime curDay in res.workDaySet())
+            foreach (DateOnly curDay in res.workDaySet())
             {
                 workedDays.Add(curDay);
             }
@@ -557,7 +557,7 @@ public class AlgorithmService
             _logger.LogDebug("PGY3 {ResName} works:", res.name);
             // print all their work days in sorted order
             ArrayList workedDays = new();
-            foreach (DateTime curDay in res.workDaySet())
+            foreach (DateOnly curDay in res.workDaySet())
             {
                 workedDays.Add(curDay);
             }
@@ -579,10 +579,10 @@ public class AlgorithmService
         ArrayList AllPgy2s = pgy2s;
 
         // store days currently worked by anyone
-        HashSet<DateTime> workedDays = new();
+        HashSet<DateOnly> workedDays = new();
         foreach (PGY1 res in AllPgy1s)
         {
-            foreach (DateTime curDay in res.workDaySet())
+            foreach (DateOnly curDay in res.workDaySet())
             {
                 workedDays.Add(curDay);
             }
@@ -590,18 +590,18 @@ public class AlgorithmService
 
         foreach (PGY2 res in AllPgy2s)
         {
-            foreach (DateTime curDay in res.workDaySet())
+            foreach (DateOnly curDay in res.workDaySet())
             {
                 workedDays.Add(curDay);
             }
         }
 
-        DateTime startDay = new(year + 1, 1, 1);
-        DateTime endDay = new(year + 1, 6, 30);
+        DateOnly startDay = new(year + 1, 1, 1);
+        DateOnly endDay = new(year + 1, 6, 30);
 
         // compute how many days of each shift type there are
         Dictionary<CallShiftType, int> shiftTypeCount = new();
-        for (DateTime curDay = startDay;
+        for (DateOnly curDay = startDay;
              curDay <= endDay;
              curDay = curDay.AddDays(1))
         {
@@ -674,10 +674,10 @@ public class AlgorithmService
         }
 
         // store days currently worked by anyone
-        HashSet<DateTime> workedDays = new();
+        HashSet<DateOnly> workedDays = new();
         foreach (PGY1 res in AllPgy1s)
         {
-            foreach (DateTime curDay in res.workDaySet())
+            foreach (DateOnly curDay in res.workDaySet())
             {
                 workedDays.Add(curDay);
             }
@@ -685,18 +685,18 @@ public class AlgorithmService
 
         foreach (PGY2 res in AllPgy2s)
         {
-            foreach (DateTime curDay in res.workDaySet())
+            foreach (DateOnly curDay in res.workDaySet())
             {
                 workedDays.Add(curDay);
             }
         }
 
-        DateTime startDay = new(year, 7, 7);
-        DateTime endDay = new(year, 12, 31);
+        DateOnly startDay = new(year, 7, 7);
+        DateOnly endDay = new(year, 12, 31);
 
         // compute how many days of each shift type there are
         Dictionary<CallShiftType, int> shiftTypeCount = new();
-        for (DateTime curDay = startDay;
+        for (DateOnly curDay = startDay;
              curDay <= endDay;
              curDay = curDay.AddDays(1))
         {
@@ -758,7 +758,7 @@ public class AlgorithmService
             if (!loosely)
             {
                 PGY1? res = (PGY1)pgy1s[i];
-                foreach (DateTime workDay in
+                foreach (DateOnly workDay in
                          res.workDaySet())
                 {
                     CallShiftType shiftType
@@ -784,7 +784,7 @@ public class AlgorithmService
             if (!loosely)
             {
                 PGY2? res = (PGY2)pgy2s[i];
-                foreach (DateTime workDay in
+                foreach (DateOnly workDay in
                          res.workDaySet())
                 {
                     CallShiftType shiftType
@@ -1091,8 +1091,8 @@ public class AlgorithmService
     }
 
     public bool RandomAssignment(ArrayList pgy1s, ArrayList pgy2s,
-        DateTime startDay, DateTime endDay,
-        Dictionary<CallShiftType, int> shiftTypeCount, HashSet<DateTime> workedDays, bool loosely)
+        DateOnly startDay, DateOnly endDay,
+        Dictionary<CallShiftType, int> shiftTypeCount, HashSet<DateOnly> workedDays, bool loosely)
     {
         //Console.WriteLine("[DEBUG] Attempting random assignment of shifts...");
 
@@ -1136,7 +1136,7 @@ public class AlgorithmService
 
         // iterate through the days and determine the maximum number of shifts for each resident
         int numberOfShifts = 0;
-        for (DateTime curDay = startDay;
+        for (DateOnly curDay = startDay;
              curDay <= endDay;
              curDay = curDay.AddDays(1))
         {
@@ -1265,7 +1265,7 @@ public class AlgorithmService
             ArrayList dayList = new();
 
             // iterate through each day
-            for (DateTime curDay = startDay;
+            for (DateOnly curDay = startDay;
                  curDay <= endDay;
                  curDay = curDay.AddDays(1))
             {
@@ -1552,7 +1552,7 @@ public class AlgorithmService
                         if (edge.flow() >
                             0) // if the flow is positive, this resident works this day
                         {
-                            DateTime workDay = (DateTime)dayList[
+                            DateOnly workDay = (DateOnly)dayList[
                                 edge.destination - shiftStart];
                             ((PGY1)pgy1s[i]).addWorkDay(workDay);
                         }
@@ -1572,7 +1572,7 @@ public class AlgorithmService
                         if (edge.flow() >
                             0) // if the flow is positive, this resident works this day
                         {
-                            DateTime workDay = (DateTime)dayList[
+                            DateOnly workDay = (DateOnly)dayList[
                                 edge.destination - shiftStart];
                             ((PGY2)pgy2s[i]).addWorkDay(workDay);
                         }
@@ -1595,8 +1595,8 @@ public class AlgorithmService
 
 
     // swap 2 residents work days (avoid back to back long calls)
-    public static void SwapWorkDays1(PGY1 res1, PGY1 res2, DateTime day1,
-        DateTime day2)
+    public static void SwapWorkDays1(PGY1 res1, PGY1 res2, DateOnly day1,
+        DateOnly day2)
     {
         res1.removeWorkDay(day1);
         res2.removeWorkDay(day2);
@@ -1605,8 +1605,8 @@ public class AlgorithmService
         res2.addWorkDay(day1);
     }
 
-    public static void SwapWorkDays12(PGY1 res1, PGY2 res2, DateTime day1,
-        DateTime day2)
+    public static void SwapWorkDays12(PGY1 res1, PGY2 res2, DateOnly day1,
+        DateOnly day2)
     {
         res1.removeWorkDay(day1);
         res2.removeWorkDay(day2);
@@ -1617,8 +1617,8 @@ public class AlgorithmService
 
 
     // swap 2 residents work days (avoid back to back long calls)
-    public static void SwapWorkDays2(PGY2 res1, PGY2 res2, DateTime day1,
-        DateTime day2)
+    public static void SwapWorkDays2(PGY2 res1, PGY2 res2, DateOnly day1,
+        DateOnly day2)
     {
         res1.removeWorkDay(day1);
         res2.removeWorkDay(day2);
@@ -1633,11 +1633,11 @@ public class AlgorithmService
         foreach (PGY1 res in pgy1s)
         {
             // get the first and last day the resident works
-            DateTime firstDay = res.firstWorkDay();
-            DateTime lastDay = res.lastWorkDay();
+            DateOnly firstDay = res.firstWorkDay();
+            DateOnly lastDay = res.lastWorkDay();
 
             // iterate through all the days
-            for (DateTime curDay = firstDay;
+            for (DateOnly curDay = firstDay;
                  curDay <= lastDay;
                  curDay = curDay.AddDays(1))
             // check if the day is a conflict
@@ -1659,10 +1659,10 @@ public class AlgorithmService
                         }
 
                         // Iterate through all the days for resident 2
-                        DateTime firstDay2 = res2.firstWorkDay();
-                        DateTime lastDay2 = res2.lastWorkDay();
+                        DateOnly firstDay2 = res2.firstWorkDay();
+                        DateOnly lastDay2 = res2.lastWorkDay();
 
-                        for (DateTime otherDay = firstDay2;
+                        for (DateOnly otherDay = firstDay2;
                              otherDay <= lastDay2;
                              otherDay = otherDay.AddDays(1))
                         {
@@ -1700,11 +1700,11 @@ public class AlgorithmService
         foreach (PGY1 res in pgy1s)
         {
             // get the first and last day the resident works
-            DateTime firstDay = res.firstWorkDay();
-            DateTime lastDay = res.lastWorkDay();
+            DateOnly firstDay = res.firstWorkDay();
+            DateOnly lastDay = res.lastWorkDay();
 
             // iterate through all the days
-            for (DateTime curDay = firstDay;
+            for (DateOnly curDay = firstDay;
                  curDay <= lastDay;
                  curDay = curDay.AddDays(1))
             // check if the day is a conflict
@@ -1729,10 +1729,10 @@ public class AlgorithmService
                         }
 
                         // Iterate through all the days for resident 2
-                        DateTime firstDay2 = res2.firstWorkDay();
-                        DateTime lastDay2 = res2.lastWorkDay();
+                        DateOnly firstDay2 = res2.firstWorkDay();
+                        DateOnly lastDay2 = res2.lastWorkDay();
 
-                        for (DateTime otherDay = firstDay2;
+                        for (DateOnly otherDay = firstDay2;
                              otherDay <= lastDay2;
                              otherDay = otherDay.AddDays(1))
                         {
@@ -1767,10 +1767,10 @@ public class AlgorithmService
                             }
 
                             // Iterate through all the days for resident 2
-                            DateTime firstDay2 = res2.firstWorkDay();
-                            DateTime lastDay2 = res2.lastWorkDay();
+                            DateOnly firstDay2 = res2.firstWorkDay();
+                            DateOnly lastDay2 = res2.lastWorkDay();
 
-                            for (DateTime otherDay = firstDay2;
+                            for (DateOnly otherDay = firstDay2;
                                  otherDay <= lastDay2;
                                  otherDay = otherDay.AddDays(1))
                             {
@@ -1801,11 +1801,11 @@ public class AlgorithmService
         foreach (PGY2 res in pgy2s)
         {
             // get the first and last day the resident works
-            DateTime firstDay = res.firstWorkDay();
-            DateTime lastDay = res.lastWorkDay();
+            DateOnly firstDay = res.firstWorkDay();
+            DateOnly lastDay = res.lastWorkDay();
 
             // iterate through all the days
-            for (DateTime curDay = firstDay;
+            for (DateOnly curDay = firstDay;
                  curDay <= lastDay;
                  curDay = curDay.AddDays(1))
             // check if the day is a conflict
@@ -1831,10 +1831,10 @@ public class AlgorithmService
                         }
 
                         // Iterate through all the days for resident 2
-                        DateTime firstDay2 = res2.firstWorkDay();
-                        DateTime lastDay2 = res2.lastWorkDay();
+                        DateOnly firstDay2 = res2.firstWorkDay();
+                        DateOnly lastDay2 = res2.lastWorkDay();
 
-                        for (DateTime otherDay = firstDay2;
+                        for (DateOnly otherDay = firstDay2;
                              otherDay <= lastDay2;
                              otherDay = otherDay.AddDays(1))
                         {
@@ -1868,10 +1868,10 @@ public class AlgorithmService
                             }
 
                             // Iterate through all the days for resident 2
-                            DateTime firstDay2 = res2.firstWorkDay();
-                            DateTime lastDay2 = res2.lastWorkDay();
+                            DateOnly firstDay2 = res2.firstWorkDay();
+                            DateOnly lastDay2 = res2.lastWorkDay();
 
-                            for (DateTime otherDay = firstDay2;
+                            for (DateOnly otherDay = firstDay2;
                                  otherDay <= lastDay2;
                                  otherDay = otherDay.AddDays(1))
                             {
@@ -1901,7 +1901,7 @@ public class AlgorithmService
         }
     }
 
-    public static int shiftType(DateTime curDate)
+    public static int shiftType(DateOnly curDate)
     {
         if (curDate.DayOfWeek == DayOfWeek.Saturday)
         {
@@ -1922,11 +1922,11 @@ public class AlgorithmService
         foreach (PGY2 res in pgy2s)
         {
             // get the first and last day the resident works
-            DateTime firstDay = res.firstWorkDay();
-            DateTime lastDay = res.lastWorkDay();
+            DateOnly firstDay = res.firstWorkDay();
+            DateOnly lastDay = res.lastWorkDay();
 
             // iterate through all the days
-            for (DateTime curDay = firstDay;
+            for (DateOnly curDay = firstDay;
                  curDay <= lastDay;
                  curDay = curDay.AddDays(1))
             // check if the day is a conflict
@@ -1947,10 +1947,10 @@ public class AlgorithmService
                         }
 
                         // Iterate through all the days for resident 2
-                        DateTime firstDay2 = res2.firstWorkDay();
-                        DateTime lastDay2 = res2.lastWorkDay();
+                        DateOnly firstDay2 = res2.firstWorkDay();
+                        DateOnly lastDay2 = res2.lastWorkDay();
 
-                        for (DateTime otherDay = firstDay2;
+                        for (DateOnly otherDay = firstDay2;
                              otherDay <= lastDay2;
                              otherDay = otherDay.AddDays(1))
                         {
@@ -1987,7 +1987,7 @@ public class AlgorithmService
 
         foreach (PGY1 res in pgy1s)
         {
-            foreach (DateTime day in res.workDaySet())
+            foreach (DateOnly day in res.workDaySet())
             {
                 CallShiftType shiftType
                     = CallShiftTypeExtensions.GetCallShiftTypeForDate(day, 1);
@@ -2007,7 +2007,7 @@ public class AlgorithmService
 
         foreach (PGY2 res in pgy2s)
         {
-            foreach (DateTime day in res.workDaySet())
+            foreach (DateOnly day in res.workDaySet())
             {
                 CallShiftType shiftType
                     = CallShiftTypeExtensions.GetCallShiftTypeForDate(day, 2);
@@ -2026,7 +2026,7 @@ public class AlgorithmService
 
         foreach (PGY3 res in pgy3s)
         {
-            foreach (DateTime day in res.workDaySet())
+            foreach (DateOnly day in res.workDaySet())
             {
                 CallShiftType shiftType
                     = CallShiftTypeExtensions.GetCallShiftTypeForDate(day, 3);
@@ -2046,7 +2046,7 @@ public class AlgorithmService
         return dateRecords;
     }
 
-    private static string GetCallType(DateTime date)
+    private static string GetCallType(DateOnly date)
     {
         return date.DayOfWeek switch
         {

@@ -22,10 +22,10 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] Residents resident)
+    public async Task<IActionResult> Register([FromBody] Resident resident)
     {
-        bool exists = await _context.residents
-            .AnyAsync(r => r.email == resident.email);
+        bool exists = await _context.Residents
+            .AnyAsync(r => r.Email == resident.Email);
 
         if (exists)
         {
@@ -34,23 +34,23 @@ public class AuthController : ControllerBase
         }
 
         string? hashedPassword
-            = BCrypt.Net.BCrypt.HashPassword(resident.password);
+            = BCrypt.Net.BCrypt.HashPassword(resident.Password);
 
-        Residents newResident = new()
+        Resident newResident = new()
         {
-            resident_id = resident.resident_id,
-            first_name = resident.first_name,
-            last_name = resident.last_name,
-            email = resident.email,
-            password = hashedPassword,
-            phone_num = resident.phone_num,
-            graduate_yr = resident.graduate_yr,
-            weekly_hours = 0,
-            total_hours = 0,
-            bi_yearly_hours = 0
+            ResidentId = resident.ResidentId,
+            FirstName = resident.FirstName,
+            LastName = resident.LastName,
+            Email = resident.Email,
+            Password = hashedPassword,
+            PhoneNum = resident.PhoneNum,
+            GraduateYr = resident.GraduateYr,
+            WeeklyHours = 0,
+            TotalHours = 0,
+            BiYearlyHours = 0
         };
 
-        _context.residents.Add(newResident);
+        _context.Residents.Add(newResident);
         await _context.SaveChangesAsync();
 
         return StatusCode(201, new { success = true });
@@ -62,14 +62,14 @@ public class AuthController : ControllerBase
         try
         {
             //check residents table first
-            Residents? resident = await _context.residents
-                .FirstOrDefaultAsync(r => r.email == request.email);
+            Resident? resident = await _context.Residents
+                .FirstOrDefaultAsync(r => r.Email == request.email);
 
             if (resident != null)
             {
                 bool passwordMatch
                     = BCrypt.Net.BCrypt.Verify(request.password,
-                        resident.password);
+                        resident.Password);
 
                 if (!passwordMatch)
                 {
@@ -86,24 +86,24 @@ public class AuthController : ControllerBase
                     userType = "resident",
                     resident = new
                     {
-                        id = resident.resident_id,
-                        resident.email,
-                        firstName = resident.first_name,
-                        lastName = resident.last_name,
-                        resident.phone_num
+                        id = resident.ResidentId,
+                        resident.Email,
+                        firstName = resident.FirstName,
+                        lastName = resident.LastName,
+                        resident.PhoneNum
                     }
                 });
             }
 
             //check admins table if not found in residents
-            Admins? admin = await _context.admins
-                .FirstOrDefaultAsync(a => a.email == request.email);
+            Admin? admin = await _context.Admins
+                .FirstOrDefaultAsync(a => a.Email == request.email);
 
             if (admin != null)
             {
                 bool passwordMatch
                     = BCrypt.Net.BCrypt.Verify(request.password,
-                        admin.password);
+                        admin.Password);
 
                 if (!passwordMatch)
                 {
@@ -120,11 +120,11 @@ public class AuthController : ControllerBase
                     userType = "admin",
                     admin = new
                     {
-                        id = admin.admin_id,
-                        admin.email,
-                        firstName = admin.first_name,
-                        lastName = admin.last_name,
-                        admin.phone_num
+                        id = admin.AdminId,
+                        admin.Email,
+                        firstName = admin.FirstName,
+                        lastName = admin.LastName,
+                        admin.PhoneNum
                     }
                 });
             }

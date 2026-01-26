@@ -17,16 +17,16 @@ public class AdminsController : ControllerBase
 
     // GET: api/Admins
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Admins>>> GetAdmins()
+    public async Task<ActionResult<IEnumerable<Admin>>> GetAdmins()
     {
-        return await _context.admins.ToListAsync();
+        return await _context.Admins.ToListAsync();
     }
 
     // GET: api/Admins/5
     [HttpGet("{id}")]
-    public async Task<ActionResult<Admins>> GetAdmin(string id)
+    public async Task<ActionResult<Admin>> GetAdmin(string id)
     {
-        Admins? admin = await _context.admins.FindAsync(id);
+        Admin? admin = await _context.Admins.FindAsync(id);
 
         if (admin == null)
         {
@@ -38,20 +38,20 @@ public class AdminsController : ControllerBase
 
     // POST: api/Admins
     [HttpPost]
-    public async Task<ActionResult<Admins>> PostAdmin(Admins admin)
+    public async Task<ActionResult<Admin>> PostAdmin(Admin admin)
     {
-        _context.admins.Add(admin);
+        _context.Admins.Add(admin);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction("GetAdmin", new { id = admin.admin_id },
+        return CreatedAtAction("GetAdmin", new { id = admin.AdminId },
             admin);
     }
 
     // PUT: api/Admins/5
     [HttpPut("{id}")]
-    public async Task<IActionResult> PutAdmin(string id, Admins admin)
+    public async Task<IActionResult> PutAdmin(string id, Admin admin)
     {
-        if (id != admin.admin_id)
+        if (id != admin.AdminId)
         {
             return BadRequest();
         }
@@ -79,35 +79,35 @@ public class AdminsController : ControllerBase
     [HttpPost("promote-resident/{residentId}")]
     public async Task<IActionResult> PromoteResidentToAdmin(string residentId)
     {
-        Residents? resident
-            = await _context.residents.FindAsync(residentId);
+        Resident? resident
+            = await _context.Residents.FindAsync(residentId);
         if (resident == null)
         {
             return NotFound("Resident not found.");
         }
 
         // Check if admin already exists with this ID
-        Admins? existingAdmin
-            = await _context.admins.FindAsync(residentId);
+        Admin? existingAdmin
+            = await _context.Admins.FindAsync(residentId);
         if (existingAdmin != null)
         {
             return BadRequest("Admin already exists with this ID.");
         }
 
         // Create new admin account
-        Admins newAdmin = new()
+        Admin newAdmin = new()
         {
-            admin_id = resident.resident_id,
-            first_name = resident.first_name,
-            last_name = resident.last_name,
-            email = resident.email,
-            password = resident.password,
-            phone_num = resident.phone_num
+            AdminId = resident.ResidentId,
+            FirstName = resident.FirstName,
+            LastName = resident.LastName,
+            Email = resident.Email,
+            Password = resident.Password,
+            PhoneNum = resident.PhoneNum
         };
 
         // Add admin and remove resident
-        _context.admins.Add(newAdmin);
-        _context.residents.Remove(resident);
+        _context.Admins.Add(newAdmin);
+        _context.Residents.Remove(resident);
 
         try
         {
@@ -125,13 +125,13 @@ public class AdminsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteAdmin(string id)
     {
-        Admins? admin = await _context.admins.FindAsync(id);
+        Admin? admin = await _context.Admins.FindAsync(id);
         if (admin == null)
         {
             return NotFound();
         }
 
-        _context.admins.Remove(admin);
+        _context.Admins.Remove(admin);
         await _context.SaveChangesAsync();
 
         return NoContent();
@@ -139,6 +139,6 @@ public class AdminsController : ControllerBase
 
     private bool AdminExists(string id)
     {
-        return _context.admins.Any(e => e.admin_id == id);
+        return _context.Admins.Any(e => e.AdminId == id);
     }
 }

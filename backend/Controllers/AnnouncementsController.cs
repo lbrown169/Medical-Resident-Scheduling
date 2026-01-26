@@ -18,7 +18,7 @@ public class AnnouncementsController : ControllerBase
     // POST: api/announcements
     [HttpPost]
     public async Task<IActionResult> CreateAnnouncement(
-        [FromBody] Announcements announcement)
+        [FromBody] Announcement announcement)
     {
         if (announcement == null)
         {
@@ -38,7 +38,7 @@ public class AnnouncementsController : ControllerBase
 
         announcement.CreatedAt = DateTime.UtcNow;
 
-        _context.announcements.Add(announcement);
+        _context.Announcements.Add(announcement);
         await _context.SaveChangesAsync();
 
         return CreatedAtAction(nameof(FilterAnnouncements),
@@ -47,10 +47,10 @@ public class AnnouncementsController : ControllerBase
 
     // GET: api/announcements
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Announcements>>>
+    public async Task<ActionResult<IEnumerable<Announcement>>>
         GetAllAnnouncements()
     {
-        List<Announcements> announcements = await _context.announcements
+        List<Announcement> announcements = await _context.Announcements
             .OrderByDescending(a => a.CreatedAt)
             .ToListAsync();
 
@@ -59,19 +59,19 @@ public class AnnouncementsController : ControllerBase
 
     // GET: api/announcements/filter?author_id=
     [HttpGet("filter")]
-    public async Task<ActionResult<IEnumerable<Announcements>>>
+    public async Task<ActionResult<IEnumerable<Announcement>>>
         FilterAnnouncements(
             [FromQuery] string author_id)
     {
-        IQueryable<Announcements> query
-            = _context.announcements.AsQueryable();
+        IQueryable<Announcement> query
+            = _context.Announcements.AsQueryable();
 
         if (!string.IsNullOrEmpty(author_id))
         {
             query = query.Where(a => a.AuthorId == author_id);
         }
 
-        List<Announcements> results
+        List<Announcement> results
             = await query.OrderByDescending(a => a.CreatedAt).ToListAsync();
 
         if (!results.Any())
@@ -85,15 +85,15 @@ public class AnnouncementsController : ControllerBase
     // PUT: api/announcements/{id}
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateAnnouncement(Guid id,
-        [FromBody] Announcements updated)
+        [FromBody] Announcement updated)
     {
         if (id != updated.AnnouncementId)
         {
             return BadRequest("ID mismatch between URL and body.");
         }
 
-        Announcements? existing
-            = await _context.announcements.FindAsync(id);
+        Announcement? existing
+            = await _context.Announcements.FindAsync(id);
         if (existing == null)
         {
             return NotFound("Announcement not found.");
@@ -119,14 +119,14 @@ public class AnnouncementsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteAnnouncement(Guid id)
     {
-        Announcements? existing
-            = await _context.announcements.FindAsync(id);
+        Announcement? existing
+            = await _context.Announcements.FindAsync(id);
         if (existing == null)
         {
             return NotFound("Announcement not found.");
         }
 
-        _context.announcements.Remove(existing);
+        _context.Announcements.Remove(existing);
         await _context.SaveChangesAsync();
 
         return NoContent();
