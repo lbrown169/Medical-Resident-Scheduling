@@ -26,7 +26,8 @@ using (IServiceScope scope = app.Services.CreateScope())
     if (app.Environment.IsDevelopment())
     {
         db.Database.Migrate();
-        DatabaseSeeder.Seed(db);
+        DatabaseSeeder seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
+        await seeder.Seed(db);
     }
 }
 
