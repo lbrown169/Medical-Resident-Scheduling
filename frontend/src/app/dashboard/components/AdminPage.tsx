@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
-import { CalendarDays, Send, Check, X, Shield, Users, Trash2, Repeat2 } from "lucide-react";
+import { CalendarDays, Send, Check, X, Shield, Users, Trash2, Repeat2, Funnel } from "lucide-react";
 import { differenceInCalendarDays, parseISO } from 'date-fns';
 import { config } from '../../../config';
 import { toast } from "../../../lib/use-toast";
@@ -1133,7 +1133,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
                     className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                   >
                     <option value="Current Year">Current Year</option>
-                    <option value="2024-2025">2026</option>
+                    <option value="2027">2027</option>
                   </select>
                 </div>
                 <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
@@ -1156,7 +1156,24 @@ const AdminPage: React.FC<AdminPageProps> = ({
                     <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                     <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current PGY Status</th>
                     <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hospital Role Profile</th>
-                    <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hours Scheduled</th>
+                    <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <div className="flex items-center gap-2">
+                        <span>Hours Scheduled</span>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button type="button" variant="outline" className="h-7 w-7 p-0 flex items-center justify-center border-gray-300 dark:border-gray-600 bg-white dark:bg-neutral-800 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer" disabled={generating} aria-label="Choose schedule filter">
+                              <Funnel className="h-3.5 w-3.5" />
+                            </Button>
+                          </DropdownMenuTrigger>
+
+                          <DropdownMenuContent align="end" className="w-40">
+                            <DropdownMenuItem className="cursor-pointer" onClick={() => ""}>Year</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer" onClick={() => ""}>Month</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer" onClick={() => ""}>Week</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
@@ -1208,7 +1225,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
                             <span className="text-gray-400 italic">N/A</span>
                           )}
                         </td>
-                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{resident.hours}</td>
+                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{Number.isFinite(resident.hours) ? resident.hours : 0}</td>
                       </tr>
                     ))
                   ) : (
