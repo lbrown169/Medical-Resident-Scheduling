@@ -1,4 +1,6 @@
 using MedicalDemo.Models;
+using MedicalDemo.Models.DTO.Requests;
+using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -23,7 +25,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequest request)
+    public async Task<IActionResult> Login([FromBody] AuthLoginRequest request)
     {
         try
         {
@@ -39,24 +41,27 @@ public class AuthController : ControllerBase
 
                 if (!passwordMatch)
                 {
-                    return Unauthorized(new
-                    { success = false, message = "Invalid credentials" });
+                    return Unauthorized(new AuthLoginResponse
+                    {
+                        success = false,
+                        message = "Invalid credentials"
+                    });
                 }
 
                 string token = Guid.NewGuid().ToString();
 
-                return Ok(new
+                return Ok(new AuthLoginResponse
                 {
                     success = true,
-                    token,
+                    token = token,
                     userType = "resident",
-                    resident = new
+                    resident = new AuthLoginResponse.User
                     {
                         id = resident.ResidentId,
-                        resident.Email,
+                        email = resident.Email,
                         firstName = resident.FirstName,
                         lastName = resident.LastName,
-                        resident.PhoneNum
+                        phoneNum = resident.PhoneNum
                     }
                 });
             }
@@ -73,46 +78,45 @@ public class AuthController : ControllerBase
 
                 if (!passwordMatch)
                 {
-                    return Unauthorized(new
-                    { success = false, message = "Invalid credentials" });
+                    return Unauthorized(new AuthLoginResponse
+                    {
+                        success = false,
+                        message = "Invalid credentials"
+                    });
                 }
 
                 string token = Guid.NewGuid().ToString();
 
-                return Ok(new
+                return Ok(new AuthLoginResponse
                 {
                     success = true,
-                    token,
+                    token = token,
                     userType = "admin",
-                    admin = new
+                    admin = new AuthLoginResponse.User
                     {
                         id = admin.AdminId,
-                        admin.Email,
+                        email = admin.Email,
                         firstName = admin.FirstName,
                         lastName = admin.LastName,
-                        admin.PhoneNum
+                        phoneNum = admin.PhoneNum
                     }
                 });
             }
 
             //Not found in either
-            return Unauthorized(new
-            { success = false, message = "Invalid credentials" });
+            return Unauthorized(new AuthLoginResponse
+            {
+                success = false,
+                message = "Invalid credentials"
+            });
         }
         catch (Exception ex)
         {
-            return StatusCode(500,
-                new
-                {
-                    success = false,
-                    message = $"Login error: {ex.Message}"
-                });
+            return StatusCode(500, new AuthLoginResponse
+            {
+                success = false,
+                message = $"Login error: {ex.Message}"
+            });
         }
     }
-}
-
-public class LoginRequest
-{
-    public string email { get; set; }
-    public string password { get; set; }
 }

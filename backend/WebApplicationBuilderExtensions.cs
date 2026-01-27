@@ -44,6 +44,7 @@ public static class WebApplicationBuilderExtensions
         // Converters
         builder.Services.AddScoped<AdminConverter>();
         builder.Services.AddScoped<AnnouncementConverter>();
+        builder.Services.AddScoped<BlackoutConverter>();
 
         // Email
         if (builder.Environment.IsDevelopment())

@@ -1,5 +1,6 @@
 using MedicalDemo.Enums;
 using MedicalDemo.Models;
+using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.DTO.Scheduling;
 using MedicalDemo.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
@@ -24,29 +25,17 @@ public class DashboardController : ControllerBase
 
     // GET: api/dashboard/resident/{residentId}
     [HttpGet("resident/{residentId}")]
-    public async Task<ActionResult<DashboardData>> GetDashboardData(
+    public async Task<ActionResult<DashboardDataResponse>> GetDashboardData(
         string residentId)
     {
         try
         {
-            DashboardData dashboardData = new()
+            DashboardDataResponse dashboardData = new()
             {
                 ResidentId = residentId,
                 CurrentRotation = "No rotation assigned",
                 RotationEndDate = "",
-                MonthlyHours = 0,
-                UpcomingShifts = new List<UpcomingShift>(),
-                RecentActivity = new List<RecentActivity>(),
-                TeamUpdates = new List<TeamUpdate>()
-            };
-
-            // Get current rotation - try multiple month formats
-            string[] currentMonthFormats =
-            {
-                DateTime.Now.ToString("MMMM yyyy"), // "December 2024"
-                DateTime.Now.ToString("MMM yyyy"), // "Dec 2024"
-                DateTime.Now.ToString("yyyy-MM"), // "2024-12"
-                DateTime.Now.ToString("MM/yyyy") // "12/2024"
+                MonthlyHours = 0
             };
 
             Resident? resident = await _context.Residents.FirstOrDefaultAsync(r => r.ResidentId == residentId);
@@ -93,13 +82,6 @@ public class DashboardController : ControllerBase
             dashboardData.MonthlyHours
                 = thisMonthDates.Sum(d => d.Hours);
 
-            // Debug: Log the hours calculation
-            // Console.WriteLine($"Resident {residentId}: Found {thisMonthDates.Count} dates in {DateTime.Now:MMMM yyyy}, calculated {dashboardData.MonthlyHours} hours");
-            if (thisMonthDates.Any())
-            {
-                // Console.WriteLine($"Dates: {string.Join(", ", thisMonthDates.Select(d => d.Date.ToString("MM/dd/yyyy")))}");
-            }
-
             // Get upcoming shifts (next 3)
             DateOnly today = DateOnly.FromDateTime(DateTime.Today);
             List<Date> futureDates = userDates
@@ -109,7 +91,7 @@ public class DashboardController : ControllerBase
                 .ToList();
 
             dashboardData.UpcomingShifts = futureDates.Select(d =>
-                new UpcomingShift
+                new DashboardDataResponse.UpcomingShift
                 {
                     Date = d.ShiftDate.ToString("MM/dd/yyyy"),
                     Type = d.CallType
@@ -118,7 +100,7 @@ public class DashboardController : ControllerBase
             // Generate recent activity
             if (thisMonthDates.Any())
             {
-                dashboardData.RecentActivity.Add(new RecentActivity
+                dashboardData.RecentActivity.Add(new DashboardDataResponse.Activity
                 {
                     Id = "1",
                     Type = "schedule",
@@ -131,7 +113,7 @@ public class DashboardController : ControllerBase
             if (futureDates.Any())
             {
                 Date nextShift = futureDates.First();
-                dashboardData.RecentActivity.Add(new RecentActivity
+                dashboardData.RecentActivity.Add(new DashboardDataResponse.Activity
                 {
                     Id = "2",
                     Type = "upcoming",
@@ -159,7 +141,7 @@ public class DashboardController : ControllerBase
                     = requesterMap.ContainsKey(swap.RequesterId)
                         ? requesterMap[swap.RequesterId]
                         : swap.RequesterId;
-                dashboardData.RecentActivity.Add(new RecentActivity
+                dashboardData.RecentActivity.Add(new DashboardDataResponse.Activity
                 {
                     Id = swap.IdswapRequests.ToString(),
                     Type = "swap_pending",
@@ -193,7 +175,7 @@ public class DashboardController : ControllerBase
                 string message = swap.Status == "Approved"
                     ? $"Your swap request for {swap.RequesterDate:MM/dd/yyyy} (with {requesteeName}) was approved."
                     : $"Your swap request for {swap.RequesterDate:MM/dd/yyyy} (with {requesteeName}) was denied. Reason: {swap.Details}";
-                dashboardData.RecentActivity.Add(new RecentActivity
+                dashboardData.RecentActivity.Add(new DashboardDataResponse.Activity
                 {
                     Id = swap.IdswapRequests.ToString(),
                     Type = swap.Status == "Approved"
@@ -226,7 +208,7 @@ public class DashboardController : ControllerBase
                         : swap.RequesterId;
                 string message
                     = $"You swapped your shift on {swap.RequesteeDate:MM/dd/yyyy} with {requesterName}.";
-                dashboardData.RecentActivity.Add(new RecentActivity
+                dashboardData.RecentActivity.Add(new DashboardDataResponse.Activity
                 {
                     Id = swap.IdswapRequests + "-as-approver",
                     Type = "swap_approved",
@@ -244,7 +226,7 @@ public class DashboardController : ControllerBase
 
             foreach (Announcement announcement in announcements)
             {
-                dashboardData.TeamUpdates.Add(new TeamUpdate
+                dashboardData.TeamUpdates.Add(new DashboardDataResponse.TeamUpdate
                 {
                     Id = announcement.AnnouncementId.ToString(),
                     Message = announcement.Message ?? "",
@@ -260,37 +242,4 @@ public class DashboardController : ControllerBase
                 $"An error occurred while fetching dashboard data: {ex.Message}");
         }
     }
-}
-
-// DTOs for dashboard response
-public class DashboardData
-{
-    public string ResidentId { get; set; } = "";
-    public string CurrentRotation { get; set; } = "";
-    public string RotationEndDate { get; set; } = "";
-    public int MonthlyHours { get; set; }
-    public List<UpcomingShift> UpcomingShifts { get; set; } = new();
-    public List<RecentActivity> RecentActivity { get; set; } = new();
-    public List<TeamUpdate> TeamUpdates { get; set; } = new();
-}
-
-public class UpcomingShift
-{
-    public string Date { get; set; } = "";
-    public string Type { get; set; } = "";
-}
-
-public class RecentActivity
-{
-    public string Id { get; set; } = "";
-    public string Type { get; set; } = "";
-    public string Message { get; set; } = "";
-    public string Date { get; set; } = "";
-}
-
-public class TeamUpdate
-{
-    public string Id { get; set; } = "";
-    public string Message { get; set; } = "";
-    public string Date { get; set; } = "";
 }
