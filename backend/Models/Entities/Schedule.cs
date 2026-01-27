@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using MedicalDemo.Enums;
+﻿using MedicalDemo.Enums;
 
-namespace MedicalDemo.Models
+namespace MedicalDemo.Models.Entities
 {
     public partial class Schedule
     {

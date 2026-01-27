@@ -3,8 +3,10 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using MedicalDemo.Algorithm;
+using MedicalDemo.Converters;
 using MedicalDemo.Interfaces;
 using MedicalDemo.Models;
+using MedicalDemo.Models.Entities;
 using MedicalDemo.Services;
 using MedicalDemo.Services.EmailSendServices;
 using Microsoft.EntityFrameworkCore;
@@ -38,6 +40,10 @@ public static class WebApplicationBuilderExtensions
         builder.Services.AddScoped<AlgorithmService>();
         builder.Services.AddScoped<MiscService>();
         builder.Services.AddScoped<DatabaseSeeder>();
+
+        // Converters
+        builder.Services.AddScoped<AdminConverter>();
+        builder.Services.AddScoped<AnnouncementConverter>();
 
         // Email
         if (builder.Environment.IsDevelopment())

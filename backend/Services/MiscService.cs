@@ -1,4 +1,5 @@
 using MedicalDemo.Models;
+using MedicalDemo.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace MedicalDemo.Services;

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace MedicalDemo.Models
+﻿namespace MedicalDemo.Models.Entities
 {
     public partial class Rotation
     {

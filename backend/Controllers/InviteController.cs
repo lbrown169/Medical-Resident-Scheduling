@@ -1,5 +1,6 @@
 using MedicalDemo.Interfaces;
 using MedicalDemo.Models;
+using MedicalDemo.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 

@@ -1,4 +1,5 @@
 using MedicalDemo.Models;
+using MedicalDemo.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,41 +20,6 @@ public class AuthController : ControllerBase
     public IActionResult Options()
     {
         return Ok();
-    }
-
-    [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] Resident resident)
-    {
-        bool exists = await _context.Residents
-            .AnyAsync(r => r.Email == resident.Email);
-
-        if (exists)
-        {
-            return Conflict(new
-            { success = false, message = "Email already registered" });
-        }
-
-        string? hashedPassword
-            = BCrypt.Net.BCrypt.HashPassword(resident.Password);
-
-        Resident newResident = new()
-        {
-            ResidentId = resident.ResidentId,
-            FirstName = resident.FirstName,
-            LastName = resident.LastName,
-            Email = resident.Email,
-            Password = hashedPassword,
-            PhoneNum = resident.PhoneNum,
-            GraduateYr = resident.GraduateYr,
-            WeeklyHours = 0,
-            TotalHours = 0,
-            BiYearlyHours = 0
-        };
-
-        _context.Residents.Add(newResident);
-        await _context.SaveChangesAsync();
-
-        return StatusCode(201, new { success = true });
     }
 
     [HttpPost("login")]

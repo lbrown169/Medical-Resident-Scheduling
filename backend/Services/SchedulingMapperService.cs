@@ -2,6 +2,7 @@ using System.Globalization;
 using MedicalDemo.Algorithm;
 using MedicalDemo.Models;
 using MedicalDemo.Models.DTO.Scheduling;
+using MedicalDemo.Models.Entities;
 
 namespace MedicalDemo.Services;
 

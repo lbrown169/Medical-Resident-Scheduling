@@ -2,6 +2,7 @@ using MedicalDemo.Algorithm;
 using MedicalDemo.Enums;
 using MedicalDemo.Models;
 using MedicalDemo.Models.DTO.Scheduling;
+using MedicalDemo.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace MedicalDemo.Services;

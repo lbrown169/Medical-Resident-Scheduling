@@ -1,3 +1,4 @@
+using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -31,13 +32,13 @@ public class ScheduleController : ControllerBase
             = await _schedulerService.GenerateFullSchedule(year);
         if (!success)
         {
-            return StatusCode(500, new { success = false, error });
+            return StatusCode(500, new AlgorithmResponse { Success = false, Message = error });
         }
 
-        return Ok(new
+        return Ok(new AlgorithmResponse
         {
-            success = true,
-            message = "Schedule generated and saved successfully."
+            Success = true,
+            Message = "Schedule generated and saved successfully."
         });
     }
 }
