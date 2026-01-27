@@ -527,7 +527,7 @@ public class AlgorithmService
             // sort the worked days array list
             workedDays.Sort();
 
-            foreach (DateTime curDay in workedDays)
+            foreach (DateOnly curDay in workedDays)
             {
                 _logger.LogDebug("  {DateTime} {CurDayDayOfWeek}", curDay, curDay.DayOfWeek);
             }
@@ -546,7 +546,7 @@ public class AlgorithmService
             // sort the worked days array list
             workedDays.Sort();
 
-            foreach (DateTime curDay in workedDays)
+            foreach (DateOnly curDay in workedDays)
             {
                 _logger.LogDebug("  {DateTime} {CurDayDayOfWeek}", curDay, curDay.DayOfWeek);
             }
@@ -565,7 +565,7 @@ public class AlgorithmService
             // sort the worked days array list
             workedDays.Sort();
 
-            foreach (DateTime curDay in workedDays)
+            foreach (DateOnly curDay in workedDays)
             {
                 _logger.LogDebug("  {DateTime} {CurDayDayOfWeek}", curDay, curDay.DayOfWeek);
             }
