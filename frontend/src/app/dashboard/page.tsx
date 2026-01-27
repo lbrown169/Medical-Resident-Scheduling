@@ -361,21 +361,20 @@ function Dashboard() {
             ? `${date.firstName} ${date.lastName}`
             : date.residentId;
 
-          // Standardize callType
-          let callType = date.callType;
-          if (callType === 'Sunday') callType = '12h';
-          if (callType === 'Saturday') callType = '24h';
-
           // Find the resident to get graduate_yr directly (for details only)
           const resident = residents.find(r => r.resident_id === date.residentId);
           const graduateYear = resident?.graduate_yr;
-          const eventColor = getEventColor(callType, graduateYear);
+          const eventColor = getEventColor(date.callType, graduateYear);
+
+          const d = new Date(date.date)
+          // date comes in as UTC and gets changed to previous day in local time. keep everything local
+          d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
 
           return {
             id: date.dateId,
             title: fullName || '', // Only name
-            start: new Date(date.date),
-            end: new Date(date.date),
+            start: d,
+            end: d,
             backgroundColor: eventColor,
             borderColor: eventColor,
             extendedProps: {
@@ -383,7 +382,7 @@ function Dashboard() {
               residentId: date.residentId,
               firstName: date.firstName,
               lastName: date.lastName,
-              callType: callType,
+              callType: date.callType,
               dateId: date.dateId,
               pgyLevel: graduateYear
             }
