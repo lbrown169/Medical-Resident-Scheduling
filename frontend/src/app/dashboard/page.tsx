@@ -45,15 +45,6 @@ type MenuItem = {
 };
 
 // Define types for API responses
-interface DateResponse {
-  dateId: string;
-  callType: string;
-  residentId?: string;
-  date: string;
-  scheduleId: string;
-  firstName?: string;
-  lastName?: string;
-}
 
 interface CalendarEvent {
   id: string;
@@ -211,7 +202,7 @@ function Dashboard() {
   };
 
   // Updated color function to use graduate_yr directly
-  const getEventColor = (callType: string, graduateYear?: number) => {
+  const getEventColor = (callType: CallType, graduateYear?: number) => {
     // Use graduate_yr directly for PGY-based coloring
     if (graduateYear) {
       switch (graduateYear) {
@@ -227,12 +218,13 @@ function Dashboard() {
     }
     
     // Fallback to call type coloring if no graduate_yr
-    switch (callType) {
-      case 'Short':
+    switch (callType.id) {
+      case 0: // short
         return '#3b82f6'; // blue
-      case 'Saturday':
+      case 1: // saturday 24
+      case 2: // saturday 12
         return '#10b981'; // green
-      case 'Sunday':
+      case 3: // sunday 12
         return '#f59e0b'; // amber
       default:
         return '#6b7280'; // gray
@@ -284,11 +276,11 @@ function Dashboard() {
         if (dates.length > 0) {
           const scheduleIdToLatestDate = {};
           dates.forEach((date) => {
-            if (!date.scheduleId) return;
-            const current = scheduleIdToLatestDate[date.scheduleId];
+            if (!date.ScheduleId) return;
+            const current = scheduleIdToLatestDate[date.ScheduleId];
             const thisDate = new Date(date.date).getTime();
             if (!current || thisDate > current) {
-              scheduleIdToLatestDate[date.scheduleId] = thisDate;
+              scheduleIdToLatestDate[date.ScheduleId] = thisDate;
             }
           });
           latestScheduleId = Object.entries(scheduleIdToLatestDate)
@@ -297,22 +289,22 @@ function Dashboard() {
 
         // Only include events from the latest schedule
         const filteredDates = latestScheduleId
-          ? dates.filter((date) => date.scheduleId === latestScheduleId)
+          ? dates.filter((date) => date.ScheduleId === latestScheduleId)
           : dates;
 
         // Filter for current user and future dates only, and with a real callType
         const userSchedule = filteredDates
           .filter((date) => {
             const dateObj = new Date(date.date);
-            return date.residentId === user.id && dateObj >= currentDate && date.callType;
+            return date.ResidentId === user.id && dateObj >= currentDate && date.CallType;
           })
           .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
           .slice(0, 20)
           .map((date) => ({
-            id: date.dateId,
-            date: date.date,
+            id: date.DateId,
+            date: date.ShiftDate,
             time: "All Day",
-            shift: `${date.callType} Call`,
+            shift: `${date.callType.Description} Call`,
             location: "Hospital"
           }));
 
@@ -331,6 +323,7 @@ function Dashboard() {
       const response = await fetch(`${config.apiUrl}/api/dates`);
       if (response.ok) {
         const dates = await response.json();
+        console.log(dates)
 
         // Find the scheduleId with the most recent date
         let latestScheduleId = null;
@@ -340,7 +333,7 @@ function Dashboard() {
           dates.forEach((date: DateResponse) => {
             if (!date.scheduleId) return;
             const current = scheduleIdToLatestDate[date.scheduleId];
-            const thisDate = new Date(date.date).getTime();
+            const thisDate = new Date(date.shiftDate).getTime();
             if (!current || thisDate > current) {
               scheduleIdToLatestDate[date.scheduleId] = thisDate;
             }
@@ -366,7 +359,7 @@ function Dashboard() {
           const graduateYear = resident?.graduate_yr;
           const eventColor = getEventColor(date.callType, graduateYear);
 
-          const d = new Date(date.date)
+          const d = new Date(date.shiftDate)
           // date comes in as UTC and gets changed to previous day in local time. keep everything local
           d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
 
@@ -382,7 +375,7 @@ function Dashboard() {
               residentId: date.residentId,
               firstName: date.firstName,
               lastName: date.lastName,
-              callType: date.callType,
+              callType: date.callType.description,
               dateId: date.dateId,
               pgyLevel: graduateYear
             }
@@ -398,8 +391,8 @@ function Dashboard() {
           description: "Failed to load calendar events",
         });
       }
-    } catch {
-      console.error('Error fetching calendar events');
+    } catch (e) {
+      console.error(e, 'Error fetching calendar events');
       toast({
         variant: "destructive",
         title: "Error",

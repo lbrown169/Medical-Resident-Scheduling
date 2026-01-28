@@ -8,16 +8,6 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
 import { logout } from "../../lib/auth";
 
-interface DateResponse {
-  dateId: string;
-  callType: string;
-  residentId?: string;
-  date: string;
-  scheduleId: string;
-  firstName?: string;
-  lastName?: string;
-}
-
 interface CalendarEvent {
   id: string;
   title: string;
@@ -547,7 +537,7 @@ export default function FacultyPage() {
           dates.forEach((date: DateResponse) => {
             if (!date.scheduleId) return;
             const current = scheduleIdToLatestDate[date.scheduleId];
-            const thisDate = new Date(date.date).getTime();
+            const thisDate = new Date(date.shiftDate).getTime();
             if (!current || thisDate > current) {
               scheduleIdToLatestDate[date.scheduleId] = thisDate;
             }
@@ -571,15 +561,15 @@ export default function FacultyPage() {
           return {
             id: date.dateId,
             title: `${resident ? `${resident.first_name} ${resident.last_name}` : 'Unknown'}`,
-            start: new Date(date.date),
-            end: new Date(date.date),
+            start: new Date(date.shiftDate),
+            end: new Date(date.shiftDate),
             backgroundColor: color,
             extendedProps: {
               scheduleId: date.scheduleId,
               residentId: date.residentId,
               firstName: resident?.first_name,
               lastName: resident?.last_name,
-              callType: date.callType,
+              callType: date.callType.description,
               dateId: date.dateId,
               pgyLevel: graduateYear
             }
@@ -596,7 +586,7 @@ export default function FacultyPage() {
   }, [residents]);
 
   // Get event color based on PGY level (like the original calendar)
-  const getEventColor = (callType: string, graduateYear?: number): string => {
+  const getEventColor = (callType: CallType, graduateYear?: number): string => {
     // Color coding based on PGY level
     if (graduateYear === 1) return '#ef4444'; // Red for PGY 1
     if (graduateYear === 2) return '#f97316'; // Orange for PGY 2

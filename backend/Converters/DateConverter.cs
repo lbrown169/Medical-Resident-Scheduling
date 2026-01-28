@@ -26,6 +26,8 @@ public class DateConverter
             DateId = date.DateId,
             ScheduleId = date.ScheduleId,
             ResidentId = date.ResidentId,
+            FirstName = date.Resident.FirstName,
+            LastName = date.Resident.LastName,
             ShiftDate = date.ShiftDate,
             CallType = new DateCallTypeShiftResponse
             {

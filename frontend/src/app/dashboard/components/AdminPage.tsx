@@ -66,11 +66,6 @@ interface Announcement {
   createdAt?: string;
 }
 
-interface DateEntry {
-  scheduleId?: string;
-  date?: string;
-}
-
 // Modal component
 function Modal({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: React.ReactNode }) {
   if (!open) return null;
@@ -151,12 +146,12 @@ const AdminPage: React.FC<AdminPageProps> = ({
     try {
       const res = await fetch(`${config.apiUrl}/api/dates`);
       if (!res.ok) return null;
-      const dates: DateEntry[] = await res.json();
+      const dates: DateResponse[] = await res.json();
       const map: Record<string, number> = {};
 
       for (const d of dates) {
-        if (!d.scheduleId || !d.date) continue;
-        const t = new Date(d.date).getTime();
+        if (!d.scheduleId || !d.dateId) continue;
+        const t = new Date(d.shiftDate).getTime();
         if (!map[d.scheduleId] || t > map[d.scheduleId]) {
           map[d.scheduleId] = t;
         }

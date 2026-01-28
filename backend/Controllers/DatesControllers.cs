@@ -55,8 +55,7 @@ public class DatesController : ControllerBase
         [FromQuery] CallShiftType? call_type
     )
     {
-        IQueryable<Date> query = _context.Dates
-            .AsQueryable();
+        IQueryable<Date> query = _context.Dates.Include(d => d.Resident).AsQueryable();
 
         if (schedule_id is not null)
         {
@@ -82,11 +81,6 @@ public class DatesController : ControllerBase
             .Select(d => _dateConverter.CreateDateResponseFromDate(d))
             .ToListAsync();
 
-        if (results.Count == 0)
-        {
-            return NotFound("No dates matched the filter criteria.");
-        }
-
         return Ok(results);
     }
 
@@ -95,7 +89,7 @@ public class DatesController : ControllerBase
     public async Task<IActionResult> UpdateDate(Guid id,
         [FromBody] DateUpdateRequest updatedDate)
     {
-        Date? existingDate = await _context.Dates.FindAsync(id);
+        Date? existingDate = await _context.Dates.Include(d => d.Resident).FirstOrDefaultAsync(d => d.DateId == id);
         if (existingDate == null)
         {
             return NotFound("Date not found.");
