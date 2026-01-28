@@ -359,19 +359,6 @@ const AdminPage: React.FC<AdminPageProps> = ({
     setResidentRows(prev => prev.map(r => r.id === residentId ? { ...r, pgyLevel: newPGY } : r));
 
     try {
-      // First, get the current resident data
-      const getResponse = await fetch(`${config.apiUrl}/api/residents/filter?resident_id=${residentId}`);
-      if (!getResponse.ok) {
-        throw new Error('Failed to fetch current resident data');
-      }
-
-      const residentsData = await getResponse.json();
-      if (!residentsData || residentsData.length === 0) {
-        throw new Error('Resident not found');
-      }
-
-      const currentResident = residentsData[0];
-
       // Update with existing data but new phone number
       const res= await fetch(`${config.apiUrl}/api/residents/${residentId}`, {
         method: 'PUT',
@@ -379,16 +366,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          resident_id: currentResident.resident_id,
-          first_name: currentResident.first_name,
-          last_name: currentResident.last_name,
-          email: currentResident.email,
-          password: currentResident.password,
-          phone_num: currentResident.phone_num,
-          graduate_yr: newPGY, // Update PGY
-          weekly_hours: currentResident.weekly_hours,
-          total_hours: currentResident.total_hours,
-          bi_yearly_hours: currentResident.bi_yearly_hours
+          graduate_yr: newPGY,
         })
       });
 
@@ -422,19 +400,6 @@ const AdminPage: React.FC<AdminPageProps> = ({
     setResidentRows(prev => prev.map(r => r.id === residentId ? { ...r, hospitalRole: newRole } : r));
 
     try {
-      // First, get the current resident data
-      const getResponse = await fetch(`${config.apiUrl}/api/residents/filter?resident_id=${residentId}`);
-      if (!getResponse.ok) {
-        throw new Error('Failed to fetch current resident data');
-      }
-
-      const residentsData = await getResponse.json();
-      if (!residentsData || residentsData.length === 0) {
-        throw new Error('Resident not found');
-      }
-
-      const currentResident = residentsData[0];
-
       // Update with existing data but new hospital role profile
       const res = await fetch(`${config.apiUrl}/api/residents/${residentId}`, {
         method: 'PUT',
@@ -442,17 +407,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          resident_id: currentResident.resident_id,
-          first_name: currentResident.first_name,
-          last_name: currentResident.last_name,
-          email: currentResident.email,
-          password: currentResident.password,
-          phone_num: currentResident.phone_num,
-          graduate_yr: currentResident.graduate_yr,
-          weekly_hours: currentResident.weekly_hours,
-          total_hours: currentResident.total_hours,
-          bi_yearly_hours: currentResident.bi_yearly_hours,
-          hospital_role_profile: newRole // Update Hospital Role Profile
+          hospital_role_profile: newRole
         })
       });
 

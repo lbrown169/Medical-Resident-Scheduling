@@ -1,4 +1,7 @@
+using MedicalDemo.Converters;
 using MedicalDemo.Models;
+using MedicalDemo.Models.DTO.Requests;
+using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,60 +15,60 @@ namespace MedicalDemo.Controllers;
 public class ResidentsController : ControllerBase
 {
     private readonly MedicalContext _context;
+    private readonly ResidentConverter _residentConverter;
 
-    public ResidentsController(MedicalContext context)
+    public ResidentsController(MedicalContext context, ResidentConverter residentConverter)
     {
         _context = context;
+        _residentConverter = residentConverter;
     }
 
-    // GET: api/Residents
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<Resident>>> GetResidents()
+    // GET: api/residents/{id}
+    [HttpGet("{id}")]
+    public async Task<ActionResult<IEnumerable<ResidentResponse>>> GetResident(Guid id)
     {
-        List<Resident> residents = await _context.Residents.AsNoTracking().ToListAsync();
-        Dictionary<string, int> hoursMapping = (await _context.Dates
-                .ToListAsync())
+        Resident? resident = await _context.Residents.FindAsync(id);
+
+        if (resident == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(_residentConverter.CreateResidentResponseFromResident(resident));
+    }
+
+    // GET: api/residents?first_name=&last_name=&graduate_yr=2&email=&password=&phone_num=&weekly_hours=&total_hours=&bi_yearly_hours
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<ResidentResponse>>> GetResidents(
+        [FromQuery] string? first_name,
+        [FromQuery] string? last_name,
+        [FromQuery] int? graduate_yr,
+        [FromQuery] string? email,
+        [FromQuery] string? phone_num,
+        [FromQuery] int? weekly_hours,
+        [FromQuery] int? total_hours,
+        [FromQuery] int? bi_yearly_hours)
+    {
+        List<Date> dates = await _context.Dates.ToListAsync();
+
+        Dictionary<string, int> totalHoursMapping = dates
             .GroupBy(d => d.ResidentId)
             .ToDictionary(
                 g => g.Key,
                 g => g.Sum(d => d.Hours)
             );
 
-        foreach (Resident resident in residents)
-        {
-            if (hoursMapping.TryGetValue(resident.ResidentId, out int hours))
-            {
-                resident.TotalHours = hours;
-            }
-            else
-            {
-                resident.TotalHours = 0;
-            }
-        }
+        DateOnly sunday = DateOnly.FromDateTime(DateTime.Now).AddDays(-(int)DateTime.Today.DayOfWeek);
+        DateOnly saturday = DateOnly.FromDateTime(DateTime.Now).AddDays(6-(int)DateTime.Today.DayOfWeek);
+        Dictionary<string, int> weekHoursMapping = dates
+            .Where(d => d.ShiftDate >= sunday && d.ShiftDate <= saturday)
+            .GroupBy(d => d.ResidentId)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Sum(d => d.Hours)
+            );
 
-        return Ok(residents);
-    }
-
-    // GET: api/residents/filter?resident_id=&first_name=&last_name=&graduate_yr=2&email=&password=&phone_num=&weekly_hours=&total_hours=&bi_yearly_hours
-    [HttpGet("filter")]
-    public async Task<ActionResult<IEnumerable<Resident>>> FilterResidents(
-        [FromQuery] string? resident_id,
-        [FromQuery] string? first_name,
-        [FromQuery] string? last_name,
-        [FromQuery] int? graduate_yr,
-        [FromQuery] string? email,
-        [FromQuery] string? password,
-        [FromQuery] string? phone_num,
-        [FromQuery] int? weekly_hours,
-        [FromQuery] int? total_hours,
-        [FromQuery] int? bi_yearly_hours)
-    {
         IQueryable<Resident> query = _context.Residents.AsQueryable();
-
-        if (!string.IsNullOrEmpty(resident_id))
-        {
-            query = query.Where(r => r.ResidentId == resident_id);
-        }
 
         if (!string.IsNullOrEmpty(first_name))
         {
@@ -87,54 +90,44 @@ public class ResidentsController : ControllerBase
             query = query.Where(r => r.Email.Contains(email));
         }
 
-        if (!string.IsNullOrEmpty(password))
-        {
-            query = query.Where(r =>
-                r.Password ==
-                password); // Consider not exposing password filters
-        }
-
         if (!string.IsNullOrEmpty(phone_num))
         {
             query = query.Where(r => r.PhoneNum.Contains(phone_num));
         }
 
+        List<Resident> results = await query.ToListAsync();
+
+        foreach (Resident resident in results)
+        {
+            resident.TotalHours = totalHoursMapping.GetValueOrDefault(resident.ResidentId, 0);
+            resident.WeeklyHours = weekHoursMapping.GetValueOrDefault(resident.ResidentId, 0);
+        }
+
+        IEnumerable<Resident> residents = results;
         if (weekly_hours is not null)
         {
-            query = query.Where(r => r.WeeklyHours == weekly_hours);
+            residents = residents.Where(r => r.WeeklyHours == weekly_hours);
         }
 
         if (total_hours is not null)
         {
-            query = query.Where(r => r.TotalHours == total_hours);
+            residents = residents.Where(r => r.TotalHours == total_hours);
         }
 
         if (bi_yearly_hours is not null)
         {
-            query = query.Where(r => r.BiYearlyHours == bi_yearly_hours);
+            residents = residents.Where(r => r.BiYearlyHours == bi_yearly_hours);
         }
 
-        List<Resident> results = await query.ToListAsync();
-
-        if (!results.Any())
-        {
-            return NotFound("No residents matched the filter criteria.");
-        }
-
-        return Ok(results);
+        return Ok(residents.Select(r => _residentConverter.CreateResidentResponseFromResident(r)));
     }
 
 
     // PUT: api/residents/{id}
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateResident(string id,
-        [FromBody] Resident updatedResident)
+        [FromBody] ResidentUpdateRequest updatedResident)
     {
-        if (id != updatedResident.ResidentId)
-        {
-            return BadRequest("Resident ID in URL and body do not match.");
-        }
-
         Resident? existingResident
             = await _context.Residents.FindAsync(id);
         if (existingResident == null)
@@ -143,23 +136,12 @@ public class ResidentsController : ControllerBase
         }
 
         // Update fields
-        existingResident.FirstName = updatedResident.FirstName;
-        existingResident.LastName = updatedResident.LastName;
-        existingResident.GraduateYr = updatedResident.GraduateYr;
-        existingResident.Email = updatedResident.Email;
-        existingResident.Password = updatedResident.Password;
-        existingResident.PhoneNum = updatedResident.PhoneNum;
-        existingResident.WeeklyHours = updatedResident.WeeklyHours;
-        existingResident.TotalHours = updatedResident.TotalHours;
-        existingResident.BiYearlyHours = updatedResident.BiYearlyHours;
-        existingResident.HospitalRoleProfile = updatedResident.HospitalRoleProfile;
+        _residentConverter.UpdateResidentWithResidentUpdateRequest(existingResident, updatedResident);
 
         try
         {
             await _context.SaveChangesAsync();
-            return
-                Ok(
-                    existingResident); // returns the updated resident object
+            return Ok(_residentConverter.CreateResidentResponseFromResident(existingResident));
         }
         catch (DbUpdateException ex)
         {
@@ -215,17 +197,6 @@ public class ResidentsController : ControllerBase
             return StatusCode(500,
                 $"An error occurred while demoting admin: {ex.Message}");
         }
-    }
-
-    // POST: api/Residents
-    [HttpPost]
-    public async Task<ActionResult<Resident>> PostResident(Resident resident)
-    {
-        _context.Residents.Add(resident);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction("GetResident",
-            new { id = resident.ResidentId }, resident);
     }
 
     // DELETE: api/Residents/5

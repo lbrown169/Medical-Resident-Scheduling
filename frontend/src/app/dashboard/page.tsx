@@ -499,19 +499,6 @@ function Dashboard() {
     }
 
     try {
-      // First, get the current resident data
-      const getResponse = await fetch(`${config.apiUrl}/api/residents/filter?resident_id=${user.id}`);
-      if (!getResponse.ok) {
-        throw new Error('Failed to fetch current resident data');
-      }
-      
-      const residentsData = await getResponse.json();
-      if (!residentsData || residentsData.length === 0) {
-        throw new Error('Resident not found');
-      }
-      
-      const currentResident = residentsData[0];
-
       // Update with existing data but new phone number
       const response = await fetch(`${config.apiUrl}/api/residents/${user.id}`, {
         method: 'PUT',
@@ -519,16 +506,7 @@ function Dashboard() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          resident_id: currentResident.resident_id,
-          first_name: currentResident.first_name,
-          last_name: currentResident.last_name,
-          email: currentResident.email,
-          password: currentResident.password, // Keep existing password
-          phone_num: phoneNumber, // Update phone number
-          graduate_yr: currentResident.graduate_yr,
-          weekly_hours: currentResident.weekly_hours,
-          total_hours: currentResident.total_hours,
-          bi_yearly_hours: currentResident.bi_yearly_hours
+          phone_num: phoneNumber,
         })
       });
 
@@ -578,19 +556,6 @@ function Dashboard() {
     }
 
     try {
-      // First, get the current resident data
-      const getResponse = await fetch(`${config.apiUrl}/api/residents/filter?resident_id=${user.id}`);
-      if (!getResponse.ok) {
-        throw new Error('Failed to fetch current resident data');
-      }
-      
-      const residentsData = await getResponse.json();
-      if (!residentsData || residentsData.length === 0) {
-        throw new Error('Resident not found');
-      }
-      
-      const currentResident = residentsData[0];
-
       // Update with existing data but new email
       const response = await fetch(`${config.apiUrl}/api/residents/${user.id}`, {
         method: 'PUT',
@@ -598,16 +563,7 @@ function Dashboard() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          resident_id: currentResident.resident_id,
-          first_name: currentResident.first_name,
-          last_name: currentResident.last_name,
-          email: email, // Update email
-          password: currentResident.password, // Keep existing password
-          phone_num: currentResident.phone_num,
-          graduate_yr: currentResident.graduate_yr,
-          weekly_hours: currentResident.weekly_hours,
-          total_hours: currentResident.total_hours,
-          bi_yearly_hours: currentResident.bi_yearly_hours
+          email: email,
         })
       });
 

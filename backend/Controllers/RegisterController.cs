@@ -1,4 +1,6 @@
 using MedicalDemo.Models;
+using MedicalDemo.Models.DTO.Requests;
+using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -39,28 +41,26 @@ public class RegisterController : ControllerBase
                 r.ResidentId == invitation.ResidentId)
             : null;
 
-        return Ok(new
+        return Ok(new RegisterInviteInfoResponse
         {
             hasEmailOnFile = resident != null,
             resident = resident == null
                 ? null
-                : new
+                : new RegisterInviteInfoResponse.User
                 {
                     firstName = resident.FirstName,
                     lastName = resident.LastName,
                     residentId = resident.ResidentId,
-                    resident.Email
+                    Email = resident.Email
                 }
         });
     }
 
     [HttpPost("complete")]
     public async Task<IActionResult> CompleteRegistration(
-        [FromBody] RegisterRequest request)
+        [FromBody] RegisterUpdateExistingUserRequest request)
     {
-        if (string.IsNullOrEmpty(request.Token) ||
-            string.IsNullOrEmpty(request.Phone) ||
-            string.IsNullOrEmpty(request.Password))
+        if (string.IsNullOrEmpty(request.Token))
         {
             return BadRequest(new
             { message = "Missing required fields." });
@@ -94,8 +94,12 @@ public class RegisterController : ControllerBase
             return NotFound(new { message = "Resident not found." });
         }
 
-        resident.PhoneNum = request.Phone;
-        resident.Password = HashPassword(request.Password);
+        resident.PhoneNum = request.Phone ?? resident.PhoneNum;
+
+        if (request.Password != null)
+        {
+            resident.Password = HashPassword(request.Password);
+        }
         invitation.Used = true;
 
         await _context.SaveChangesAsync();
@@ -105,20 +109,8 @@ public class RegisterController : ControllerBase
 
     [HttpPost("new")]
     public async Task<IActionResult> RegisterNewResident(
-        [FromBody] RegisterNewRequest request)
+        [FromBody] RegisterCreateNewUserRequest request)
     {
-        if (string.IsNullOrEmpty(request.Token) ||
-            string.IsNullOrEmpty(request.Email) ||
-            string.IsNullOrEmpty(request.FirstName) ||
-            string.IsNullOrEmpty(request.LastName) ||
-            string.IsNullOrEmpty(request.ResidentId) ||
-            string.IsNullOrEmpty(request.Phone) ||
-            string.IsNullOrEmpty(request.Password))
-        {
-            return BadRequest(new
-            { message = "Missing required fields." });
-        }
-
         Invitation? invitation = await _context.Invitations
             .FirstOrDefaultAsync(i =>
                 i.Token == request.Token && !i.Used &&
@@ -165,23 +157,5 @@ public class RegisterController : ControllerBase
     private static string HashPassword(string password)
     {
         return BCrypt.Net.BCrypt.HashPassword(password);
-    }
-
-    public class RegisterNewRequest
-    {
-        public string Token { get; set; }
-        public string? Email { get; set; }
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
-        public string ResidentId { get; set; }
-        public string Phone { get; set; }
-        public string Password { get; set; }
-    }
-
-    public class RegisterRequest
-    {
-        public string Token { get; set; }
-        public string Phone { get; set; }
-        public string Password { get; set; }
     }
 }
