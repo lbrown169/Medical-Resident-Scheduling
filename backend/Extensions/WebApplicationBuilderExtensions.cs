@@ -93,18 +93,18 @@ public static class WebApplicationBuilderExtensions
 
         builder.Services.AddDbContext<MedicalContext>((sp, options) =>
         {
+            string? mySqlConnectionString = mySqlConnectionString
+                = Environment.GetEnvironmentVariable(
+                    "DB_CONNECTION_STRING");
             ILogger<MedicalContext> logger
                 = sp.GetRequiredService<ILogger<MedicalContext>>();
-            IConfiguration configuration
-                = sp.GetRequiredService<IConfiguration>();
-            string? mySqlConnectionString
-                = configuration.GetConnectionString("MySqlConn");
 
             if (string.IsNullOrEmpty(mySqlConnectionString))
             {
+                IConfiguration configuration
+                    = sp.GetRequiredService<IConfiguration>();
                 mySqlConnectionString
-                    = Environment.GetEnvironmentVariable(
-                        "DB_CONNECTION_STRING");
+                    = configuration.GetConnectionString("MySqlConn");
             }
 
             if (string.IsNullOrEmpty(mySqlConnectionString))

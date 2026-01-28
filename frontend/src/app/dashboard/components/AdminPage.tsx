@@ -733,6 +733,9 @@ const AdminPage: React.FC<AdminPageProps> = ({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem onClick={() => setSelectedYear(currentYear - 1)}>
+                    Generate for {currentYear - 1}
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setSelectedYear(currentYear)}>
                     Generate for {currentYear}
                   </DropdownMenuItem>

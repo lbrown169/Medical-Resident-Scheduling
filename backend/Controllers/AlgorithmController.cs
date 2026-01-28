@@ -18,7 +18,7 @@ public class ScheduleController : ControllerBase
     [HttpPost("training/{year}")]
     public async Task<IActionResult> GenerateFullSchedule(int year)
     {
-        if (year < DateTime.Now.Year)
+        if (year < (DateTime.Now.Year - 1))
         {
             return BadRequest(new
             {
