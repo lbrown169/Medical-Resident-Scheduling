@@ -136,7 +136,6 @@ namespace MedicalDemo.Models.Entities
                     .HasColumnName("date_id");
 
                 entity.Property(e => e.CallType)
-                    .HasMaxLength(45)
                     .HasColumnName("call_type");
 
                 entity.Property(e => e.ShiftDate).HasColumnName("date");

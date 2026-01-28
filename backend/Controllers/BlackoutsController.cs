@@ -30,8 +30,8 @@ public class BlackoutsController : ControllerBase
         _context.Blackouts.Add(blackout);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetBlackouts),
-            new { resident_id = blackout.BlackoutId }, _blackoutConverter.CreateBlackoutResponseFromBlackout(blackout));
+        return CreatedAtAction(nameof(GetBlackout),
+            new { id = blackout.BlackoutId }, _blackoutConverter.CreateBlackoutResponseFromBlackout(blackout));
     }
 
     // GET: api/blackouts
@@ -61,6 +61,19 @@ public class BlackoutsController : ControllerBase
         }
 
         return Ok(results);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<IEnumerable<BlackoutResponse>>> GetBlackout(Guid id)
+    {
+        Blackout? blackout = await _context.Blackouts.FindAsync(id);
+
+        if (blackout == null)
+        {
+            return NotFound("Blackout not found");
+        }
+
+        return Ok(_blackoutConverter.CreateBlackoutResponseFromBlackout(blackout));
     }
 
     // PUT: api/blackouts/{id}

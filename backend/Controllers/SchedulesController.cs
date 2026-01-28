@@ -1,3 +1,4 @@
+using MedicalDemo.Algorithm;
 using MedicalDemo.Enums;
 using MedicalDemo.Models;
 using MedicalDemo.Models.DTO;
@@ -64,7 +65,7 @@ public class SchedulesController : ControllerBase
             {
                 Date = d.ShiftDate,
                 ResidentId = d.ResidentId,
-                CallType = d.CallType
+                CallType = d.CallType.GetDescription()
             }).ToListAsync();
 
         if (!publishedDates.Any())
@@ -89,7 +90,7 @@ public class SchedulesController : ControllerBase
             {
                 Date = d.ShiftDate,
                 ResidentId = d.ResidentId,
-                CallType = d.CallType
+                CallType = d.CallType.GetDescription()
             }).ToListAsync();
 
         if (!underReviewDates.Any())

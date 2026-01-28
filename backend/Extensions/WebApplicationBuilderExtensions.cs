@@ -38,7 +38,6 @@ public static class WebApplicationBuilderExtensions
         builder.Services.AddScoped<SchedulingMapperService>();
         builder.Services.AddScoped<SchedulerService>();
         builder.Services.AddScoped<AlgorithmService>();
-        builder.Services.AddScoped<MiscService>();
         builder.Services.AddScoped<DatabaseSeeder>();
 
         // Converters

@@ -13,19 +13,16 @@ public class SchedulerService
     private readonly AlgorithmService _algorithmService;
     private readonly MedicalContext _context;
     private readonly SchedulingMapperService _mapper;
-    private readonly MiscService _misc;
 
     public SchedulerService(
         MedicalContext context,
         SchedulingMapperService mapper,
-        MiscService misc,
         AlgorithmService algorithmService,
         ILogger<SchedulerService> logger
     )
     {
         _context = context;
         _mapper = mapper;
-        _misc = misc;
         _algorithmService = algorithmService;
         _logger = logger;
     }

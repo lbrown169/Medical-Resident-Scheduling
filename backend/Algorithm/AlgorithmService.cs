@@ -1666,10 +1666,10 @@ public class AlgorithmService
                              otherDay <= lastDay2;
                              otherDay = otherDay.AddDays(1))
                         {
-                            if (res2.isWorking(otherDay) && shiftType(curDay) ==
-                                shiftType(otherDay) &&
-                                res.canWork(otherDay) &&
-                                !res2.commitedWorkDay(otherDay))
+                            if (res2.isWorking(otherDay)
+                                && CallShiftTypeExtensions.GetCallShiftTypeForDate(curDay, 1) == CallShiftTypeExtensions.GetCallShiftTypeForDate(otherDay, 1)
+                                && res.canWork(otherDay)
+                                && !res2.commitedWorkDay(otherDay))
                             {
                                 found = true;
                                 SwapWorkDays1(res, res2, curDay, otherDay);
@@ -1901,21 +1901,6 @@ public class AlgorithmService
         }
     }
 
-    public static int shiftType(DateOnly curDate)
-    {
-        if (curDate.DayOfWeek == DayOfWeek.Saturday)
-        {
-            return 24;
-        }
-
-        if (curDate.DayOfWeek == DayOfWeek.Sunday)
-        {
-            return 12;
-        }
-
-        return 3;
-    }
-
     public void
         FixWeekends2(ArrayList pgy2s) // function to fix pgy2 weekens
     {
@@ -1954,9 +1939,9 @@ public class AlgorithmService
                              otherDay <= lastDay2;
                              otherDay = otherDay.AddDays(1))
                         {
-                            if (res2.isWorking(otherDay) && shiftType(curDay) ==
-                                shiftType(otherDay) &&
-                                res.canWork(otherDay))
+                            if (res2.isWorking(otherDay)
+                                && CallShiftTypeExtensions.GetCallShiftTypeForDate(curDay, 2) == CallShiftTypeExtensions.GetCallShiftTypeForDate(otherDay, 2)
+                                && res.canWork(otherDay))
                             {
                                 found = true;
                                 SwapWorkDays2(res, res2, curDay, otherDay);
@@ -1998,7 +1983,7 @@ public class AlgorithmService
                     ResidentId
                         = res.id, // Assuming `id` exists in PGY1 class and maps to the backend
                     Date = day,
-                    CallType = shiftType.GetDescription(),
+                    CallType = shiftType,
                     Hours = shiftType.GetHours(),
                     IsCommitted = true
                 });
@@ -2017,7 +2002,7 @@ public class AlgorithmService
                     ScheduleId = scheduleId,
                     ResidentId = res.id,
                     Date = day,
-                    CallType = shiftType.GetDescription(),
+                    CallType = shiftType,
                     Hours = shiftType.GetHours(),
                     IsCommitted = true
                 });
@@ -2036,7 +2021,7 @@ public class AlgorithmService
                     ScheduleId = scheduleId,
                     ResidentId = res.id,
                     Date = day,
-                    CallType = shiftType.GetDescription(),
+                    CallType = shiftType,
                     Hours = shiftType.GetHours(),
                     IsCommitted = true
                 });
@@ -2044,16 +2029,6 @@ public class AlgorithmService
         }
 
         return dateRecords;
-    }
-
-    private static string GetCallType(DateOnly date)
-    {
-        return date.DayOfWeek switch
-        {
-            DayOfWeek.Saturday => "24h",
-            DayOfWeek.Sunday => "12h",
-            _ => "Short"
-        };
     }
 }
 

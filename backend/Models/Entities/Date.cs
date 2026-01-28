@@ -1,4 +1,6 @@
-﻿namespace MedicalDemo.Models.Entities
+﻿using MedicalDemo.Algorithm;
+
+namespace MedicalDemo.Models.Entities
 {
     public partial class Date
     {
@@ -6,7 +8,7 @@
         public Guid ScheduleId { get; set; }
         public string ResidentId { get; set; } = null!;
         public DateOnly ShiftDate { get; set; }
-        public string CallType { get; set; } = null!;
+        public CallShiftType CallType { get; set; }
         public int Hours { get; set; }
 
         public virtual Resident Resident { get; set; } = null!;

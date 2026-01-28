@@ -32,8 +32,8 @@ public class AnnouncementsController : ControllerBase
         await _context.SaveChangesAsync();
 
         return CreatedAtAction(
-            nameof(GetAllAnnouncements),
-            new { authorId = announcement.AnnouncementId },
+            nameof(GetAnnouncement),
+            new { id = announcement.AnnouncementId },
             _announcementConverter.CreateAnnouncementResponseFromAnnouncement(announcement)
         );
     }
@@ -55,6 +55,22 @@ public class AnnouncementsController : ControllerBase
             .ToListAsync();
 
         return Ok(announcements);
+    }
+
+    // GET: api/announcement/{id}
+    [HttpGet("{id}")]
+    public async Task<ActionResult<IEnumerable<AnnouncementResponse>>> GetAnnouncement(Guid id)
+    {
+        IQueryable<Announcement> query = _context.Announcements.AsQueryable();
+
+        Announcement? ann = await _context.Announcements.FindAsync(id);
+
+        if (ann == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(_announcementConverter.CreateAnnouncementResponseFromAnnouncement(ann));
     }
 
     // PUT: api/announcements/{id}
