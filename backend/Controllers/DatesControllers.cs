@@ -1,3 +1,4 @@
+using MedicalDemo.Enums;
 using MedicalDemo.Models;
 using MedicalDemo.Models.DTO;
 using Microsoft.AspNetCore.Mvc;
@@ -37,13 +38,15 @@ public class DatesController : ControllerBase
             new { id = date.DateId }, date);
     }
 
-    // GET: api/dates
-    [HttpGet]
+    // GET: api/dates/{year}
+    [HttpGet("{year:int}")]
     public async Task<ActionResult<IEnumerable<DatesWithResidentDTO>>>
-        GetDates()
+        GetDates(int year)
     {
         List<DatesWithResidentDTO> dates = await _context.Dates
             .Include(d => d.Resident) // Join with Residents
+            .Include(d => d.Schedule)
+            .Where( d => d.Schedule.Status == ScheduleStatus.Published && d.ShiftDate.Year == year)
             .Select(d => new DatesWithResidentDTO
             {
                 DateId = d.DateId,
