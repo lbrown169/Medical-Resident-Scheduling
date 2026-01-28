@@ -46,7 +46,7 @@ public class DatesController : ControllerBase
         List<DatesWithResidentDTO> dates = await _context.Dates
             .Include(d => d.Resident) // Join with Residents
             .Include(d => d.Schedule)
-            .Where( d => d.Schedule.Status == ScheduleStatus.Published && d.ShiftDate.Year == year)
+            .Where(d => d.Schedule.Status == ScheduleStatus.Published && d.ShiftDate.Year == year)
             .Select(d => new DatesWithResidentDTO
             {
                 DateId = d.DateId,
