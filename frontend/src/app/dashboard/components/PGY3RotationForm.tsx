@@ -86,8 +86,8 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) 
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const router = useRouter();
 
-  // Deadline configuration (December 12, 2025 at 11:59 PM EST)
-  const deadline = new Date("2025-12-12T23:59:00-05:00");
+  // Deadline configuration (March 15, 2026 at 11:59 PM EST)
+  const deadline = new Date("2026-03-15T23:59:00-05:00");
   const isDeadlinePassed = new Date() > deadline;
 
   useEffect(() => {
@@ -312,7 +312,7 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) 
           <ClipboardList className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
           <h2 className="text-2xl font-bold text-foreground mb-2">Submission Deadline Passed</h2>
           <p className="text-muted-foreground">
-            The deadline for submitting PGY-4 rotation preferences was December 12, 2025 at 11:59 PM EST.
+            The deadline for submitting PGY-4 rotation preferences was March 15, 2026 at 11:59 PM EST.
             The form is now closed.
           </p>
         </div>
@@ -369,7 +369,7 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) 
             You may return at anytime prior to the deadline to make changes.
           </p>
           <p className="text-red-600 dark:text-red-400 font-semibold">
-            Due: 12 December, 2025 at 11:59pm EST
+            Due: {deadline.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })} at {deadline.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZoneName: 'short' })}
           </p>
         </div>
 

@@ -1,18 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { CalendarRange, Users, UserX, CalendarClock, Trash2, Save, Download, X, Calendar } from "lucide-react";
 import { ConfirmDialog } from "./ConfirmDialog";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "../../../components/ui/alert-dialog";
 
 
 /**
@@ -30,7 +22,8 @@ import {
  * - CLC: Pink (#ec4899)
  */
 
-const rotationOptions = [
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const rotationOptions: { value: string; label: string; color: string }[] = [
   { value: "Intp Psy", label: "Intp Psy", color: "#8b5cf6" },
   { value: "Consult", label: "Consult", color: "#f97316" },
   { value: "VA", label: "VA", color: "#60a5fa" },
@@ -48,13 +41,6 @@ const rotationOptions = [
 interface PGY4RotationScheduleProps {
 	residents: { id: string; name: string; email: string; pgyLevel: number | string }[];
 
-}
-
-interface RotationButtonProps {
-	label: string;
-	value: string;
-	rotationId: string;
-	options: typeof rotationOptions;
 }
 
 
@@ -78,16 +64,13 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 
 }) => {
 	const [activeTab, setActiveTab] = useState<'schedule' | 'submissions' | 'configure'>('schedule');
-	const [confirmOpen, setConfirmOpen] = useState(false);
-	const [generating, setGenerating] = useState(false);
+	const [generating] = useState(false);
 	const currentYear = new Date().getFullYear();
-	const [selectedYear, setSelectedYear] = useState<number>(currentYear);
-	const deadline = new Date("2026-12-12T23:59:00-05:00");
+	const [selectedYear] = useState<number>(currentYear);
+	const deadline = new Date("2026-03-15T23:59:00-05:00");
 
 
 	const [showRotationChangeModal, setShowRotationChangeModal] = useState(false);
-	const [activeRotation, setActiveRotation] = useState("");
-	const [newRotation, setNewRotation] = useState("");
 
 	// Extract only PGY-3 residents
 	const PGY3Residents = residents.filter (resident =>
@@ -133,7 +116,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 						<div className="h-6 sm:h-10 border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-700 mx-0 sm:mx-4 lg:mx-6 hidden sm:block" />
 						<div className="flex items-center">
 							<Button
-								onClick={() => setConfirmOpen(true)}
+								onClick={() => {}}
 								disabled={generating}
 								className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl shadow"
 							>
@@ -233,18 +216,18 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 							<thead className="bg-gray-100 dark:bg-neutral-800 ">
 								<tr>
 									<th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ">Residents</th>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">JUL '{selectedYear % 100}</th>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">AUG '{selectedYear % 100}</th>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">SEP '{selectedYear % 100}</th>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">OCT '{selectedYear % 100}</th>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">NOV '{selectedYear % 100}</th>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">DEC '{selectedYear % 100}</th>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">JAN '{(selectedYear + 1) % 100}</th>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">FEB '{(selectedYear + 1) % 100}</th>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">MAR '{(selectedYear + 1) % 100}</th>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">APR '{(selectedYear + 1) % 100}</th>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">MAY '{(selectedYear + 1) % 100}</th>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">JUN '{(selectedYear + 1) % 100}</th>
+									<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">JUL &apos;{selectedYear % 100}</th>
+									<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">AUG &apos;{selectedYear % 100}</th>
+									<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">SEP &apos;{selectedYear % 100}</th>
+									<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">OCT &apos;{selectedYear % 100}</th>
+									<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">NOV &apos;{selectedYear % 100}</th>
+									<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">DEC &apos;{selectedYear % 100}</th>
+								<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">JAN &apos;{(selectedYear + 1) % 100}</th>
+								<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">FEB &apos;{(selectedYear + 1) % 100}</th>
+								<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">MAR &apos;{(selectedYear + 1) % 100}</th>
+								<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">APR &apos;{(selectedYear + 1) % 100}</th>
+								<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">MAY &apos;{(selectedYear + 1) % 100}</th>
+								<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">JUN &apos;{(selectedYear + 1) % 100}</th>
 								</tr>
 							</thead>
 							<tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
