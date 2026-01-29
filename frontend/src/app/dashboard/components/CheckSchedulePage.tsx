@@ -23,9 +23,11 @@ const CheckSchedulePage: React.FC<CheckSchedulePageProps> = ({ mySchedule }) => 
 
   // Group schedule entries by date proximity
   const scheduleCategories = mySchedule.reduce((acc, entry) => {
+    // Parse date string and apply timezone offset to keep it local
     const entryDate = new Date(entry.date);
+    entryDate.setMinutes(entryDate.getMinutes() + entryDate.getTimezoneOffset());
     entryDate.setHours(0, 0, 0, 0);
-    
+
     if (entryDate.getTime() === today.getTime()) {
       acc.today.push(entry);
     } else if (entryDate <= oneWeekFromNow) {
@@ -37,16 +39,18 @@ const CheckSchedulePage: React.FC<CheckSchedulePageProps> = ({ mySchedule }) => 
   }, { today: [] as ScheduleEntry[], thisWeek: [] as ScheduleEntry[], later: [] as ScheduleEntry[] });
 
   const formatDate = (dateString: string) => {
+    // Apply timezone offset to keep date local (same as calendar)
     const date = new Date(dateString);
+    date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
     date.setHours(0, 0, 0, 0);
-    
+
     if (date.getTime() === today.getTime()) return "Today";
     if (date.getTime() === today.getTime() + 24 * 60 * 60 * 1000) return "Tomorrow";
-    
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'short', 
-      month: 'short', 
-      day: 'numeric' 
+
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric'
     });
   };
 
