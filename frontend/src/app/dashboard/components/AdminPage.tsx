@@ -48,16 +48,21 @@ interface Request {
 }
 
 interface SwapRequest {
-  SwapId: string;
-  ScheduleSwapId: string;
-  RequesterId: string;
-  RequesteeId: string;
-  RequesterDate: string;
-  RequesteeDate: string;
-  Status: string;
-  CreatedAt: string;
-  UpdatedAt: string;
-  Details?: string;
+  swapRequestId: string;
+  scheduleId: string;
+  requesterId: string;
+  requesteeId: string;
+  requesterDate: string;
+  requesteeDate: string;
+  status: SwapRequestStatus;
+  createdAt: string;
+  updatedAt: string;
+  details?: string;
+}
+
+interface SwapRequestStatus {
+  id: number;
+  description: string;
 }
 
 interface Announcement {
@@ -540,7 +545,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
   const finalIdToName = users.length > 0 ? idToName : fallbackIdToName;
   console.log('Final mapping being used:', finalIdToName);
 
-  const pendingSwapsCount = swapHistory.filter(s => s.Status === 'Pending').length;
+  const pendingSwapsCount = swapHistory.filter(s => s.status.id === 0).length;
   console.log('swapHistory array:', swapHistory);
   console.log('pendingSwapsCount:', pendingSwapsCount);
   const pendingRequestsCount = groupedRequests.filter(r => r.status === 'Pending').length;
@@ -840,28 +845,28 @@ const AdminPage: React.FC<AdminPageProps> = ({
                   {swapHistory.length > 0 ? (
                     swapHistory.map((swap, idx) => {
                       console.log('Rendering swap:', swap);
-                      console.log('swap.RequesterId:', swap.RequesterId);
-                      console.log('swap.RequesteeId:', swap.RequesteeId);
-                      console.log('finalIdToName[swap.RequesterId]:', finalIdToName[swap.RequesterId]);
-                      console.log('finalIdToName[swap.RequesteeId]:', finalIdToName[swap.RequesteeId]);
+                      console.log('swap.RequesterId:', swap.requesterId);
+                      console.log('swap.RequesteeId:', swap.requesteeId);
+                      console.log('finalIdToName[swap.RequesterId]:', finalIdToName[swap.requesterId]);
+                      console.log('finalIdToName[swap.RequesteeId]:', finalIdToName[swap.requesteeId]);
 
                       return (
-                        <tr key={swap.SwapId || idx} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
+                        <tr key={swap.swapRequestId || idx} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
                           <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                            {finalIdToName[swap.RequesterId] || `Resident ${swap.RequesterId}`}
+                            {finalIdToName[swap.requesterId] || `Resident ${swap.requesterId}`}
                           </td>
                           <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                            {finalIdToName[swap.RequesteeId] || `Resident ${swap.RequesteeId}`}
+                            {finalIdToName[swap.requesteeId] || `Resident ${swap.requesteeId}`}
                           </td>
-                          <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.RequesterDate ? new Date(swap.RequesterDate).toLocaleDateString() : ''}</td>
-                          <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.RequesteeDate ? new Date(swap.RequesteeDate).toLocaleDateString() : ''}</td>
-                          <td className={`px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm font-semibold ${swap.Status === 'Approved' ? 'text-green-600' :
-                            swap.Status === 'Denied' ? 'text-red-600' :
+                          <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.requesterDate ? new Date(swap.requesterDate).toLocaleDateString() : ''}</td>
+                          <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.requesteeDate ? new Date(swap.requesteeDate).toLocaleDateString() : ''}</td>
+                          <td className={`px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm font-semibold ${swap.status.id === 1 ? 'text-green-600' :
+                            swap.status.id === 2 ? 'text-red-600' :
                               'text-yellow-600'
                             }`}>
-                            {swap.Status}
+                            {swap.status.description}
                           </td>
-                          <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.Details || '-'}</td>
+                          <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.details || '-'}</td>
                         </tr>
                       );
                     })
