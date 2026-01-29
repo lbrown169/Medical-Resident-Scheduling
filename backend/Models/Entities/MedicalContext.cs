@@ -281,21 +281,21 @@ namespace MedicalDemo.Models.Entities
 
             modelBuilder.Entity<SwapRequest>(entity =>
             {
-                entity.HasKey(e => e.IdswapRequests)
+                entity.HasKey(e => e.SwapRequestId)
                     .HasName("PRIMARY");
 
                 entity.ToTable("swap_requests");
 
-                entity.HasIndex(e => e.IdswapRequests, "idswap_requests_UNIQUE")
+                entity.HasIndex(e => e.SwapRequestId, "idswap_requests_UNIQUE")
                     .IsUnique();
 
                 entity.HasIndex(e => e.RequesteeId, "requestee_id_idx");
 
                 entity.HasIndex(e => e.RequesterId, "requester_id_idx");
 
-                entity.HasIndex(e => e.ScheduleSwapId, "schedule_id_idx");
+                entity.HasIndex(e => e.ScheduleId, "schedule_id_idx");
 
-                entity.Property(e => e.IdswapRequests)
+                entity.Property(e => e.SwapRequestId)
                     .HasColumnType("binary(16)")
                     .HasColumnName("idswap_requests");
 
@@ -320,14 +320,13 @@ namespace MedicalDemo.Models.Entities
                     .HasMaxLength(15)
                     .HasColumnName("requester_id");
 
-                entity.Property(e => e.ScheduleSwapId)
+                entity.Property(e => e.ScheduleId)
                     .HasColumnType("binary(16)")
                     .HasColumnName("schedule_swap_id");
 
                 entity.Property(e => e.Status)
-                    .HasMaxLength(45)
-                    .HasColumnName("status")
-                    .HasDefaultValueSql("'Pending'");
+                    .HasColumnType("int")
+                    .HasColumnName("status");
 
                 entity.Property(e => e.UpdatedAt)
                     .HasColumnType("datetime")
@@ -346,7 +345,7 @@ namespace MedicalDemo.Models.Entities
 
                 entity.HasOne(d => d.ScheduleSwap)
                     .WithMany(p => p.SwapRequests)
-                    .HasForeignKey(d => d.ScheduleSwapId)
+                    .HasForeignKey(d => d.ScheduleId)
                     .HasConstraintName("schedule_swap_id");
             });
 

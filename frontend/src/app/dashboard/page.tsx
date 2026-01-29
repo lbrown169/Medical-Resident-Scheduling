@@ -828,12 +828,10 @@ function Dashboard() {
       }
       // Create a swap request (pending approval)
       const swapRequest = {
-        ScheduleSwapId: myShift.extendedProps.scheduleId, // or partnerShiftEvent.extendedProps.scheduleId
         RequesterId: user?.id,
         RequesteeId: selectedResident,
         RequesterDate: yourShiftDate,
         RequesteeDate: partnerShiftDate,
-        Status: "Pending",
         Details: ""
       };
       console.log('Submitting swapRequest:', swapRequest);

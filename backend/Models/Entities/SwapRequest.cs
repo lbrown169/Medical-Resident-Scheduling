@@ -1,14 +1,16 @@
-﻿namespace MedicalDemo.Models.Entities
+﻿using MedicalDemo.Enums;
+
+namespace MedicalDemo.Models.Entities
 {
     public partial class SwapRequest
     {
-        public Guid IdswapRequests { get; set; }
-        public Guid ScheduleSwapId { get; set; }
+        public Guid SwapRequestId { get; set; }
+        public Guid ScheduleId { get; set; }
         public string RequesterId { get; set; } = null!;
         public string RequesteeId { get; set; } = null!;
         public DateOnly RequesterDate { get; set; }
         public DateOnly RequesteeDate { get; set; }
-        public string Status { get; set; } = null!;
+        public SwapRequestStatus Status { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public string? Details { get; set; }
