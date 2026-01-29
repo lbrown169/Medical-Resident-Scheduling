@@ -58,7 +58,7 @@ public class SwapRequestsController : ControllerBase
         [FromQuery] Guid? schedule_swap_id,
         [FromQuery] string? requester_id,
         [FromQuery] string? requestee_id,
-        [FromQuery] SwapRequestStatus? status)
+        [FromQuery] RequestStatus? status)
     {
         IQueryable<SwapRequest>
             query = _context.SwapRequests.AsQueryable();
@@ -114,7 +114,7 @@ public class SwapRequestsController : ControllerBase
             return NotFound();
         }
 
-        if (existing.Status == SwapRequestStatus.Approved)
+        if (existing.Status == RequestStatus.Approved)
         {
             return BadRequest(new GenericResponse
             {
@@ -177,7 +177,7 @@ public class SwapRequestsController : ControllerBase
             return NotFound();
         }
 
-        if (swap.Status != SwapRequestStatus.Pending)
+        if (swap.Status != RequestStatus.Pending)
         {
             return BadRequest(new GenericResponse
             {
@@ -209,7 +209,7 @@ public class SwapRequestsController : ControllerBase
 
         // Swap the resident IDs
         (requesteeDate.ResidentId, requesterDate.ResidentId) = (swap.RequesterId, swap.RequesteeId);
-        swap.Status = SwapRequestStatus.Approved;
+        swap.Status = RequestStatus.Approved;
         swap.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
@@ -227,7 +227,7 @@ public class SwapRequestsController : ControllerBase
             return NotFound();
         }
 
-        if (swap.Status != SwapRequestStatus.Pending)
+        if (swap.Status != RequestStatus.Pending)
         {
             return BadRequest(new GenericResponse
             {
@@ -236,7 +236,7 @@ public class SwapRequestsController : ControllerBase
             });
         }
 
-        swap.Status = SwapRequestStatus.Denied;
+        swap.Status = RequestStatus.Denied;
         swap.Details = denyRequest.Reason ?? "";
         swap.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();

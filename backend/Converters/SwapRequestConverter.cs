@@ -17,7 +17,7 @@ public class SwapRequestConverter
             RequesteeId = createRequest.RequesteeId,
             RequesterDate = createRequest.RequesterDate,
             RequesteeDate = createRequest.RequesteeDate,
-            Status = SwapRequestStatus.Pending,
+            Status = RequestStatus.Pending,
             CreatedAt = DateTime.Now,
             UpdatedAt = DateTime.Now,
             Details = createRequest.Details,

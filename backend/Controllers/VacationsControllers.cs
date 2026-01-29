@@ -1,155 +1,75 @@
-using MedicalDemo.Models.DTO;
+using MedicalDemo.Converters;
+using MedicalDemo.Enums;
+using MedicalDemo.Models.DTO.Requests;
+using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace MedicalDemo.Controllers;
 
-public class UpdateStatusDto
-{
-    public string Status { get; set; } = string.Empty;
-}
-
 [ApiController]
 [Route("api/[controller]")]
 public class VacationsController : ControllerBase
 {
     private readonly MedicalContext _context;
+    private readonly VacationConverter _vacationConverter;
+    private readonly ILogger<VacationsController> _logger;
 
-    public VacationsController(MedicalContext context)
+    public VacationsController(ILogger<VacationsController> logger, MedicalContext context, VacationConverter vacationConverter)
     {
+        _logger = logger;
         _context = context;
+        _vacationConverter = vacationConverter;
     }
 
     // POST: api/vacations
     [HttpPost]
     public async Task<IActionResult> CreateVacation(
-        [FromBody] Vacation vacation)
+        [FromBody] VacationCreateRequest vacationCreateRequest)
     {
-        if (vacation == null)
-        {
-            return BadRequest("Vacation object is null.");
-        }
-
-        // Validate required fields
-        if (string.IsNullOrWhiteSpace(vacation.ResidentId) ||
-            vacation.Date == default ||
-            string.IsNullOrWhiteSpace(vacation.Reason) ||
-            string.IsNullOrWhiteSpace(vacation.Status))
-        {
-            return BadRequest(
-                "Missing required fields: ResidentId, Date, Reason, and Status are required.");
-        }
-
         // Check if resident exists
         bool residentExists
             = await _context.Residents.AnyAsync(r =>
-                r.ResidentId == vacation.ResidentId);
+                r.ResidentId == vacationCreateRequest.ResidentId);
         if (!residentExists)
         {
             return BadRequest(
-                $"Resident with id '{vacation.ResidentId}' does not exist.");
+                $"Resident with id '{vacationCreateRequest.ResidentId}' does not exist.");
         }
 
-        // Generate a new Guid if not supplied
-        if (vacation.VacationId == Guid.Empty)
-        {
-            vacation.VacationId = Guid.NewGuid();
-        }
+        Vacation vacation = _vacationConverter.CreateVacationFromVacationCreateRequest(vacationCreateRequest);
 
         _context.Vacations.Add(vacation);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(FilterVacations),
-            new { id = vacation.VacationId }, vacation);
+        return CreatedAtAction(nameof(GetVacation),
+            new { id = vacation.VacationId }, _vacationConverter.CreateVacationResponseFromVacation(vacation));
     }
 
-    // GET: api/vacations
+    // GET: api/vacations?residentId=&date=&reason=&status=
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<VacationWithResidentDto>>>
-        GetAllVacations()
-    {
-        List<VacationWithResidentDto> vacations = await _context.Vacations
-            .Join(_context.Residents,
-                v => v.ResidentId,
-                r => r.ResidentId,
-                (v, r) => new VacationWithResidentDto
-                {
-                    VacationId = v.VacationId,
-                    ResidentId = r.ResidentId,
-                    FirstName = r.FirstName,
-                    LastName = r.LastName,
-                    Date = v.Date,
-                    Reason = v.Reason,
-                    Status = v.Status,
-                    Details = v.Details,
-                    GroupId = v.GroupId
-                })
-            .ToListAsync();
-
-        return Ok(vacations);
-    }
-
-    // PUT: api/vacations/group/{groupId}/status
-    [HttpPut("group/{groupId}/status")]
-    public async Task<IActionResult> UpdateStatusByGroup(string groupId,
-        [FromBody] UpdateStatusDto input)
-    {
-        if (string.IsNullOrWhiteSpace(input.Status))
-        {
-            return BadRequest("Status is required.");
-        }
-
-        List<Vacation> matchingRequests = await _context.Vacations
-            .Where(v => v.GroupId == groupId)
-            .ToListAsync();
-
-        if (!matchingRequests.Any())
-        {
-            return NotFound(
-                $"No vacation requests found for groupId '{groupId}'.");
-        }
-
-        foreach (Vacation request in matchingRequests)
-        {
-            request.Status = input.Status;
-        }
-
-        await _context.SaveChangesAsync();
-
-        return Ok(new
-        {
-            message
-                = $"Status updated to '{input.Status}' for groupId '{groupId}'."
-        });
-    }
-
-
-    // GET: api/vacations/filter?residentId=&date=&reason=&status=
-    [HttpGet("filter")]
-    public async Task<ActionResult<IEnumerable<VacationWithResidentDto>>>
-        FilterVacations(
-            [FromQuery] string? residentId,
-            [FromQuery] DateOnly? date,
-            [FromQuery] string? reason,
-            [FromQuery] string? status)
-    {
-        IQueryable<VacationWithResidentDto> query = _context.Vacations
-            .Join(_context.Residents,
-                v => v.ResidentId,
-                r => r.ResidentId,
-                (v, r) => new VacationWithResidentDto
+    public async Task<ActionResult<IEnumerable<VacationWithResidentResponse>>> GetAllVacations(
+        [FromQuery] string? residentId,
+        [FromQuery] DateOnly? date,
+        [FromQuery] string? reason,
+        [FromQuery] string? status
+    ) {
+        IQueryable<VacationWithResidentResponse> query = _context.Vacations
+            .Select(v=> new VacationWithResidentResponse
                 {
                     VacationId = v.VacationId,
                     ResidentId = v.ResidentId,
-                    FirstName = r.FirstName,
-                    LastName = r.LastName,
+                    FirstName = v.Resident.FirstName,
+                    LastName = v.Resident.LastName,
                     Date = v.Date,
-                    Reason = v.Reason,
+                    Reason = v.Reason ?? string.Empty,
                     Status = v.Status,
                     Details = v.Details,
-                    GroupId = v.GroupId
-                });
+                    GroupId = v.GroupId,
+                    HalfDay = v.HalfDay
+                })
+            ;
 
         if (!string.IsNullOrEmpty(residentId))
         {
@@ -171,49 +91,114 @@ public class VacationsController : ControllerBase
             query = query.Where(v => v.Status == status);
         }
 
-        List<VacationWithResidentDto> results = await query.ToListAsync();
-
-        if (results.Count == 0)
-        {
-            return NotFound("No matching vacation records found.");
-        }
+        List<VacationWithResidentResponse> results = await query.ToListAsync();
 
         return Ok(results);
+    }
+
+    // GET: api/vacation/{id}
+    [HttpGet("{id}")]
+    public async Task<ActionResult<IEnumerable<VacationWithResidentResponse>>> GetVacation(Guid id)
+    {
+        VacationWithResidentResponse? result = await _context.Vacations
+            .Where(v => v.VacationId == id)
+            .Select(v => new VacationWithResidentResponse
+            {
+                VacationId = v.VacationId,
+                ResidentId = v.ResidentId,
+                FirstName = v.Resident.FirstName,
+                LastName = v.Resident.LastName,
+                Date = v.Date,
+                Reason = v.Reason ?? string.Empty,
+                Status = v.Status,
+                Details = v.Details,
+                GroupId = v.GroupId,
+                HalfDay = v.HalfDay
+            })
+            .FirstOrDefaultAsync();
+
+        if (result == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(result);
+    }
+
+    // PUT: api/vacations/group/{groupId}/status
+    [HttpPut("group/{groupId}/status/approve")]
+    public async Task<IActionResult> ApproveVacationByGroup(string groupId)
+    {
+        List<Vacation> matchingRequests = await _context.Vacations
+            .Where(v => v.GroupId == groupId)
+            .ToListAsync();
+
+        if (matchingRequests.Count == 0)
+        {
+            return NotFound();
+        }
+
+        foreach (Vacation request in matchingRequests)
+        {
+            request.Status = nameof(RequestStatus.Approved);
+        }
+
+        await _context.SaveChangesAsync();
+
+        return Ok();
+    }
+
+    // PUT: api/vacations/group/{groupId}/status
+    [HttpPut("group/{groupId}/status/deny")]
+    public async Task<IActionResult> DenyVacationByGroup(string groupId)
+    {
+        List<Vacation> matchingRequests = await _context.Vacations
+            .Where(v => v.GroupId == groupId)
+            .ToListAsync();
+
+        if (matchingRequests.Count == 0)
+        {
+            return NotFound();
+        }
+
+        foreach (Vacation request in matchingRequests)
+        {
+            request.Status = nameof(RequestStatus.Denied);
+        }
+
+        await _context.SaveChangesAsync();
+
+        return Ok();
     }
 
     // PUT: api/vacations/{id}
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateVacation(Guid id,
-        [FromBody] Vacation updatedVacation)
+        [FromBody] VacationUpdateRequest update)
     {
-        if (id != updatedVacation.VacationId)
-        {
-            return BadRequest("Vacation ID in URL and body do not match.");
-        }
-
         Vacation? existingVacation
             = await _context.Vacations.FindAsync(id);
 
         if (existingVacation == null)
         {
-            return NotFound("Vacation not found.");
+            return NotFound();
         }
 
-        // Update the fields
-        existingVacation.ResidentId = updatedVacation.ResidentId;
-        existingVacation.Date = updatedVacation.Date;
-        existingVacation.Reason = updatedVacation.Reason;
-        existingVacation.Status = updatedVacation.Status;
+        _vacationConverter.UpdateVacationFromVacationUpdateRequest(existingVacation, update);
 
         try
         {
             await _context.SaveChangesAsync();
-            return Ok(existingVacation); // returns updated object
+            return Ok(_vacationConverter.CreateVacationResponseFromVacation(existingVacation)); // returns updated object
         }
         catch (DbUpdateException ex)
         {
-            return StatusCode(500,
-                $"An error occurred while updating the date: {ex.Message}");
+            _logger.LogError(ex, "Failed to update vacation");
+            return StatusCode(500, new GenericResponse
+            {
+                Success = false,
+                Message = $"An error occurred while updating the date: {ex.Message}"
+            });
         }
     }
 
@@ -225,7 +210,7 @@ public class VacationsController : ControllerBase
 
         if (vacation == null)
         {
-            return NotFound("Vacation not found.");
+            return NotFound();
         }
 
         _context.Vacations.Remove(vacation);
@@ -252,7 +237,7 @@ public class VacationsController : ControllerBase
         _context.Vacations.RemoveRange(vacationsToDelete);
         await _context.SaveChangesAsync();
 
-        var response = new { notDeleted = failedDeletedIds };
+        VacationsNotDeletedResponse response = new VacationsNotDeletedResponse(){ notDeleted = failedDeletedIds };
 
         return Ok(response);
     }

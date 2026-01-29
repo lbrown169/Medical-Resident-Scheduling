@@ -386,6 +386,11 @@ namespace MedicalDemo.Models.Entities
                     .HasMaxLength(45)
                     .HasColumnName("status")
                     .HasDefaultValueSql("'Pending'");
+
+                entity.HasOne(v => v.Resident)
+                    .WithMany(p => p.Vacations)
+                    .HasForeignKey(v => v.ResidentId)
+                    .HasConstraintName("resident_id_vacations");
             });
 
             OnModelCreatingPartial(modelBuilder);

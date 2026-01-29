@@ -8,9 +8,9 @@ public class SwapRequestStatusResponse
     public int Id { get; set; }
     public string Description { get; set; }
 
-    public SwapRequestStatusResponse(SwapRequestStatus swapRequestStatus)
+    public SwapRequestStatusResponse(RequestStatus requestStatus)
     {
-        Id = (int)swapRequestStatus;
-        Description = swapRequestStatus.GetDisplayName();
+        Id = (int)requestStatus;
+        Description = requestStatus.GetDisplayName();
     }
 }

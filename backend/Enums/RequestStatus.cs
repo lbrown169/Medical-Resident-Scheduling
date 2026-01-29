@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace MedicalDemo.Enums;
 
-public enum SwapRequestStatus
+public enum RequestStatus
 {
     [Display(Name = "Pending")]
     Pending = 0,

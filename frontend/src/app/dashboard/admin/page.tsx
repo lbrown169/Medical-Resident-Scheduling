@@ -38,7 +38,7 @@ interface AdminResponse {
 export default function Page() {
   // State for all required props
   const [residents, setResidents] = useState<Resident[]>([]);
-  const [myTimeOffRequests, setMyTimeOffRequests] = useState<TimeOffRequest[]>([]);
+  const [myTimeOffRequests, setMyTimeOffRequests] = useState<VacationResponse[]>([]);
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [userInvitations] = useState<UserInvitation[]>([]); // Not used, but required by AdminPage
   const [inviteEmail, setInviteEmail] = useState('');

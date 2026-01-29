@@ -76,7 +76,7 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
     setLoadingRequests(true);
     setErrorRequests(null);
     try {
-      const url = `${config.apiUrl}/api/vacations/filter?residentId=${encodeURIComponent(userId)}`;
+      const url = `${config.apiUrl}/api/vacations?residentId=${encodeURIComponent(userId)}`;
       const res = await fetch(url, { cache: "no-store" });
 
       if (res.status === 404) {

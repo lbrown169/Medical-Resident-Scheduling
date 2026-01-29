@@ -10,7 +10,7 @@ namespace MedicalDemo.Models.Entities
         public string RequesteeId { get; set; } = null!;
         public DateOnly RequesterDate { get; set; }
         public DateOnly RequesteeDate { get; set; }
-        public SwapRequestStatus Status { get; set; }
+        public RequestStatus Status { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public string? Details { get; set; }

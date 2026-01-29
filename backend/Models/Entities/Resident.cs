@@ -28,5 +28,6 @@
         public virtual ICollection<Rotation> Rotations { get; set; }
         public virtual ICollection<SwapRequest> SwapRequestRequestees { get; set; }
         public virtual ICollection<SwapRequest> SwapRequestRequesters { get; set; }
+        public virtual ICollection<Vacation> Vacations { get; set; }
     }
 }

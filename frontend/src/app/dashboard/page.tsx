@@ -173,13 +173,7 @@ function Dashboard() {
   const [users, setUsers] = useState<{ id: string; first_name: string; last_name: string; email: string; role: string }[]>([]);
 
   // Add state for adminSwapRequests, myTimeOffRequests, and shifts
-  const [myTimeOffRequests, setMyTimeOffRequests] = useState<{
-    vacationId: string;
-    date: string;
-    reason: string;
-    status: string;
-    residentId: string;
-  }[]>([]);
+  const [myTimeOffRequests, setMyTimeOffRequests] = useState<VacationResponse[]>([]);
   const [shifts, setShifts] = useState<{
     id: string;
     name: string;
@@ -651,12 +645,11 @@ function Dashboard() {
     console.log("Approving groupId:", groupId);
     try {
 
-      const response = await fetch(`${config.apiUrl}/api/vacations/group/${groupId}/status`, {
+      const response = await fetch(`${config.apiUrl}/api/vacations/group/${groupId}/status/approve`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status: "Approved" }),
       });
   
       if (!response.ok) {
@@ -684,12 +677,11 @@ function Dashboard() {
   
   const handleDenyRequest = async (groupId: string) => {
     try {
-      const response = await fetch(`${config.apiUrl}/api/vacations/group/${groupId}/status`, {
+      const response = await fetch(`${config.apiUrl}/api/vacations/group/${groupId}/status/deny`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status: "Denied" }),
       });
   
       if (!response.ok) {
@@ -907,12 +899,11 @@ function Dashboard() {
   
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
         requests.push({
-          groupId: groupId, //New request
+          GroupId: groupId, //New request
           ResidentId: user.id,
           Date: d.toISOString().split('T')[0],
           Reason: reason,
-          Description: description || '',
-          Status: 'Pending',
+          Details: description || ''
         });
       }
   
@@ -1024,14 +1015,7 @@ case "Home":
     return (
       <AdminPage
         residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr, hospitalRole: r.hospital_role_profile ?? undefined, hours: r.total_hours }))}
-        myTimeOffRequests={myTimeOffRequests.map(r => ({
-          id: r.vacationId,
-          startDate: r.date || '',
-          endDate: r.date || '',
-          resident: r.residentId || '',
-          reason: r.reason,
-          status: r.status,
-        }))}
+        myTimeOffRequests={myTimeOffRequests}
         shifts={shifts.map(s => ({
           id: s.id,
           name: s.name
@@ -1168,14 +1152,7 @@ case "Home":
         return (
           <AdminPage
             residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr, hospitalRole: r.hospital_role_profile ?? undefined, hours: r.total_hours }))}
-            myTimeOffRequests={myTimeOffRequests.map(r => ({
-              id: r.vacationId,
-              startDate: r.date || '',
-              endDate: r.date || '',
-              resident: r.residentId || '',
-              reason: r.reason,
-              status: r.status,
-            }))}
+            myTimeOffRequests={myTimeOffRequests}
             shifts={shifts.map(s => ({
               id: s.id,
               name: s.name

@@ -128,7 +128,7 @@ public class DashboardController : ControllerBase
             // Add pending swap requests for this resident (as requestee)
             List<SwapRequest> pendingSwaps = await _context.SwapRequests
                 .Where(s =>
-                    s.RequesteeId == residentId && s.Status == SwapRequestStatus.Pending)
+                    s.RequesteeId == residentId && s.Status == RequestStatus.Pending)
                 .ToListAsync();
             List<string> requesterIds = pendingSwaps.Select(s => s.RequesterId)
                 .Distinct().ToList();
@@ -156,7 +156,7 @@ public class DashboardController : ControllerBase
             // Add swap requests where this resident is the requester and status is Approved or Denied
             List<SwapRequest> respondedSwaps = await _context.SwapRequests
                 .Where(s =>
-                    s.RequesterId == residentId && (s.Status == SwapRequestStatus.Approved || s.Status == SwapRequestStatus.Denied))
+                    s.RequesterId == residentId && (s.Status == RequestStatus.Approved || s.Status == RequestStatus.Denied))
                 .OrderByDescending(s => s.UpdatedAt)
                 .ToListAsync();
             // Fetch all requestee IDs for these swaps
@@ -173,13 +173,13 @@ public class DashboardController : ControllerBase
                     = requesteeMap.ContainsKey(swap.RequesteeId)
                         ? requesteeMap[swap.RequesteeId]
                         : swap.RequesteeId;
-                string message = swap.Status == SwapRequestStatus.Approved
+                string message = swap.Status == RequestStatus.Approved
                     ? $"Your swap request for {swap.RequesterDate:MM/dd/yyyy} (with {requesteeName}) was approved."
                     : $"Your swap request for {swap.RequesterDate:MM/dd/yyyy} (with {requesteeName}) was denied. Reason: {swap.Details}";
                 dashboardData.RecentActivity.Add(new DashboardDataResponse.Activity
                 {
                     Id = swap.SwapRequestId.ToString(),
-                    Type = swap.Status == SwapRequestStatus.Approved
+                    Type = swap.Status == RequestStatus.Approved
                         ? "swap_approved"
                         : "swap_denied",
                     Message = message,
@@ -191,7 +191,7 @@ public class DashboardController : ControllerBase
             List<SwapRequest> approvedAsRequestee = await _context
                 .SwapRequests
                 .Where(s =>
-                    s.RequesteeId == residentId && s.Status == SwapRequestStatus.Approved)
+                    s.RequesteeId == residentId && s.Status == RequestStatus.Approved)
                 .OrderByDescending(s => s.UpdatedAt)
                 .ToListAsync();
             List<string> approvedRequesterIds = approvedAsRequestee

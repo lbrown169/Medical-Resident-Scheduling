@@ -48,6 +48,7 @@ public static class WebApplicationBuilderExtensions
         builder.Services.AddScoped<ResidentConverter>();
         builder.Services.AddScoped<ScheduleConverter>();
         builder.Services.AddScoped<SwapRequestConverter>();
+        builder.Services.AddScoped<VacationConverter>();
 
         // Email
         if (builder.Environment.IsDevelopment())

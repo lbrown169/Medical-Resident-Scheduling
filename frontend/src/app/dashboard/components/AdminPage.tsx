@@ -15,7 +15,7 @@ import { ChevronDown } from "lucide-react";
 
 interface AdminPageProps {
   residents: { id: string; name: string; email: string; pgyLevel: number | string; hospitalRole?: number; hours: number }[];
-  myTimeOffRequests: { id: string; startDate: string; endDate: string; resident: string; reason: string; status: string; }[];
+  myTimeOffRequests: VacationResponse[];
   shifts: { id: string; name: string }[];
   handleApproveRequest: (id: string) => void;
   handleDenyRequest: (id: string) => void;
