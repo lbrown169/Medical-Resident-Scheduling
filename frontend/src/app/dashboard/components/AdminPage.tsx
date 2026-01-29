@@ -544,6 +544,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
           startDate: start,
           endDate: end,
           groupId: current.groupId,
+          details: current.details,
         });
 
 
@@ -958,6 +959,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
                     <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Range</th>
                     <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resident</th>
                     <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+                    <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
                     <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                     <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
@@ -970,6 +972,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
                         <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{getRequestDate(request)}</td>
                         <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{getResidentName(request)}</td>
                         <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{request.reason}</td>
+                        <td className="px-2 sm:px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{request.details || '-'}</td>
                         <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{request.status}</td>
                         <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           {request.status === "Pending" && (
@@ -987,7 +990,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={6} className="px-6 py-4 text-center text-gray-500 italic">No time off requests found.</td>
+                      <td colSpan={7} className="px-6 py-4 text-center text-gray-500 italic">No time off requests found.</td>
                     </tr>
                   )}
                 </tbody>
@@ -1319,6 +1322,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Range</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resident</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
@@ -1331,6 +1335,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{getRequestDate(request)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{getResidentName(request)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{request.reason}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">{request.details || '-'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{request.status}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       {request.status === "Pending" && (
@@ -1348,7 +1353,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center text-gray-500 italic">No time off requests found.</td>
+                  <td colSpan={7} className="px-6 py-4 text-center text-gray-500 italic">No time off requests found.</td>
                 </tr>
               )}
             </tbody>

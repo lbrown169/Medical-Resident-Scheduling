@@ -965,7 +965,7 @@ function Dashboard() {
           ResidentId: user.id,
           Date: d.toISOString().split('T')[0],
           Reason: reason,
-          Description: description || '',
+          Details: description || '',
           Status: 'Pending',
         });
       }
