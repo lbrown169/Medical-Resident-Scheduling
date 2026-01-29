@@ -14,13 +14,15 @@ namespace MedicalDemo.Controllers;
 [Route("api/[controller]")]
 public class ResidentsController : ControllerBase
 {
+    private readonly ILogger<ResidentsController> _logger;
     private readonly MedicalContext _context;
     private readonly ResidentConverter _residentConverter;
 
-    public ResidentsController(MedicalContext context, ResidentConverter residentConverter)
+    public ResidentsController(MedicalContext context, ResidentConverter residentConverter, ILogger<ResidentsController> logger)
     {
         _context = context;
         _residentConverter = residentConverter;
+        _logger = logger;
     }
 
     // GET: api/residents/{id}
@@ -132,7 +134,7 @@ public class ResidentsController : ControllerBase
             = await _context.Residents.FindAsync(id);
         if (existingResident == null)
         {
-            return NotFound("Resident not found.");
+            return NotFound();
         }
 
         // Update fields
@@ -145,6 +147,7 @@ public class ResidentsController : ControllerBase
         }
         catch (DbUpdateException ex)
         {
+            _logger.LogError(ex, "Failed to update resident");
             return StatusCode(500,
                 $"An error occurred while updating the resident: {ex.Message}");
         }
@@ -194,6 +197,7 @@ public class ResidentsController : ControllerBase
         }
         catch (DbUpdateException ex)
         {
+            _logger.LogError(ex, "Failed to demote admin");
             return StatusCode(500,
                 $"An error occurred while demoting admin: {ex.Message}");
         }

@@ -14,11 +14,13 @@ public class AnnouncementsController : ControllerBase
 {
     private readonly MedicalContext _context;
     private readonly AnnouncementConverter _announcementConverter;
+    private readonly ILogger<AnnouncementsController> _logger;
 
-    public AnnouncementsController(MedicalContext context, AnnouncementConverter announcementConverter)
+    public AnnouncementsController(MedicalContext context, AnnouncementConverter announcementConverter, ILogger<AnnouncementsController> logger)
     {
         _context = context;
         _announcementConverter = announcementConverter;
+        _logger = logger;
     }
 
     // POST: api/announcements
@@ -82,7 +84,7 @@ public class AnnouncementsController : ControllerBase
             = await _context.Announcements.FindAsync(id);
         if (existing == null)
         {
-            return NotFound("Announcement not found.");
+            return NotFound();
         }
 
         _announcementConverter.UpdateAnnouncementFromAnnouncementUpdateRequest(existing, announcementUpdateRequest);
@@ -94,6 +96,7 @@ public class AnnouncementsController : ControllerBase
         }
         catch (DbUpdateException ex)
         {
+            _logger.LogError(ex, "Failed to update anouncement");
             return StatusCode(500,
                 $"Error updating announcement: {ex.Message}");
         }
@@ -107,7 +110,7 @@ public class AnnouncementsController : ControllerBase
             = await _context.Announcements.FindAsync(id);
         if (existing == null)
         {
-            return NotFound("Announcement not found.");
+            return NotFound();
         }
 
         _context.Announcements.Remove(existing);

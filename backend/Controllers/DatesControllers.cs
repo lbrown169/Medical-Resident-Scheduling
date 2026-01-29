@@ -17,13 +17,15 @@ namespace MedicalDemo.Controllers;
 [Route("api/[controller]")]
 public class DatesController : ControllerBase
 {
+    private readonly ILogger<DatesController> _logger;
     private readonly MedicalContext _context;
     private readonly DateConverter _dateConverter;
 
-    public DatesController(MedicalContext context, DateConverter dateConverter)
+    public DatesController(MedicalContext context, DateConverter dateConverter, ILogger<DatesController> logger)
     {
         _context = context;
         _dateConverter = dateConverter;
+        _logger = logger;
     }
 
     // POST: api/dates
@@ -35,7 +37,7 @@ public class DatesController : ControllerBase
 
         if (resident == null)
         {
-            return BadRequest("Resident not found");
+            return BadRequest();
         }
 
         date.Hours = CallShiftTypeExtensions
@@ -109,7 +111,7 @@ public class DatesController : ControllerBase
         Date? existingDate = await _context.Dates.Include(d => d.Resident).FirstOrDefaultAsync(d => d.DateId == id);
         if (existingDate == null)
         {
-            return NotFound("Date not found.");
+            return NotFound();
         }
 
         // Update fields
@@ -118,7 +120,7 @@ public class DatesController : ControllerBase
         Resident? resident = await _context.Residents.FirstOrDefaultAsync(r => r.ResidentId == existingDate.ResidentId);
         if (resident == null)
         {
-            return BadRequest("Resident not found");
+            return BadRequest();
         }
 
         if (updatedDate.Hours is null)
@@ -136,6 +138,7 @@ public class DatesController : ControllerBase
         }
         catch (DbUpdateException ex)
         {
+            _logger.LogError(ex, "Failed to update the date");
             return StatusCode(500,
                 $"An error occurred while updating the date: {ex.Message}");
         }
@@ -148,7 +151,7 @@ public class DatesController : ControllerBase
         Date? existingDate = await _context.Dates.FindAsync(id);
         if (existingDate == null)
         {
-            return NotFound("Date not found.");
+            return NotFound();
         }
 
         _context.Dates.Remove(existingDate);

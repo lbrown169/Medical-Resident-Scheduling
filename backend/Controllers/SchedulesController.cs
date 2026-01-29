@@ -21,14 +21,12 @@ public class SchedulesController : ControllerBase
     private readonly ILogger<SchedulesController> _logger;
     private readonly MedicalContext _context;
     private readonly ScheduleConverter _scheduleConverter;
-    private readonly DateConverter _dateConverter;
 
-    public SchedulesController(ILogger<SchedulesController> logger, MedicalContext context, ScheduleConverter scheduleConverter, DateConverter dateConverter)
+    public SchedulesController(ILogger<SchedulesController> logger, MedicalContext context, ScheduleConverter scheduleConverter)
     {
         _logger = logger;
         _context = context;
         _scheduleConverter = scheduleConverter;
-        _dateConverter = dateConverter;
     }
 
     // GET: api/schedules?status=&generatedYear=

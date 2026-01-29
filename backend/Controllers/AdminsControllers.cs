@@ -11,13 +11,15 @@ namespace MedicalDemo.Controllers;
 [Route("api/[controller]")]
 public class AdminsController : ControllerBase
 {
+    private readonly ILogger<AdminsController> _logger;
     private readonly MedicalContext _context;
     private readonly AdminConverter _adminConverter;
 
-    public AdminsController(MedicalContext context, AdminConverter adminConverter)
+    public AdminsController(MedicalContext context, AdminConverter adminConverter, ILogger<AdminsController> logger)
     {
         _context = context;
         _adminConverter = adminConverter;
+        _logger = logger;
     }
 
     // GET: api/Admins
@@ -52,7 +54,7 @@ public class AdminsController : ControllerBase
             = await _context.Residents.FindAsync(residentId);
         if (resident == null)
         {
-            return NotFound("Resident not found.");
+            return NotFound();
         }
 
         // Check if admin already exists with this ID
@@ -60,7 +62,7 @@ public class AdminsController : ControllerBase
             = await _context.Admins.FindAsync(residentId);
         if (existingAdmin != null)
         {
-            return BadRequest("Admin already exists with this ID.");
+            return Conflict();
         }
 
         // Create new admin account
@@ -77,6 +79,7 @@ public class AdminsController : ControllerBase
         }
         catch (DbUpdateException ex)
         {
+            _logger.LogError(ex, "Failed to promote resident");
             return StatusCode(500,
                 $"An error occurred while promoting resident: {ex.Message}");
         }

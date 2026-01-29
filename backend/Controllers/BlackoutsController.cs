@@ -12,13 +12,15 @@ namespace MedicalDemo.Controllers;
 [Route("api/[controller]")]
 public class BlackoutsController : ControllerBase
 {
+    private readonly ILogger<BlackoutsController> _logger;
     private readonly BlackoutConverter _blackoutConverter;
     private readonly MedicalContext _context;
 
-    public BlackoutsController(MedicalContext context, BlackoutConverter blackoutConverter)
+    public BlackoutsController(MedicalContext context, BlackoutConverter blackoutConverter, ILogger<BlackoutsController> logger)
     {
         _context = context;
         _blackoutConverter = blackoutConverter;
+        _logger = logger;
     }
 
     // POST: api/blackouts
@@ -57,7 +59,7 @@ public class BlackoutsController : ControllerBase
 
         if (results.Count == 0)
         {
-            return NotFound("No blackouts matched the filter criteria.");
+            return NotFound();
         }
 
         return Ok(results);
@@ -70,7 +72,7 @@ public class BlackoutsController : ControllerBase
 
         if (blackout == null)
         {
-            return NotFound("Blackout not found");
+            return NotFound();
         }
 
         return Ok(_blackoutConverter.CreateBlackoutResponseFromBlackout(blackout));
@@ -85,7 +87,7 @@ public class BlackoutsController : ControllerBase
             = await _context.Blackouts.FindAsync(id);
         if (existingBlackout == null)
         {
-            return NotFound("Blackout not found.");
+            return NotFound();
         }
 
         // Update fields
@@ -98,6 +100,7 @@ public class BlackoutsController : ControllerBase
         }
         catch (DbUpdateException ex)
         {
+            _logger.LogError(ex, "Failed to update blackout");
             return StatusCode(500,
                 $"An error occurred while updating the date: {ex.Message}");
         }
@@ -110,7 +113,7 @@ public class BlackoutsController : ControllerBase
         Blackout? blackout = await _context.Blackouts.FindAsync(id);
         if (blackout == null)
         {
-            return NotFound("Blackout not found.");
+            return NotFound();
         }
 
         _context.Blackouts.Remove(blackout);

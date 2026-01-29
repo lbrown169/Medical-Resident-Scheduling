@@ -18,11 +18,13 @@ namespace MedicalDemo.Controllers;
 [Route("api/[controller]")]
 public class DashboardController : ControllerBase
 {
+    private readonly ILogger<DashboardController> _logger;
     private readonly MedicalContext _context;
 
-    public DashboardController(MedicalContext context)
+    public DashboardController(MedicalContext context, ILogger<DashboardController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     // GET: api/dashboard/resident/{residentId}
@@ -44,7 +46,7 @@ public class DashboardController : ControllerBase
 
             if (resident == null)
             {
-                return NotFound("Resident not found");
+                return NotFound();
             }
 
             HospitalRole role = HospitalRole.Unassigned;
@@ -239,6 +241,7 @@ public class DashboardController : ControllerBase
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to get dashboard info");
             return StatusCode(500,
                 $"An error occurred while fetching dashboard data: {ex.Message}");
         }
