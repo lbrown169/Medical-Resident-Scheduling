@@ -268,29 +268,8 @@ function Dashboard() {
         const currentDate = new Date();
         currentDate.setHours(0, 0, 0, 0); // Start of today
 
-        // Find the scheduleId with the most recent date (same as calendar)
-        let latestScheduleId = null;
-        if (dates.length > 0) {
-          const scheduleIdToLatestDate = {};
-          dates.forEach((date: DateResponse) => {
-            if (!date.scheduleId) return;
-            const current = scheduleIdToLatestDate[date.scheduleId];
-            const thisDate = new Date(date.shiftDate).getTime();
-            if (!current || thisDate > current) {
-              scheduleIdToLatestDate[date.scheduleId] = thisDate;
-            }
-          });
-          latestScheduleId = Object.entries(scheduleIdToLatestDate)
-            .sort((a, b) => (Number(b[1]) - Number(a[1])))[0]?.[0];
-        }
-
-        // Only include events from the latest schedule
-        const filteredDates = latestScheduleId
-          ? dates.filter((date) => date.scheduleId === latestScheduleId)
-          : dates;
-
         // Filter for current user and future dates only, and with a real callType
-        const userSchedule = filteredDates
+        const userSchedule = dates
           .filter((date) => {
             const dateObj = new Date(date.shiftDate);
             return date.residentId === user.id && dateObj >= currentDate && date.callType;
@@ -322,30 +301,7 @@ function Dashboard() {
         const dates = await response.json() as DateResponse[];
         console.log(dates)
 
-        // Find the scheduleId with the most recent date
-        let latestScheduleId = null;
-        if (dates.length > 0) {
-          // Map of scheduleId to most recent date
-          const scheduleIdToLatestDate: Record<string, number> = {};
-          dates.forEach((date: DateResponse) => {
-            if (!date.scheduleId) return;
-            const current = scheduleIdToLatestDate[date.scheduleId];
-            const thisDate = new Date(date.shiftDate).getTime();
-            if (!current || thisDate > current) {
-              scheduleIdToLatestDate[date.scheduleId] = thisDate;
-            }
-          });
-          // Find the scheduleId with the most recent date
-          latestScheduleId = Object.entries(scheduleIdToLatestDate)
-            .sort((a, b) => (Number(b[1]) - Number(a[1])))[0]?.[0];
-        }
-
-        // Only include events from the latest schedule
-        const filteredDates = latestScheduleId
-          ? dates.filter((date: DateResponse) => date.scheduleId === latestScheduleId)
-          : dates;
-
-        const events = filteredDates.map((date: DateResponse) => {
+        const events = dates.map((date: DateResponse) => {
           // Only show the resident's name on the calendar
           const fullName = date.firstName && date.lastName
             ? `${date.firstName} ${date.lastName}`
