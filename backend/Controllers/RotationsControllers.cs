@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MedicalDemo.Controllers;
 
+// TODO: This controller has not been refactored from the backend rewrite
 [ApiController]
 [Route("api/[controller]")]
 public class RotationsController : ControllerBase

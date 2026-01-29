@@ -1,5 +1,6 @@
 using MedicalDemo.Algorithm;
 using MedicalDemo.Enums;
+using MedicalDemo.Extensions;
 using MedicalDemo.Models;
 using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.DTO.Scheduling;
@@ -95,7 +96,7 @@ public class DashboardController : ControllerBase
                 new DashboardDataResponse.UpcomingShift
                 {
                     Date = d.ShiftDate.ToString("MM/dd/yyyy"),
-                    Type = d.CallType.GetDescription()
+                    Type = d.CallType.GetDisplayName()
                 }).ToList();
 
             // Generate recent activity
@@ -119,7 +120,7 @@ public class DashboardController : ControllerBase
                     Id = "2",
                     Type = "upcoming",
                     Message
-                        = $"Next shift: {nextShift.CallType.GetDescription()} on {nextShift.ShiftDate:MM/dd/yyyy}",
+                        = $"Next shift: {nextShift.CallType.GetDisplayName()} on {nextShift.ShiftDate:MM/dd/yyyy}",
                     Date = "Upcoming"
                 });
             }

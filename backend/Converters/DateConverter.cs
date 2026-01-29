@@ -19,6 +19,11 @@ public class DateConverter
         };
     }
 
+    /// <summary>
+    ///     This method requires the Resident field to be included
+    /// </summary>
+    /// <param name="date"></param>
+    /// <returns></returns>
     public DateResponse CreateDateResponseFromDate(Date date)
     {
         return new DateResponse
@@ -29,11 +34,7 @@ public class DateConverter
             FirstName = date.Resident.FirstName,
             LastName = date.Resident.LastName,
             ShiftDate = date.ShiftDate,
-            CallType = new DateCallTypeShiftResponse
-            {
-                Id = (int)date.CallType,
-                Description = date.CallType.GetDescription()
-            },
+            CallType = new DateCallTypeShiftResponse(date.CallType),
             Hours = date.Hours,
         };
     }

@@ -265,9 +265,9 @@ function Dashboard() {
   const fetchMySchedule = useCallback(async () => {
     if (!user?.id) return;
     try {
-      const response = await fetch(`${config.apiUrl}/api/dates`);
+      const response = await fetch(`${config.apiUrl}/api/dates/published`);
       if (response.ok) {
-        const dates = await response.json();
+        const dates = await response.json() as DateResponse[];
         const currentDate = new Date();
         currentDate.setHours(0, 0, 0, 0); // Start of today
 
@@ -275,12 +275,12 @@ function Dashboard() {
         let latestScheduleId = null;
         if (dates.length > 0) {
           const scheduleIdToLatestDate = {};
-          dates.forEach((date) => {
-            if (!date.ScheduleId) return;
-            const current = scheduleIdToLatestDate[date.ScheduleId];
-            const thisDate = new Date(date.date).getTime();
+          dates.forEach((date: DateResponse) => {
+            if (!date.scheduleId) return;
+            const current = scheduleIdToLatestDate[date.scheduleId];
+            const thisDate = new Date(date.shiftDate).getTime();
             if (!current || thisDate > current) {
-              scheduleIdToLatestDate[date.ScheduleId] = thisDate;
+              scheduleIdToLatestDate[date.scheduleId] = thisDate;
             }
           });
           latestScheduleId = Object.entries(scheduleIdToLatestDate)
@@ -289,22 +289,22 @@ function Dashboard() {
 
         // Only include events from the latest schedule
         const filteredDates = latestScheduleId
-          ? dates.filter((date) => date.ScheduleId === latestScheduleId)
+          ? dates.filter((date) => date.scheduleId === latestScheduleId)
           : dates;
 
         // Filter for current user and future dates only, and with a real callType
         const userSchedule = filteredDates
           .filter((date) => {
-            const dateObj = new Date(date.date);
-            return date.ResidentId === user.id && dateObj >= currentDate && date.CallType;
+            const dateObj = new Date(date.shiftDate);
+            return date.residentId === user.id && dateObj >= currentDate && date.callType;
           })
-          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+          .sort((a, b) => new Date(a.shiftDate).getTime() - new Date(b.shiftDate).getTime())
           .slice(0, 20)
           .map((date) => ({
-            id: date.DateId,
-            date: date.ShiftDate,
+            id: date.dateId,
+            date: date.shiftDate,
             time: "All Day",
-            shift: `${date.callType.Description} Call`,
+            shift: `${date.callType.description} Call`,
             location: "Hospital"
           }));
 
@@ -320,9 +320,9 @@ function Dashboard() {
   const fetchCalendarEvents = useCallback(async () => {
     try {
       // Fetch all dates - the backend doesn't support month/year filtering yet
-      const response = await fetch(`${config.apiUrl}/api/dates`);
+      const response = await fetch(`${config.apiUrl}/api/dates/published`);
       if (response.ok) {
-        const dates = await response.json();
+        const dates = await response.json() as DateResponse[];
         console.log(dates)
 
         // Find the scheduleId with the most recent date

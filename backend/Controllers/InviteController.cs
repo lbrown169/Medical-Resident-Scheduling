@@ -70,14 +70,14 @@ namespace MedicalDemo.Controllers
             {
                 return StatusCode(500, new  InviteResponse
                 {
-                    success = false,
-                    message = "Email sending failed."
+                    Success = false,
+                    Message = "Email sending failed."
                 });
             }
 
             return Ok(new InviteResponse
             {
-                success = true
+                Success = true
             });
         }
     }

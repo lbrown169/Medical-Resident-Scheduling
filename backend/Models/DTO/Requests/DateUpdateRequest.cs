@@ -1,4 +1,5 @@
 using MedicalDemo.Algorithm;
+using MedicalDemo.Models.DTO.Scheduling;
 
 namespace MedicalDemo.Models.DTO.Requests;
 

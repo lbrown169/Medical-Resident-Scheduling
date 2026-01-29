@@ -144,7 +144,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
   // Helper to get id needed for schedule deletion
   const getLatestScheduleId = async (): Promise<string | null> => {
     try {
-      const res = await fetch(`${config.apiUrl}/api/dates`);
+      const res = await fetch(`${config.apiUrl}/api/dates/published`);
       if (!res.ok) return null;
       const dates: DateResponse[] = await res.json();
       const map: Record<string, number> = {};

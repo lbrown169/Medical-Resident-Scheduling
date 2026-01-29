@@ -1,9 +1,12 @@
 using MedicalDemo.Algorithm;
 using MedicalDemo.Converters;
+using MedicalDemo.Enums;
+using MedicalDemo.Extensions;
 using MedicalDemo.Models;
 using MedicalDemo.Models.DTO;
 using MedicalDemo.Models.DTO.Requests;
 using MedicalDemo.Models.DTO.Responses;
+using MedicalDemo.Models.DTO.Scheduling;
 using MedicalDemo.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -78,10 +81,24 @@ public class DatesController : ControllerBase
         }
 
         List<DateResponse> results = await query
+            .Include(d => d.Resident)
             .Select(d => _dateConverter.CreateDateResponseFromDate(d))
             .ToListAsync();
 
         return Ok(results);
+    }
+
+    // GET: api/dates/published
+    [HttpGet("published")]
+    public async Task<ActionResult<IEnumerable<DateResponse>>>
+        GetPublishedDates()
+    {
+        List<DateResponse> publishedDates = await _context.Dates
+            .Include(d => d.Resident)
+            .Where(d => d.Schedule.Status == ScheduleStatus.Published)
+            .Select(d => _dateConverter.CreateDateResponseFromDate(d)).ToListAsync();
+
+        return Ok(publishedDates);
     }
 
     // PUT: api/dates/{id}
@@ -114,6 +131,7 @@ public class DatesController : ControllerBase
         try
         {
             await _context.SaveChangesAsync();
+            await _context.Entry(existingDate).ReloadAsync();
             return Ok(_dateConverter.CreateDateResponseFromDate(existingDate)); // returns updated object
         }
         catch (DbUpdateException ex)

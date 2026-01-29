@@ -18,7 +18,7 @@ export default function Page() {
 
   const fetchMySchedule = useCallback(async () => {
     try {
-      const response = await fetch(`${config.apiUrl}/api/dates`);
+      const response = await fetch(`${config.apiUrl}/api/dates/published`);
       if (response.ok) {
         const dates: DateResponse[] = await response.json();
         const currentDate = new Date();

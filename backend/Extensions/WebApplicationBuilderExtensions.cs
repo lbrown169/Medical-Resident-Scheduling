@@ -46,6 +46,7 @@ public static class WebApplicationBuilderExtensions
         builder.Services.AddScoped<BlackoutConverter>();
         builder.Services.AddScoped<DateConverter>();
         builder.Services.AddScoped<ResidentConverter>();
+        builder.Services.AddScoped<ScheduleConverter>();
 
         // Email
         if (builder.Environment.IsDevelopment())
@@ -93,8 +94,7 @@ public static class WebApplicationBuilderExtensions
 
         builder.Services.AddDbContext<MedicalContext>((sp, options) =>
         {
-            string? mySqlConnectionString = mySqlConnectionString
-                = Environment.GetEnvironmentVariable(
+            string? mySqlConnectionString = Environment.GetEnvironmentVariable(
                     "DB_CONNECTION_STRING");
             ILogger<MedicalContext> logger
                 = sp.GetRequiredService<ILogger<MedicalContext>>();

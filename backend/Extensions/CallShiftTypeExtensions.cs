@@ -1,4 +1,6 @@
-namespace MedicalDemo.Algorithm;
+using MedicalDemo.Models.DTO.Scheduling;
+
+namespace MedicalDemo.Extensions;
 
 public static class CallShiftTypeExtensions
 {

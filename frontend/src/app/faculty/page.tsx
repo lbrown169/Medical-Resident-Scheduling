@@ -526,7 +526,7 @@ export default function FacultyPage() {
   const fetchCalendarEvents = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${config.apiUrl}/api/dates`);
+      const response = await fetch(`${config.apiUrl}/api/dates/published`);
       if (response.ok) {
         const dates: DateResponse[] = await response.json();
         
