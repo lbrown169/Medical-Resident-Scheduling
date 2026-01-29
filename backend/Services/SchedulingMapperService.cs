@@ -29,8 +29,8 @@ public class SchedulingMapperService
             ResidentId = resident.ResidentId,
             Name = resident.FirstName + " " + resident.LastName,
             VacationRequests
-                = [..vacations.Select(v => v.Date)],
-            CommitedWorkDays = [..committedDates],
+                = [.. vacations.Select(v => v.Date)],
+            CommitedWorkDays = [.. committedDates],
             InTraining = resident.GraduateYr == 1
         };
 
@@ -56,8 +56,8 @@ public class SchedulingMapperService
             ResidentId = resident.ResidentId,
             Name = resident.FirstName + " " + resident.LastName,
             VacationRequests
-                = [..vacations.Select(v => v.Date)],
-            CommitedWorkDays = [..committedDates],
+                = [.. vacations.Select(v => v.Date)],
+            CommitedWorkDays = [.. committedDates],
             InTraining = resident.GraduateYr == 2
         };
 
@@ -82,8 +82,8 @@ public class SchedulingMapperService
             ResidentId = resident.ResidentId,
             Name = resident.FirstName + " " + resident.LastName,
             VacationRequests
-                = [..vacations.Select(v => v.Date)],
-            CommitedWorkDays = [..committedDates]
+                = [.. vacations.Select(v => v.Date)],
+            CommitedWorkDays = [.. committedDates]
         };
     }
 

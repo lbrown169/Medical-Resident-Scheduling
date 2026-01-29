@@ -1,4 +1,4 @@
-﻿namespace MedicalDemo.Models.Entities
+namespace MedicalDemo.Models.Entities
 {
     public partial class Rotation
     {

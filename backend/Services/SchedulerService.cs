@@ -80,7 +80,7 @@ public class SchedulerService
                     DateId = dto.DateId,
                     ScheduleId = dto.ScheduleId,
                     ResidentId = dto.ResidentId,
-                    ShiftDate= dto.Date,
+                    ShiftDate = dto.Date,
                     Hours = dto.Hours,
                     CallType = dto.CallType
                 }).ToList();

@@ -12,7 +12,7 @@ public class AdminConverter
         admin.FirstName = updateRequest.FirstName ?? admin.FirstName;
         admin.LastName = updateRequest.LastName ?? admin.LastName;
         admin.Email = updateRequest.Email ?? admin.Email;
-        admin.PhoneNum = updateRequest.PhoneNum ?? admin.PhoneNum;;
+        admin.PhoneNum = updateRequest.PhoneNum ?? admin.PhoneNum; ;
     }
 
     public AdminResponse CreateAdminResponseFromAdmin(Admin admin)

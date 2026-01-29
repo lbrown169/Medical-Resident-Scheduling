@@ -63,7 +63,7 @@ public class AnnouncementsController : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<IEnumerable<AnnouncementResponse>>> GetAnnouncement(Guid id)
     {
-        IQueryable<Announcement> query = _context.Announcements.AsQueryable();
+        _ = _context.Announcements.AsQueryable();
 
         Announcement? ann = await _context.Announcements.FindAsync(id);
 

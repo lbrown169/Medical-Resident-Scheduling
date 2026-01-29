@@ -143,10 +143,10 @@ public class SwapRequestsController : ControllerBase
         catch (DbUpdateException ex)
         {
             return StatusCode(500, new GenericResponse
-                {
-                    Success = false,
-                    Message = $"An error occurred while updating the swap request: {ex.Message}"
-                }
+            {
+                Success = false,
+                Message = $"An error occurred while updating the swap request: {ex.Message}"
+            }
             );
         }
     }
@@ -249,7 +249,7 @@ public class SwapRequestsController : ControllerBase
 
     private async Task<string?> ValidateSwapRequestAndAssignScheduleId(SwapRequest swapRequest)
     {
-                // Fetch residents
+        // Fetch residents
         Resident? requester =
             await _context.Residents.FindAsync(swapRequest.RequesterId);
         Resident? requestee =

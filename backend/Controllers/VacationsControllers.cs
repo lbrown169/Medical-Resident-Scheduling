@@ -54,21 +54,22 @@ public class VacationsController : ControllerBase
         [FromQuery] DateOnly? date,
         [FromQuery] string? reason,
         [FromQuery] string? status
-    ) {
+    )
+    {
         IQueryable<VacationWithResidentResponse> query = _context.Vacations
-            .Select(v=> new VacationWithResidentResponse
-                {
-                    VacationId = v.VacationId,
-                    ResidentId = v.ResidentId,
-                    FirstName = v.Resident.FirstName,
-                    LastName = v.Resident.LastName,
-                    Date = v.Date,
-                    Reason = v.Reason ?? string.Empty,
-                    Status = v.Status,
-                    Details = v.Details,
-                    GroupId = v.GroupId,
-                    HalfDay = v.HalfDay
-                })
+            .Select(v => new VacationWithResidentResponse
+            {
+                VacationId = v.VacationId,
+                ResidentId = v.ResidentId,
+                FirstName = v.Resident.FirstName,
+                LastName = v.Resident.LastName,
+                Date = v.Date,
+                Reason = v.Reason ?? string.Empty,
+                Status = v.Status,
+                Details = v.Details,
+                GroupId = v.GroupId,
+                HalfDay = v.HalfDay
+            })
             ;
 
         if (!string.IsNullOrEmpty(residentId))
@@ -237,7 +238,7 @@ public class VacationsController : ControllerBase
         _context.Vacations.RemoveRange(vacationsToDelete);
         await _context.SaveChangesAsync();
 
-        VacationsNotDeletedResponse response = new VacationsNotDeletedResponse(){ notDeleted = failedDeletedIds };
+        VacationsNotDeletedResponse response = new VacationsNotDeletedResponse() { notDeleted = failedDeletedIds };
 
         return Ok(response);
     }

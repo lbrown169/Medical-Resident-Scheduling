@@ -29,7 +29,7 @@ public class BlackoutConverter
 
     public void UpdateBlackoutFromBlackoutUpdateRequest(Blackout blackout, BlackoutUpdateRequest request)
     {
-        blackout.Date = request.Date ?? blackout.Date;;
+        blackout.Date = request.Date ?? blackout.Date; ;
         blackout.ResidentId = request.ResidentId ?? blackout.ResidentId;
     }
 }

@@ -211,7 +211,7 @@ public class PGY1
     public HashSet<DateOnly> workDaySet() // all worked days
     {
         // return a copy of the work days
-        return [..allWorkDates];
+        return [.. allWorkDates];
     }
 
     public bool

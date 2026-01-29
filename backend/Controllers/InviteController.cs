@@ -68,7 +68,7 @@ namespace MedicalDemo.Controllers
 
             if (!success)
             {
-                return StatusCode(500, new  InviteResponse
+                return StatusCode(500, new InviteResponse
                 {
                     Success = false,
                     Message = "Email sending failed."

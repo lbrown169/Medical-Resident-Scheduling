@@ -1,4 +1,4 @@
-﻿using MedicalDemo.Enums;
+using MedicalDemo.Enums;
 
 namespace MedicalDemo.Models.Entities
 {

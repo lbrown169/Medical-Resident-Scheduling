@@ -61,7 +61,7 @@ public class ResidentsController : ControllerBase
             );
 
         DateOnly sunday = DateOnly.FromDateTime(DateTime.Now).AddDays(-(int)DateTime.Today.DayOfWeek);
-        DateOnly saturday = DateOnly.FromDateTime(DateTime.Now).AddDays(6-(int)DateTime.Today.DayOfWeek);
+        DateOnly saturday = DateOnly.FromDateTime(DateTime.Now).AddDays(6 - (int)DateTime.Today.DayOfWeek);
         Dictionary<string, int> weekHoursMapping = dates
             .Where(d => d.ShiftDate >= sunday && d.ShiftDate <= saturday)
             .GroupBy(d => d.ResidentId)
