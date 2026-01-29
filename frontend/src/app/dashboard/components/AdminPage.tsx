@@ -71,6 +71,78 @@ interface DateEntry {
   date?: string;
 }
 
+interface DateRow {
+  dateId: string;
+  scheduleId: string;
+  residentId: string;
+  firstName?: string;
+  lastName?: string;
+  date: string;      // ISO
+  callType: string;
+  hours: number;
+}
+
+type HoursScope = "year" | "month" | "week";
+
+interface DateRow {
+  dateId: string;
+  scheduleId: string;
+  residentId: string;
+  firstName?: string;
+  lastName?: string;
+  date: string; // ISO
+  callType: string;
+  hours: number;
+}
+
+function startOfDay(d: Date): Date {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+
+// Monday-based week (Mon 00:00 -> next Mon 00:00)
+function getWeekRangeSunday(ref: Date = new Date()): { start: Date; endExclusive: Date } {
+  const now = startOfDay(ref);
+  const day = now.getDay(); // 0 = Sunday
+
+  const start = new Date(now);
+  start.setDate(now.getDate() - day); // back to Sunday
+
+  const endExclusive = new Date(start);
+  endExclusive.setDate(start.getDate() + 7); // next Sunday
+
+  return { start, endExclusive };
+}
+
+function getMonthRange(year: number, month0: number): { start: Date; endExclusive: Date } {
+  const start = new Date(year, month0, 1);
+  const endExclusive = new Date(year, month0 + 1, 1);
+  return { start, endExclusive };
+}
+
+function getJulyYearRange(yearStart: number): { start: Date; endExclusive: Date } {
+  // July 1 of yearStart -> July 1 of yearStart+1
+  const start = new Date(yearStart, 6, 1);          // July = 6
+  const endExclusive = new Date(yearStart + 1, 6, 1);
+  return { start, endExclusive };
+}
+
+function sumHoursByResident(rows: DateRow[], start: Date, endExclusive: Date): Record<string, number> {
+  const out: Record<string, number> = {};
+  const startMs = start.getTime();
+  const endMs = endExclusive.getTime();
+
+  for (const r of rows) {
+    const t = new Date(r.date).getTime();
+    if (Number.isNaN(t)) continue;
+    if (t < startMs || t >= endMs) continue;
+
+    out[r.residentId] = (out[r.residentId] ?? 0) + (r.hours ?? 0);
+  }
+  return out;
+}
+
 // Modal component
 function Modal({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: React.ReactNode }) {
   if (!open) return null;
@@ -126,6 +198,16 @@ const AdminPage: React.FC<AdminPageProps> = ({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
 
+  const now = new Date();
+  const initialJulyYearStart = now.getMonth() >= 6 ? /*1 + */now.getFullYear() : /*1 + */now.getFullYear() - 1; // month 6 = July
+  const [hoursScope, setHoursScope] = useState<HoursScope>("year");
+  const [hoursMonth0] = useState<number>(new Date().getMonth() /*+ 12*/); // 0-11
+  const [hoursYear] = useState<number>(initialJulyYearStart);
+
+  const [latestScheduleId, setLatestScheduleId] = useState<string | null>(null);
+  const [scheduleDateRows, setScheduleDateRows] = useState<DateRow[]>([]);
+  const [loadingHours, setLoadingHours] = useState(false);
+
   const handleGenerateSchedule = async (year: number) => {
     setGenerating(true);
     setMessage("");
@@ -144,6 +226,10 @@ const AdminPage: React.FC<AdminPageProps> = ({
     } finally {
       setGenerating(false);
     }
+
+    const id = await getLatestScheduleId();
+    setLatestScheduleId(id);
+    if (id) setScheduleDateRows(await fetchScheduleDateRows(id));
   };
 
   // Helper to get id needed for schedule deletion
@@ -169,6 +255,46 @@ const AdminPage: React.FC<AdminPageProps> = ({
       return null;
     }
   };
+
+  const fetchScheduleDateRows = async (scheduleId: string): Promise<DateRow[]> => {
+    const url = `${config.apiUrl}/api/Dates/filter?schedule_id=${encodeURIComponent(scheduleId)}`;
+    const res = await fetch(url);
+    if (!res.ok) return [];
+    const data = (await res.json()) as DateRow[];
+    return Array.isArray(data) ? data : [];
+  };
+
+  useEffect(() => {
+    let alive = true;
+
+    const load = async () => {
+      setLoadingHours(true);
+      try {
+        const id = await getLatestScheduleId(); // you already have this function
+        if (!alive) return;
+
+        setLatestScheduleId(id);
+
+        if (!id) {
+          setScheduleDateRows([]);
+          return;
+        }
+
+        const rows = await fetchScheduleDateRows(id);
+        if (!alive) return;
+
+        setScheduleDateRows(rows);
+      } finally {
+        if (alive) setLoadingHours(false);
+      }
+    };
+
+    load();
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleDeleteSchedule = async (): Promise<void> => {
     setDeletingSchedule(true);
@@ -196,6 +322,8 @@ const AdminPage: React.FC<AdminPageProps> = ({
 
       if (ok && onNavigateToCalendar) {
         onNavigateToCalendar();
+        setLatestScheduleId(null);
+        setScheduleDateRows([]);
       }
     } finally {
       setDeletingSchedule(false);
@@ -356,6 +484,29 @@ const AdminPage: React.FC<AdminPageProps> = ({
 
   const [savingPGY, setSavingPGY] = useState<Record<string, boolean>>({});
   const [savingHospitalRole, setSavingHospitalRole] = useState<Record<string, boolean>>({});
+
+  const hoursByResident = useMemo(() => {
+    if (!latestScheduleId || scheduleDateRows.length === 0) return {};
+
+    const now = new Date();
+
+    let range: { start: Date; endExclusive: Date };
+
+    if (hoursScope === "week") {
+      range = getWeekRangeSunday(now);
+    } else if (hoursScope === "month") {
+      range = getMonthRange(hoursYear, hoursMonth0);
+    } else {
+      range = getJulyYearRange(hoursYear);
+    }
+
+    return sumHoursByResident(scheduleDateRows, range.start, range.endExclusive);
+  }, [latestScheduleId, scheduleDateRows, hoursScope, hoursMonth0, hoursYear]);
+
+  const getDisplayedHours = (residentId: string): number => {
+    const val = hoursByResident[residentId];
+    return Number.isFinite(val) ? val : 0;
+  };
 
   // Updates the PGY year when selected by administrators on the Resident Info tab
   const handleUpdatePGY = async (residentId: string, newPGY: number) => {
@@ -1133,7 +1284,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
                     className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                   >
                     <option value="Current Year">Current Year</option>
-                    <option value="2027">2027</option>
+                    {/*<option value="2027">2027</option>*/}
                   </select>
                 </div>
                 <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
@@ -1167,9 +1318,24 @@ const AdminPage: React.FC<AdminPageProps> = ({
                           </DropdownMenuTrigger>
 
                           <DropdownMenuContent align="end" className="w-40">
-                            <DropdownMenuItem className="cursor-pointer" onClick={() => ""}>Year</DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer" onClick={() => ""}>Month</DropdownMenuItem>
-                            <DropdownMenuItem className="cursor-pointer" onClick={() => ""}>Week</DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="cursor-pointer"
+                              onClick={() => setHoursScope("year")}
+                            >
+                              This Schedule Year
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="cursor-pointer"
+                              onClick={() => setHoursScope("month")}
+                            >
+                              This Month
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="cursor-pointer"
+                              onClick={() => setHoursScope("week")}
+                            >
+                              This Week
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
@@ -1225,7 +1391,9 @@ const AdminPage: React.FC<AdminPageProps> = ({
                             <span className="text-gray-400 italic">N/A</span>
                           )}
                         </td>
-                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{Number.isFinite(resident.hours) ? resident.hours : 0}</td>
+                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {loadingHours ? "…" : getDisplayedHours(resident.id)}
+                        </td>
                       </tr>
                     ))
                   ) : (
