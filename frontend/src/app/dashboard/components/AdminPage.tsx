@@ -12,6 +12,8 @@ import { Dialog } from "../../../components/ui/dialog";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
+import { VacationResponse } from "@/lib/models/VacationResponse";
+import { DateResponse } from "@/lib/models/DateResponse";
 
 interface AdminPageProps {
   residents: { id: string; name: string; email: string; pgyLevel: number | string; hospitalRole?: number; hours: number }[];

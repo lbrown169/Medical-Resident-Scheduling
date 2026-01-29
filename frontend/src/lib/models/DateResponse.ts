@@ -1,4 +1,6 @@
-interface DateResponse {
+import { CallType } from "./CallType";
+
+export interface DateResponse {
   dateId: string;
   callType: CallType;
   residentId?: string;

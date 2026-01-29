@@ -1,4 +1,4 @@
-interface VacationResponse {
+export interface VacationResponse {
   vacationId: string;
   residentId: string;
   firstName: string;

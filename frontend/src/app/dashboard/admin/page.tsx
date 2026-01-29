@@ -2,10 +2,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import AdminPage from '../components/AdminPage';
 import { config } from '../../../config';
+import { VacationResponse } from '@/lib/models/VacationResponse';
 
 // Types
 interface Resident { id: string; name: string; email: string; pgyLevel: number | string; hours: number; }
-interface TimeOffRequest { id: string; startDate: string; endDate: string; resident: string; reason: string; status: string; }
 interface Shift { id: string; name: string; }
 interface UserInvitation { id: string; email: string; status: "Pending" | "Member" | "Not Invited"; }
 interface User { id: string; first_name: string; last_name: string; email: string; role: string; }

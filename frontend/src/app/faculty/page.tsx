@@ -7,6 +7,8 @@ import { config } from "../../config";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
 import { logout } from "../../lib/auth";
+import { DateResponse } from "@/lib/models/DateResponse";
+import { CallType } from "@/lib/models/CallType";
 
 interface CalendarEvent {
   id: string;

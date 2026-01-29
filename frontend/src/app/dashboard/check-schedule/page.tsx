@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import CheckSchedulePage from '../components/CheckSchedulePage';
 import { config } from '../../../config';
+import { DateResponse } from '@/lib/models/DateResponse';
 
 interface ScheduleEntry {
   id: string;
