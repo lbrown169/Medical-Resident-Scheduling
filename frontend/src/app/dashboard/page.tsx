@@ -851,16 +851,28 @@ function Dashboard() {
     }
   
     try {
+      // Parse dates and apply timezone offset to keep them local
       const start = new Date(startDate);
+      start.setMinutes(start.getMinutes() + start.getTimezoneOffset());
       const end = new Date(endDate);
+      end.setMinutes(end.getMinutes() + end.getTimezoneOffset());
+
       const groupId = crypto.randomUUID(); //group ID
       const requests = [];
-  
+
+      // Helper to format date as YYYY-MM-DD without timezone conversion
+      const formatLocalDate = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
         requests.push({
           GroupId: groupId, //New request
           ResidentId: user.id,
-          Date: d.toISOString().split('T')[0],
+          Date: formatLocalDate(d),
           Reason: reason,
           Details: description || ''
         });

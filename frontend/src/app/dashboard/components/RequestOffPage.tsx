@@ -181,12 +181,16 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
     );
   };
 
-  const fmt = (d: string) =>
-    new Date(d).toLocaleDateString("en-US", {
+  const fmt = (d: string) => {
+    // Apply timezone offset to keep date local (same as calendar)
+    const date = new Date(d);
+    date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+    return date.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
     });
+  };
 
   return (
     <div className="w-full h-full bg-background p-4 overflow-hidden">
