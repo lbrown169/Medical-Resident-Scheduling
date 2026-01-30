@@ -555,9 +555,10 @@ const AdminPage: React.FC<AdminPageProps> = ({
 
   // Helper to format a date as MM/DD/YYYY
   const formatDate = (dateStr: string) => {
-    console.log("Parsing dateStr:", dateStr); // <-- Debug line
     if (!dateStr) return 'N/A';
+    // Apply timezone offset to keep date local (same as calendar)
     const date = new Date(dateStr);
+    date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
     if (isNaN(date.getTime())) return 'N/A';
     return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
   };
