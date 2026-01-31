@@ -15,7 +15,10 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
+		<PackageReference Include="NLog.Web.AspNetCore" Version="6.1.0" />
 		<PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="6.0.2"/>
+		<PackageReference Include="Sentry.AspNetCore" Version="6.0.0" />
+		<PackageReference Include="Sentry.NLog" Version="6.0.0" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0"/>
 		<PackageReference Include="Postmark" Version="5.2.0"/>
 		<None Update=".env">
@@ -23,5 +26,10 @@
 		</None>
 	</ItemGroup>
 
-
+	<ItemGroup>
+		<Content Update="Configuration\*">
+			
+		</Content>
+	</ItemGroup>
+	
 </Project>
