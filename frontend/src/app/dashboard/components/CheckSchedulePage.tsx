@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Card } from "../../../components/ui/card";
-import { Calendar, CalendarDays } from "lucide-react";
+import { Calendar, UserCheck, CalendarDays } from "lucide-react";
 
 interface ScheduleEntry {
   id: string;
@@ -91,7 +91,7 @@ const CheckSchedulePage: React.FC<CheckSchedulePageProps> = ({ mySchedule }) => 
         <div className="text-center mb-6">
           <div className="flex justify-center mb-3">
             <div className="p-3 bg-primary/10 rounded-full">
-              <CalendarDays className="h-6 w-6 text-primary" />
+              <UserCheck className="h-6 w-6 text-primary" />
             </div>
           </div>
           <h1 className="text-2xl font-bold text-foreground mb-2">My Upcoming Schedule</h1>
