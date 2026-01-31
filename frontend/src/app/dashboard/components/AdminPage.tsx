@@ -861,8 +861,8 @@ const AdminPage: React.FC<AdminPageProps> = ({
                           <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                             {finalIdToName[swap.requesteeId] || `Resident ${swap.requesteeId}`}
                           </td>
-                          <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.requesterDate ? new Date(swap.requesterDate).toLocaleDateString() : ''}</td>
-                          <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.requesteeDate ? new Date(swap.requesteeDate).toLocaleDateString() : ''}</td>
+                          <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.requesterDate ? formatDate(swap.requesterDate) : ''}</td>
+                          <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.requesteeDate ? formatDate(swap.requesteeDate) : ''}</td>
                           <td className={`px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm font-semibold ${swap.status.id === 1 ? 'text-green-600' :
                             swap.status.id === 2 ? 'text-red-600' :
                               'text-yellow-600'
