@@ -54,12 +54,20 @@ public class DashboardController : ControllerBase
 
             if (resident.HospitalRoleProfile is { } profile)
             {
-                role = resident.HospitalRoleProfile switch
+                int pgyLevel = resident.GraduateYr;
+
+                if (pgyLevel == 1 && profile >= 0 && profile < HospitalRole.Pgy1Profiles.Length)
                 {
-                    1 => HospitalRole.Pgy1Profiles[profile][monthIndex],
-                    2 => HospitalRole.Pgy2Profiles[profile - 8][monthIndex],
-                    _ => role
-                };
+                    role = HospitalRole.Pgy1Profiles[profile][monthIndex];
+                }
+                else if (pgyLevel == 2)
+                {
+                    int pgy2Index = profile - 8;
+                    if (pgy2Index >= 0 && pgy2Index < HospitalRole.Pgy2Profiles.Length)
+                    {
+                        role = HospitalRole.Pgy2Profiles[pgy2Index][monthIndex];
+                    }
+                }
             }
 
             dashboardData.CurrentRotation = role.name;
