@@ -1,0 +1,316 @@
+/**
+ * Print Styles for PGY-4 Schedule Page
+ * 
+ * This stylesheet optimizes the PGY-4 rotation schedule for printing.
+ * It removes unnecessary UI elements, adjusts layouts for paper, and
+ * ensures the schedule fits properly on printed pages.
+ * 
+ * USAGE:
+ * This file should be imported in the PGY-4 schedule page component:
+ * import './print.css';
+ * 
+ * The styles are automatically applied when the user prints the page
+ * using the browser's print dialog or window.print().
+ * 
+ * PRINT OPTIMIZATION STRATEGIES:
+ * 1. Hide non-essential UI elements (buttons, navigation, etc.)
+ * 2. Adjust font sizes for better readability on paper
+ * 3. Remove colored backgrounds to save ink (optional)
+ * 4. Ensure table borders are visible and clear
+ * 5. Prevent page breaks within important content sections
+ * 6. Optimize margins for standard paper sizes (Letter/A4)
+ */
+
+/* ============================================================================
+ * PRINT MEDIA QUERY
+ * All styles within this block only apply when printing
+ * ============================================================================ */
+@media print {
+  /* ==========================================================================
+   * PAGE SETUP
+   * Configure page margins, orientation, and size
+   * ========================================================================== */
+  
+  @page {
+    /* Standard margins for Letter/A4 paper */
+    margin: 0.5in;
+    
+    /* 
+     * Landscape orientation recommended for rotation calendars
+     * Uncomment the line below to use landscape mode
+     */
+    /* size: landscape; */
+  }
+
+  /* ==========================================================================
+   * GLOBAL PRINT STYLES
+   * Remove backgrounds and adjust colors for better printing
+   * ========================================================================== */
+  
+  * {
+    /* Remove box shadows to reduce ink usage */
+    box-shadow: none !important;
+    
+    /* 
+     * Optional: Remove all background colors to save ink
+     * Comment out the next line if you want to preserve rotation badge colors
+     */
+    /* background: white !important; */
+  }
+
+  body {
+    /* Ensure body takes full width */
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    
+    /* Use standard serif font for better print readability */
+    font-family: Georgia, 'Times New Roman', serif;
+    
+    /* Slightly smaller base font for fitting more content */
+    font-size: 10pt;
+    
+    /* Black text for maximum contrast */
+    color: #000;
+  }
+
+  /* ==========================================================================
+   * HIDE NON-ESSENTIAL ELEMENTS
+   * Remove UI elements that aren't needed in printed version
+   * ========================================================================== */
+  
+  /* Hide elements with print:hidden utility class */
+  .print\\:hidden,
+  [class*="print:hidden"] {
+    display: none !important;
+  }
+
+  /* Hide common UI elements */
+  nav,
+  aside,
+  button,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Hide action buttons in the header */
+  .pgy4-schedule-page button {
+    display: none !important;
+  }
+
+  /* Hide navigation sidebar */
+  .sidebar,
+  .navigation {
+    display: none !important;
+  }
+
+  /* ==========================================================================
+   * HEADER OPTIMIZATION
+   * Style the page title and description for print
+   * ========================================================================== */
+  
+  .pgy4-schedule-page h1 {
+    font-size: 18pt;
+    margin-bottom: 8pt;
+    page-break-after: avoid;
+  }
+
+  .pgy4-schedule-page > div > div > p {
+    font-size: 11pt;
+    margin-bottom: 12pt;
+  }
+
+  /* ==========================================================================
+   * SECTION HEADERS
+   * Style My Schedule and Team Schedule section headers
+   * ========================================================================== */
+  
+  .my-schedule-section h2,
+  .team-schedule-section h2 {
+    font-size: 14pt;
+    font-weight: bold;
+    margin-top: 16pt;
+    margin-bottom: 8pt;
+    page-break-after: avoid;
+    border-bottom: 2pt solid #000;
+    padding-bottom: 4pt;
+  }
+
+  .my-schedule-section p,
+  .team-schedule-section p {
+    font-size: 9pt;
+    margin-bottom: 8pt;
+    color: #333;
+  }
+
+  /* ==========================================================================
+   * ROTATION CALENDAR OPTIMIZATION
+   * Ensure calendar tables print clearly and fit on pages
+   * ========================================================================== */
+  
+  .rotation-calendar {
+    /* Prevent calendar from breaking across pages */
+    page-break-inside: avoid;
+    
+    /* Add margin between sections */
+    margin-bottom: 20pt;
+  }
+
+  /* Calendar grid container */
+  .rotation-calendar > div {
+    /* Ensure borders are visible when printing */
+    border: 1pt solid #000;
+  }
+
+  /* Calendar header row */
+  .rotation-calendar [class*="grid-cols"] > div:first-child {
+    background: #f0f0f0 !important;
+    border-bottom: 2pt solid #000;
+  }
+
+  /* Month header cells */
+  .rotation-calendar [class*="grid-cols"] > div > div {
+    font-size: 8pt;
+    padding: 4pt;
+    border-right: 1pt solid #999;
+  }
+
+  /* Resident name column */
+  .rotation-calendar [class*="grid-cols"] > div > div:first-child {
+    font-weight: bold;
+    background: #fafafa !important;
+    border-right: 2pt solid #000;
+  }
+
+  /* Rotation cells */
+  .rotation-calendar [class*="grid-cols"] > div > div {
+    border-bottom: 1pt solid #ddd;
+  }
+
+  /* Ensure rotation badges are visible */
+  .rotation-calendar [data-rotation-type] {
+    /* Keep badge backgrounds for color-coding */
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    
+    font-size: 7pt;
+    padding: 2pt 4pt;
+  }
+
+  /* ==========================================================================
+   * ROTATION LEGEND
+   * Optimize legend display for printing
+   * ========================================================================== */
+  
+  .legend-section {
+    /* Prevent legend from breaking across pages */
+    page-break-inside: avoid;
+    
+    /* Add top margin for separation */
+    margin-top: 16pt;
+    padding: 8pt;
+    border: 1pt solid #ccc;
+    background: #f9f9f9 !important;
+  }
+
+  .rotation-legend h3 {
+    font-size: 10pt;
+    font-weight: bold;
+    margin-bottom: 6pt;
+  }
+
+  .rotation-legend [data-rotation-legend-item] {
+    font-size: 8pt;
+    margin-right: 8pt;
+    margin-bottom: 4pt;
+  }
+
+  /* Keep rotation badge colors in legend */
+  .rotation-legend [data-rotation-type] {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    
+    font-size: 7pt;
+    padding: 2pt 4pt;
+  }
+
+  /* ==========================================================================
+   * FOOTER
+   * Style footer information for print
+   * ========================================================================== */
+  
+  .pgy4-schedule-page > div:last-child {
+    margin-top: 16pt;
+    padding-top: 8pt;
+    border-top: 1pt solid #ccc;
+    font-size: 8pt;
+    text-align: center;
+  }
+
+  /* ==========================================================================
+   * PAGE BREAK CONTROL
+   * Prevent awkward breaks in the middle of content
+   * ========================================================================== */
+  
+  /* Prevent page breaks inside these sections */
+  .my-schedule-section,
+  .team-schedule-section,
+  .legend-section {
+    page-break-inside: avoid;
+  }
+
+  /* Allow page breaks between major sections if needed */
+  .my-schedule-section {
+    page-break-after: auto;
+  }
+
+  /* ==========================================================================
+   * LINK STYLING
+   * Remove link underlines and use regular text color for print
+   * ========================================================================== */
+  
+  a {
+    color: #000;
+    text-decoration: none;
+  }
+
+  /* Show link URLs after link text (optional) */
+  /* Uncomment if you want to show URLs in printed version */
+  /*
+  a[href]:after {
+    content: " (" attr(href) ")";
+    font-size: 80%;
+    color: #666;
+  }
+  */
+
+  /* ==========================================================================
+   * UTILITY CLASSES
+   * Additional helper classes for print optimization
+   * ========================================================================== */
+  
+  /* Force visibility for print-only content */
+  .print-only {
+    display: block !important;
+  }
+
+  /* Reduce spacing on print to fit more content */
+  .print\\:mt-4 {
+    margin-top: 4pt !important;
+  }
+
+  .print\\:mb-6 {
+    margin-bottom: 6pt !important;
+  }
+}
+
+/* ============================================================================
+ * SCREEN-ONLY STYLES
+ * Styles that only apply to screen view, not print
+ * ============================================================================ */
+@media screen {
+  /* Hide print-only elements on screen */
+  .print-only {
+    display: none;
+  }
+}

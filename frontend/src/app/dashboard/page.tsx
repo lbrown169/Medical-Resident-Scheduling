@@ -14,7 +14,7 @@ import {
   SidebarTrigger,
 } from "../../components/ui/sidebar";
 import { SidebarUserCard } from "./components/SidebarUserCard";
-import { Repeat, CalendarDays, UserCheck, Shield, Settings, Home, LogOut, User as UserIcon, ChevronDown, Moon, Sun, ClipboardList, CalendarRange } from "lucide-react";
+import { Repeat, CalendarDays, UserCheck, Shield, Settings, Home, LogOut, User as UserIcon, ChevronDown, Moon, Sun, ClipboardList, CalendarRange, Calendar1 } from "lucide-react";
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { useRouter } from "next/navigation";
 import { toast } from '../../lib/use-toast';
@@ -37,6 +37,7 @@ import CheckSchedulePage from "./components/CheckSchedulePage";
 import AdminPage from "./components/AdminPage";
 import PGY3RotationForm from "./components/PGY3RotationForm";
 import PGY4RotationPage from "./components/PGY4RotationPage";
+import PGY4SchedulePage from "../dashboard/pgy4-schedule/page";
 
 import MobileHeader from "./components/MobileHeader";
 import MobileUserMenu from "./components/MobileUserMenu";
@@ -108,6 +109,7 @@ const menuItems: MenuItem[] = [
   { title: "Request Off", icon: <CalendarDays className="w-5 h-5 mr-2" /> },
   { title: "Check My Schedule", icon: <UserCheck className="w-5 h-5 mr-2" /> },
   { title: "PGY-4 Rotation Forms", icon: <ClipboardList className="w-5 h-5 mr-2" /> },
+  { title: "PGY-4 Schedule", icon: <Calendar1 className="w-5 h-5 mr-2" /> },
   { title: "PGY-4 Rotations", icon: <CalendarRange className="w-5 h-5 mr-2" /> },
   { title: "Admin", icon: <Shield className="w-5 h-5 mr-2" /> },
   { title: "Settings", icon: <Settings className="w-5 h-5 mr-2" /> },
@@ -1263,6 +1265,20 @@ case "Home":
           />
         );
       
+      case "PGY-4 Schedule":
+        // Only PGY-4 residents can view this page
+        if (currentUserPGY !== 4) {
+          return (
+            <div className="w-full pt-4 flex flex-col items-center">
+              <h1 className="text-2xl font-bold mb-6">Access Denied</h1>
+              <p className="text-center text-gray-600 dark:text-gray-400">
+                This page is only accessible to PGY-4 residents.
+              </p>
+            </div>
+          );
+        }
+        return <PGY4SchedulePage />;
+      
       case "PGY-4 Rotations":
           if (!isAdmin) {
           return (
@@ -1362,6 +1378,9 @@ case "Home":
     if (item.title === "Check My Schedule") return !isAdmin;
     // Only show PGY-4 Rotation Forms to PGY-3 residents
     if (item.title === "PGY-4 Rotation Forms") return currentUserPGY === 3;
+    // Only show PGY-4 Schedule to PGY-4 residents (calculated as: current year - graduate year + 1 = 4)
+    // For example: 2026 - 2022 + 1 = 5 (graduated), 2026 - 2023 + 1 = 4 (PGY-4)
+    if (item.title === "PGY-4 Schedule") return currentUserPGY === 4;
     //Only show PGY-4 Rotaion Schedule to admins
     if (item.title === "PGY-4 Rotations") return isAdmin;
     return true;
