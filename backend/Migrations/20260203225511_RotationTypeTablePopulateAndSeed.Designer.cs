@@ -3,6 +3,7 @@ using System;
 using MedicalDemo.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MedicalDemo.Migrations
 {
     [DbContext(typeof(MedicalContext))]
-    partial class MedicalContextModelSnapshot : ModelSnapshot
+    [Migration("20260203225511_RotationTypeTablePopulateAndSeed")]
+    partial class RotationTypeTablePopulateAndSeed
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -285,12 +287,6 @@ namespace MedicalDemo.Migrations
                         .HasColumnType("varchar(45)")
                         .HasColumnName("month");
 
-                    b.Property<int>("MonthIndex")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PgyYear")
-                        .HasColumnType("int");
-
                     b.Property<string>("ResidentId")
                         .IsRequired()
                         .HasMaxLength(15)
@@ -303,13 +299,7 @@ namespace MedicalDemo.Migrations
                         .HasColumnType("varchar(45)")
                         .HasColumnName("rotation");
 
-                    b.Property<byte[]>("RotationTypeId")
-                        .IsRequired()
-                        .HasColumnType("binary(16)");
-
                     b.HasKey("RotationId");
-
-                    b.HasIndex("RotationTypeId");
 
                     b.HasIndex(new[] { "ResidentId" }, "resident_id_rotation_idx");
 
@@ -815,15 +805,7 @@ namespace MedicalDemo.Migrations
                         .IsRequired()
                         .HasConstraintName("resident_id_rotation");
 
-                    b.HasOne("MedicalDemo.Models.Entities.RotationType", "RotationType")
-                        .WithMany()
-                        .HasForeignKey("RotationTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Resident");
-
-                    b.Navigation("RotationType");
                 });
 
             modelBuilder.Entity("MedicalDemo.Models.Entities.SwapRequest", b =>
