@@ -125,7 +125,7 @@ function SidebarFloatingTrigger() {
 }
 
 function mapShiftType(shift: string) {
-  if (shift === "Saturday") return ["Saturday (24h)", "Saturday (14h)"];
+  if (shift === "Saturday") return ["Saturday (24h)", "Saturday (12h)"];
   if (shift === "Sunday") return ["Sunday (12h)"];
   return [shift]; // "Short" stays "Short"
 }
