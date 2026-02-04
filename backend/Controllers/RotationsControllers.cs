@@ -1,9 +1,11 @@
 using MedicalDemo.Models;
+using MedicalDemo.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace MedicalDemo.Controllers;
 
+// TODO: This controller has not been refactored from the backend rewrite
 [ApiController]
 [Route("api/[controller]")]
 public class RotationsController : ControllerBase
@@ -18,7 +20,7 @@ public class RotationsController : ControllerBase
     // POST: api/rotations
     [HttpPost]
     public async Task<IActionResult> CreateRotation(
-        [FromBody] Rotations rotation)
+        [FromBody] Rotation rotation)
     {
         if (rotation == null)
         {
@@ -30,7 +32,7 @@ public class RotationsController : ControllerBase
             rotation.RotationId = Guid.NewGuid();
         }
 
-        _context.rotations.Add(rotation);
+        _context.Rotations.Add(rotation);
         await _context.SaveChangesAsync();
 
         return CreatedAtAction(nameof(FilterRotations),
@@ -39,19 +41,19 @@ public class RotationsController : ControllerBase
 
     // GET: api/rotations
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Rotations>>> GetAllRotations()
+    public async Task<ActionResult<IEnumerable<Rotation>>> GetAllRotations()
     {
-        return await _context.rotations.ToListAsync();
+        return await _context.Rotations.ToListAsync();
     }
 
     // GET: api/rotations/filter?residentId=&month=&rotation=
     [HttpGet("filter")]
-    public async Task<ActionResult<IEnumerable<Rotations>>> FilterRotations(
+    public async Task<ActionResult<IEnumerable<Rotation>>> FilterRotations(
         [FromQuery] string? residentId,
         [FromQuery] string? month,
         [FromQuery] string? rotation)
     {
-        IQueryable<Rotations> query = _context.rotations.AsQueryable();
+        IQueryable<Rotation> query = _context.Rotations.AsQueryable();
 
         if (!string.IsNullOrEmpty(residentId))
         {
@@ -66,10 +68,10 @@ public class RotationsController : ControllerBase
 
         if (!string.IsNullOrEmpty(rotation))
         {
-            query = query.Where(v => v.Rotation == rotation);
+            query = query.Where(v => v.Rotation1 == rotation);
         }
 
-        List<Rotations> results = await query.ToListAsync();
+        List<Rotation> results = await query.ToListAsync();
 
         if (results.Count == 0)
         {
@@ -82,15 +84,15 @@ public class RotationsController : ControllerBase
     // PUT: api/rotations/{id}
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateRotation(Guid id,
-        [FromBody] Rotations updatedRotation)
+        [FromBody] Rotation updatedRotation)
     {
         if (id != updatedRotation.RotationId)
         {
             return BadRequest("Rotation ID in URL and body do not match.");
         }
 
-        Rotations? existingRotation
-            = await _context.rotations.FindAsync(id);
+        Rotation? existingRotation
+            = await _context.Rotations.FindAsync(id);
         if (existingRotation == null)
         {
             return NotFound("Rotation not found.");
@@ -99,7 +101,6 @@ public class RotationsController : ControllerBase
         // Update the fields
         existingRotation.ResidentId = updatedRotation.ResidentId;
         existingRotation.Month = updatedRotation.Month;
-        existingRotation.Rotation = updatedRotation.Rotation;
 
         try
         {
@@ -117,14 +118,14 @@ public class RotationsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteRotation(Guid id)
     {
-        Rotations? rotation = await _context.rotations.FindAsync(id);
+        Rotation? rotation = await _context.Rotations.FindAsync(id);
 
         if (rotation == null)
         {
             return NotFound("Rotation not found.");
         }
 
-        _context.rotations.Remove(rotation);
+        _context.Rotations.Remove(rotation);
         await _context.SaveChangesAsync();
 
         return NoContent(); // 204

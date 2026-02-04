@@ -1,4 +1,7 @@
 using MedicalDemo.Models;
+using MedicalDemo.Models.DTO.Requests;
+using MedicalDemo.Models.DTO.Responses;
+using MedicalDemo.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,132 +24,99 @@ public class AuthController : ControllerBase
         return Ok();
     }
 
-    [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] Residents resident)
-    {
-        bool exists = await _context.residents
-            .AnyAsync(r => r.email == resident.email);
-
-        if (exists)
-        {
-            return Conflict(new
-            { success = false, message = "Email already registered" });
-        }
-
-        string? hashedPassword
-            = BCrypt.Net.BCrypt.HashPassword(resident.password);
-
-        Residents newResident = new()
-        {
-            resident_id = resident.resident_id,
-            first_name = resident.first_name,
-            last_name = resident.last_name,
-            email = resident.email,
-            password = hashedPassword,
-            phone_num = resident.phone_num,
-            graduate_yr = resident.graduate_yr,
-            weekly_hours = 0,
-            total_hours = 0,
-            bi_yearly_hours = 0
-        };
-
-        _context.residents.Add(newResident);
-        await _context.SaveChangesAsync();
-
-        return StatusCode(201, new { success = true });
-    }
-
     [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequest request)
+    public async Task<IActionResult> Login([FromBody] AuthLoginRequest request)
     {
         try
         {
             //check residents table first
-            Residents? resident = await _context.residents
-                .FirstOrDefaultAsync(r => r.email == request.email);
+            Resident? resident = await _context.Residents
+                .FirstOrDefaultAsync(r => r.Email == request.email);
 
             if (resident != null)
             {
                 bool passwordMatch
                     = BCrypt.Net.BCrypt.Verify(request.password,
-                        resident.password);
+                        resident.Password);
 
                 if (!passwordMatch)
                 {
-                    return Unauthorized(new
-                    { success = false, message = "Invalid credentials" });
+                    return Unauthorized(new AuthLoginResponse
+                    {
+                        success = false,
+                        message = "Invalid credentials"
+                    });
                 }
 
                 string token = Guid.NewGuid().ToString();
 
-                return Ok(new
+                return Ok(new AuthLoginResponse
                 {
                     success = true,
-                    token,
+                    token = token,
                     userType = "resident",
-                    resident = new
+                    resident = new AuthLoginResponse.User
                     {
-                        id = resident.resident_id,
-                        resident.email,
-                        firstName = resident.first_name,
-                        lastName = resident.last_name,
-                        resident.phone_num
+                        id = resident.ResidentId,
+                        email = resident.Email,
+                        firstName = resident.FirstName,
+                        lastName = resident.LastName,
+                        phoneNum = resident.PhoneNum
                     }
                 });
             }
 
             //check admins table if not found in residents
-            Admins? admin = await _context.admins
-                .FirstOrDefaultAsync(a => a.email == request.email);
+            Admin? admin = await _context.Admins
+                .FirstOrDefaultAsync(a => a.Email == request.email);
 
             if (admin != null)
             {
                 bool passwordMatch
                     = BCrypt.Net.BCrypt.Verify(request.password,
-                        admin.password);
+                        admin.Password);
 
                 if (!passwordMatch)
                 {
-                    return Unauthorized(new
-                    { success = false, message = "Invalid credentials" });
+                    return Unauthorized(new AuthLoginResponse
+                    {
+                        success = false,
+                        message = "Invalid credentials"
+                    });
                 }
 
                 string token = Guid.NewGuid().ToString();
 
-                return Ok(new
+                return Ok(new AuthLoginResponse
                 {
                     success = true,
-                    token,
+                    token = token,
                     userType = "admin",
-                    admin = new
+                    admin = new AuthLoginResponse.User
                     {
-                        id = admin.admin_id,
-                        admin.email,
-                        firstName = admin.first_name,
-                        lastName = admin.last_name,
-                        admin.phone_num
+                        id = admin.AdminId,
+                        email = admin.Email,
+                        firstName = admin.FirstName,
+                        lastName = admin.LastName,
+                        phoneNum = admin.PhoneNum
                     }
                 });
             }
 
             //Not found in either
-            return Unauthorized(new
-            { success = false, message = "Invalid credentials" });
+            return Unauthorized(new AuthLoginResponse
+            {
+                success = false,
+                message = "Invalid credentials"
+            });
         }
         catch (Exception ex)
         {
-            return StatusCode(500,
-                new
-                {
-                    success = false,
-                    message = $"Login error: {ex.Message}"
-                });
+            return StatusCode(500, new AuthLoginResponse
+            {
+                success = false,
+                message = $"Login error: {ex.Message}"
+            });
         }
     }
-}
-
-public class LoginRequest
-{
-    public string email { get; set; }
-    public string password { get; set; }
 }

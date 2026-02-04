@@ -1,5 +1,13 @@
+using MedicalDemo.Algorithm;
+using MedicalDemo.Converters;
+using MedicalDemo.Enums;
+using MedicalDemo.Extensions;
 using MedicalDemo.Models;
 using MedicalDemo.Models.DTO;
+using MedicalDemo.Models.DTO.Requests;
+using MedicalDemo.Models.DTO.Responses;
+using MedicalDemo.Models.DTO.Scheduling;
+using MedicalDemo.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,68 +17,50 @@ namespace MedicalDemo.Controllers;
 [Route("api/[controller]")]
 public class DatesController : ControllerBase
 {
+    private readonly ILogger<DatesController> _logger;
     private readonly MedicalContext _context;
+    private readonly DateConverter _dateConverter;
 
-    public DatesController(MedicalContext context)
+    public DatesController(MedicalContext context, DateConverter dateConverter, ILogger<DatesController> logger)
     {
         _context = context;
+        _dateConverter = dateConverter;
+        _logger = logger;
     }
 
     // POST: api/dates
     [HttpPost]
-    public async Task<IActionResult> CreateDate([FromBody] Dates date)
+    public async Task<IActionResult> CreateDate([FromBody] DateCreateRequest request)
     {
-        if (date == null)
+        Date date = _dateConverter.CreateDateFromDateCreateRequest(request);
+        Resident? resident = await _context.Residents.FirstOrDefaultAsync(r => r.ResidentId == request.ResidentId);
+
+        if (resident == null)
         {
-            return BadRequest("Date object is null.");
+            return BadRequest();
         }
 
-        if (date.DateId == Guid.Empty)
-        {
-            date.DateId = Guid.NewGuid();
-        }
+        date.Hours = CallShiftTypeExtensions
+            .GetCallShiftTypeForDate(date.ShiftDate, resident.GraduateYr)
+            .GetHours();
 
-        _context.dates.Add(date);
+        _context.Dates.Add(date);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(FilterDates),
+        return CreatedAtAction(nameof(GetDates),
             new { id = date.DateId }, date);
     }
 
     // GET: api/dates
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<DatesWithResidentDTO>>>
-        GetDates()
+    public async Task<ActionResult<IEnumerable<DateResponse>>> GetDates(
+        [FromQuery] Guid? schedule_id,
+        [FromQuery] string? resident_id,
+        [FromQuery] DateOnly? date,
+        [FromQuery] CallShiftType? call_type
+    )
     {
-        List<DatesWithResidentDTO> dates = await _context.dates
-            .Include(d => d.Resident) // Join with Residents
-            .Select(d => new DatesWithResidentDTO
-            {
-                DateId = d.DateId,
-                ScheduleId = d.ScheduleId,
-                ResidentId = d.ResidentId,
-                FirstName = d.Resident.first_name,
-                LastName = d.Resident.last_name,
-                Date = d.Date,
-                CallType = d.CallType,
-                Hours = d.Hours
-            })
-            .ToListAsync();
-
-        return Ok(dates);
-    }
-
-    // GET: api/dates/filter?schedule_id=&resident_id=&date=&call_type
-    [HttpGet("filter")]
-    public async Task<ActionResult<IEnumerable<DatesWithResidentDTO>>>
-        FilterDates(
-            [FromQuery] Guid? schedule_id,
-            [FromQuery] string? resident_id,
-            [FromQuery] DateTime? date,
-            [FromQuery] string? call_type)
-    {
-        IQueryable<Dates> query = _context.dates.Include(d => d.Resident)
-            .AsQueryable();
+        IQueryable<Date> query = _context.Dates.Include(d => d.Resident).AsQueryable();
 
         if (schedule_id is not null)
         {
@@ -84,66 +74,71 @@ public class DatesController : ControllerBase
 
         if (date is not null)
         {
-            query = query.Where(d => d.Date.Date == date.Value.Date);
+            query = query.Where(d => d.ShiftDate == date.Value);
         }
 
-        if (!string.IsNullOrEmpty(call_type))
+        if (call_type is not null)
         {
-            query = query.Where(d => d.CallType.Contains(call_type));
+            query = query.Where(d => d.CallType == call_type);
         }
 
-        List<DatesWithResidentDTO> results = await query
-            .Select(d => new DatesWithResidentDTO
-            {
-                DateId = d.DateId,
-                ScheduleId = d.ScheduleId,
-                ResidentId = d.ResidentId,
-                FirstName = d.Resident.first_name,
-                LastName = d.Resident.last_name,
-                Date = d.Date,
-                CallType = d.CallType,
-                Hours = d.Hours
-            })
+        List<DateResponse> results = await query
+            .Include(d => d.Resident)
+            .Select(d => _dateConverter.CreateDateResponseFromDate(d))
             .ToListAsync();
 
-        if (!results.Any())
-        {
-            return NotFound("No dates matched the filter criteria.");
-        }
-
         return Ok(results);
+    }
+
+    // GET: api/dates/published
+    [HttpGet("published")]
+    public async Task<ActionResult<IEnumerable<DateResponse>>>
+        GetPublishedDates()
+    {
+        List<DateResponse> publishedDates = await _context.Dates
+            .Include(d => d.Resident)
+            .Where(d => d.Schedule.Status == ScheduleStatus.Published)
+            .Select(d => _dateConverter.CreateDateResponseFromDate(d)).ToListAsync();
+
+        return Ok(publishedDates);
     }
 
     // PUT: api/dates/{id}
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateDate(Guid id,
-        [FromBody] Dates updatedDate)
+        [FromBody] DateUpdateRequest updatedDate)
     {
-        if (id != updatedDate.DateId)
-        {
-            return BadRequest("Date ID in URL and body do not match.");
-        }
-
-        Dates? existingDate = await _context.dates.FindAsync(id);
+        Date? existingDate = await _context.Dates.Include(d => d.Resident).FirstOrDefaultAsync(d => d.DateId == id);
         if (existingDate == null)
         {
-            return NotFound("Date not found.");
+            return NotFound();
         }
 
         // Update fields
-        existingDate.ScheduleId = updatedDate.ScheduleId;
-        existingDate.ResidentId = updatedDate.ResidentId;
-        existingDate.Date = updatedDate.Date;
-        existingDate.CallType = updatedDate.CallType;
-        existingDate.Hours = updatedDate.Hours;
+        _dateConverter.UpdateDateFromDateUpdateRequest(existingDate, updatedDate);
+
+        Resident? resident = await _context.Residents.FirstOrDefaultAsync(r => r.ResidentId == existingDate.ResidentId);
+        if (resident == null)
+        {
+            return BadRequest();
+        }
+
+        if (updatedDate.Hours is null)
+        {
+            existingDate.Hours = CallShiftTypeExtensions
+                .GetCallShiftTypeForDate(existingDate.ShiftDate,
+                    resident.GraduateYr).GetHours();
+        }
 
         try
         {
             await _context.SaveChangesAsync();
-            return Ok(existingDate); // returns updated object
+            await _context.Entry(existingDate).ReloadAsync();
+            return Ok(_dateConverter.CreateDateResponseFromDate(existingDate)); // returns updated object
         }
         catch (DbUpdateException ex)
         {
+            _logger.LogError(ex, "Failed to update the date");
             return StatusCode(500,
                 $"An error occurred while updating the date: {ex.Message}");
         }
@@ -153,13 +148,13 @@ public class DatesController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteDate(Guid id)
     {
-        Dates? existingDate = await _context.dates.FindAsync(id);
+        Date? existingDate = await _context.Dates.FindAsync(id);
         if (existingDate == null)
         {
-            return NotFound("Date not found.");
+            return NotFound();
         }
 
-        _context.dates.Remove(existingDate);
+        _context.Dates.Remove(existingDate);
         await _context.SaveChangesAsync();
 
         return NoContent(); // 204

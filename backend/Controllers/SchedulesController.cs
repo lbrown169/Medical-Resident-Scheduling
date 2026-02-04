@@ -1,5 +1,12 @@
+using MedicalDemo.Algorithm;
+using MedicalDemo.Converters;
+using MedicalDemo.Enums;
+using MedicalDemo.Extensions;
 using MedicalDemo.Models;
 using MedicalDemo.Models.DTO;
+using MedicalDemo.Models.DTO.Requests;
+using MedicalDemo.Models.DTO.Responses;
+using MedicalDemo.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,145 +18,105 @@ namespace MedicalDemo.Controllers;
 [Route("api/[controller]")]
 public class SchedulesController : ControllerBase
 {
+    private readonly ILogger<SchedulesController> _logger;
     private readonly MedicalContext _context;
+    private readonly ScheduleConverter _scheduleConverter;
 
-    public SchedulesController(MedicalContext context)
+    public SchedulesController(ILogger<SchedulesController> logger, MedicalContext context, ScheduleConverter scheduleConverter)
     {
+        _logger = logger;
         _context = context;
+        _scheduleConverter = scheduleConverter;
     }
 
-    // POST: api/schedules
-    [HttpPost]
-    public async Task<IActionResult> CreateSchedule(
-        [FromBody] Schedules schedule)
-    {
-        if (schedule == null)
-        {
-            return BadRequest("Schedule object is null.");
-        }
-
-        if (schedule.ScheduleId == Guid.Empty)
-        {
-            schedule.ScheduleId = Guid.NewGuid();
-        }
-
-        _context.schedules.Add(schedule);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetAllSchedules),
-            new { id = schedule.ScheduleId }, schedule);
-    }
-
-    // GET: api/schedules
+    // GET: api/schedules?status=&generatedYear=
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Schedules>>> GetAllSchedules()
+    public async Task<ActionResult<IEnumerable<ScheduleResponse>>> GetAllSchedules(
+        [FromQuery] ScheduleStatus? status,
+        [FromQuery] int? generatedYear)
     {
-        List<Schedules> schedules = await _context.schedules.ToListAsync();
-        return Ok(schedules);
-    }
+        IQueryable<Schedule> query = _context.Schedules.AsQueryable();
 
-    // GET: api/schedules/filter?status=
-    [HttpGet("filter")]
-    public async Task<ActionResult<IEnumerable<Schedules>>> FilterSchedules(
-        [FromQuery] string? status)
-    {
-        IQueryable<Schedules> query = _context.schedules.AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(status))
+        if (status != null)
         {
             query = query.Where(s => s.Status == status);
         }
 
-        List<Schedules> results = await query.ToListAsync();
-
-        if (results.Count == 0)
+        if (generatedYear != null)
         {
-            return NotFound("No matching schedule records found.");
+            query = query.Where(s => s.GeneratedYear == generatedYear);
         }
+
+        List<ScheduleResponse> results = await query.Select(s => _scheduleConverter.CreateScheduleResponseFromSchedule(s)).ToListAsync();
 
         return Ok(results);
     }
 
-    // GET: api/schedules/published-dates
-    [HttpGet("published-dates")]
-    public async Task<ActionResult<IEnumerable<ScheduleDatesDTO>>>
-        GetPublishedDates()
+    // GET: api/schedules/published/{year}
+    [HttpGet("published/{year}")]
+    public async Task<ActionResult<ScheduleResponse>>
+        GetPublishedSchedule(int year)
     {
-        List<ScheduleDatesDTO> publishedDates = await (
-            from d in _context.dates
-            join s in _context.schedules on d.ScheduleId equals s
-                .ScheduleId
-            where s.Status.ToLower() == "published"
-            select new ScheduleDatesDTO
-            {
-                Date = d.Date,
-                ResidentId = d.ResidentId,
-                CallType = d.CallType
-            }).ToListAsync();
+        Schedule? schedule = await _context.Schedules.FirstOrDefaultAsync(s => s.Status == ScheduleStatus.Published && s.GeneratedYear == year);
 
-        if (!publishedDates.Any())
+        if (schedule == null)
         {
-            return NotFound("No dates found for published schedules.");
+            return NotFound();
         }
 
-        return Ok(publishedDates);
+        return Ok(_scheduleConverter.CreateScheduleResponseFromSchedule(schedule));
     }
-
-    // GET: api/schedules/under-review-dates
-    [HttpGet("under-review-dates")]
-    public async Task<ActionResult<IEnumerable<ScheduleDatesDTO>>>
-        GetUnderReviewDates()
-    {
-        List<ScheduleDatesDTO> underReviewDates = await (
-            from d in _context.dates
-            join s in _context.schedules on d.ScheduleId equals s
-                .ScheduleId
-            where s.Status.ToLower() == "under review"
-            select new ScheduleDatesDTO
-            {
-                Date = d.Date,
-                ResidentId = d.ResidentId,
-                CallType = d.CallType
-            }).ToListAsync();
-
-        if (!underReviewDates.Any())
-        {
-            return NotFound("No dates found for schedules under review.");
-        }
-
-        return Ok(underReviewDates);
-    }
-
 
     // PUT: api/schedules/{id}
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateSchedule(Guid id,
-        [FromBody] Schedules updatedSchedule)
+        [FromBody] UpdateScheduleRequest updateSchedule)
     {
-        if (id != updatedSchedule.ScheduleId)
-        {
-            return BadRequest("Schedule ID in URL and body do not match.");
-        }
-
-        Schedules? existingSchedule
-            = await _context.schedules.FindAsync(id);
+        Schedule? existingSchedule
+            = await _context.Schedules.FindAsync(id);
 
         if (existingSchedule == null)
         {
-            return NotFound("Schedule not found.");
+            return NotFound();
         }
 
-        existingSchedule.Status = updatedSchedule.Status;
+        if (existingSchedule.Status == updateSchedule.Status)
+        {
+            return NoContent();
+        }
+
+        // Only one schedule per year can be published
+        if (updateSchedule.Status == ScheduleStatus.Published)
+        {
+            bool isSchedulePublished = await _context.Schedules.AnyAsync(s =>
+                s.GeneratedYear == existingSchedule.GeneratedYear
+                && s.Status == ScheduleStatus.Published
+            );
+            if (isSchedulePublished)
+            {
+                return Conflict(new GenericResponse
+                {
+                    Success = false,
+                    Message = $"A schedule for {existingSchedule.GeneratedYear} is already published"
+                });
+            }
+        }
+
+        existingSchedule.Status = updateSchedule.Status;
 
         try
         {
             await _context.SaveChangesAsync();
-            return Ok(existingSchedule); // returns updated object
+            return Ok(_scheduleConverter.CreateScheduleResponseFromSchedule(existingSchedule)); // returns updated object
         }
         catch (DbUpdateException ex)
         {
-            return StatusCode(500,
-                $"An error occurred while updating the date: {ex.Message}");
+            _logger.LogError(ex, "An error occurred updating the schedule {scheduleId}", id);
+            return StatusCode(500, new GenericResponse
+            {
+                Success = false,
+                Message = "An error occurred while updating the schedule"
+            });
         }
     }
 
@@ -157,14 +124,14 @@ public class SchedulesController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteSchedule(Guid id)
     {
-        Schedules? schedule = await _context.schedules.FindAsync(id);
+        Schedule? schedule = await _context.Schedules.FindAsync(id);
 
         if (schedule == null)
         {
-            return NotFound("Schedule not found.");
+            return NotFound();
         }
 
-        _context.schedules.Remove(schedule);
+        _context.Schedules.Remove(schedule);
         await _context.SaveChangesAsync();
 
         return NoContent(); // 204 No Content

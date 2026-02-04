@@ -1,4 +1,8 @@
+using MedicalDemo.Converters;
 using MedicalDemo.Models;
+using MedicalDemo.Models.DTO.Requests;
+using MedicalDemo.Models.DTO.Responses;
+using MedicalDemo.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,49 +12,38 @@ namespace MedicalDemo.Controllers;
 [Route("api/[controller]")]
 public class BlackoutsController : ControllerBase
 {
+    private readonly ILogger<BlackoutsController> _logger;
+    private readonly BlackoutConverter _blackoutConverter;
     private readonly MedicalContext _context;
 
-    public BlackoutsController(MedicalContext context)
+    public BlackoutsController(MedicalContext context, BlackoutConverter blackoutConverter, ILogger<BlackoutsController> logger)
     {
         _context = context;
+        _blackoutConverter = blackoutConverter;
+        _logger = logger;
     }
 
     // POST: api/blackouts
     [HttpPost]
     public async Task<IActionResult> CreateBlackout(
-        [FromBody] Blackouts blackout)
+        [FromBody] BlackoutCreateRequest blackoutCreateRequest)
     {
-        if (blackout == null)
-        {
-            return BadRequest("Blackout object is null.");
-        }
-
-        if (blackout.BlackoutId == Guid.Empty)
-        {
-            blackout.BlackoutId = Guid.NewGuid();
-        }
-
-        _context.blackouts.Add(blackout);
+        Blackout blackout = _blackoutConverter.CreateBlackoutFromBlackoutCreateRequest(blackoutCreateRequest);
+        _context.Blackouts.Add(blackout);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(FilterBlackouts),
-            new { id = blackout.BlackoutId }, blackout);
+        return CreatedAtAction(nameof(GetBlackout),
+            new { id = blackout.BlackoutId }, _blackoutConverter.CreateBlackoutResponseFromBlackout(blackout));
     }
 
     // GET: api/blackouts
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Blackouts>>> GetBlackouts()
-    {
-        return await _context.blackouts.ToListAsync();
-    }
-
-    // GET: api/blackouts/filter?resident_id=&date
-    [HttpGet("filter")]
-    public async Task<ActionResult<IEnumerable<Blackouts>>> FilterBlackouts(
+    public async Task<ActionResult<IEnumerable<BlackoutResponse>>> GetBlackouts(
         [FromQuery] string? resident_id,
-        [FromQuery] DateTime? date)
+        [FromQuery] DateOnly? date
+    )
     {
-        IQueryable<Blackouts> query = _context.blackouts.AsQueryable();
+        IQueryable<Blackout> query = _context.Blackouts.AsQueryable();
 
         if (!string.IsNullOrEmpty(resident_id))
         {
@@ -59,47 +52,55 @@ public class BlackoutsController : ControllerBase
 
         if (date.HasValue)
         {
-            query = query.Where(b => b.Date.Date == date.Value.Date);
+            query = query.Where(b => b.Date == date.Value);
         }
 
-        List<Blackouts> results = await query.ToListAsync();
+        List<BlackoutResponse> results = await query.Select(b => _blackoutConverter.CreateBlackoutResponseFromBlackout(b)).ToListAsync();
 
-        if (!results.Any())
+        if (results.Count == 0)
         {
-            return NotFound("No blackouts matched the filter criteria.");
+            return NotFound();
         }
 
         return Ok(results);
     }
 
+    [HttpGet("{id}")]
+    public async Task<ActionResult<IEnumerable<BlackoutResponse>>> GetBlackout(Guid id)
+    {
+        Blackout? blackout = await _context.Blackouts.FindAsync(id);
+
+        if (blackout == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(_blackoutConverter.CreateBlackoutResponseFromBlackout(blackout));
+    }
+
     // PUT: api/blackouts/{id}
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateBlackout(Guid id,
-        [FromBody] Blackouts updatedBlackout)
+        [FromBody] BlackoutUpdateRequest updatedBlackout)
     {
-        if (id != updatedBlackout.BlackoutId)
-        {
-            return BadRequest("Blackout ID in URL and body do not match.");
-        }
-
-        Blackouts? existingBlackout
-            = await _context.blackouts.FindAsync(id);
+        Blackout? existingBlackout
+            = await _context.Blackouts.FindAsync(id);
         if (existingBlackout == null)
         {
-            return NotFound("Blackout not found.");
+            return NotFound();
         }
 
         // Update fields
-        existingBlackout.ResidentId = updatedBlackout.ResidentId;
-        existingBlackout.Date = updatedBlackout.Date;
+        _blackoutConverter.UpdateBlackoutFromBlackoutUpdateRequest(existingBlackout, updatedBlackout);
 
         try
         {
             await _context.SaveChangesAsync();
-            return Ok(existingBlackout); // returns updated object
+            return Ok(_blackoutConverter.CreateBlackoutResponseFromBlackout(existingBlackout));
         }
         catch (DbUpdateException ex)
         {
+            _logger.LogError(ex, "Failed to update blackout");
             return StatusCode(500,
                 $"An error occurred while updating the date: {ex.Message}");
         }
@@ -109,13 +110,13 @@ public class BlackoutsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteBlackout(Guid id)
     {
-        Blackouts? blackout = await _context.blackouts.FindAsync(id);
+        Blackout? blackout = await _context.Blackouts.FindAsync(id);
         if (blackout == null)
         {
-            return NotFound("Blackout not found.");
+            return NotFound();
         }
 
-        _context.blackouts.Remove(blackout);
+        _context.Blackouts.Remove(blackout);
         await _context.SaveChangesAsync();
 
         return NoContent(); // 204

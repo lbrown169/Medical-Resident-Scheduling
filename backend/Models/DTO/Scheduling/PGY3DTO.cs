@@ -2,7 +2,7 @@ namespace MedicalDemo.Models.DTO.Scheduling;
 
 public class PGY3DTO : ResidentDTO
 {
-    public override bool CanWork(DateTime curDay)
+    public override bool CanWork(DateOnly curDay)
     {
         if (IsVacation(curDay))
         {
@@ -11,8 +11,8 @@ public class PGY3DTO : ResidentDTO
 
         if (curDay.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
         {
-            DateTime prevDay = curDay.AddDays(-1);
-            DateTime nextDay = curDay.AddDays(1);
+            DateOnly prevDay = curDay.AddDays(-1);
+            DateOnly nextDay = curDay.AddDays(1);
             if (WorkDays.Contains(prevDay) ||
                 WorkDays.Contains(nextDay))
             {
@@ -21,8 +21,8 @@ public class PGY3DTO : ResidentDTO
         }
         else // Weekday
         {
-            DateTime nextDay = curDay.AddDays(1);
-            DateTime prevDay = curDay.AddDays(-1);
+            DateOnly nextDay = curDay.AddDays(1);
+            DateOnly prevDay = curDay.AddDays(-1);
 
             if (WorkDays.Contains(nextDay) &&
                 nextDay.DayOfWeek == DayOfWeek.Saturday)
@@ -40,7 +40,7 @@ public class PGY3DTO : ResidentDTO
         return true;
     }
 
-    public override void AddWorkDay(DateTime curDay)
+    public override void AddWorkDay(DateOnly curDay)
     {
         if (WorkDays.Contains(curDay))
         {
@@ -51,7 +51,7 @@ public class PGY3DTO : ResidentDTO
         WorkDays.Add(curDay);
     }
 
-    public override void RemoveWorkDay(DateTime curDay)
+    public override void RemoveWorkDay(DateOnly curDay)
     {
         if (!WorkDays.Contains(curDay))
         {

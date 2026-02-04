@@ -147,7 +147,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
   const getEventsForDate = (date: Date) => {
     return events.filter(event => {
       const eventDate = ensureDate(event.start);
-      return eventDate.toDateString() === date.toDateString();
+      return eventDate.getTime() === date.getTime();
     });
   };
 
