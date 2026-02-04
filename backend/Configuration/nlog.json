@@ -77,11 +77,6 @@
         "minlevel": "Trace",
         "writeTo": "console, logFile"
       },
-      "99_Info": {
-        "logger": "*",
-        "minlevel": "Info",
-        "writeTo": "console, sentry"
-      },
       "90_EntityFramework": {
         "logger": "Microsoft.EntityFrameworkCore.*",
         "minlevel": "Trace",
@@ -92,23 +87,26 @@
       "90_AspNetCore": {
         "logger": "Microsoft.AspNetCore.*",
         "minlevel": "Trace",
-        "maxlevel": "Debug",
-        "writeTo": "",
-        "final": true
-      },
-      "90_AspNetCoreMvc": {
-        "logger": "Microsoft.AspNetCore.Mvc.*",
-        "minlevel": "Trace",
         "maxlevel": "Info",
         "writeTo": "",
         "final": true
       },
-      "90_AspNetCoreRouting": {
-        "logger": "Microsoft.AspNetCore.Routing.*",
-        "minlevel": "Trace",
-        "maxlevel": "Info",
-        "writeTo": "",
-        "final": true
+      "50_Sentry_Production_Errors": {
+        "logger": "*",
+        "minlevel": "Error",
+        "writeTo": "sentry",
+        "filters": [
+          {
+            "type": "when",
+            "condition": "equals('${environment:ASPNETCORE_ENVIRONMENT}', 'Production')",
+            "action": "Log"
+          },
+          {
+            "type": "when",
+            "condition": "not equals('${environment:ASPNETCORE_ENVIRONMENT}', 'Production')",
+            "action": "Ignore"
+          }
+        ]
       }
     }
   }

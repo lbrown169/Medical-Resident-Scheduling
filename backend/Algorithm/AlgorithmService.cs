@@ -139,7 +139,7 @@ public class AlgorithmService
 
         if (shortCallGraph.getFlow(sourceIndex, sinkIndex) != 3 * pgy1)
         {
-            _logger.LogError("Not able to make valid assignment based on parameters");
+            _logger.LogWarning("Not able to make valid assignment based on parameters");
             return false;
         }
 
@@ -293,7 +293,7 @@ public class AlgorithmService
         //Console.WriteLine($"The number of pgy1 is {pgy1}");
         if (flow != 1 * pgy1)
         {
-            _logger.LogError("Not able to make valid assignment based on parameters");
+            _logger.LogWarning("Not able to make valid assignment based on parameters");
             return false;
         }
 
@@ -444,7 +444,7 @@ public class AlgorithmService
 
         if (sundaysCallGraph.getFlow(sourceIndex, sinkIndex) != 1 * pgy1)
         {
-            _logger.LogError("Not able to make valid assignment based on parameters");
+            _logger.LogWarning("Not able to make valid assignment based on parameters");
             return false;
         }
 
@@ -517,7 +517,7 @@ public class AlgorithmService
     {
         foreach (PGY1 res in pgy1s)
         {
-            _logger.LogDebug("PGY1 {ResName} works:", res.name);
+            _logger.LogTrace("PGY1 {ResName} works:", res.name);
             // print all their work days in sorted order
             ArrayList workedDays = new();
             foreach (DateOnly curDay in res.workDaySet())
@@ -530,13 +530,13 @@ public class AlgorithmService
 
             foreach (DateOnly curDay in workedDays)
             {
-                _logger.LogDebug("  {DateTime} {CurDayDayOfWeek}", curDay, curDay.DayOfWeek);
+                _logger.LogTrace("  {DateTime} {CurDayDayOfWeek}", curDay, curDay.DayOfWeek);
             }
         }
 
         foreach (PGY2 res in pgy2s)
         {
-            _logger.LogDebug("PGY2 {ResName} works:", res.name);
+            _logger.LogTrace("PGY2 {ResName} works:", res.name);
             // print all their work days in sorted order
             ArrayList workedDays = new();
             foreach (DateOnly curDay in res.workDaySet())
@@ -549,13 +549,13 @@ public class AlgorithmService
 
             foreach (DateOnly curDay in workedDays)
             {
-                _logger.LogDebug("  {DateTime} {CurDayDayOfWeek}", curDay, curDay.DayOfWeek);
+                _logger.LogTrace("  {DateTime} {CurDayDayOfWeek}", curDay, curDay.DayOfWeek);
             }
         }
 
         foreach (PGY3 res in pgy3s)
         {
-            _logger.LogDebug("PGY3 {ResName} works:", res.name);
+            _logger.LogTrace("PGY3 {ResName} works:", res.name);
             // print all their work days in sorted order
             ArrayList workedDays = new();
             foreach (DateOnly curDay in res.workDaySet())
@@ -568,7 +568,7 @@ public class AlgorithmService
 
             foreach (DateOnly curDay in workedDays)
             {
-                _logger.LogDebug("  {DateTime} {CurDayDayOfWeek}", curDay, curDay.DayOfWeek);
+                _logger.LogTrace("  {DateTime} {CurDayDayOfWeek}", curDay, curDay.DayOfWeek);
             }
         }
     }
@@ -637,7 +637,7 @@ public class AlgorithmService
 
         if (!assigned)
         {
-            _logger.LogError(
+            _logger.LogWarning(
                 "[ERROR] Could not assign random shifts after retries");
             return false;
         }
@@ -732,7 +732,7 @@ public class AlgorithmService
 
         if (!assigned)
         {
-            _logger.LogError(
+            _logger.LogWarning(
                 "[ERROR] Could not assign random shifts after retries");
             return false;
         }
@@ -903,7 +903,7 @@ public class AlgorithmService
 
         if (!success)
         {
-            _logger.LogError("Failed");
+            _logger.LogWarning("Failed");
         }
     }
 
@@ -985,7 +985,7 @@ public class AlgorithmService
         if (needsToCalculate)
         {
             // Too many attempts
-            _logger.LogError("Failed to swap shifts with giver rooted after 100 attempts.");
+            _logger.LogWarning("Failed to swap shifts with giver rooted after 100 attempts.");
             return false;
         }
 
@@ -1078,7 +1078,7 @@ public class AlgorithmService
         if (needsToCalculate)
         {
             // Too many attempts
-            _logger.LogError("Failed to swap shifts with giver rooted after 100 attempts.");
+            _logger.LogWarning("Failed to swap shifts with giver rooted after 100 attempts.");
             return false;
         }
 
@@ -1348,7 +1348,7 @@ public class AlgorithmService
                             : ((PGY2)pgy2s[residentIndex - pgy1s.Count]).name;
 
                         // print the resident who did not handle their shifts
-                        _logger.LogError(
+                        _logger.LogWarning(
                             "[DEBUG] Resident {ResidentName} did not handle " +
                             "their shifts properly. Assigned: {Flow}, Expected: " +
                             "{EdgeOriginalCap}",
@@ -1468,7 +1468,7 @@ public class AlgorithmService
                 } */
 
                 // print the shift counts for each resident
-                _logger.LogInformation("Shift counts for each resident:");
+                _logger.LogDebug("Shift counts for each resident:");
                 for (int i = 0; i < pgy1s.Count; i++)
                 {
                     int totalHours =
@@ -1476,7 +1476,7 @@ public class AlgorithmService
                             + pgy1ShiftCount[i][CallShiftType.SaturdayFullCall] * 24
                             + pgy1ShiftCount[i][CallShiftType.SundayHalfCall] * 12;
 
-                    _logger.LogInformation(
+                    _logger.LogDebug(
                         "PGY1 {I}: Short: {I1}, Saturday Long: {I2}, Sunday: {I3}, Hours: {hours}",
                         ((PGY1)pgy1s[i]).name, pgy1ShiftCount[i][CallShiftType.WeekdayShortCall],
                         pgy1ShiftCount[i][CallShiftType.SaturdayFullCall],
@@ -1505,7 +1505,7 @@ public class AlgorithmService
                 continue;
             }
 
-            _logger.LogInformation("Shift counts for each resident:");
+            _logger.LogDebug("Shift counts for each resident:");
             for (int i = 0; i < pgy1s.Count; i++)
             {
                 int totalHours =
@@ -1513,7 +1513,7 @@ public class AlgorithmService
                     + pgy1ShiftCount[i][CallShiftType.SaturdayFullCall] * 24
                     + pgy1ShiftCount[i][CallShiftType.SundayHalfCall] * 12;
 
-                _logger.LogInformation(
+                _logger.LogDebug(
                     "PGY1 {I}: Short: {I1}, Saturday Long: {I2}, Sunday: {I3}, Hours: {hours}",
                     ((PGY1)pgy1s[i]).name, pgy1ShiftCount[i][CallShiftType.WeekdayShortCall],
                     pgy1ShiftCount[i][CallShiftType.SaturdayFullCall],
@@ -1529,7 +1529,7 @@ public class AlgorithmService
                     + pgy2ShiftCount[i][CallShiftType.SaturdayHalfCall] * 12
                     + pgy2ShiftCount[i][CallShiftType.SundayHalfCall] * 12;
 
-                _logger.LogInformation(
+                _logger.LogDebug(
                     "PGY2 {I}: Short: {I1}, Saturday Long: {I2}, Sunday: {I3}, Hours: {hours}",
                     ((PGY2)pgy2s[i]).name, pgy2ShiftCount[i][CallShiftType.WeekdayShortCall],
                     pgy2ShiftCount[i][CallShiftType.SaturdayHalfCall],
@@ -1539,7 +1539,7 @@ public class AlgorithmService
             }
 
             // if we reach here, the flow is equal to the number of days, so we can assign the shifts
-            _logger.LogDebug("Adding worked days");
+            _logger.LogTrace("Adding worked days");
 
             // add worked days
             for (int i = 0; i < pgy1s.Count; i++)
