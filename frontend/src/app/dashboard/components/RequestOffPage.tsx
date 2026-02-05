@@ -281,11 +281,17 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
               <textarea
                 id="description-box"
                 rows={2}
+                maxLength={255}
                 className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors resize-none"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="e.g., specific duties, contact info, special considerations..."
               />
+              <div className="flex justify-end">
+                <span className={`text-xs ${description.length >= 255 ? 'text-red-500 font-semibold' : 'text-muted-foreground'}`}>
+                  {description.length}/255
+                </span>
+              </div>
             </div>
 
             {/* Form Summary */}
