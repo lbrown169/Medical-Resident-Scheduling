@@ -27,7 +27,11 @@ interface SchedulesByYear {
   [year: number]: Schedule[];
 }
 
-const SchedulesPage: React.FC = () => {
+interface SchedulesPageProps {
+  onNavigateToCalendar: () => void;
+}
+
+const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) => {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedYears, setExpandedYears] = useState<Set<number>>(new Set());
@@ -37,6 +41,10 @@ const SchedulesPage: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
   const [generating, setGenerating] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+
+  // Delete confirmation state
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [scheduleToDelete, setScheduleToDelete] = useState<Schedule | null>(null);
 
   const fetchSchedules = useCallback(async () => {
     try {
@@ -61,7 +69,7 @@ const SchedulesPage: React.FC = () => {
 
   const getUniqueYears = (scheduleList: Schedule[]): number[] => {
     const years = [...new Set(scheduleList.map((s) => s.generatedYear))];
-    return years.sort((a, b) => b - a); // Sort descending (newest first)
+    return years.sort((a, b) => a - b); // Sort ascending
   };
 
   const groupSchedulesByYear = (scheduleList: Schedule[]): SchedulesByYear => {
@@ -127,9 +135,27 @@ const SchedulesPage: React.FC = () => {
     });
   };
 
-  const handleDelete = async (scheduleId: string) => {
+  const handleDeleteClick = (schedule: Schedule) => {
+    // Check if the schedule is published (status.id === 1)
+    if (schedule.status.id === 1) {
+      toast({
+        variant: "destructive",
+        title: "Cannot Delete Published Schedule",
+        description: "You must unpublish the schedule before deleting it.",
+      });
+      return;
+    }
+
+    // If it's under review, show confirmation dialog
+    setScheduleToDelete(schedule);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!scheduleToDelete) return;
+
     try {
-      const response = await fetch(`${config.apiUrl}/api/schedules/${scheduleId}`, {
+      const response = await fetch(`${config.apiUrl}/api/schedules/${scheduleToDelete.scheduleId}`, {
         method: "DELETE",
       });
       if (response.ok || response.status === 204) {
@@ -149,6 +175,9 @@ const SchedulesPage: React.FC = () => {
         title: "Error",
         description: "Failed to delete schedule. Please try again.",
       });
+    } finally {
+      setDeleteConfirmOpen(false);
+      setScheduleToDelete(null);
     }
   };
 
@@ -171,7 +200,10 @@ const SchedulesPage: React.FC = () => {
           title: isCurrentlyPublished ? "Schedule Unpublished" : "Schedule Published",
           description: `The schedule has been ${isCurrentlyPublished ? "unpublished" : "published"}.`,
         });
-        fetchSchedules();
+        await fetchSchedules();
+
+        // Navigate to the calendar to show updated schedule
+        onNavigateToCalendar();
       } else if (response.status === 409) {
         // Conflict - another schedule is already published for this year
         toast({
@@ -330,14 +362,14 @@ const SchedulesPage: React.FC = () => {
                                   <div className="flex items-center justify-end gap-4">
                                     <button
                                       onClick={() => handleEdit(schedule.scheduleId)}
-                                      className="flex items-center gap-1 text-blue-500 hover:text-blue-600"
+                                      className="flex items-center gap-1 text-blue-500 hover:text-blue-600 cursor-pointer"
                                     >
                                       Edit
                                       <Edit className="h-4 w-4" />
                                     </button>
                                     <button
-                                      onClick={() => handleDelete(schedule.scheduleId)}
-                                      className="flex items-center gap-1 text-red-500 hover:text-red-600"
+                                      onClick={() => handleDeleteClick(schedule)}
+                                      className="flex items-center gap-1 text-red-500 hover:text-red-600 cursor-pointer"
                                     >
                                       Delete
                                       <Trash2 className="h-4 w-4" />
@@ -357,6 +389,18 @@ const SchedulesPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        title="Delete Schedule?"
+        message={`Are you sure you want to delete this schedule for ${scheduleToDelete?.generatedYear}? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleConfirmDelete}
+        variant="danger"
+      />
     </div>
   );
 };

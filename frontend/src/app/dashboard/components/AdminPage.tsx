@@ -3,17 +3,14 @@
 import React, { useState, useEffect } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
-import { CalendarDays, CalendarX, Send, Check, X, Shield, Users, Trash2, Repeat } from "lucide-react";
+import { CalendarDays, CalendarX, Send, Check, X, Shield, Users, Repeat } from "lucide-react";
 import { differenceInCalendarDays, parseISO } from 'date-fns';
 import { config } from '../../../config';
 import { toast } from "../../../lib/use-toast";
 import { useMemo } from "react";
 import { Dialog } from "../../../components/ui/dialog";
 import { ConfirmDialog } from "./ConfirmDialog";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { ChevronDown } from "lucide-react";
 import { VacationResponse } from "@/lib/models/VacationResponse";
-import { DateResponse } from "@/lib/models/DateResponse";
 
 interface AdminPageProps {
   residents: { id: string; name: string; email: string; pgyLevel: number | string; hospitalRole?: number; hours: number }[];
@@ -31,7 +28,6 @@ interface AdminPageProps {
   users: { id: string; first_name: string; last_name: string; email: string; role: string }[];
   handleDeleteUser: (user: { id: string; first_name: string; last_name: string; email: string; role: string }) => void;
   latestVersion?: string;
-  onNavigateToCalendar?: () => void;
   userId: string;
 }
 
@@ -101,14 +97,11 @@ const AdminPage: React.FC<AdminPageProps> = ({
   // setInviteRole,
   users,
   handleDeleteUser,
-  onNavigateToCalendar,
   userId,
 }) => {
   console.log('AdminPage props - users:', users);
   console.log('AdminPage props - users length:', users.length);
 
-  const [generating, setGenerating] = useState(false);
-  const [message, setMessage] = useState("");
   const [showRequestsModal, setShowRequestsModal] = useState(false);
   const [showInvitationsModal, setShowInvitationsModal] = useState(false);
   const [myTimeOffRequests, setMyTimeOffRequests] = useState<Request[]>([]);
@@ -123,86 +116,6 @@ const AdminPage: React.FC<AdminPageProps> = ({
   const [showAnnouncementConfirm, setShowAnnouncementConfirm] = useState(false);
   const [deletingAnnouncement, setDeletingAnnouncement] = useState<string | null>(null);
   const [switchingRole, setSwitchingRole] = useState<string | null>(null);
-  const [deletingSchedule, setDeletingSchedule] = useState(false);
-  const currentYear = new Date().getFullYear();
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [selectedYear, setSelectedYear] = useState<number>(currentYear);
-
-  const handleGenerateSchedule = async (year: number) => {
-    setGenerating(true);
-    setMessage("");
-    try {
-      const response = await fetch(`${config.apiUrl}/api/algorithm/training/${year}`, {
-        method: "POST",
-      });
-
-      if (!response.ok) throw new Error("Failed to generate schedule");
-      setMessage(`New schedule for ${year} generated successfully!`);
-
-      if (onNavigateToCalendar) onNavigateToCalendar();
-    } catch (err) {
-      console.error("Error generating schedule:", err);
-      setMessage("Error generating schedule. Please try again.");
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  // Helper to get id needed for schedule deletion
-  const getLatestScheduleId = async (): Promise<string | null> => {
-    try {
-      const res = await fetch(`${config.apiUrl}/api/dates/published`);
-      if (!res.ok) return null;
-      const dates: DateResponse[] = await res.json();
-      const map: Record<string, number> = {};
-
-      for (const d of dates) {
-        if (!d.scheduleId || !d.dateId) continue;
-        const t = new Date(d.shiftDate).getTime();
-        if (!map[d.scheduleId] || t > map[d.scheduleId]) {
-          map[d.scheduleId] = t;
-        }
-      }
-
-      const latest = Object.entries(map).sort((a, b) => b[1] - a[1])[0]?.[0];
-      return latest ?? null;
-    } catch (e) {
-      console.error("getLatestScheduleId error:", e);
-      return null;
-    }
-  };
-
-  const handleDeleteSchedule = async (): Promise<void> => {
-    setDeletingSchedule(true);
-    try {
-      const id = await getLatestScheduleId();
-      if (!id) {
-        toast({
-          title: "No schedule found",
-          description: "Couldn’t determine a schedule ID to delete.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const res = await fetch(`${config.apiUrl}/api/schedules/${encodeURIComponent(id)}`, { method: "DELETE" });
-      const ok = res.status === 204;
-
-      toast({
-        title: ok ? "Schedule deleted" : "Delete failed",
-        description: ok
-          ? "The current schedule was deleted successfully."
-          : (await res.text()) || `Unexpected error (${res.status}).`,
-        variant: ok ? "success" : "destructive",
-      });
-
-      if (ok && onNavigateToCalendar) {
-        onNavigateToCalendar();
-      }
-    } finally {
-      setDeletingSchedule(false);
-    }
-  };
 
   useEffect(() => {
     // Ping backend API
@@ -717,77 +630,9 @@ const AdminPage: React.FC<AdminPageProps> = ({
               </div>
               <span className="text-xs text-gray-500">Pending Time Off</span>
             </div>
-            <div className="h-6 sm:h-10 border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-700 mx-0 sm:mx-4 lg:mx-6 hidden sm:block" />
-            <div className="flex items-center">
-
-              {/* Left: Generate Schedule Button (uses currently selectedYear) */}
-              <Button
-                onClick={() => setConfirmOpen(true)}
-                disabled={generating}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-l-xl rounded-r-none shadow"
-              >
-                {generating ? "Generating..." : `Generate ${selectedYear} Schedule`}
-              </Button>
-              
-              {/* Right: attached dropdown chevron to choose year */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-3 rounded-r-xl rounded-l-none shadow border-l border-blue-500"
-                    disabled={generating}
-                    aria-label="Choose year"
-                  >
-                    <ChevronDown className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem onClick={() => setSelectedYear(currentYear - 1)}>
-                    Generate for {currentYear - 1}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSelectedYear(currentYear)}>
-                    Generate for {currentYear}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSelectedYear(currentYear + 1)}>
-                    Generate for {currentYear + 1}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <ConfirmDialog
-                open={confirmOpen}
-                onOpenChange={setConfirmOpen}
-                title="Generate new schedule?"
-                message={`This will overwrite the current schedule for ${selectedYear}. Continue?`}
-                confirmText="Generate"
-                cancelText="Cancel"
-                onConfirm={() => handleGenerateSchedule(selectedYear)}
-                loading={generating}
-                variant="default"
-              />
-            </div>
-
-            {/* Delete Schedule */}
-            <ConfirmDialog
-              triggerText={
-                <>
-                  <span className="flex items-center justify-center">
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Current Schedule
-                  </span>
-                </>
-              }
-              title="Delete current schedule?"
-              message="This action cannot be undone."
-              confirmText="Delete"
-              cancelText="Cancel"
-              onConfirm={handleDeleteSchedule}
-              loading={deletingSchedule}
-              variant="danger"
-            />
           </div>
         </div>
       </Card>
-      {message && <div className="mb-4 text-center text-sm font-medium text-green-600 dark:text-green-400">{message}</div>}
 
       {/* Tab Navigation */}
       <div className="w-full max-w-6xl flex flex-col sm:flex-row gap-1 sm:gap-2 mb-4 sm:mb-6">

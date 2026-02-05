@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { ChevronLeft, ChevronRight, CalendarDays, Home, Repeat2, UserCheck, CalendarX, Settings as SettingsIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarDays, Home, Repeat2, UserCheck, CalendarX, Settings as SettingsIcon, LayoutList } from "lucide-react";
 
 interface CalendarEvent {
   id: string;
@@ -27,11 +27,12 @@ interface CalendarPageProps {
   onNavigateToCheckSchedule?: () => void;
   onNavigateToSettings?: () => void;
   onNavigateToHome?: () => void;
+  onNavigateToSchedules?: () => void;
   onDateChange?: (month: number, year: number) => void;
   isAdmin?: boolean;
 }
 
-const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCalls, onNavigateToRequestOff, onNavigateToCheckSchedule, onNavigateToSettings, onNavigateToHome, onDateChange, isAdmin }) => {
+const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCalls, onNavigateToRequestOff, onNavigateToCheckSchedule, onNavigateToSettings, onNavigateToHome, onNavigateToSchedules, onDateChange, isAdmin }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month' | 'year'>('month');
@@ -370,9 +371,12 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
             <button onClick={onNavigateToHome} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground">
               <Home className="w-5 h-5" /> Home
             </button>
+            {/* Swap Calls button: only show if not admin */}
+            {!isAdmin && (
             <button onClick={onNavigateToSwapCalls} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground">
               <Repeat2 className="w-5 h-5" /> Swap Calls
             </button>
+            )}
             {/* Request Off button: only show if not admin */}
             {!isAdmin && (
               <button onClick={onNavigateToRequestOff} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground">
@@ -385,8 +389,11 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                 <UserCheck className="w-5 h-5" /> Check My Schedule
               </button>
             )}
+            {/* Schedules button: only show for admin */}
             {isAdmin && (
-              null
+              <button onClick={onNavigateToSchedules} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground">
+                <LayoutList className="w-5 h-5" /> Schedules
+              </button>
             )}
             <button onClick={onNavigateToSettings} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground">
               <SettingsIcon className="w-5 h-5" /> Settings
