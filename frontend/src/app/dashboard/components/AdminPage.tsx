@@ -948,7 +948,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={7} className="px-6 py-4 text-center text-gray-500 italic">No time off requests found.</td>
+                      <td colSpan={6} className="px-6 py-4 text-center text-gray-500 italic">No time off requests found.</td>
                     </tr>
                   )}
                 </tbody>
