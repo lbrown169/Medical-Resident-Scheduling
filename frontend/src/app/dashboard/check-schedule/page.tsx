@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import CheckSchedulePage from '../components/CheckSchedulePage';
 import { config } from '../../../config';
+import { DateResponse } from '@/lib/models/DateResponse';
 
 interface ScheduleEntry {
   id: string;
@@ -12,19 +13,13 @@ interface ScheduleEntry {
 }
 
 // API Response types
-interface DateResponse {
-  dateId: string;
-  date: string;
-  callType: string;
-  scheduleId: string;
-}
 
 export default function Page() {
   const [mySchedule, setMySchedule] = useState<ScheduleEntry[]>([]);
 
   const fetchMySchedule = useCallback(async () => {
     try {
-      const response = await fetch(`${config.apiUrl}/api/dates`);
+      const response = await fetch(`${config.apiUrl}/api/dates/published`);
       if (response.ok) {
         const dates: DateResponse[] = await response.json();
         const currentDate = new Date();
@@ -37,7 +32,7 @@ export default function Page() {
           dates.forEach((date: DateResponse) => {
             if (!date.scheduleId) return;
             const current = scheduleIdToLatestDate[date.scheduleId];
-            const thisDate = new Date(date.date).getTime();
+            const thisDate = new Date(date.shiftDate).getTime();
             if (!current || thisDate > current) {
               scheduleIdToLatestDate[date.scheduleId] = thisDate;
             }
@@ -54,16 +49,16 @@ export default function Page() {
         // Filter for future dates only, and with a real callType
         const userSchedule = filteredDates
           .filter((date: DateResponse) => {
-            const dateObj = new Date(date.date);
+            const dateObj = new Date(date.shiftDate);
             return dateObj >= currentDate && date.callType;
           })
-          .sort((a: DateResponse, b: DateResponse) => new Date(a.date).getTime() - new Date(b.date).getTime())
+          .sort((a: DateResponse, b: DateResponse) => new Date(a.shiftDate).getTime() - new Date(b.shiftDate).getTime())
           .slice(0, 20)
           .map((date: DateResponse) => ({
             id: date.dateId,
-            date: date.date,
+            date: date.shiftDate,
             time: "All Day",
-            shift: `${date.callType} Call`,
+            shift: `${date.callType.description} Call`,
             location: "Hospital"
           }));
 

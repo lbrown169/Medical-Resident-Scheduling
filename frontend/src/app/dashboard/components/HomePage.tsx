@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
-import { Calendar, Clock, RotateCcw, CalendarCheck, Bell, Users } from "lucide-react";
+import { Calendar, CalendarX, Clock, UserCheck, RotateCcw, Repeat, CalendarCheck, Bell, Users } from "lucide-react";
 import { config } from "../../../config";
 import { Dialog } from "../../../components/ui/dialog";
 import { toast } from "../../../lib/use-toast";
@@ -242,7 +242,7 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
             >
               <div className="text-left w-full">
                 <div className="flex items-center gap-3 mb-2">
-                  <RotateCcw className="h-4 w-4" />
+                  <Repeat className="h-4 w-4" />
                   <span className="font-semibold text-base">Request Call Swap</span>
                 </div>
                 <p className="text-sm text-muted-foreground">Submit a swap request</p>
@@ -256,7 +256,7 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
             >
               <div className="text-left w-full">
                 <div className="flex items-center gap-3 mb-2">
-                  <Calendar className="h-6 w-6" />
+                  <CalendarX className="h-4 w-4" />
                   <span className="font-semibold text-base">Request Time Off</span>
                 </div>
                 <p className="text-sm text-muted-foreground ">Plan your time off</p>
@@ -272,8 +272,8 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
               >
                 <div className="text-left w-full">
                   <div className="flex items-center gap-3 mb-2">
-                    <CalendarCheck className="h-6 w-6" />
-                    <span className="font-semibold text-base">View My Schedule</span>
+                    <UserCheck className="h-4 w-4" />
+                    <span className="font-semibold text-base">Check My Schedule</span>
                   </div>
                   <p className="text-sm text-muted-foreground mt-2">See your full schedule</p>
                 </div>

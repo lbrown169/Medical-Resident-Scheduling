@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
-import { CalendarDays, Send, Check, X, Shield, Users, Trash2, Repeat2 } from "lucide-react";
+import { CalendarDays, CalendarX, Send, Check, X, Shield, Users, Trash2, Repeat } from "lucide-react";
 import { differenceInCalendarDays, parseISO } from 'date-fns';
 import { config } from '../../../config';
 import { toast } from "../../../lib/use-toast";
@@ -12,10 +12,12 @@ import { Dialog } from "../../../components/ui/dialog";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
+import { VacationResponse } from "@/lib/models/VacationResponse";
+import { DateResponse } from "@/lib/models/DateResponse";
 
 interface AdminPageProps {
   residents: { id: string; name: string; email: string; pgyLevel: number | string; hospitalRole?: number; hours: number }[];
-  myTimeOffRequests: { id: string; startDate: string; endDate: string; resident: string; reason: string; status: string; }[];
+  myTimeOffRequests: VacationResponse[];
   shifts: { id: string; name: string }[];
   handleApproveRequest: (id: string) => void;
   handleDenyRequest: (id: string) => void;
@@ -48,27 +50,27 @@ interface Request {
 }
 
 interface SwapRequest {
-  SwapId: string;
-  ScheduleSwapId: string;
-  RequesterId: string;
-  RequesteeId: string;
-  RequesterDate: string;
-  RequesteeDate: string;
-  Status: string;
-  CreatedAt: string;
-  UpdatedAt: string;
-  Details?: string;
+  swapRequestId: string;
+  scheduleId: string;
+  requesterId: string;
+  requesteeId: string;
+  requesterDate: string;
+  requesteeDate: string;
+  status: SwapRequestStatus;
+  createdAt: string;
+  updatedAt: string;
+  details?: string;
+}
+
+interface SwapRequestStatus {
+  id: number;
+  description: string;
 }
 
 interface Announcement {
   announcementId: string;
   message: string;
   createdAt?: string;
-}
-
-interface DateEntry {
-  scheduleId?: string;
-  date?: string;
 }
 
 // Modal component
@@ -149,14 +151,14 @@ const AdminPage: React.FC<AdminPageProps> = ({
   // Helper to get id needed for schedule deletion
   const getLatestScheduleId = async (): Promise<string | null> => {
     try {
-      const res = await fetch(`${config.apiUrl}/api/dates`);
+      const res = await fetch(`${config.apiUrl}/api/dates/published`);
       if (!res.ok) return null;
-      const dates: DateEntry[] = await res.json();
+      const dates: DateResponse[] = await res.json();
       const map: Record<string, number> = {};
 
       for (const d of dates) {
-        if (!d.scheduleId || !d.date) continue;
-        const t = new Date(d.date).getTime();
+        if (!d.scheduleId || !d.dateId) continue;
+        const t = new Date(d.shiftDate).getTime();
         if (!map[d.scheduleId] || t > map[d.scheduleId]) {
           map[d.scheduleId] = t;
         }
@@ -364,19 +366,6 @@ const AdminPage: React.FC<AdminPageProps> = ({
     setResidentRows(prev => prev.map(r => r.id === residentId ? { ...r, pgyLevel: newPGY } : r));
 
     try {
-      // First, get the current resident data
-      const getResponse = await fetch(`${config.apiUrl}/api/residents/filter?resident_id=${residentId}`);
-      if (!getResponse.ok) {
-        throw new Error('Failed to fetch current resident data');
-      }
-
-      const residentsData = await getResponse.json();
-      if (!residentsData || residentsData.length === 0) {
-        throw new Error('Resident not found');
-      }
-
-      const currentResident = residentsData[0];
-
       // Update with existing data but new phone number
       const res= await fetch(`${config.apiUrl}/api/residents/${residentId}`, {
         method: 'PUT',
@@ -384,16 +373,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          resident_id: currentResident.resident_id,
-          first_name: currentResident.first_name,
-          last_name: currentResident.last_name,
-          email: currentResident.email,
-          password: currentResident.password,
-          phone_num: currentResident.phone_num,
-          graduate_yr: newPGY, // Update PGY
-          weekly_hours: currentResident.weekly_hours,
-          total_hours: currentResident.total_hours,
-          bi_yearly_hours: currentResident.bi_yearly_hours
+          graduate_yr: newPGY,
         })
       });
 
@@ -427,19 +407,6 @@ const AdminPage: React.FC<AdminPageProps> = ({
     setResidentRows(prev => prev.map(r => r.id === residentId ? { ...r, hospitalRole: newRole } : r));
 
     try {
-      // First, get the current resident data
-      const getResponse = await fetch(`${config.apiUrl}/api/residents/filter?resident_id=${residentId}`);
-      if (!getResponse.ok) {
-        throw new Error('Failed to fetch current resident data');
-      }
-
-      const residentsData = await getResponse.json();
-      if (!residentsData || residentsData.length === 0) {
-        throw new Error('Resident not found');
-      }
-
-      const currentResident = residentsData[0];
-
       // Update with existing data but new hospital role profile
       const res = await fetch(`${config.apiUrl}/api/residents/${residentId}`, {
         method: 'PUT',
@@ -447,17 +414,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          resident_id: currentResident.resident_id,
-          first_name: currentResident.first_name,
-          last_name: currentResident.last_name,
-          email: currentResident.email,
-          password: currentResident.password,
-          phone_num: currentResident.phone_num,
-          graduate_yr: currentResident.graduate_yr,
-          weekly_hours: currentResident.weekly_hours,
-          total_hours: currentResident.total_hours,
-          bi_yearly_hours: currentResident.bi_yearly_hours,
-          hospital_role_profile: newRole // Update Hospital Role Profile
+          hospital_role_profile: newRole
         })
       });
 
@@ -591,7 +548,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
   const finalIdToName = users.length > 0 ? idToName : fallbackIdToName;
   console.log('Final mapping being used:', finalIdToName);
 
-  const pendingSwapsCount = swapHistory.filter(s => s.Status === 'Pending').length;
+  const pendingSwapsCount = swapHistory.filter(s => s.status.id === 0).length;
   console.log('swapHistory array:', swapHistory);
   console.log('pendingSwapsCount:', pendingSwapsCount);
   const pendingRequestsCount = groupedRequests.filter(r => r.status === 'Pending').length;
@@ -599,9 +556,10 @@ const AdminPage: React.FC<AdminPageProps> = ({
 
   // Helper to format a date as MM/DD/YYYY
   const formatDate = (dateStr: string) => {
-    console.log("Parsing dateStr:", dateStr); // <-- Debug line
     if (!dateStr) return 'N/A';
+    // Apply timezone offset to keep date local (same as calendar)
     const date = new Date(dateStr);
+    date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
     if (isNaN(date.getTime())) return 'N/A';
     return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
   };
@@ -748,14 +706,14 @@ const AdminPage: React.FC<AdminPageProps> = ({
             </div>
             <div className="flex flex-col items-center border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-700 pt-4 sm:pt-0 sm:pl-8">
               <div className="flex items-center gap-2 mb-1">
-                <Repeat2 className="w-5 h-5 text-yellow-500" />
+                <Repeat className="w-5 h-5 text-yellow-500" />
                 <span className="text-2xl font-bold text-gray-900 dark:text-white">{pendingSwapsCount}</span>
               </div>
               <span className="text-xs text-gray-500">Pending Swaps</span>
             </div>
             <div className="flex flex-col items-center border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-700 pt-4 sm:pt-0 sm:pl-8">
               <div className="flex items-center gap-2 mb-1">
-                <CalendarDays className="w-5 h-5 text-green-500" />
+                <CalendarX className="w-5 h-5 text-green-500" />
                 <span className="text-2xl font-bold text-gray-900 dark:text-white">{pendingRequestsCount}</span>
               </div>
               <span className="text-xs text-gray-500">Pending Time Off</span>
@@ -891,28 +849,28 @@ const AdminPage: React.FC<AdminPageProps> = ({
                   {swapHistory.length > 0 ? (
                     swapHistory.map((swap, idx) => {
                       console.log('Rendering swap:', swap);
-                      console.log('swap.RequesterId:', swap.RequesterId);
-                      console.log('swap.RequesteeId:', swap.RequesteeId);
-                      console.log('finalIdToName[swap.RequesterId]:', finalIdToName[swap.RequesterId]);
-                      console.log('finalIdToName[swap.RequesteeId]:', finalIdToName[swap.RequesteeId]);
+                      console.log('swap.RequesterId:', swap.requesterId);
+                      console.log('swap.RequesteeId:', swap.requesteeId);
+                      console.log('finalIdToName[swap.RequesterId]:', finalIdToName[swap.requesterId]);
+                      console.log('finalIdToName[swap.RequesteeId]:', finalIdToName[swap.requesteeId]);
 
                       return (
-                        <tr key={swap.SwapId || idx} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
+                        <tr key={swap.swapRequestId || idx} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
                           <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                            {finalIdToName[swap.RequesterId] || `Resident ${swap.RequesterId}`}
+                            {finalIdToName[swap.requesterId] || `Resident ${swap.requesterId}`}
                           </td>
                           <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                            {finalIdToName[swap.RequesteeId] || `Resident ${swap.RequesteeId}`}
+                            {finalIdToName[swap.requesteeId] || `Resident ${swap.requesteeId}`}
                           </td>
-                          <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.RequesterDate ? new Date(swap.RequesterDate).toLocaleDateString() : ''}</td>
-                          <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.RequesteeDate ? new Date(swap.RequesteeDate).toLocaleDateString() : ''}</td>
-                          <td className={`px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm font-semibold ${swap.Status === 'Approved' ? 'text-green-600' :
-                            swap.Status === 'Denied' ? 'text-red-600' :
+                          <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.requesterDate ? formatDate(swap.requesterDate) : ''}</td>
+                          <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.requesteeDate ? formatDate(swap.requesteeDate) : ''}</td>
+                          <td className={`px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm font-semibold ${swap.status.id === 1 ? 'text-green-600' :
+                            swap.status.id === 2 ? 'text-red-600' :
                               'text-yellow-600'
                             }`}>
-                            {swap.Status}
+                            {swap.status.description}
                           </td>
-                          <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.Details || '-'}</td>
+                          <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.details || '-'}</td>
                         </tr>
                       );
                     })

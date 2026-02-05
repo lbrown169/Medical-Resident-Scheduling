@@ -76,7 +76,7 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
     setLoadingRequests(true);
     setErrorRequests(null);
     try {
-      const url = `${config.apiUrl}/api/vacations/filter?residentId=${encodeURIComponent(userId)}`;
+      const url = `${config.apiUrl}/api/vacations?residentId=${encodeURIComponent(userId)}`;
       const res = await fetch(url, { cache: "no-store" });
 
       if (res.status === 404) {
@@ -181,12 +181,16 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
     );
   };
 
-  const fmt = (d: string) =>
-    new Date(d).toLocaleDateString("en-US", {
+  const fmt = (d: string) => {
+    // Apply timezone offset to keep date local (same as calendar)
+    const date = new Date(d);
+    date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+    return date.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
     });
+  };
 
   return (
     <div className="w-full h-full bg-background p-4 overflow-hidden">
@@ -195,7 +199,7 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
         <div className="text-center mb-5">
           <div className="flex justify-center mb-2">
             <div className="p-2.5 bg-primary/10 rounded-full">
-              <CalendarX className="h-5 w-5 text-primary" />
+              <CalendarX className="h-6 w-6 text-primary" />
             </div>
           </div>
           <h1 className="text-2xl font-bold text-foreground mb-1">Request Time Off</h1>

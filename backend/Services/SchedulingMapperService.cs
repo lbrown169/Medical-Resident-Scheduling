@@ -2,6 +2,7 @@ using System.Globalization;
 using MedicalDemo.Algorithm;
 using MedicalDemo.Models;
 using MedicalDemo.Models.DTO.Scheduling;
+using MedicalDemo.Models.Entities;
 
 namespace MedicalDemo.Services;
 
@@ -14,91 +15,103 @@ public class SchedulingMapperService
         _context = context;
     }
 
-    public PGY1DTO MapToPGY1DTO(Residents resident, IEnumerable<HospitalRole> rotations,
-        List<Vacations> vacations,
+    public PGY1DTO MapToPGY1DTO(Resident resident, IList<HospitalRole> rotations,
+        List<Vacation> vacations,
         List<DatesDTO> dates)
     {
-        List<DateTime> committedDates = dates
-            .Where(d => d.ResidentId == resident.resident_id && d.IsCommitted)
+        List<DateOnly> committedDates = dates
+            .Where(d => d.ResidentId == resident.ResidentId && d.IsCommitted)
             .Select(d => d.Date)
             .ToList();
 
-        return new PGY1DTO
+        PGY1DTO dto = new PGY1DTO
         {
-            ResidentId = resident.resident_id,
-            Name = resident.first_name + " " + resident.last_name,
+            ResidentId = resident.ResidentId,
+            Name = resident.FirstName + " " + resident.LastName,
             VacationRequests
-                = new HashSet<DateTime>(vacations.Select(v => v.Date)),
-            RolePerMonth = rotations.ToArray(),
-            CommitedWorkDays = new HashSet<DateTime>(committedDates),
-            InTraining = resident.graduate_yr == 1
+                = [.. vacations.Select(v => v.Date)],
+            CommitedWorkDays = [.. committedDates],
+            InTraining = resident.GraduateYr == 1
         };
+
+        for (int i = 0; i < rotations.Count; i++)
+        {
+            dto.RolePerMonth[i] = rotations[i];
+        }
+
+        return dto;
     }
 
-    public PGY2DTO MapToPGY2DTO(Residents resident, IEnumerable<HospitalRole> rotations,
-        List<Vacations> vacations,
+    public PGY2DTO MapToPGY2DTO(Resident resident, IList<HospitalRole> rotations,
+        List<Vacation> vacations,
         List<DatesDTO> dates)
     {
-        List<DateTime> committedDates = dates
-            .Where(d => d.ResidentId == resident.resident_id && d.IsCommitted)
+        List<DateOnly> committedDates = dates
+            .Where(d => d.ResidentId == resident.ResidentId && d.IsCommitted)
             .Select(d => d.Date)
             .ToList();
 
-        return new PGY2DTO
+        PGY2DTO dto = new()
         {
-            ResidentId = resident.resident_id,
-            Name = resident.first_name + " " + resident.last_name,
+            ResidentId = resident.ResidentId,
+            Name = resident.FirstName + " " + resident.LastName,
             VacationRequests
-                = new HashSet<DateTime>(vacations.Select(v => v.Date)),
-            RolePerMonth = rotations.ToArray(),
-            CommitedWorkDays = new HashSet<DateTime>(committedDates),
-            InTraining = resident.graduate_yr == 2
+                = [.. vacations.Select(v => v.Date)],
+            CommitedWorkDays = [.. committedDates],
+            InTraining = resident.GraduateYr == 2
         };
+
+        for (int i = 0; i < rotations.Count; i++)
+        {
+            dto.RolePerMonth[i] = rotations[i];
+        }
+
+        return dto;
     }
 
-    public PGY3DTO MapToPGY3DTO(Residents resident, List<Vacations> vacations,
+    public PGY3DTO MapToPGY3DTO(Resident resident, List<Vacation> vacations,
         List<DatesDTO> dates)
     {
-        List<DateTime> committedDates = dates
-            .Where(d => d.ResidentId == resident.resident_id && d.IsCommitted)
+        List<DateOnly> committedDates = dates
+            .Where(d => d.ResidentId == resident.ResidentId && d.IsCommitted)
             .Select(d => d.Date)
             .ToList();
 
         return new PGY3DTO
         {
-            ResidentId = resident.resident_id,
-            Name = resident.first_name + " " + resident.last_name,
+            ResidentId = resident.ResidentId,
+            Name = resident.FirstName + " " + resident.LastName,
             VacationRequests
-                = new HashSet<DateTime>(vacations.Select(v => v.Date)),
-            CommitedWorkDays = new HashSet<DateTime>(committedDates)
+                = [.. vacations.Select(v => v.Date)],
+            CommitedWorkDays = [.. committedDates]
         };
     }
 
-    public List<DatesDTO> MapToDatesDTOs(List<Dates> dates)
+    public List<DatesDTO> MapToDatesDTOs(List<Date> dates)
     {
         return dates.Select(d => new DatesDTO
         {
             DateId = d.DateId,
             ScheduleId = d.ScheduleId,
             ResidentId = d.ResidentId,
-            Date = d.Date,
+            Date = d.ShiftDate,
             CallType = d.CallType,
             IsCommitted = true
         }).ToList();
     }
 
-    private static HospitalRole[] MapRotationsToRoles(List<Rotations> rotations)
+    private static HospitalRole[] MapRotationsToRoles(List<Rotation> rotations)
     {
         HospitalRole[] roles = new HospitalRole[12];
 
-        foreach (Rotations rotation in rotations)
+        foreach (Rotation rotation in rotations)
         {
-            _ = rotation.Rotation?.Trim().ToLowerInvariant();
-            int month = DateTime.ParseExact(rotation.Month.Trim(), "MMMM",
+            _ = rotation.Rotation1?.Trim().ToLowerInvariant();
+            int month = DateOnly.ParseExact(rotation.Month.Trim(), "MMMM",
                 CultureInfo.InvariantCulture).Month;
             int academicMonthIndex = (month + 5) % 12;
             roles[academicMonthIndex]
-                = MapRotationNameToRole(rotation.Rotation);
+                = MapRotationNameToRole(rotation.Rotation1);
         }
 
         return roles;
@@ -153,12 +166,12 @@ public class SchedulingMapperService
                 model.rolePerMonth[i] = dto.RolePerMonth[i];
             }
 
-            foreach (DateTime day in dto.VacationRequests)
+            foreach (DateOnly day in dto.VacationRequests)
             {
                 model.requestVacation(day);
             }
 
-            foreach (DateTime day in dto.CommitedWorkDays)
+            foreach (DateOnly day in dto.CommitedWorkDays)
             {
                 model.addWorkDay(day);
             }
@@ -180,12 +193,12 @@ public class SchedulingMapperService
                 model.rolePerMonth[i] = dto.RolePerMonth[i];
             }
 
-            foreach (DateTime day in dto.VacationRequests)
+            foreach (DateOnly day in dto.VacationRequests)
             {
                 model.requestVacation(day);
             }
 
-            foreach (DateTime day in dto.CommitedWorkDays)
+            foreach (DateOnly day in dto.CommitedWorkDays)
             {
                 model.addWorkDay(day);
             }
@@ -199,12 +212,12 @@ public class SchedulingMapperService
         return dtos.Select(dto =>
         {
             PGY3 model = new(dto.Name);
-            foreach (DateTime day in dto.VacationRequests)
+            foreach (DateOnly day in dto.VacationRequests)
             {
                 model.requestVacation(day);
             }
 
-            foreach (DateTime day in dto.CommitedWorkDays)
+            foreach (DateOnly day in dto.CommitedWorkDays)
             {
                 model.addWorkDay(day);
             }

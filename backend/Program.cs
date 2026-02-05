@@ -1,7 +1,9 @@
 using DotNetEnv;
 using MedicalDemo;
 using MedicalDemo.Models;
+using MedicalDemo.Models.Entities;
 using MedicalDemo.Services;
+using Microsoft.EntityFrameworkCore;
 
 Env.Load(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
 Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
@@ -22,10 +24,11 @@ using (IServiceScope scope = app.Services.CreateScope())
     MedicalContext db
         = scope.ServiceProvider.GetRequiredService<MedicalContext>();
 
-    string? seedEnv = Environment.GetEnvironmentVariable("SEED");
-    if (seedEnv == "true")
+    if (app.Environment.IsDevelopment())
     {
-        DatabaseSeeder.Seed(db);
+        db.Database.Migrate();
+        DatabaseSeeder seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
+        await seeder.Seed(db);
     }
 }
 

@@ -14,7 +14,7 @@ import {
   SidebarTrigger,
 } from "../../components/ui/sidebar";
 import { SidebarUserCard } from "./components/SidebarUserCard";
-import { Repeat, CalendarDays, UserCheck, Shield, Settings, Home, LogOut, User as UserIcon, ChevronDown, Moon, Sun } from "lucide-react";
+import { Repeat, CalendarDays, CalendarX, UserCheck, Shield, Settings, Home, LogOut, User as UserIcon, ChevronDown, Moon, Sun } from "lucide-react";
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { useRouter } from "next/navigation";
 import { toast } from '../../lib/use-toast';
@@ -38,6 +38,9 @@ import AdminPage from "./components/AdminPage";
 
 import MobileHeader from "./components/MobileHeader";
 import MobileUserMenu from "./components/MobileUserMenu";
+import { VacationResponse } from "@/lib/models/VacationResponse";
+import { CallType } from "@/lib/models/CallType";
+import { DateResponse } from "@/lib/models/DateResponse";
 
 type MenuItem = {
   title: string;
@@ -45,15 +48,6 @@ type MenuItem = {
 };
 
 // Define types for API responses
-interface DateResponse {
-  dateId: string;
-  callType: string;
-  residentId?: string;
-  date: string;
-  scheduleId: string;
-  firstName?: string;
-  lastName?: string;
-}
 
 interface CalendarEvent {
   id: string;
@@ -105,7 +99,7 @@ const menuItems: MenuItem[] = [
   { title: "Home", icon: <Home className="w-6 h-6 mr-3" /> },
   { title: "Calendar", icon: <CalendarDays className="w-6 h-6 mr-3" /> },
   { title: "Swap Calls", icon: <Repeat className="w-6 h-6 mr-3" /> },
-  { title: "Request Off", icon: <CalendarDays className="w-6 h-6 mr-3" /> },
+  { title: "Request Off", icon: <CalendarX className="w-6 h-6 mr-3" /> },
   { title: "Check My Schedule", icon: <UserCheck className="w-6 h-6 mr-3" /> },
   { title: "Admin", icon: <Shield className="w-6 h-6 mr-3" /> },
   { title: "Settings", icon: <Settings className="w-6 h-6 mr-3" /> },
@@ -131,8 +125,8 @@ function SidebarFloatingTrigger() {
 }
 
 function mapShiftType(shift: string) {
-  if (shift === "Saturday") return ["24h", "Saturday"];
-  if (shift === "Sunday") return ["12h", "Sunday"];
+  if (shift === "Saturday") return ["Saturday (24h)", "Saturday (12h)"];
+  if (shift === "Sunday") return ["Sunday (12h)"];
   return [shift]; // "Short" stays "Short"
 }
 
@@ -182,13 +176,7 @@ function Dashboard() {
   const [users, setUsers] = useState<{ id: string; first_name: string; last_name: string; email: string; role: string }[]>([]);
 
   // Add state for adminSwapRequests, myTimeOffRequests, and shifts
-  const [myTimeOffRequests, setMyTimeOffRequests] = useState<{
-    vacationId: string;
-    date: string;
-    reason: string;
-    status: string;
-    residentId: string;
-  }[]>([]);
+  const [myTimeOffRequests, setMyTimeOffRequests] = useState<VacationResponse[]>([]);
   const [shifts, setShifts] = useState<{
     id: string;
     name: string;
@@ -211,7 +199,7 @@ function Dashboard() {
   };
 
   // Updated color function to use graduate_yr directly
-  const getEventColor = (callType: string, graduateYear?: number) => {
+  const getEventColor = (callType: CallType, graduateYear?: number) => {
     // Use graduate_yr directly for PGY-based coloring
     if (graduateYear) {
       switch (graduateYear) {
@@ -227,12 +215,13 @@ function Dashboard() {
     }
     
     // Fallback to call type coloring if no graduate_yr
-    switch (callType) {
-      case 'Short':
+    switch (callType.id) {
+      case 0: // short
         return '#3b82f6'; // blue
-      case 'Saturday':
+      case 1: // saturday 24
+      case 2: // saturday 12
         return '#10b981'; // green
-      case 'Sunday':
+      case 3: // sunday 12
         return '#f59e0b'; // amber
       default:
         return '#6b7280'; // gray
@@ -273,46 +262,25 @@ function Dashboard() {
   const fetchMySchedule = useCallback(async () => {
     if (!user?.id) return;
     try {
-      const response = await fetch(`${config.apiUrl}/api/dates`);
+      const response = await fetch(`${config.apiUrl}/api/dates/published`);
       if (response.ok) {
-        const dates = await response.json();
+        const dates = await response.json() as DateResponse[];
         const currentDate = new Date();
         currentDate.setHours(0, 0, 0, 0); // Start of today
 
-        // Find the scheduleId with the most recent date (same as calendar)
-        let latestScheduleId = null;
-        if (dates.length > 0) {
-          const scheduleIdToLatestDate = {};
-          dates.forEach((date) => {
-            if (!date.scheduleId) return;
-            const current = scheduleIdToLatestDate[date.scheduleId];
-            const thisDate = new Date(date.date).getTime();
-            if (!current || thisDate > current) {
-              scheduleIdToLatestDate[date.scheduleId] = thisDate;
-            }
-          });
-          latestScheduleId = Object.entries(scheduleIdToLatestDate)
-            .sort((a, b) => (Number(b[1]) - Number(a[1])))[0]?.[0];
-        }
-
-        // Only include events from the latest schedule
-        const filteredDates = latestScheduleId
-          ? dates.filter((date) => date.scheduleId === latestScheduleId)
-          : dates;
-
         // Filter for current user and future dates only, and with a real callType
-        const userSchedule = filteredDates
+        const userSchedule = dates
           .filter((date) => {
-            const dateObj = new Date(date.date);
+            const dateObj = new Date(date.shiftDate);
             return date.residentId === user.id && dateObj >= currentDate && date.callType;
           })
-          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+          .sort((a, b) => new Date(a.shiftDate).getTime() - new Date(b.shiftDate).getTime())
           .slice(0, 20)
           .map((date) => ({
             id: date.dateId,
-            date: date.date,
+            date: date.shiftDate,
             time: "All Day",
-            shift: `${date.callType} Call`,
+            shift: `${date.callType.description} Call`,
             location: "Hospital"
           }));
 
@@ -328,54 +296,31 @@ function Dashboard() {
   const fetchCalendarEvents = useCallback(async () => {
     try {
       // Fetch all dates - the backend doesn't support month/year filtering yet
-      const response = await fetch(`${config.apiUrl}/api/dates`);
+      const response = await fetch(`${config.apiUrl}/api/dates/published`);
       if (response.ok) {
-        const dates = await response.json();
+        const dates = await response.json() as DateResponse[];
+        console.log(dates)
 
-        // Find the scheduleId with the most recent date
-        let latestScheduleId = null;
-        if (dates.length > 0) {
-          // Map of scheduleId to most recent date
-          const scheduleIdToLatestDate: Record<string, number> = {};
-          dates.forEach((date: DateResponse) => {
-            if (!date.scheduleId) return;
-            const current = scheduleIdToLatestDate[date.scheduleId];
-            const thisDate = new Date(date.date).getTime();
-            if (!current || thisDate > current) {
-              scheduleIdToLatestDate[date.scheduleId] = thisDate;
-            }
-          });
-          // Find the scheduleId with the most recent date
-          latestScheduleId = Object.entries(scheduleIdToLatestDate)
-            .sort((a, b) => (Number(b[1]) - Number(a[1])))[0]?.[0];
-        }
-
-        // Only include events from the latest schedule
-        const filteredDates = latestScheduleId
-          ? dates.filter((date: DateResponse) => date.scheduleId === latestScheduleId)
-          : dates;
-
-        const events = filteredDates.map((date: DateResponse) => {
+        const events = dates.map((date: DateResponse) => {
           // Only show the resident's name on the calendar
           const fullName = date.firstName && date.lastName
             ? `${date.firstName} ${date.lastName}`
             : date.residentId;
 
-          // Standardize callType
-          let callType = date.callType;
-          if (callType === 'Sunday') callType = '12h';
-          if (callType === 'Saturday') callType = '24h';
-
           // Find the resident to get graduate_yr directly (for details only)
           const resident = residents.find(r => r.resident_id === date.residentId);
           const graduateYear = resident?.graduate_yr;
-          const eventColor = getEventColor(callType, graduateYear);
+          const eventColor = getEventColor(date.callType, graduateYear);
+
+          const d = new Date(date.shiftDate)
+          // date comes in as UTC and gets changed to previous day in local time. keep everything local
+          d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
 
           return {
             id: date.dateId,
             title: fullName || '', // Only name
-            start: new Date(date.date),
-            end: new Date(date.date),
+            start: d,
+            end: d,
             backgroundColor: eventColor,
             borderColor: eventColor,
             extendedProps: {
@@ -383,7 +328,7 @@ function Dashboard() {
               residentId: date.residentId,
               firstName: date.firstName,
               lastName: date.lastName,
-              callType: callType,
+              callType: date.callType.description,
               dateId: date.dateId,
               pgyLevel: graduateYear
             }
@@ -399,8 +344,8 @@ function Dashboard() {
           description: "Failed to load calendar events",
         });
       }
-    } catch {
-      console.error('Error fetching calendar events');
+    } catch (e) {
+      console.error(e, 'Error fetching calendar events');
       toast({
         variant: "destructive",
         title: "Error",
@@ -507,19 +452,6 @@ function Dashboard() {
     }
 
     try {
-      // First, get the current resident data
-      const getResponse = await fetch(`${config.apiUrl}/api/residents/filter?resident_id=${user.id}`);
-      if (!getResponse.ok) {
-        throw new Error('Failed to fetch current resident data');
-      }
-      
-      const residentsData = await getResponse.json();
-      if (!residentsData || residentsData.length === 0) {
-        throw new Error('Resident not found');
-      }
-      
-      const currentResident = residentsData[0];
-
       // Update with existing data but new phone number
       const response = await fetch(`${config.apiUrl}/api/residents/${user.id}`, {
         method: 'PUT',
@@ -527,16 +459,7 @@ function Dashboard() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          resident_id: currentResident.resident_id,
-          first_name: currentResident.first_name,
-          last_name: currentResident.last_name,
-          email: currentResident.email,
-          password: currentResident.password, // Keep existing password
-          phone_num: phoneNumber, // Update phone number
-          graduate_yr: currentResident.graduate_yr,
-          weekly_hours: currentResident.weekly_hours,
-          total_hours: currentResident.total_hours,
-          bi_yearly_hours: currentResident.bi_yearly_hours
+          phone_num: phoneNumber,
         })
       });
 
@@ -586,19 +509,6 @@ function Dashboard() {
     }
 
     try {
-      // First, get the current resident data
-      const getResponse = await fetch(`${config.apiUrl}/api/residents/filter?resident_id=${user.id}`);
-      if (!getResponse.ok) {
-        throw new Error('Failed to fetch current resident data');
-      }
-      
-      const residentsData = await getResponse.json();
-      if (!residentsData || residentsData.length === 0) {
-        throw new Error('Resident not found');
-      }
-      
-      const currentResident = residentsData[0];
-
       // Update with existing data but new email
       const response = await fetch(`${config.apiUrl}/api/residents/${user.id}`, {
         method: 'PUT',
@@ -606,16 +516,7 @@ function Dashboard() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          resident_id: currentResident.resident_id,
-          first_name: currentResident.first_name,
-          last_name: currentResident.last_name,
-          email: email, // Update email
-          password: currentResident.password, // Keep existing password
-          phone_num: currentResident.phone_num,
-          graduate_yr: currentResident.graduate_yr,
-          weekly_hours: currentResident.weekly_hours,
-          total_hours: currentResident.total_hours,
-          bi_yearly_hours: currentResident.bi_yearly_hours
+          email: email,
         })
       });
 
@@ -703,12 +604,11 @@ function Dashboard() {
     console.log("Approving groupId:", groupId);
     try {
 
-      const response = await fetch(`${config.apiUrl}/api/vacations/group/${groupId}/status`, {
+      const response = await fetch(`${config.apiUrl}/api/vacations/group/${groupId}/status/approve`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status: "Approved" }),
       });
   
       if (!response.ok) {
@@ -736,12 +636,11 @@ function Dashboard() {
   
   const handleDenyRequest = async (groupId: string) => {
     try {
-      const response = await fetch(`${config.apiUrl}/api/vacations/group/${groupId}/status`, {
+      const response = await fetch(`${config.apiUrl}/api/vacations/group/${groupId}/status/deny`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status: "Denied" }),
       });
   
       if (!response.ok) {
@@ -880,12 +779,10 @@ function Dashboard() {
       }
       // Create a swap request (pending approval)
       const swapRequest = {
-        ScheduleSwapId: myShift.extendedProps.scheduleId, // or partnerShiftEvent.extendedProps.scheduleId
         RequesterId: user?.id,
         RequesteeId: selectedResident,
         RequesterDate: yourShiftDate,
         RequesteeDate: partnerShiftDate,
-        Status: "Pending",
         Details: ""
       };
       console.log('Submitting swapRequest:', swapRequest);
@@ -954,19 +851,30 @@ function Dashboard() {
     }
   
     try {
+      // Parse dates and apply timezone offset to keep them local
       const start = new Date(startDate);
+      start.setMinutes(start.getMinutes() + start.getTimezoneOffset());
       const end = new Date(endDate);
+      end.setMinutes(end.getMinutes() + end.getTimezoneOffset());
+
       const groupId = crypto.randomUUID(); //group ID
       const requests = [];
-  
+
+      // Helper to format date as YYYY-MM-DD without timezone conversion
+      const formatLocalDate = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
         requests.push({
-          groupId: groupId, //New request
+          GroupId: groupId, //New request
           ResidentId: user.id,
-          Date: d.toISOString().split('T')[0],
+          Date: formatLocalDate(d),
           Reason: reason,
-          Details: description || '',
-          Status: 'Pending',
+          Details: description || ''
         });
       }
   
@@ -1078,14 +986,7 @@ case "Home":
     return (
       <AdminPage
         residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr, hospitalRole: r.hospital_role_profile ?? undefined, hours: r.total_hours }))}
-        myTimeOffRequests={myTimeOffRequests.map(r => ({
-          id: r.vacationId,
-          startDate: r.date || '',
-          endDate: r.date || '',
-          resident: r.residentId || '',
-          reason: r.reason,
-          status: r.status,
-        }))}
+        myTimeOffRequests={myTimeOffRequests}
         shifts={shifts.map(s => ({
           id: s.id,
           name: s.name
@@ -1222,14 +1123,7 @@ case "Home":
         return (
           <AdminPage
             residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr, hospitalRole: r.hospital_role_profile ?? undefined, hours: r.total_hours }))}
-            myTimeOffRequests={myTimeOffRequests.map(r => ({
-              id: r.vacationId,
-              startDate: r.date || '',
-              endDate: r.date || '',
-              resident: r.residentId || '',
-              reason: r.reason,
-              status: r.status,
-            }))}
+            myTimeOffRequests={myTimeOffRequests}
             shifts={shifts.map(s => ({
               id: s.id,
               name: s.name
