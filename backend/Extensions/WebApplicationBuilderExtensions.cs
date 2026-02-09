@@ -94,6 +94,7 @@ public static class WebApplicationBuilderExtensions
                     = new AuthenticationHeaderValue("Basic", base64Auth);
             });
 
+        bool hasLoggedConnectionString = false;
         builder.Services.AddDbContext<MedicalContext>((sp, options) =>
         {
             string? mySqlConnectionString = Environment.GetEnvironmentVariable(
@@ -115,8 +116,13 @@ public static class WebApplicationBuilderExtensions
                     "Database connection string is not configured. Please set ConnectionStrings.MySqlConn in appsettings.json");
             }
 
-            logger.LogDebug("Connecting to {mySqlConnectionString}",
-                mySqlConnectionString);
+            if (!hasLoggedConnectionString)
+            {
+                logger.LogInformation("Connecting to {mySqlConnectionString}",
+                    mySqlConnectionString);
+                hasLoggedConnectionString = true;
+            }
+
             options.UseMySql(mySqlConnectionString,
                 ServerVersion.AutoDetect(mySqlConnectionString));
         });

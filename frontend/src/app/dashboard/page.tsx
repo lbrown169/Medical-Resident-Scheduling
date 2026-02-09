@@ -14,7 +14,7 @@ import {
   SidebarTrigger,
 } from "../../components/ui/sidebar";
 import { SidebarUserCard } from "./components/SidebarUserCard";
-import { Repeat, CalendarDays, UserCheck, Shield, Settings, Home, LogOut, User as UserIcon, ChevronDown, Moon, Sun } from "lucide-react";
+import { Repeat, CalendarDays, CalendarX, UserCheck, Shield, Settings, Home, LogOut, User as UserIcon, ChevronDown, Moon, Sun } from "lucide-react";
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { useRouter } from "next/navigation";
 import { toast } from '../../lib/use-toast';
@@ -99,7 +99,7 @@ const menuItems: MenuItem[] = [
   { title: "Home", icon: <Home className="w-6 h-6 mr-3" /> },
   { title: "Calendar", icon: <CalendarDays className="w-6 h-6 mr-3" /> },
   { title: "Swap Calls", icon: <Repeat className="w-6 h-6 mr-3" /> },
-  { title: "Request Off", icon: <CalendarDays className="w-6 h-6 mr-3" /> },
+  { title: "Request Off", icon: <CalendarX className="w-6 h-6 mr-3" /> },
   { title: "Check My Schedule", icon: <UserCheck className="w-6 h-6 mr-3" /> },
   { title: "Admin", icon: <Shield className="w-6 h-6 mr-3" /> },
   { title: "Settings", icon: <Settings className="w-6 h-6 mr-3" /> },
@@ -125,7 +125,7 @@ function SidebarFloatingTrigger() {
 }
 
 function mapShiftType(shift: string) {
-  if (shift === "Saturday") return ["Saturday (24h)", "Saturday (14h)"];
+  if (shift === "Saturday") return ["Saturday (24h)", "Saturday (12h)"];
   if (shift === "Sunday") return ["Sunday (12h)"];
   return [shift]; // "Short" stays "Short"
 }

@@ -199,7 +199,7 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
         <div className="text-center mb-5">
           <div className="flex justify-center mb-2">
             <div className="p-2.5 bg-primary/10 rounded-full">
-              <CalendarX className="h-5 w-5 text-primary" />
+              <CalendarX className="h-6 w-6 text-primary" />
             </div>
           </div>
           <h1 className="text-2xl font-bold text-foreground mb-1">Request Time Off</h1>

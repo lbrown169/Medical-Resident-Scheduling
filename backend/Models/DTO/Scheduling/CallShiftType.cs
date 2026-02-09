@@ -8,7 +8,7 @@ public enum CallShiftType
     WeekdayShortCall = 0,
     [Display(Name = "Saturday (24h)")]
     SaturdayFullCall = 1,
-    [Display(Name = "Saturday (14h)")]
+    [Display(Name = "Saturday (12h)")]
     SaturdayHalfCall = 2,
     [Display(Name = "Sunday (12h)")]
     SundayHalfCall = 3

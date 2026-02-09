@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
-import { Calendar, Users, Clock, Send, ArrowRightLeft, AlertTriangle } from "lucide-react";
+import { Calendar, Users, Clock, Repeat, Send, ArrowRightLeft, AlertTriangle } from "lucide-react";
 
 interface SwapCallsPageProps {
   yourShiftDate: string;
@@ -23,7 +23,7 @@ interface SwapCallsPageProps {
 
 // Add this utility function for shift mapping
 function mapShiftType(shift: string) {
-  if (shift === "Saturday") return ["Saturday (24h)", "Saturday (14h)"];
+  if (shift === "Saturday") return ["Saturday (24h)", "Saturday (12h)"];
   if (shift === "Sunday") return ["Sunday (12h)"];
   return [shift]; // "Short" stays "Short"
 }
@@ -68,7 +68,7 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
         <div className="text-center mb-5">
           <div className="flex justify-center mb-2">
             <div className="p-2.5 bg-primary/10 rounded-full">
-              <ArrowRightLeft className="h-5 w-5 text-primary" />
+              <Repeat className="h-6 w-6 text-primary" />
             </div>
           </div>
           <h1 className="text-2xl font-bold text-foreground mb-1">Request Call Swap</h1>
