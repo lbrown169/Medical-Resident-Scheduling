@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace MedicalDemo.Models.Entities
 {
@@ -24,6 +25,7 @@ namespace MedicalDemo.Models.Entities
         public virtual DbSet<SwapRequest> SwapRequests { get; set; } = null!;
         public virtual DbSet<Vacation> Vacations { get; set; } = null!;
         public virtual DbSet<RotationType> RotationTypes { get; set; } = null!;
+        public virtual DbSet<RotationPrefRequest> RotationPrefRequests { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -407,6 +409,99 @@ namespace MedicalDemo.Models.Entities
                 .HasConversion<int>()
                 .HasColumnType("int")
                 .HasDefaultValue(PgyYearFlags.NONE);
+
+            modelBuilder.Entity<RotationPrefRequest>()
+                .Property(v => v.RotationPrefRequestId)
+                .HasColumnType("binary(16)")
+                .HasConversion(
+                    v => v.ToByteArray(),
+                    v => new Guid(v)
+                );
+
+            modelBuilder.Entity<RotationPrefRequest>(entity =>
+            {
+                entity.Property(v => v.RotationPrefRequestId)
+                    .HasColumnType("binary(16)")
+                    .HasConversion(
+                        v => v.ToByteArray(),
+                        v => new Guid(v)
+                    );
+
+                entity.Property(v => v.FirstPriorityId)
+                    .HasColumnType("binary(16)")
+                    .HasConversion(
+                        v => v.ToByteArray(),
+                        v => new Guid(v)
+                    );
+
+                entity.Property(v => v.SecondPriorityId)
+                   .HasColumnType("binary(16)")
+                   .HasConversion(
+                       v => v.ToByteArray(),
+                       v => new Guid(v)
+                   );
+
+                entity.Property(v => v.ThirdPriorityId)
+                   .HasColumnType("binary(16)")
+                   .HasConversion(
+                       v => v.ToByteArray(),
+                       v => new Guid(v)
+                   );
+
+                entity.Property(v => v.FourthPriorityId)
+                   .HasColumnType("binary(16)")
+                   .HasConversion(
+                       v => v.ToByteArray(),
+                       v => new Guid(v)
+                   );
+
+                ValueConverter<Guid?, byte[]?> nullableGuidToBytesConverter =
+                    new(
+                        v => v.HasValue ? v.Value.ToByteArray() : null,
+                        v => v == null ? null : new Guid(v)
+                    );
+
+                entity.Property(v => v.FifthPriorityId)
+                   .HasColumnType("binary(16)")
+                   .HasConversion(nullableGuidToBytesConverter);
+
+                entity.Property(v => v.SixthPriorityId)
+                   .HasColumnType("binary(16)")
+                   .HasConversion(nullableGuidToBytesConverter);
+
+                entity.Property(v => v.SeventhPriorityId)
+                    .HasColumnType("binary(16)")
+                    .HasConversion(nullableGuidToBytesConverter);
+
+                entity.Property(v => v.EighthPriorityId)
+                    .HasColumnType("binary(16)")
+                    .HasConversion(nullableGuidToBytesConverter);
+
+                entity.Property(v => v.FirstAlternativeId)
+                    .HasColumnType("binary(16)")
+                    .HasConversion(nullableGuidToBytesConverter);
+
+                entity.Property(v => v.SecondAlternativeId)
+                    .HasColumnType("binary(16)")
+                    .HasConversion(nullableGuidToBytesConverter);
+
+                entity.Property(v => v.ThirdAlternativeId)
+                    .HasColumnType("binary(16)")
+                    .HasConversion(nullableGuidToBytesConverter);
+
+                entity.Property(v => v.FirstAvoidId)
+                    .HasColumnType("binary(16)")
+                    .HasConversion(nullableGuidToBytesConverter);
+
+                entity.Property(v => v.SecondAvoidId)
+                    .HasColumnType("binary(16)")
+                    .HasConversion(nullableGuidToBytesConverter);
+
+                entity.Property(v => v.ThirdAvoidId)
+                    .HasColumnType("binary(16)")
+                    .HasConversion(nullableGuidToBytesConverter);
+            });
+
 
             OnModelCreatingPartial(modelBuilder);
 
