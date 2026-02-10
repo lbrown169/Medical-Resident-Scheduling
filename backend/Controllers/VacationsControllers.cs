@@ -34,8 +34,20 @@ public class VacationsController : ControllerBase
                 r.ResidentId == vacationCreateRequest.ResidentId);
         if (!residentExists)
         {
-            return BadRequest(
-                $"Resident with id '{vacationCreateRequest.ResidentId}' does not exist.");
+            return BadRequest(new GenericResponse
+            {
+                Success = false,
+                Message = $"Resident with id '{vacationCreateRequest.ResidentId}' does not exist."
+            });
+        }
+
+        if (vacationCreateRequest.Details?.Length > 255)
+        {
+            return BadRequest(new GenericResponse
+            {
+                Success = false,
+                Message = "Details cannot be longer than 255 characters."
+            });
         }
 
         Vacation vacation = _vacationConverter.CreateVacationFromVacationCreateRequest(vacationCreateRequest);
