@@ -437,7 +437,7 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
                           className="border border-border rounded-lg p-3 hover:bg-muted/40 transition-colors"
                         >
                           <div className="flex items-start justify-between gap-3">
-                            <div className="space-y-0.5">
+                            <div className="space-y-0.5 min-w-0">
                               <div className="flex items-center gap-2">
                                 <Calendar className="h-4 w-4 text-primary" />
                                 <span className="font-medium">
@@ -453,10 +453,8 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
                                 <span className="font-medium">{g.reason}</span>
                               </div>
                               {g.details ? (
-                                <div className="text-xs text-muted-foreground">
-                                  {g.details.length > 100
-                                    ? g.details.slice(0, 100) + "…"
-                                    : g.details}
+                                <div className="text-xs text-muted-foreground break-all">
+                                  {g.details}
                                 </div>
                               ) : null}
                             </div>
