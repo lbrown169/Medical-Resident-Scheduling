@@ -362,7 +362,7 @@ namespace MedicalDemo.Models.Entities
                 entity.Property(e => e.Date).HasColumnName("date");
 
                 entity.Property(e => e.Details)
-                    .HasMaxLength(150)
+                    .HasMaxLength(255)
                     .HasColumnName("details");
 
                 entity.Property(e => e.GroupId)
