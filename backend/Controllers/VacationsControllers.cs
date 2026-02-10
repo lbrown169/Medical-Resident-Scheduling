@@ -197,6 +197,15 @@ public class VacationsController : ControllerBase
             return NotFound();
         }
 
+        if (update.Details?.Length > 255)
+        {
+            return BadRequest(new GenericResponse
+            {
+                Success = false,
+                Message = "Details cannot be longer than 255 characters."
+            });
+        }
+
         _vacationConverter.UpdateVacationFromVacationUpdateRequest(existingVacation, update);
 
         try
