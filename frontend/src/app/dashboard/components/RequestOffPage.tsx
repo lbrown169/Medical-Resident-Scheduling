@@ -280,7 +280,7 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
               </div>
               <textarea
                 id="description-box"
-                rows={2}
+                rows={4}
                 maxLength={255}
                 className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors resize-none"
                 value={description}
@@ -340,7 +340,7 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
           </div>
 
           {/* Submit Button / Confirmation */}
-          <div className="pt-3 mt-auto">
+          <div className="mt-auto">
             {!showConfirmation ? (
               <>
                 <Button 
