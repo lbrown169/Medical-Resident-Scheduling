@@ -830,8 +830,8 @@ namespace MedicalDemo.Migrations
                         .HasColumnName("date");
 
                     b.Property<string>("Details")
-                        .HasMaxLength(150)
-                        .HasColumnType("varchar(150)")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
                         .HasColumnName("details");
 
                     b.Property<string>("GroupId")
