@@ -11,6 +11,7 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { ConfirmDialog } from "./ConfirmDialog";
+import ScheduleEditModal from "./ScheduleEditModal";
 
 interface ScheduleStatus {
   id: number;
@@ -45,6 +46,11 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
   // Delete confirmation state
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [scheduleToDelete, setScheduleToDelete] = useState<Schedule | null>(null);
+
+  // Edit modal state
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(null);
+  const [selectedScheduleYear, setSelectedScheduleYear] = useState<number | undefined>();
 
   const fetchSchedules = useCallback(async () => {
     try {
@@ -127,12 +133,10 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
     }
   };
 
-  const handleEdit = (scheduleId: string) => {
-    // Edit needs to show calendar view
-    toast({
-      title: "Edit Schedule",
-      description: `Editing schedule ${scheduleId}`,
-    });
+  const handleEdit = (scheduleId: string, year: number) => {
+    setSelectedScheduleId(scheduleId);
+    setSelectedScheduleYear(year);
+    setEditModalOpen(true);
   };
 
   const handleDeleteClick = (schedule: Schedule) => {
@@ -361,7 +365,7 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
                                 <td className="py-3 text-right">
                                   <div className="flex items-center justify-end gap-4">
                                     <button
-                                      onClick={() => handleEdit(schedule.scheduleId)}
+                                      onClick={() => handleEdit(schedule.scheduleId, schedule.generatedYear)}
                                       className="flex items-center gap-1 text-blue-500 hover:text-blue-600 cursor-pointer"
                                     >
                                       Edit
@@ -400,6 +404,14 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
         cancelText="Cancel"
         onConfirm={handleConfirmDelete}
         variant="danger"
+      />
+
+      {/* Schedule Edit/Preview Modal */}
+      <ScheduleEditModal
+        open={editModalOpen}
+        onOpenChange={setEditModalOpen}
+        scheduleId={selectedScheduleId}
+        scheduleYear={selectedScheduleYear}
       />
     </div>
   );
