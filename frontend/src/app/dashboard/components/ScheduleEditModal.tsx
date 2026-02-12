@@ -202,15 +202,37 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
     return date.toDateString() === today.toDateString();
   };
 
+  // Schedule range: July of scheduleYear to June of scheduleYear + 1
+  const minYM = scheduleYear ? scheduleYear * 12 + 6 : null;  // July (month index 6)
+  const maxYM = scheduleYear ? (scheduleYear + 1) * 12 + 5 : null;  // June (month index 5)
+
   const navigateMonth = (direction: 'prev' | 'next') => {
     const newDate = new Date(currentDate);
     newDate.setMonth(newDate.getMonth() + (direction === 'next' ? 1 : -1));
+    if (minYM !== null && maxYM !== null) {
+      const newYM = newDate.getFullYear() * 12 + newDate.getMonth();
+      if (newYM < minYM || newYM > maxYM) return;
+    }
     setCurrentDate(newDate);
   };
 
+  const curYM = currentDate.getFullYear() * 12 + currentDate.getMonth();
+  const canNavigatePrev = minYM === null || curYM > minYM;
+  const canNavigateNext = maxYM === null || curYM < maxYM;
+
   const goToToday = () => {
-    setCurrentDate(new Date());
+    const today = new Date();
+    if (minYM !== null && maxYM !== null) {
+      const todayYM = today.getFullYear() * 12 + today.getMonth();
+      if (todayYM < minYM || todayYM > maxYM) return;
+    }
+    setCurrentDate(today);
   };
+
+  const isTodayInScheduleYear = minYM === null || maxYM === null || (() => {
+    const todayYM = new Date().getFullYear() * 12 + new Date().getMonth();
+    return todayYM >= minYM && todayYM <= maxYM;
+  })();
 
   const calendarDays = generateCalendarDays();
 
@@ -237,19 +259,23 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                 </h2>
                 <button
                   onClick={() => navigateMonth('prev')}
-                  className="p-2 hover:bg-muted rounded-full transition-colors"
+                  disabled={!canNavigatePrev}
+                  className="p-2 hover:bg-muted rounded-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
-                <button
-                  onClick={goToToday}
-                  className="px-3 py-1 text-sm font-medium text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                >
-                  Today
-                </button>
+                {isTodayInScheduleYear && (
+                  <button
+                    onClick={goToToday}
+                    className="px-3 py-1 text-sm font-medium text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                  >
+                    Today
+                  </button>
+                )}
                 <button
                   onClick={() => navigateMonth('next')}
-                  className="p-2 hover:bg-muted rounded-full transition-colors"
+                  disabled={!canNavigateNext}
+                  className="p-2 hover:bg-muted rounded-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
                 >
                   <ChevronRight className="w-5 h-5" />
                 </button>
