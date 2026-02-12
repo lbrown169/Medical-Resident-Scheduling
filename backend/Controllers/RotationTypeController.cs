@@ -1,8 +1,10 @@
 
 using MedicalDemo.Converters;
+using MedicalDemo.Enums;
 using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace MedicalDemo.Controllers;
 
@@ -15,7 +17,7 @@ public class RotationTypeController(MedicalContext context) : ControllerBase
     [HttpGet("{id}")]
     public async Task<ActionResult<RotationTypeResponse>> GetById([FromRoute] Guid id)
     {
-        RotationType? foundRotationType = context.RotationTypes.Find(id);
+        RotationType? foundRotationType = await context.RotationTypes.FindAsync(id);
 
         if (foundRotationType == null)
         {
@@ -42,7 +44,7 @@ public class RotationTypeController(MedicalContext context) : ControllerBase
 
         if (pgyYear.Count == 0)
         {
-            rotationTypes = [.. context.RotationTypes];
+            rotationTypes = await context.RotationTypes.ToListAsync();
         }
         else
         {
@@ -52,7 +54,7 @@ public class RotationTypeController(MedicalContext context) : ControllerBase
                 searchFlags |= (PgyYearFlags)(1 << (year - 1));
             }
 
-            rotationTypes = [.. context.RotationTypes.Where(rt => (rt.PgyYearFlags & searchFlags) != 0)];
+            rotationTypes = await context.RotationTypes.Where(rt => (rt.PgyYearFlags & searchFlags) != 0).ToListAsync();
         }
 
         List<RotationTypeResponse> rotationTypeResponses = [.. rotationTypes.Select(RotationTypeConverter.CreateRotationTypeResponse)];

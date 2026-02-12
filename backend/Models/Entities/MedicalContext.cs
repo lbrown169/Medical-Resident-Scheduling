@@ -1,3 +1,4 @@
+using MedicalDemo.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 

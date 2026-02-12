@@ -1,3 +1,4 @@
+using MedicalDemo.Enums;
 using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.Entities;
 
