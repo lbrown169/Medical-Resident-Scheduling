@@ -12,21 +12,7 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import ScheduleEditModal from "./ScheduleEditModal";
-
-interface ScheduleStatus {
-  id: number;
-  description: string;
-}
-
-interface Schedule {
-  scheduleId: string;
-  status: ScheduleStatus;
-  generatedYear: number;
-}
-
-interface SchedulesByYear {
-  [year: number]: Schedule[];
-}
+import { Schedule, SchedulesByYear } from "../../../lib/models/Schedule";
 
 interface SchedulesPageProps {
   onNavigateToCalendar: () => void;
