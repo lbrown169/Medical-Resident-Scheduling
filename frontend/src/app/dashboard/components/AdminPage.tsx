@@ -3,13 +3,13 @@
 import React, { useState, useEffect } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
+import { Dialog } from "../../../components/ui/dialog";
+import { ConfirmDialog } from "../../../components/ui/confirm-dialog";
 import { CalendarDays, CalendarX, Send, Check, X, Shield, Users, Repeat } from "lucide-react";
 import { differenceInCalendarDays, parseISO } from 'date-fns';
 import { config } from '../../../config';
 import { toast } from "../../../lib/use-toast";
 import { useMemo } from "react";
-import { Dialog } from "../../../components/ui/dialog";
-import { ConfirmDialog } from "./ConfirmDialog";
 import { VacationResponse } from "@/lib/models/VacationResponse";
 
 interface AdminPageProps {
