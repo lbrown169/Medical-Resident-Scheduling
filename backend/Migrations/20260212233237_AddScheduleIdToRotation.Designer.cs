@@ -3,6 +3,7 @@ using System;
 using MedicalDemo.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MedicalDemo.Migrations
 {
     [DbContext(typeof(MedicalContext))]
-    partial class MedicalContextModelSnapshot : ModelSnapshot
+    [Migration("20260212233237_AddScheduleIdToRotation")]
+    partial class AddScheduleIdToRotation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -198,23 +200,6 @@ namespace MedicalDemo.Migrations
                     b.ToTable("invitations", (string)null);
                 });
 
-            modelBuilder.Entity("MedicalDemo.Models.Entities.PGY4RotationSchedule", b =>
-                {
-                    b.Property<byte[]>("PGY4RotationScheduleId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("binary(16)")
-                        .HasColumnName("pgy4_rotation_schedule_id");
-
-                    b.Property<string>("Seed")
-                        .IsRequired()
-                        .HasColumnType("longtext")
-                        .HasColumnName("seed");
-
-                    b.HasKey("PGY4RotationScheduleId");
-
-                    b.ToTable("pgy4_rotation_schedule");
-                });
-
             modelBuilder.Entity("MedicalDemo.Models.Entities.Resident", b =>
                 {
                     b.Property<string>("ResidentId")
@@ -310,9 +295,6 @@ namespace MedicalDemo.Migrations
                     b.Property<int>("MonthIndex")
                         .HasColumnType("int");
 
-                    b.Property<byte[]>("Pgy4RotationScheduleId")
-                        .HasColumnType("binary(16)");
-
                     b.Property<int>("PgyYear")
                         .HasColumnType("int");
 
@@ -329,6 +311,10 @@ namespace MedicalDemo.Migrations
                         .HasColumnName("rotation");
 
                     b.Property<byte[]>("RotationTypeId")
+                        .IsRequired()
+                        .HasColumnType("binary(16)");
+
+                    b.Property<byte[]>("ScheduleId")
                         .IsRequired()
                         .HasColumnType("binary(16)");
 

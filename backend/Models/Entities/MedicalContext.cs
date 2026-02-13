@@ -27,6 +27,7 @@ namespace MedicalDemo.Models.Entities
         public virtual DbSet<Vacation> Vacations { get; set; } = null!;
         public virtual DbSet<RotationType> RotationTypes { get; set; } = null!;
         public virtual DbSet<RotationPrefRequest> RotationPrefRequests { get; set; } = null!;
+        public virtual DbSet<PGY4RotationSchedule> PGY4RotationSchedules { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -234,6 +235,11 @@ namespace MedicalDemo.Models.Entities
                 entity.Property(e => e.TotalHours).HasColumnName("total_hours");
 
                 entity.Property(e => e.WeeklyHours).HasColumnName("weekly_hours");
+
+                entity.Property(e => e.ChiefType)
+                    .HasConversion<int>()
+                    .HasColumnType("int")
+                    .HasDefaultValue(ChiefType.None);
             });
 
             modelBuilder.Entity<Rotation>(entity =>
@@ -248,6 +254,13 @@ namespace MedicalDemo.Models.Entities
                 entity.Property(e => e.RotationId)
                     .HasColumnType("binary(16)")
                     .HasColumnName("rotation_id");
+
+                entity.Property(e => e.Pgy4RotationScheduleId)
+                    .HasColumnType("binary(16)")
+                    .HasConversion(
+                        v => v.HasValue ? v.Value.ToByteArray() : null,
+                        v => v == null ? null : new Guid(v)
+                    );
 
                 entity.Property(e => e.Month)
                     .HasMaxLength(45)
@@ -281,6 +294,16 @@ namespace MedicalDemo.Models.Entities
                 entity.Property(e => e.Status)
                     .HasColumnType("int")
                     .HasColumnName("status");
+            });
+
+            modelBuilder.Entity<PGY4RotationSchedule>(entity =>
+            {
+                entity.Property(e => e.PGY4RotationScheduleId)
+                    .HasColumnType("binary(16)")
+                    .HasConversion(
+                        v => v.ToByteArray(),
+                        v => new Guid(v)
+                    );
             });
 
             modelBuilder.Entity<SwapRequest>(entity =>

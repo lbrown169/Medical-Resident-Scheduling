@@ -1,6 +1,7 @@
 using MedicalDemo.Models.DTO.Requests;
 using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.Entities;
+using RotationScheduleGenerator.Algorithm;
 
 namespace MedicalDemo.Converters;
 
@@ -10,8 +11,7 @@ public static class RotationPrefRequestConverter
         RotationPrefRequest request
     )
     {
-        List<RotationType?> Priorities =
-        [
+        List<RotationTypeResponse> PrioritiesResponse = FilterNullAndConvertToResponse([
             request.FirstPriority,
             request.SecondPriority,
             request.ThirdPriority,
@@ -20,34 +20,19 @@ public static class RotationPrefRequestConverter
             request.SixthPriority,
             request.SeventhPriority,
             request.EighthPriority,
-        ];
+        ]);
 
-        List<RotationType?> Alternatives =
-        [
+        List<RotationTypeResponse> AlternativesResponse = FilterNullAndConvertToResponse([
             request.FirstAlternative,
             request.SecondAlternative,
             request.ThirdAlternative,
-        ];
+        ]);
 
-        List<RotationType?> Avoids = [request.FirstAvoid, request.SecondAvoid, request.ThirdAvoid];
-
-        List<RotationTypeResponse> PrioritiesResponse =
-                [.. Priorities
-                    .Where((priority) => priority != null)
-                    .Cast<RotationType>()
-                    .Select(RotationTypeConverter.CreateRotationTypeResponse)];
-
-        List<RotationTypeResponse> AlternativesResponse =
-                [.. Alternatives
-                    .Where((alternative) => alternative != null)
-                    .Cast<RotationType>()
-                    .Select(RotationTypeConverter.CreateRotationTypeResponse)];
-
-        List<RotationTypeResponse> AvoidsResponse =
-                [.. Avoids
-                    .Where((avoid) => avoid != null)
-                    .Cast<RotationType>()
-                    .Select(RotationTypeConverter.CreateRotationTypeResponse)];
+        List<RotationTypeResponse> AvoidsResponse = FilterNullAndConvertToResponse([
+            request.FirstAlternative,
+            request.SecondAlternative,
+            request.ThirdAlternative,
+        ]);
 
         return new RotationPrefResponse
         {
@@ -55,7 +40,7 @@ public static class RotationPrefRequestConverter
             Priorities = PrioritiesResponse,
             Alternatives = AlternativesResponse,
             Avoids = AvoidsResponse,
-            AdditionalNotes = request.AdditionalNotes
+            AdditionalNotes = request.AdditionalNotes,
         };
     }
 
@@ -123,4 +108,66 @@ public static class RotationPrefRequestConverter
 
         prefRequestModel.AdditionalNotes = updateRequest.AdditionalNotes;
     }
+
+    public static AlgorithmRotationPrefRequest CreateAlgorithmSchedulePrefRequestFromModel(
+        RotationPrefRequest requestModel
+    )
+    {
+        AlgorithmRotationType[] AlgorithmPriorities = [.. FilterNullAndConvertToAlgorithmType([
+            requestModel.FirstPriority,
+            requestModel.SecondPriority,
+            requestModel.ThirdPriority,
+            requestModel.FourthPriority,
+            requestModel.FifthPriority,
+            requestModel.SixthPriority,
+            requestModel.SeventhPriority,
+            requestModel.EighthPriority,
+        ])];
+
+        AlgorithmRotationType[] AlgorithmAlternatives = [.. FilterNullAndConvertToAlgorithmType([
+            requestModel.FirstAlternative,
+            requestModel.SecondAlternative,
+            requestModel.ThirdAlternative,
+        ])];
+
+        AlgorithmRotationType[] AlgorithmAvoids = [.. FilterNullAndConvertToAlgorithmType([
+            requestModel.FirstAlternative,
+            requestModel.SecondAlternative,
+            requestModel.ThirdAlternative,
+        ])];
+
+        return new()
+        {
+            RotationPrefRequestId = requestModel.RotationPrefRequestId,
+            Requester = requestModel.Resident,
+            Priorities = AlgorithmPriorities,
+            Alternatives = AlgorithmAlternatives,
+            Avoids = AlgorithmAvoids
+        };
+    }
+
+    private static List<RotationTypeResponse> FilterNullAndConvertToResponse(
+        List<RotationType?> rotationTypes
+    )
+    {
+        return
+        [
+            .. rotationTypes
+                .Where((avoid) => avoid != null)
+                .Cast<RotationType>()
+                .Select(RotationTypeConverter.CreateRotationTypeResponse),
+        ];
+    }
+
+    private static List<AlgorithmRotationType> FilterNullAndConvertToAlgorithmType(List<RotationType?> rotationTypes)
+    {
+        return
+        [
+            .. rotationTypes
+                .Where((avoid) => avoid != null)
+                .Cast<RotationType>()
+                .Select(RotationTypeConverter.CreateAlgorithmRotationTypeFromModel),
+        ];
+    }
 }
+

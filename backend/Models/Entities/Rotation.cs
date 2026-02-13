@@ -6,6 +6,9 @@ namespace MedicalDemo.Models.Entities
     {
         public Guid RotationId { get; set; }
 
+        [ForeignKey(nameof(PGY4RotationSchedule))]
+        public Guid? Pgy4RotationScheduleId { get; set; }
+
         public string ResidentId { get; set; } = null!;
 
         public string Month { get; set; } = null!;
