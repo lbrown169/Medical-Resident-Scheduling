@@ -9,11 +9,12 @@ using Microsoft.EntityFrameworkCore;
 namespace MedicalDemo.Controllers;
 
 [ApiController]
-[Route("api/rotation-type")]
+[Route("api/rotation-types")]
 public class RotationTypeController(MedicalContext context) : ControllerBase
 {
     private readonly MedicalContext context = context;
 
+    // GET: api/rotation-types/{id}
     [HttpGet("{id}")]
     public async Task<ActionResult<RotationTypeResponse>> GetById([FromRoute] Guid id)
     {
@@ -28,6 +29,7 @@ public class RotationTypeController(MedicalContext context) : ControllerBase
         return Ok(response);
     }
 
+    // GET: api/rotation-types
     [HttpGet]
     public async Task<ActionResult<RotationTypesListResponse>> GetAll([FromQuery] List<int> pgyYear)
     {

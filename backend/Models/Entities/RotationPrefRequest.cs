@@ -13,6 +13,7 @@ public class RotationPrefRequest
     [ForeignKey(nameof(Resident))]
     public string ResidentId { get; set; } = null!;
 
+    [ForeignKey(nameof(ResidentId))]
     public Resident Resident { get; set; } = null!;
 
     [Column("first_priority_id")]
