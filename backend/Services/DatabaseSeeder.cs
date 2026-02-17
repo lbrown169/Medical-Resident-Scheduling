@@ -428,6 +428,156 @@ public class DatabaseSeeder
                     TotalHours = 45,
                     BiYearlyHours = 45,
                     HospitalRoleProfile = 1
+                },
+                new Resident
+                {
+                    ResidentId = "OFS2842",
+                    FirstName = "Dwayne",
+                    LastName = "Johnson",
+                    GraduateYr = 3,
+                    Email = "dwayne.johnson@example.com",
+                    Password
+                        = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
+                    PhoneNum = "201-555-0128",
+                    WeeklyHours = 0,
+                    TotalHours = 45,
+                    BiYearlyHours = 45,
+                    HospitalRoleProfile = 1
+                },
+                new Resident
+                {
+                    ResidentId = "LKD1234",
+                    FirstName = "Tom",
+                    LastName = "Cruise",
+                    GraduateYr = 3,
+                    Email = "tom.cruise@example.com",
+                    Password
+                        = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
+                    PhoneNum = "201-555-0128",
+                    WeeklyHours = 0,
+                    TotalHours = 45,
+                    BiYearlyHours = 45,
+                    HospitalRoleProfile = 1
+                },
+                new Resident
+                {
+                    ResidentId = "AKC1234",
+                    FirstName = "Justin",
+                    LastName = "Bieber",
+                    GraduateYr = 3,
+                    Email = "justin.bieber@example.com",
+                    Password
+                        = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
+                    PhoneNum = "201-555-0128",
+                    WeeklyHours = 0,
+                    TotalHours = 45,
+                    BiYearlyHours = 45,
+                    HospitalRoleProfile = 1
+                },
+                new Resident
+                {
+                    ResidentId = "POW8237",
+                    FirstName = "Tom",
+                    LastName = "Holland",
+                    GraduateYr = 3,
+                    Email = "tom.holland@example.com",
+                    Password
+                        = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
+                    PhoneNum = "201-555-0128",
+                    WeeklyHours = 0,
+                    TotalHours = 45,
+                    BiYearlyHours = 45,
+                    HospitalRoleProfile = 1
+                },
+                new Resident
+                {
+                    ResidentId = "KJD8273",
+                    FirstName = "Pedro",
+                    LastName = "Pascal",
+                    GraduateYr = 3,
+                    Email = "pedro.pascal@example.com",
+                    Password
+                        = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
+                    PhoneNum = "201-555-0128",
+                    WeeklyHours = 0,
+                    TotalHours = 45,
+                    BiYearlyHours = 45,
+                    HospitalRoleProfile = 1
+                },
+                new Resident
+                {
+                    ResidentId = "MWU2643",
+                    FirstName = "Margot",
+                    LastName = "Robbie",
+                    GraduateYr = 3,
+                    Email = "margot.robbie@example.com",
+                    Password
+                        = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
+                    PhoneNum = "201-555-0128",
+                    WeeklyHours = 0,
+                    TotalHours = 45,
+                    BiYearlyHours = 45,
+                    HospitalRoleProfile = 1
+                },
+                new Resident
+                {
+                    ResidentId = "KSK8232",
+                    FirstName = "Chris",
+                    LastName = "Rock",
+                    GraduateYr = 3,
+                    Email = "chris.rock@example.com",
+                    Password
+                        = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
+                    PhoneNum = "201-555-0128",
+                    WeeklyHours = 0,
+                    TotalHours = 45,
+                    BiYearlyHours = 45,
+                    HospitalRoleProfile = 1
+                },
+                new Resident
+                {
+                    ResidentId = "VKD7295",
+                    FirstName = "Jackie",
+                    LastName = "Chan",
+                    GraduateYr = 3,
+                    Email = "jackie.chan@example.com",
+                    Password
+                        = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
+                    PhoneNum = "201-555-0128",
+                    WeeklyHours = 0,
+                    TotalHours = 45,
+                    BiYearlyHours = 45,
+                    HospitalRoleProfile = 1
+                },
+                new Resident
+                {
+                    ResidentId = "KMD4264",
+                    FirstName = "Barack",
+                    LastName = "Obama",
+                    GraduateYr = 3,
+                    Email = "barack.obama@example.com",
+                    Password
+                        = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
+                    PhoneNum = "201-555-0128",
+                    WeeklyHours = 0,
+                    TotalHours = 45,
+                    BiYearlyHours = 45,
+                    HospitalRoleProfile = 1
+                },
+                new Resident
+                {
+                    ResidentId = "ZJT8738",
+                    FirstName = "Jason",
+                    LastName = "Momoa",
+                    GraduateYr = 3,
+                    Email = "json.momoa@example.com",
+                    Password
+                        = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
+                    PhoneNum = "201-555-0128",
+                    WeeklyHours = 0,
+                    TotalHours = 45,
+                    BiYearlyHours = 45,
+                    HospitalRoleProfile = 1
                 }
             );
 
