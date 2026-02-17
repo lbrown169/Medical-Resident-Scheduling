@@ -3,6 +3,7 @@ using System;
 using MedicalDemo.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MedicalDemo.Migrations
 {
     [DbContext(typeof(MedicalContext))]
-    partial class MedicalContextModelSnapshot : ModelSnapshot
+    [Migration("20260203225511_RotationTypeTablePopulateAndSeed")]
+    partial class RotationTypeTablePopulateAndSeed
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -285,12 +287,6 @@ namespace MedicalDemo.Migrations
                         .HasColumnType("varchar(45)")
                         .HasColumnName("month");
 
-                    b.Property<int>("MonthIndex")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PgyYear")
-                        .HasColumnType("int");
-
                     b.Property<string>("ResidentId")
                         .IsRequired()
                         .HasMaxLength(15)
@@ -303,13 +299,7 @@ namespace MedicalDemo.Migrations
                         .HasColumnType("varchar(45)")
                         .HasColumnName("rotation");
 
-                    b.Property<byte[]>("RotationTypeId")
-                        .IsRequired()
-                        .HasColumnType("binary(16)");
-
                     b.HasKey("RotationId");
-
-                    b.HasIndex("RotationTypeId");
 
                     b.HasIndex(new[] { "ResidentId" }, "resident_id_rotation_idx");
 
@@ -319,131 +309,43 @@ namespace MedicalDemo.Migrations
                     b.ToTable("rotations", (string)null);
                 });
 
-            modelBuilder.Entity("MedicalDemo.Models.Entities.RotationPrefRequest", b =>
-                {
-                    b.Property<byte[]>("RotationPrefRequestId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("binary(16)");
-
-                    b.Property<string>("AdditionalNotes")
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<byte[]>("EighthPriorityId")
-                        .HasColumnType("binary(16)");
-
-                    b.Property<byte[]>("FifthPriorityId")
-                        .HasColumnType("binary(16)");
-
-                    b.Property<byte[]>("FirstAlternativeId")
-                        .HasColumnType("binary(16)");
-
-                    b.Property<byte[]>("FirstAvoidId")
-                        .HasColumnType("binary(16)");
-
-                    b.Property<byte[]>("FirstPriorityId")
-                        .IsRequired()
-                        .HasColumnType("binary(16)");
-
-                    b.Property<byte[]>("FourthPriorityId")
-                        .IsRequired()
-                        .HasColumnType("binary(16)");
-
-                    b.Property<string>("ResidentId")
-                        .IsRequired()
-                        .HasColumnType("varchar(15)");
-
-                    b.Property<byte[]>("SecondAlternativeId")
-                        .HasColumnType("binary(16)");
-
-                    b.Property<byte[]>("SecondAvoidId")
-                        .HasColumnType("binary(16)");
-
-                    b.Property<byte[]>("SecondPriorityId")
-                        .IsRequired()
-                        .HasColumnType("binary(16)");
-
-                    b.Property<byte[]>("SeventhPriorityId")
-                        .HasColumnType("binary(16)");
-
-                    b.Property<byte[]>("SixthPriorityId")
-                        .HasColumnType("binary(16)");
-
-                    b.Property<byte[]>("ThirdAlternativeId")
-                        .HasColumnType("binary(16)");
-
-                    b.Property<byte[]>("ThirdAvoidId")
-                        .HasColumnType("binary(16)");
-
-                    b.Property<byte[]>("ThirdPriorityId")
-                        .IsRequired()
-                        .HasColumnType("binary(16)");
-
-                    b.HasKey("RotationPrefRequestId");
-
-                    b.HasIndex("EighthPriorityId");
-
-                    b.HasIndex("FifthPriorityId");
-
-                    b.HasIndex("FirstAlternativeId");
-
-                    b.HasIndex("FirstAvoidId");
-
-                    b.HasIndex("FirstPriorityId");
-
-                    b.HasIndex("FourthPriorityId");
-
-                    b.HasIndex("ResidentId");
-
-                    b.HasIndex("SecondAlternativeId");
-
-                    b.HasIndex("SecondAvoidId");
-
-                    b.HasIndex("SecondPriorityId");
-
-                    b.HasIndex("SeventhPriorityId");
-
-                    b.HasIndex("SixthPriorityId");
-
-                    b.HasIndex("ThirdAlternativeId");
-
-                    b.HasIndex("ThirdAvoidId");
-
-                    b.HasIndex("ThirdPriorityId");
-
-                    b.ToTable("rotation_pref_request");
-                });
-
             modelBuilder.Entity("MedicalDemo.Models.Entities.RotationType", b =>
                 {
                     b.Property<byte[]>("RotationTypeId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("binary(16)");
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("rotation_type_id");
 
                     b.Property<bool>("DoesLongCall")
-                        .HasColumnType("tinyint(1)");
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("does_long_call");
 
                     b.Property<bool>("DoesShortCall")
-                        .HasColumnType("tinyint(1)");
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("does_short_call");
 
                     b.Property<bool>("DoesTrainingLongCall")
-                        .HasColumnType("tinyint(1)");
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("does_training_long_call");
 
                     b.Property<bool>("DoesTrainingShortCall")
-                        .HasColumnType("tinyint(1)");
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("does_training_short_call");
 
                     b.Property<bool>("IsChiefRotation")
-                        .HasColumnType("tinyint(1)");
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("is_chief_rotation");
 
                     b.Property<int>("PgyYearFlags")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
-                        .HasDefaultValue(0);
+                        .HasDefaultValue(0)
+                        .HasColumnName("pgy_year_flags");
 
                     b.Property<string>("RotationName")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("longtext")
+                        .HasColumnName("rotation_name");
 
                     b.HasKey("RotationTypeId");
 
@@ -808,8 +710,8 @@ namespace MedicalDemo.Migrations
                         .HasColumnName("date");
 
                     b.Property<string>("Details")
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)")
                         .HasColumnName("details");
 
                     b.Property<string>("GroupId")
@@ -903,118 +805,7 @@ namespace MedicalDemo.Migrations
                         .IsRequired()
                         .HasConstraintName("resident_id_rotation");
 
-                    b.HasOne("MedicalDemo.Models.Entities.RotationType", "RotationType")
-                        .WithMany()
-                        .HasForeignKey("RotationTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Resident");
-
-                    b.Navigation("RotationType");
-                });
-
-            modelBuilder.Entity("MedicalDemo.Models.Entities.RotationPrefRequest", b =>
-                {
-                    b.HasOne("MedicalDemo.Models.Entities.RotationType", "EighthPriority")
-                        .WithMany()
-                        .HasForeignKey("EighthPriorityId");
-
-                    b.HasOne("MedicalDemo.Models.Entities.RotationType", "FifthPriority")
-                        .WithMany()
-                        .HasForeignKey("FifthPriorityId");
-
-                    b.HasOne("MedicalDemo.Models.Entities.RotationType", "FirstAlternative")
-                        .WithMany()
-                        .HasForeignKey("FirstAlternativeId");
-
-                    b.HasOne("MedicalDemo.Models.Entities.RotationType", "FirstAvoid")
-                        .WithMany()
-                        .HasForeignKey("FirstAvoidId");
-
-                    b.HasOne("MedicalDemo.Models.Entities.RotationType", "FirstPriority")
-                        .WithMany()
-                        .HasForeignKey("FirstPriorityId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("MedicalDemo.Models.Entities.RotationType", "FourthPriority")
-                        .WithMany()
-                        .HasForeignKey("FourthPriorityId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("MedicalDemo.Models.Entities.Resident", "Resident")
-                        .WithMany()
-                        .HasForeignKey("ResidentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("MedicalDemo.Models.Entities.RotationType", "SecondAlternative")
-                        .WithMany()
-                        .HasForeignKey("SecondAlternativeId");
-
-                    b.HasOne("MedicalDemo.Models.Entities.RotationType", "SecondAvoid")
-                        .WithMany()
-                        .HasForeignKey("SecondAvoidId");
-
-                    b.HasOne("MedicalDemo.Models.Entities.RotationType", "SecondPriority")
-                        .WithMany()
-                        .HasForeignKey("SecondPriorityId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("MedicalDemo.Models.Entities.RotationType", "SeventhPriority")
-                        .WithMany()
-                        .HasForeignKey("SeventhPriorityId");
-
-                    b.HasOne("MedicalDemo.Models.Entities.RotationType", "SixthPriority")
-                        .WithMany()
-                        .HasForeignKey("SixthPriorityId");
-
-                    b.HasOne("MedicalDemo.Models.Entities.RotationType", "ThirdAlternative")
-                        .WithMany()
-                        .HasForeignKey("ThirdAlternativeId");
-
-                    b.HasOne("MedicalDemo.Models.Entities.RotationType", "ThirdAvoid")
-                        .WithMany()
-                        .HasForeignKey("ThirdAvoidId");
-
-                    b.HasOne("MedicalDemo.Models.Entities.RotationType", "ThirdPriority")
-                        .WithMany()
-                        .HasForeignKey("ThirdPriorityId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("EighthPriority");
-
-                    b.Navigation("FifthPriority");
-
-                    b.Navigation("FirstAlternative");
-
-                    b.Navigation("FirstAvoid");
-
-                    b.Navigation("FirstPriority");
-
-                    b.Navigation("FourthPriority");
-
-                    b.Navigation("Resident");
-
-                    b.Navigation("SecondAlternative");
-
-                    b.Navigation("SecondAvoid");
-
-                    b.Navigation("SecondPriority");
-
-                    b.Navigation("SeventhPriority");
-
-                    b.Navigation("SixthPriority");
-
-                    b.Navigation("ThirdAlternative");
-
-                    b.Navigation("ThirdAvoid");
-
-                    b.Navigation("ThirdPriority");
                 });
 
             modelBuilder.Entity("MedicalDemo.Models.Entities.SwapRequest", b =>
