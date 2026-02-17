@@ -36,9 +36,9 @@ public class RotationTypeController(MedicalContext context) : ControllerBase
         // Validations
         foreach (int year in pgyYear)
         {
-            if (year < 0 || year > 4)
+            if (year < 1 || year > 4)
             {
-                return BadRequest("Pgy Year cannot be less than 0 or greater than 4");
+                return BadRequest("Pgy Year cannot be less than 1 or greater than 4");
             }
         }
 

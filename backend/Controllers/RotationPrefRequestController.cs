@@ -267,7 +267,7 @@ public class RotationPrefRequestController(MedicalContext context) : ControllerB
         List<Guid> invalidGuids =
         [
             .. rotationTypes
-                .Where((rt) => (rt.PgyYearFlags & PgyYearFlags.PGY4) == 0)
+                .Where((rt) => (rt.PgyYearFlags & PgyYearFlags.Pgy4) == 0)
                 .Select((rt) => rt.RotationTypeId),
         ];
 

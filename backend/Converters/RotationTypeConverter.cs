@@ -10,7 +10,7 @@ public class RotationTypeConverter
     {
         List<int> pgyYears = [];
 
-        foreach (int i in new List<int> { 1, 2, 3, 4 })
+        for (int i = 1; i < 5; i++)
         {
             PgyYearFlags pgyYearFlags = (PgyYearFlags)(1 << (i - 1));
             if ((rotationType.PgyYearFlags & pgyYearFlags) != 0)
