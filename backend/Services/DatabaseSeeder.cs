@@ -440,8 +440,8 @@ public class DatabaseSeeder
                         = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
                     PhoneNum = "201-555-0128",
                     WeeklyHours = 0,
-                    TotalHours = 45,
-                    BiYearlyHours = 45,
+                    TotalHours = 43,
+                    BiYearlyHours = 23,
                     HospitalRoleProfile = 1
                 },
                 new Resident
@@ -455,8 +455,8 @@ public class DatabaseSeeder
                         = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
                     PhoneNum = "201-555-0128",
                     WeeklyHours = 0,
-                    TotalHours = 45,
-                    BiYearlyHours = 45,
+                    TotalHours = 9,
+                    BiYearlyHours = 9,
                     HospitalRoleProfile = 1
                 },
                 new Resident
@@ -470,8 +470,8 @@ public class DatabaseSeeder
                         = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
                     PhoneNum = "201-555-0128",
                     WeeklyHours = 0,
-                    TotalHours = 45,
-                    BiYearlyHours = 45,
+                    TotalHours = 17,
+                    BiYearlyHours = 14,
                     HospitalRoleProfile = 1
                 },
                 new Resident
@@ -485,8 +485,8 @@ public class DatabaseSeeder
                         = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
                     PhoneNum = "201-555-0128",
                     WeeklyHours = 0,
-                    TotalHours = 45,
-                    BiYearlyHours = 45,
+                    TotalHours = 78,
+                    BiYearlyHours = 51,
                     HospitalRoleProfile = 1
                 },
                 new Resident
@@ -500,8 +500,8 @@ public class DatabaseSeeder
                         = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
                     PhoneNum = "201-555-0128",
                     WeeklyHours = 0,
-                    TotalHours = 45,
-                    BiYearlyHours = 45,
+                    TotalHours = 41,
+                    BiYearlyHours = 39,
                     HospitalRoleProfile = 1
                 },
                 new Resident
@@ -515,8 +515,8 @@ public class DatabaseSeeder
                         = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
                     PhoneNum = "201-555-0128",
                     WeeklyHours = 0,
-                    TotalHours = 45,
-                    BiYearlyHours = 45,
+                    TotalHours = 10,
+                    BiYearlyHours = 4,
                     HospitalRoleProfile = 1
                 },
                 new Resident
@@ -530,8 +530,8 @@ public class DatabaseSeeder
                         = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
                     PhoneNum = "201-555-0128",
                     WeeklyHours = 0,
-                    TotalHours = 45,
-                    BiYearlyHours = 45,
+                    TotalHours = 23,
+                    BiYearlyHours = 18,
                     HospitalRoleProfile = 1
                 },
                 new Resident
@@ -545,8 +545,8 @@ public class DatabaseSeeder
                         = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
                     PhoneNum = "201-555-0128",
                     WeeklyHours = 0,
-                    TotalHours = 45,
-                    BiYearlyHours = 45,
+                    TotalHours = 87,
+                    BiYearlyHours = 67,
                     HospitalRoleProfile = 1
                 },
                 new Resident
@@ -560,8 +560,8 @@ public class DatabaseSeeder
                         = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
                     PhoneNum = "201-555-0128",
                     WeeklyHours = 0,
-                    TotalHours = 45,
-                    BiYearlyHours = 45,
+                    TotalHours = 11,
+                    BiYearlyHours = 4,
                     HospitalRoleProfile = 1
                 },
                 new Resident
@@ -575,8 +575,8 @@ public class DatabaseSeeder
                         = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
                     PhoneNum = "201-555-0128",
                     WeeklyHours = 0,
-                    TotalHours = 45,
-                    BiYearlyHours = 45,
+                    TotalHours = 20,
+                    BiYearlyHours = 12,
                     HospitalRoleProfile = 1
                 }
             );
