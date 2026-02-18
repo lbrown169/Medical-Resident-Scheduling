@@ -1,4 +1,8 @@
+using MedicalDemo.Converters;
 using MedicalDemo.Models;
+using MedicalDemo.Models.DTO.Requests;
+using MedicalDemo.Models.DTO.Responses;
+using MedicalDemo.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,107 +13,90 @@ namespace MedicalDemo.Controllers;
 public class AnnouncementsController : ControllerBase
 {
     private readonly MedicalContext _context;
+    private readonly AnnouncementConverter _announcementConverter;
+    private readonly ILogger<AnnouncementsController> _logger;
 
-    public AnnouncementsController(MedicalContext context)
+    public AnnouncementsController(MedicalContext context, AnnouncementConverter announcementConverter, ILogger<AnnouncementsController> logger)
     {
         _context = context;
+        _announcementConverter = announcementConverter;
+        _logger = logger;
     }
 
     // POST: api/announcements
     [HttpPost]
     public async Task<IActionResult> CreateAnnouncement(
-        [FromBody] Announcements announcement)
+        [FromBody] AnnouncementCreateRequest announcementCreateRequest)
     {
-        if (announcement == null)
-        {
-            return BadRequest("Announcement object is null.");
-        }
+        Announcement announcement = _announcementConverter.CreateAnnouncementFromAnnouncementCreateRequest(announcementCreateRequest);
 
-        if (announcement.AnnouncementId == Guid.Empty)
-        {
-            announcement.AnnouncementId = Guid.NewGuid();
-        }
-
-        // Set default author if not provided
-        if (string.IsNullOrEmpty(announcement.AuthorId))
-        {
-            announcement.AuthorId = "Admin";
-        }
-
-        announcement.CreatedAt = DateTime.UtcNow;
-
-        _context.announcements.Add(announcement);
+        _context.Announcements.Add(announcement);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(FilterAnnouncements),
-            new { id = announcement.AnnouncementId }, announcement);
+        return CreatedAtAction(
+            nameof(GetAnnouncement),
+            new { id = announcement.AnnouncementId },
+            _announcementConverter.CreateAnnouncementResponseFromAnnouncement(announcement)
+        );
     }
 
     // GET: api/announcements
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Announcements>>>
-        GetAllAnnouncements()
+    public async Task<ActionResult<IEnumerable<AnnouncementResponse>>> GetAllAnnouncements([FromQuery] string? authorId)
     {
-        List<Announcements> announcements = await _context.announcements
+        IQueryable<Announcement> query = _context.Announcements.AsQueryable();
+
+        if (!string.IsNullOrEmpty(authorId))
+        {
+            query = query.Where(a => a.AuthorId == authorId);
+        }
+
+        List<AnnouncementResponse> announcements = await query
             .OrderByDescending(a => a.CreatedAt)
+            .Select(a => _announcementConverter.CreateAnnouncementResponseFromAnnouncement(a))
             .ToListAsync();
 
         return Ok(announcements);
     }
 
-    // GET: api/announcements/filter?author_id=
-    [HttpGet("filter")]
-    public async Task<ActionResult<IEnumerable<Announcements>>>
-        FilterAnnouncements(
-            [FromQuery] string author_id)
+    // GET: api/announcement/{id}
+    [HttpGet("{id}")]
+    public async Task<ActionResult<IEnumerable<AnnouncementResponse>>> GetAnnouncement(Guid id)
     {
-        IQueryable<Announcements> query
-            = _context.announcements.AsQueryable();
+        _ = _context.Announcements.AsQueryable();
 
-        if (!string.IsNullOrEmpty(author_id))
+        Announcement? ann = await _context.Announcements.FindAsync(id);
+
+        if (ann == null)
         {
-            query = query.Where(a => a.AuthorId == author_id);
+            return NotFound();
         }
 
-        List<Announcements> results
-            = await query.OrderByDescending(a => a.CreatedAt).ToListAsync();
-
-        if (!results.Any())
-        {
-            return NotFound("No announcements matched the filter.");
-        }
-
-        return Ok(results);
+        return Ok(_announcementConverter.CreateAnnouncementResponseFromAnnouncement(ann));
     }
 
     // PUT: api/announcements/{id}
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateAnnouncement(Guid id,
-        [FromBody] Announcements updated)
+        [FromBody] AnnouncementUpdateRequest announcementUpdateRequest)
     {
-        if (id != updated.AnnouncementId)
-        {
-            return BadRequest("ID mismatch between URL and body.");
-        }
-
-        Announcements? existing
-            = await _context.announcements.FindAsync(id);
+        Announcement? existing
+            = await _context.Announcements.FindAsync(id);
         if (existing == null)
         {
-            return NotFound("Announcement not found.");
+            return NotFound();
         }
 
-        existing.Message = updated.Message;
-        existing.AuthorId = updated.AuthorId;
-        // You typically wouldn't update CreatedAt, so we leave it as-is
+        _announcementConverter.UpdateAnnouncementFromAnnouncementUpdateRequest(existing, announcementUpdateRequest);
 
         try
         {
             await _context.SaveChangesAsync();
-            return Ok(existing);
+            return Ok(_announcementConverter.CreateAnnouncementResponseFromAnnouncement(existing));
         }
         catch (DbUpdateException ex)
         {
+            _logger.LogError(ex, "Failed to update anouncement");
             return StatusCode(500,
                 $"Error updating announcement: {ex.Message}");
         }
@@ -119,14 +106,14 @@ public class AnnouncementsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteAnnouncement(Guid id)
     {
-        Announcements? existing
-            = await _context.announcements.FindAsync(id);
+        Announcement? existing
+            = await _context.Announcements.FindAsync(id);
         if (existing == null)
         {
-            return NotFound("Announcement not found.");
+            return NotFound();
         }
 
-        _context.announcements.Remove(existing);
+        _context.Announcements.Remove(existing);
         await _context.SaveChangesAsync();
 
         return NoContent();

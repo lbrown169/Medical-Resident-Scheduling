@@ -21,7 +21,7 @@ public class PSYCallCalendar
     //determine what the first day of the first month is
     //if july1 then training schedule
     //store what type each day is
-    //what days are saturday, sunday, or weekdays 
+    //what days are saturday, sunday, or weekdays
 }
 
 public class TrainingCalendar : PSYCallCalendar
@@ -40,10 +40,8 @@ public class TrainingCalendar : PSYCallCalendar
         dayOfWeekAmt = new int[7]; // array of 7 days
 
         Calendar calendar = new GregorianCalendar();
-        DateTime
-            currentDay
-                = new(year, 7,
-                    7); // second week of july of whatever year passed in
+        // second week of july of whatever year passed in
+        DateTime currentDay = new(year, 7, 7);
 
         shortCallDaysList = new ArrayList();
         saturdayCallDaysList = new ArrayList();
@@ -59,17 +57,17 @@ public class TrainingCalendar : PSYCallCalendar
                     .Thursday) // if it is tues, wed, or thurs TODODODODODODO
                                // TO DO, DO NOT HARD CODE THIS^ IN CASE WE WANT MONDAY AND FRIDAY TO BE OPTIONAL
             {
-                shortCallDaysList.Add(currentDay);
+                shortCallDaysList.Add(DateOnly.FromDateTime(currentDay));
             }
 
             if (dayOfWeek == DayOfWeek.Saturday)
             {
-                saturdayCallDaysList.Add(currentDay);
+                saturdayCallDaysList.Add(DateOnly.FromDateTime(currentDay));
             }
 
             if (dayOfWeek == DayOfWeek.Sunday)
             {
-                sundayCallDaysList.Add(currentDay);
+                sundayCallDaysList.Add(DateOnly.FromDateTime(currentDay));
             }
 
             dayOfWeekAmt[
@@ -82,28 +80,28 @@ public class TrainingCalendar : PSYCallCalendar
 
     // Input: a day as an integer (0-indexed)
     // Output: DateTime for the day index
-    public DateTime
+    public DateOnly
         whatShortDayIsIt(
             int day) // short call training day that cooresponds with an actual calendar day
     {
         return
-            (DateTime)shortCallDaysList[day]; // returns a day month year
+            (DateOnly)shortCallDaysList[day]; // returns a day month year
     }
 
-    public DateTime whatSaturdayIsIt(int day)
+    public DateOnly whatSaturdayIsIt(int day)
     {
         return
-            (DateTime)saturdayCallDaysList[day]; // returns a day month year
+            (DateOnly)saturdayCallDaysList[day]; // returns a day month year
     }
 
-    public DateTime whatSundayIsIt(int day)
+    public DateOnly whatSundayIsIt(int day)
     {
         return
-            (DateTime)sundayCallDaysList[day]; // returns a day month year
+            (DateOnly)sundayCallDaysList[day]; // returns a day month year
     }
     // Input: a day as month, day, year
     // Ouput: the day as an integer (0-indexed)
-    //public 
+    //public
 
     //* DEBUGGING IF NEEDED
     public void printDayAmounts()

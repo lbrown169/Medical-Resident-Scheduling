@@ -1,3 +1,4 @@
+using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,7 +18,7 @@ public class ScheduleController : ControllerBase
     [HttpPost("training/{year}")]
     public async Task<IActionResult> GenerateFullSchedule(int year)
     {
-        if (year < DateTime.Now.Year)
+        if (year < (DateTime.Now.Year - 1))
         {
             return BadRequest(new
             {
@@ -31,13 +32,13 @@ public class ScheduleController : ControllerBase
             = await _schedulerService.GenerateFullSchedule(year);
         if (!success)
         {
-            return StatusCode(500, new { success = false, error });
+            return StatusCode(500, new AlgorithmResponse { Success = false, Message = error });
         }
 
-        return Ok(new
+        return Ok(new AlgorithmResponse
         {
-            success = true,
-            message = "Schedule generated and saved successfully."
+            Success = true,
+            Message = "Schedule generated and saved successfully."
         });
     }
 }

@@ -7,7 +7,8 @@ namespace MedicalDemo.Controllers;
 public class GeneralController : ControllerBase
 {
     [HttpHead("health")]
-    public IActionResult Health()
+    [HttpGet("health")]
+    public IActionResult HeadHealth()
     {
         return Ok();
     }

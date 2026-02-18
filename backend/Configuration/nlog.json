@@ -1,0 +1,113 @@
+{
+  "NLog": {
+    "throwExceptions": false,
+    "throwConfigExceptions": true,
+    "autoReload": true,
+    "variables": {
+      "normal": "[${date:format=yyyy-MM-dd HH\\:mm\\:ss.fff}] ${level:uppercase=true}:${logger}:${message} ${exception:format=message,stacktrace:separator=*}"
+    },
+    "extensions": [
+      {
+        "assembly": "Sentry.Nlog"
+      }
+    ],
+    "targets": {
+      "async": true,
+      "console": {
+        "type": "ColoredConsole",
+        "layout": "${normal}",
+        "rowHighlightingRules": [
+          {
+            "condition": "level == LogLevel.Fatal",
+            "foregroundColor": "Cyan"
+          },
+          {
+            "condition": "level == LogLevel.Error",
+            "foregroundColor": "Red"
+          },
+          {
+            "condition": "level == LogLevel.Warn",
+            "foregroundColor": "Yellow"
+          },
+          {
+            "condition": "level == LogLevel.Info",
+            "foregroundColor": "White"
+          },
+          {
+            "condition": "level == LogLevel.Trace",
+            "foregroundColor": "Gray"
+          }
+        ]
+      },
+      "debugger": {
+        "type": "Debugger",
+        "layout": "${normal}"
+      },
+      "logFile": {
+        "type": "File",
+        "layout": "${normal}",
+        "fileName": "${when:when='${environment:OS}'='Windows_NT':inner=C\\:/temp/psycall/logs/:else=/var/log/psycall/}${processname}${when:when=length('${gdc:item=ConfigurationName}')>0:inner=.${gdc:item=ConfigurationName}:else=}.log",
+        "keepFileOpen": false,
+        "archiveFileName": "${when:when='${environment:OS}'='Windows_NT':inner=C\\:/temp/psycall/logs/:else=/var/log/psycall/}${processname}${when:when=length('${gdc:item=ConfigurationName}')>0:inner=.${gdc:item=ConfigurationName}:else=}.{#}.log",
+        "archiveEvery": "Day",
+        "archiveDateFormat": "yyyyMMdd",
+        "archiveNumbering": "Date",
+        "maxArchiveFiles": 50
+      },
+      "sentry": {
+        "type": "Sentry",
+        "dsn": "${configsetting:item=Sentry.Dsn}",
+        "includeEventProperties": true,
+        "layout": "${normal}",
+        "breadcrumbLayout": "${normal}",
+        "minimumBreadcrumbLevel": "Debug",
+        "ignoreEventsWithNoException": false,
+        "includeEventDataOnBreadcrumbs": true,
+        "includeEventPropertiesAsTags": true,
+        "minimumEventLevel": "Error",
+        "options": {
+          "attachStacktrace": true,
+          "sendDefaultPii": true
+        }
+      }
+    },
+    "rules": {
+      "99_Trace": {
+        "logger": "*",
+        "minlevel": "Trace",
+        "writeTo": "console, logFile"
+      },
+      "90_EntityFramework": {
+        "logger": "Microsoft.EntityFrameworkCore.*",
+        "minlevel": "Trace",
+        "maxlevel": "Info",
+        "writeTo": "",
+        "final": true
+      },
+      "90_AspNetCore": {
+        "logger": "Microsoft.AspNetCore.*",
+        "minlevel": "Trace",
+        "maxlevel": "Info",
+        "writeTo": "",
+        "final": true
+      },
+      "50_Sentry_Production_Errors": {
+        "logger": "*",
+        "minlevel": "Error",
+        "writeTo": "sentry",
+        "filters": [
+          {
+            "type": "when",
+            "condition": "equals('${environment:ASPNETCORE_ENVIRONMENT}', 'Production')",
+            "action": "Log"
+          },
+          {
+            "type": "when",
+            "condition": "not equals('${environment:ASPNETCORE_ENVIRONMENT}', 'Production')",
+            "action": "Ignore"
+          }
+        ]
+      }
+    }
+  }
+}

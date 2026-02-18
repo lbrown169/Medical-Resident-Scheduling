@@ -1,5 +1,10 @@
+using MedicalDemo.Algorithm;
+using MedicalDemo.Enums;
+using MedicalDemo.Extensions;
 using MedicalDemo.Models;
+using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.DTO.Scheduling;
+using MedicalDemo.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,58 +18,56 @@ namespace MedicalDemo.Controllers;
 [Route("api/[controller]")]
 public class DashboardController : ControllerBase
 {
+    private readonly ILogger<DashboardController> _logger;
     private readonly MedicalContext _context;
 
-    public DashboardController(MedicalContext context)
+    public DashboardController(MedicalContext context, ILogger<DashboardController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     // GET: api/dashboard/resident/{residentId}
     [HttpGet("resident/{residentId}")]
-    public async Task<ActionResult<DashboardData>> GetDashboardData(
+    public async Task<ActionResult<DashboardDataResponse>> GetDashboardData(
         string residentId)
     {
         try
         {
-            DashboardData dashboardData = new()
+            DashboardDataResponse dashboardData = new()
             {
                 ResidentId = residentId,
                 CurrentRotation = "No rotation assigned",
                 RotationEndDate = "",
-                MonthlyHours = 0,
-                UpcomingShifts = new List<UpcomingShift>(),
-                RecentActivity = new List<RecentActivity>(),
-                TeamUpdates = new List<TeamUpdate>()
+                MonthlyHours = 0
             };
 
-            // Get current rotation - try multiple month formats
-            string[] currentMonthFormats =
-            {
-                DateTime.Now.ToString("MMMM yyyy"), // "December 2024"
-                DateTime.Now.ToString("MMM yyyy"), // "Dec 2024"
-                DateTime.Now.ToString("yyyy-MM"), // "2024-12"
-                DateTime.Now.ToString("MM/yyyy") // "12/2024"
-            };
-
-            Residents? resident = await _context.residents.FirstOrDefaultAsync(r => r.resident_id == residentId);
+            Resident? resident = await _context.Residents.FirstOrDefaultAsync(r => r.ResidentId == residentId);
 
             if (resident == null)
             {
-                return NotFound("Resident not found");
+                return NotFound();
             }
 
             HospitalRole role = HospitalRole.Unassigned;
             int monthIndex = (DateTime.Now.Month + 5) % 12;
 
-            if (resident.hospital_role_profile is { } profile)
+            if (resident.HospitalRoleProfile is { } profile)
             {
-                role = resident.hospital_role_profile switch
+                int pgyLevel = resident.GraduateYr;
+
+                if (pgyLevel == 1 && profile >= 0 && profile < HospitalRole.Pgy1Profiles.Length)
                 {
-                    1 => HospitalRole.Pgy1Profiles[profile][monthIndex],
-                    2 => HospitalRole.Pgy2Profiles[profile - 8][monthIndex],
-                    _ => role
-                };
+                    role = HospitalRole.Pgy1Profiles[profile][monthIndex];
+                }
+                else if (pgyLevel == 2)
+                {
+                    int pgy2Index = profile - 8;
+                    if (pgy2Index >= 0 && pgy2Index < HospitalRole.Pgy2Profiles.Length)
+                    {
+                        role = HospitalRole.Pgy2Profiles[pgy2Index][monthIndex];
+                    }
+                }
             }
 
             dashboardData.CurrentRotation = role.name;
@@ -78,42 +81,38 @@ public class DashboardController : ControllerBase
             }
 
             // Get dates for this resident
-            List<Dates> userDates = await _context.dates
-                .Where(d => d.ResidentId == residentId)
+            List<Date> userDates = await _context.Dates
+                .Where(d =>
+                    d.ResidentId == residentId
+                    && d.Schedule.Status == ScheduleStatus.Published)
                 .ToListAsync();
 
             // Calculate this month's hours
-            List<Dates> thisMonthDates = userDates.Where(d =>
-                d.Date.Month == DateTime.Now.Month &&
-                d.Date.Year == DateTime.Now.Year).ToList();
+            List<Date> thisMonthDates = userDates.Where(d =>
+                d.ShiftDate.Month == DateTime.Now.Month &&
+                d.ShiftDate.Year == DateTime.Now.Year).ToList();
             dashboardData.MonthlyHours
                 = thisMonthDates.Sum(d => d.Hours);
 
-            // Debug: Log the hours calculation
-            // Console.WriteLine($"Resident {residentId}: Found {thisMonthDates.Count} dates in {DateTime.Now:MMMM yyyy}, calculated {dashboardData.MonthlyHours} hours");
-            if (thisMonthDates.Any())
-            {
-                // Console.WriteLine($"Dates: {string.Join(", ", thisMonthDates.Select(d => d.Date.ToString("MM/dd/yyyy")))}");
-            }
-
             // Get upcoming shifts (next 3)
-            List<Dates> futureDates = userDates
-                .Where(d => d.Date >= DateTime.Today)
-                .OrderBy(d => d.Date)
+            DateOnly today = DateOnly.FromDateTime(DateTime.Today);
+            List<Date> futureDates = userDates
+                .Where(d => d.ShiftDate >= today)
+                .OrderBy(d => d.ShiftDate)
                 .Take(3)
                 .ToList();
 
             dashboardData.UpcomingShifts = futureDates.Select(d =>
-                new UpcomingShift
+                new DashboardDataResponse.UpcomingShift
                 {
-                    Date = d.Date.ToString("MM/dd/yyyy"),
-                    Type = d.CallType
+                    Date = d.ShiftDate.ToString("MM/dd/yyyy"),
+                    Type = d.CallType.GetDisplayName()
                 }).ToList();
 
             // Generate recent activity
             if (thisMonthDates.Any())
             {
-                dashboardData.RecentActivity.Add(new RecentActivity
+                dashboardData.RecentActivity.Add(new DashboardDataResponse.Activity
                 {
                     Id = "1",
                     Type = "schedule",
@@ -125,13 +124,13 @@ public class DashboardController : ControllerBase
 
             if (futureDates.Any())
             {
-                Dates nextShift = futureDates.First();
-                dashboardData.RecentActivity.Add(new RecentActivity
+                Date nextShift = futureDates.First();
+                dashboardData.RecentActivity.Add(new DashboardDataResponse.Activity
                 {
                     Id = "2",
                     Type = "upcoming",
                     Message
-                        = $"Next shift: {nextShift.CallType} on {nextShift.Date:MM/dd/yyyy}",
+                        = $"Next shift: {nextShift.CallType.GetDisplayName()} on {nextShift.ShiftDate:MM/dd/yyyy}",
                     Date = "Upcoming"
                 });
             }
@@ -139,24 +138,24 @@ public class DashboardController : ControllerBase
             // Add pending swap requests for this resident (as requestee)
             List<SwapRequest> pendingSwaps = await _context.SwapRequests
                 .Where(s =>
-                    s.RequesteeId == residentId && s.Status == "Pending")
+                    s.RequesteeId == residentId && s.Status == RequestStatus.Pending)
                 .ToListAsync();
             List<string> requesterIds = pendingSwaps.Select(s => s.RequesterId)
                 .Distinct().ToList();
             Dictionary<string, string> requesterMap = await _context
-                .residents
-                .Where(r => requesterIds.Contains(r.resident_id))
-                .ToDictionaryAsync(r => r.resident_id,
-                    r => r.first_name + " " + r.last_name);
+                .Residents
+                .Where(r => requesterIds.Contains(r.ResidentId))
+                .ToDictionaryAsync(r => r.ResidentId,
+                    r => r.FirstName + " " + r.LastName);
             foreach (SwapRequest swap in pendingSwaps)
             {
                 string requesterName
                     = requesterMap.ContainsKey(swap.RequesterId)
                         ? requesterMap[swap.RequesterId]
                         : swap.RequesterId;
-                dashboardData.RecentActivity.Add(new RecentActivity
+                dashboardData.RecentActivity.Add(new DashboardDataResponse.Activity
                 {
-                    Id = swap.SwapId.ToString(),
+                    Id = swap.SwapRequestId.ToString(),
                     Type = "swap_pending",
                     Message =
                         $"Swap request from {requesterName} for {swap.RequesterDate:MM/dd/yyyy} (your shift: {swap.RequesteeDate:MM/dd/yyyy})",
@@ -167,31 +166,30 @@ public class DashboardController : ControllerBase
             // Add swap requests where this resident is the requester and status is Approved or Denied
             List<SwapRequest> respondedSwaps = await _context.SwapRequests
                 .Where(s =>
-                    s.RequesterId == residentId && (s.Status == "Approved" ||
-                                                    s.Status == "Denied"))
+                    s.RequesterId == residentId && (s.Status == RequestStatus.Approved || s.Status == RequestStatus.Denied))
                 .OrderByDescending(s => s.UpdatedAt)
                 .ToListAsync();
             // Fetch all requestee IDs for these swaps
             List<string> requesteeIds = respondedSwaps
                 .Select(s => s.RequesteeId).Distinct().ToList();
             Dictionary<string, string> requesteeMap = await _context
-                .residents
-                .Where(r => requesteeIds.Contains(r.resident_id))
-                .ToDictionaryAsync(r => r.resident_id,
-                    r => r.first_name + " " + r.last_name);
+                .Residents
+                .Where(r => requesteeIds.Contains(r.ResidentId))
+                .ToDictionaryAsync(r => r.ResidentId,
+                    r => r.FirstName + " " + r.LastName);
             foreach (SwapRequest swap in respondedSwaps)
             {
                 string requesteeName
                     = requesteeMap.ContainsKey(swap.RequesteeId)
                         ? requesteeMap[swap.RequesteeId]
                         : swap.RequesteeId;
-                string message = swap.Status == "Approved"
+                string message = swap.Status == RequestStatus.Approved
                     ? $"Your swap request for {swap.RequesterDate:MM/dd/yyyy} (with {requesteeName}) was approved."
                     : $"Your swap request for {swap.RequesterDate:MM/dd/yyyy} (with {requesteeName}) was denied. Reason: {swap.Details}";
-                dashboardData.RecentActivity.Add(new RecentActivity
+                dashboardData.RecentActivity.Add(new DashboardDataResponse.Activity
                 {
-                    Id = swap.SwapId.ToString(),
-                    Type = swap.Status == "Approved"
+                    Id = swap.SwapRequestId.ToString(),
+                    Type = swap.Status == RequestStatus.Approved
                         ? "swap_approved"
                         : "swap_denied",
                     Message = message,
@@ -203,16 +201,16 @@ public class DashboardController : ControllerBase
             List<SwapRequest> approvedAsRequestee = await _context
                 .SwapRequests
                 .Where(s =>
-                    s.RequesteeId == residentId && s.Status == "Approved")
+                    s.RequesteeId == residentId && s.Status == RequestStatus.Approved)
                 .OrderByDescending(s => s.UpdatedAt)
                 .ToListAsync();
             List<string> approvedRequesterIds = approvedAsRequestee
                 .Select(s => s.RequesterId).Distinct().ToList();
             Dictionary<string, string> approvedRequesterMap = await _context
-                .residents
-                .Where(r => approvedRequesterIds.Contains(r.resident_id))
-                .ToDictionaryAsync(r => r.resident_id,
-                    r => r.first_name + " " + r.last_name);
+                .Residents
+                .Where(r => approvedRequesterIds.Contains(r.ResidentId))
+                .ToDictionaryAsync(r => r.ResidentId,
+                    r => r.FirstName + " " + r.LastName);
             foreach (SwapRequest swap in approvedAsRequestee)
             {
                 string requesterName
@@ -221,9 +219,9 @@ public class DashboardController : ControllerBase
                         : swap.RequesterId;
                 string message
                     = $"You swapped your shift on {swap.RequesteeDate:MM/dd/yyyy} with {requesterName}.";
-                dashboardData.RecentActivity.Add(new RecentActivity
+                dashboardData.RecentActivity.Add(new DashboardDataResponse.Activity
                 {
-                    Id = swap.SwapId + "-as-approver",
+                    Id = swap.SwapRequestId + "-as-approver",
                     Type = "swap_approved",
                     Message = message,
                     Date = swap.UpdatedAt.ToString("MM/dd/yyyy")
@@ -231,15 +229,15 @@ public class DashboardController : ControllerBase
             }
 
             // Add team updates from announcements
-            List<Announcements> announcements = await _context
-                .announcements
+            List<Announcement> announcements = await _context
+                .Announcements
                 .OrderByDescending(a => a.CreatedAt)
                 .Take(5) // Show the 5 most recent announcements
                 .ToListAsync();
 
-            foreach (Announcements announcement in announcements)
+            foreach (Announcement announcement in announcements)
             {
-                dashboardData.TeamUpdates.Add(new TeamUpdate
+                dashboardData.TeamUpdates.Add(new DashboardDataResponse.TeamUpdate
                 {
                     Id = announcement.AnnouncementId.ToString(),
                     Message = announcement.Message ?? "",
@@ -251,41 +249,9 @@ public class DashboardController : ControllerBase
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to get dashboard info");
             return StatusCode(500,
                 $"An error occurred while fetching dashboard data: {ex.Message}");
         }
     }
-}
-
-// DTOs for dashboard response
-public class DashboardData
-{
-    public string ResidentId { get; set; } = "";
-    public string CurrentRotation { get; set; } = "";
-    public string RotationEndDate { get; set; } = "";
-    public int MonthlyHours { get; set; }
-    public List<UpcomingShift> UpcomingShifts { get; set; } = new();
-    public List<RecentActivity> RecentActivity { get; set; } = new();
-    public List<TeamUpdate> TeamUpdates { get; set; } = new();
-}
-
-public class UpcomingShift
-{
-    public string Date { get; set; } = "";
-    public string Type { get; set; } = "";
-}
-
-public class RecentActivity
-{
-    public string Id { get; set; } = "";
-    public string Type { get; set; } = "";
-    public string Message { get; set; } = "";
-    public string Date { get; set; } = "";
-}
-
-public class TeamUpdate
-{
-    public string Id { get; set; } = "";
-    public string Message { get; set; } = "";
-    public string Date { get; set; } = "";
 }
