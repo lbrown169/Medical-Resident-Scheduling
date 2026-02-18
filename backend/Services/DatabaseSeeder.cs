@@ -442,7 +442,7 @@ public class DatabaseSeeder
                     WeeklyHours = 0,
                     TotalHours = 43,
                     BiYearlyHours = 23,
-                    HospitalRoleProfile = 1
+                    HospitalRoleProfile = null
                 },
                 new Resident
                 {
@@ -457,7 +457,7 @@ public class DatabaseSeeder
                     WeeklyHours = 0,
                     TotalHours = 9,
                     BiYearlyHours = 9,
-                    HospitalRoleProfile = 1
+                    HospitalRoleProfile = null
                 },
                 new Resident
                 {
@@ -472,7 +472,7 @@ public class DatabaseSeeder
                     WeeklyHours = 0,
                     TotalHours = 17,
                     BiYearlyHours = 14,
-                    HospitalRoleProfile = 1
+                    HospitalRoleProfile = null
                 },
                 new Resident
                 {
@@ -487,7 +487,7 @@ public class DatabaseSeeder
                     WeeklyHours = 0,
                     TotalHours = 78,
                     BiYearlyHours = 51,
-                    HospitalRoleProfile = 1
+                    HospitalRoleProfile = null
                 },
                 new Resident
                 {
@@ -502,7 +502,7 @@ public class DatabaseSeeder
                     WeeklyHours = 0,
                     TotalHours = 41,
                     BiYearlyHours = 39,
-                    HospitalRoleProfile = 1
+                    HospitalRoleProfile = null
                 },
                 new Resident
                 {
@@ -517,7 +517,7 @@ public class DatabaseSeeder
                     WeeklyHours = 0,
                     TotalHours = 10,
                     BiYearlyHours = 4,
-                    HospitalRoleProfile = 1
+                    HospitalRoleProfile = null
                 },
                 new Resident
                 {
@@ -532,7 +532,7 @@ public class DatabaseSeeder
                     WeeklyHours = 0,
                     TotalHours = 23,
                     BiYearlyHours = 18,
-                    HospitalRoleProfile = 1
+                    HospitalRoleProfile = null
                 },
                 new Resident
                 {
@@ -547,7 +547,7 @@ public class DatabaseSeeder
                     WeeklyHours = 0,
                     TotalHours = 87,
                     BiYearlyHours = 67,
-                    HospitalRoleProfile = 1
+                    HospitalRoleProfile = null
                 },
                 new Resident
                 {
@@ -562,7 +562,7 @@ public class DatabaseSeeder
                     WeeklyHours = 0,
                     TotalHours = 11,
                     BiYearlyHours = 4,
-                    HospitalRoleProfile = 1
+                    HospitalRoleProfile = null
                 },
                 new Resident
                 {
@@ -577,7 +577,7 @@ public class DatabaseSeeder
                     WeeklyHours = 0,
                     TotalHours = 20,
                     BiYearlyHours = 12,
-                    HospitalRoleProfile = 1
+                    HospitalRoleProfile = null
                 }
             );
 
