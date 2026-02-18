@@ -1,13 +1,12 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace MedicalDemo.Enums
-{
-    public enum Semester
-    {
-        [Display(Name = "Fall")]
-        Fall = 1,
+namespace MedicalDemo.Enums;
 
-        [Display(Name = "Spring")]
-        Spring = 2
-    }
+public enum Semester
+{
+    [Display(Name = "Fall")]
+    Fall = 1,
+
+    [Display(Name = "Spring")]
+    Spring = 2
 }

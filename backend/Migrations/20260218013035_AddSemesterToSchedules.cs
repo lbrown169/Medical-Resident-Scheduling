@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore.Migrations;
+﻿using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -13,7 +13,7 @@ namespace MedicalDemo.Migrations
                 table: "schedules",
                 type: "int",
                 nullable: false,
-                defaultValue: 1);
+                defaultValue: 0);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
