@@ -47,7 +47,7 @@ public class SchedulerService
                 // List<PGY3> pgy3Models = residentData.PGY3s
                 //     .Select(MapToPGY3).ToList();
 
-                bool loosely = attempt > 50;
+                int looseFactor = 6 + Math.Min(18, attempt / 10 * 2);
 
                 bool success;
                 switch (semester)
@@ -56,10 +56,10 @@ public class SchedulerService
                         success =
                             _algorithmService.Training(year, residentData.PGY1s, residentData.PGY2s,
                                 residentData.PGY3s) &&
-                            _algorithmService.Part1(year, residentData.PGY1s, residentData.PGY2s, loosely);
+                            _algorithmService.Part1(year, residentData.PGY1s, residentData.PGY2s, looseFactor);
                         break;
                     case Semester.Spring:
-                        success = _algorithmService.Part2(year, residentData.PGY1s, residentData.PGY2s, loosely);
+                        success = _algorithmService.Part2(year, residentData.PGY1s, residentData.PGY2s, looseFactor);
                         break;
                     default:
                         return (false, "Semester not recognized.");

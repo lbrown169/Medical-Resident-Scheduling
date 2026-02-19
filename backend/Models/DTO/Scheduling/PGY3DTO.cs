@@ -4,7 +4,7 @@ public class PGY3DTO : ResidentDTO
 {
     public override bool CanWork(DateOnly curDay)
     {
-        if (IsVacation(curDay))
+        if (IsVacation(curDay) || CommitedWorkDay(curDay))
         {
             return false;
         }

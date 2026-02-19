@@ -8,5 +8,5 @@ public enum Semester
     Fall = 1,
 
     [Display(Name = "Spring")]
-    Spring = 2
+    Spring = 2,
 }

@@ -9,6 +9,7 @@ public abstract class ResidentDTO
     public HashSet<DateOnly> WorkDays { get; set; } = new();
     public HashSet<DateOnly> CommitedWorkDays { get; set; } = new();
     public HashSet<DateOnly> PendingSaveWorkDays { get; set; } = new();
+    public HashSet<DateOnly> AllPendingWorkDays => [.. PendingSaveWorkDays, .. WorkDays];
 
     public HospitalRole?[] RolePerMonth { get; set; } = new HospitalRole?[12];
 
@@ -53,6 +54,11 @@ public abstract class ResidentDTO
     public bool IsWorking(DateOnly curDay)
     {
         return WorkDays.Contains(curDay);
+    }
+
+    public bool CanAddWorkDay(DateOnly curDay)
+    {
+        return CanWork(curDay) && !IsWorking(curDay);
     }
 
     /// <summary>
