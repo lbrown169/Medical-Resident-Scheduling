@@ -31,6 +31,7 @@ public class ScheduleController : ControllerBase
         // Generate the new schedule
         (bool success, string? error)
             = await _schedulerService.GenerateScheduleForSemester(year, Semester.Fall);
+        await _schedulerService.GenerateScheduleForSemester(year, Semester.Spring);
         if (!success)
         {
             return StatusCode(500, new AlgorithmResponse { Success = false, Message = error });

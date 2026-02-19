@@ -621,9 +621,7 @@ public class AlgorithmService
     public bool Part1(int year, List<PGY1DTO> pgy1s, List<PGY2DTO> pgy2s, int looseFactor)
     {
         _logger.LogInformation("part 1: normal schedule (july through december)");
-        int pgy1 = 8;
-        int pgy2 = 8;
-
+        int pgy1 = pgy1s.Count;
         for (int i = 0; i < pgy1; i++)
         {
             pgy1s[i].InTraining = false;
