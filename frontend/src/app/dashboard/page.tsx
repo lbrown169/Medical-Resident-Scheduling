@@ -14,7 +14,7 @@ import {
   SidebarTrigger,
 } from "../../components/ui/sidebar";
 import { SidebarUserCard } from "./components/SidebarUserCard";
-import { Repeat, CalendarDays, CalendarX, UserCheck, Shield, Settings, Home, LogOut, User as UserIcon, ChevronDown, Moon, Sun } from "lucide-react";
+import { Repeat, CalendarDays, CalendarX, UserCheck, Shield, Settings, Home, LogOut, User as UserIcon, ChevronDown, Moon, Sun, ClipboardList, CalendarRange, Calendar1 } from "lucide-react"; // kept CalendarX from main
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { useRouter } from "next/navigation";
 import { toast } from '../../lib/use-toast';
@@ -35,6 +35,9 @@ import SwapCallsPage from "./components/SwapCallsPage";
 import RequestOffPage from "./components/RequestOffPage";
 import CheckSchedulePage from "./components/CheckSchedulePage";
 import AdminPage from "./components/AdminPage";
+import PGY3RotationForm from "./components/PGY3RotationForm";
+import PGY4RotationPage from "./components/PGY4RotationPage";
+import PGY4SchedulePage from "../dashboard/pgy4-schedule/page";
 
 import MobileHeader from "./components/MobileHeader";
 import MobileUserMenu from "./components/MobileUserMenu";
@@ -103,6 +106,9 @@ const menuItems: MenuItem[] = [
   { title: "Check My Schedule", icon: <UserCheck className="w-6 h-6 mr-3" /> },
   { title: "Admin", icon: <Shield className="w-6 h-6 mr-3" /> },
   { title: "Settings", icon: <Settings className="w-6 h-6 mr-3" /> },
+  { title: "PGY-4 Rotation Forms", icon: <ClipboardList className="w-6 h-6 mr-3" /> },
+  { title: "PGY-4 Schedule", icon: <Calendar1 className="w-6 h-6 mr-3" /> },
+  { title: "PGY-4 Rotations", icon: <CalendarRange className="w-6 h-6 mr-3" /> }
 ];
 
 const leaveReasons = [
@@ -1147,6 +1153,45 @@ case "Home":
           />
         );
 
+      case "PGY-4 Rotation Forms":
+        return (
+          <PGY3RotationForm 
+            userId={user?.id || ""}
+            userPGY={currentUserPGY || 0}
+          />
+        );
+      
+      case "PGY-4 Schedule":
+        // Only PGY-4 residents can view this page
+        if (currentUserPGY !== 4) {
+          return (
+            <div className="w-full pt-4 flex flex-col items-center">
+              <h1 className="text-2xl font-bold mb-6">Access Denied</h1>
+              <p className="text-center text-gray-600 dark:text-gray-400">
+                This page is only accessible to PGY-4 residents.
+              </p>
+            </div>
+          );
+        }
+        return <PGY4SchedulePage />;
+      
+      case "PGY-4 Rotations":
+          if (!isAdmin) {
+          return (
+            <div className="w-full pt-4 flex flex-col items-center">
+              <h1 className="text-2xl font-bold mb-6">Access Denied</h1>
+              <p className="text-center text-gray-600 dark:text-gray-400">
+                You do not have permission to access the PGY-4 admin panel.
+              </p>
+            </div>
+          );
+        }
+        return (
+          <PGY4RotationPage
+          residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr }))}
+          />
+        );
+
       default:
         return null;
     }
@@ -1219,10 +1264,21 @@ case "Home":
   // Computed values
   const displayName = user ? `${user.firstName} ${user.lastName}` : "John Doe";
   const displayEmail = user?.email || "john.doe@email.com";
+  
+  // Get current user's PGY level
+  const currentUserPGY = residents.find(r => r.resident_id === user?.id)?.graduate_yr;
+  
   const filteredMenuItems = menuItems.filter(item => {
     if (item.title === "Admin") return false; //hide admin option
     if (item.title === "Request Off") return !isAdmin;
     if (item.title === "Check My Schedule") return !isAdmin;
+    // Only show PGY-4 Rotation Forms to PGY-3 residents
+    if (item.title === "PGY-4 Rotation Forms") return currentUserPGY === 3;
+    // Only show PGY-4 Schedule to PGY-4 residents (calculated as: current year - graduate year + 1 = 4)
+    // For example: 2026 - 2022 + 1 = 5 (graduated), 2026 - 2023 + 1 = 4 (PGY-4)
+    if (item.title === "PGY-4 Schedule") return currentUserPGY === 4;
+    //Only show PGY-4 Rotaion Schedule to admins
+    if (item.title === "PGY-4 Rotations") return isAdmin;
     return true;
   });
 
@@ -1265,7 +1321,7 @@ case "Home":
                           <SidebarMenuItem key={item.title}>
                             <SidebarMenuButton asChild>
                               <span
-                                className={`flex items-center text-xl cursor-pointer rounded-lg px-2 py-1 transition-colors ${
+                                className={`flex items-center text-base cursor-pointer rounded-lg px-2 py-1 transition-colors ${
                                   selected === item.title
                                     ? "font-bold text-gray-800 dark:text-gray-200 bg-gray-300 dark:bg-gray-700"
                                     : "hover:bg-gray-900 dark:hover:bg-gray-700"
