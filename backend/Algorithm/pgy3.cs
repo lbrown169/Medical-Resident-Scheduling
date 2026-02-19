@@ -3,6 +3,8 @@ public class PGY3
     private readonly HashSet<DateOnly>
         allWorkDates; // every single day they are supposed to work
 
+    private readonly HashSet<DateOnly> committedWorkDates; //dates they are already working
+
     private readonly HashSet<DateOnly> vacationRequests;
 
     private readonly int hoursWorked6months;
@@ -18,6 +20,7 @@ public class PGY3
         this.name = name;
         vacationRequests = new HashSet<DateOnly>();
         allWorkDates = new HashSet<DateOnly>(); // initialize the hashset
+        committedWorkDates = [];
         hoursWorked6months = 0;
         hoursWorkedTotal = 0;
     }
@@ -62,6 +65,23 @@ public class PGY3
         }
 
         allWorkDates.Add(curDay);
+        return true;
+    }
+
+    public void removeCommittedWorkDay(DateOnly curDay)
+    {
+        committedWorkDates.Remove(curDay);
+    }
+
+    public bool addCommittedWorkDay(DateOnly curDay)
+    {
+        if (committedWorkDates.Contains(curDay))
+        {
+            Console.WriteLine("error: the resident already works this day?");
+            return false;
+        }
+
+        committedWorkDates.Add(curDay);
         return true;
     }
 

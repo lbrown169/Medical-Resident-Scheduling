@@ -17,11 +17,11 @@ public class SchedulingMapperService
 
     public PGY1DTO MapToPGY1DTO(Resident resident, IList<HospitalRole> rotations,
         List<Vacation> vacations,
-        List<DatesDTO> dates)
+        List<Date> dates)
     {
         List<DateOnly> committedDates = dates
-            .Where(d => d.ResidentId == resident.ResidentId && d.IsCommitted)
-            .Select(d => d.Date)
+            .Where(d => d.ResidentId == resident.ResidentId)
+            .Select(d => d.ShiftDate)
             .ToList();
 
         PGY1DTO dto = new PGY1DTO
@@ -44,11 +44,11 @@ public class SchedulingMapperService
 
     public PGY2DTO MapToPGY2DTO(Resident resident, IList<HospitalRole> rotations,
         List<Vacation> vacations,
-        List<DatesDTO> dates)
+        List<Date> dates)
     {
         List<DateOnly> committedDates = dates
-            .Where(d => d.ResidentId == resident.ResidentId && d.IsCommitted)
-            .Select(d => d.Date)
+            .Where(d => d.ResidentId == resident.ResidentId)
+            .Select(d => d.ShiftDate)
             .ToList();
 
         PGY2DTO dto = new()
@@ -70,11 +70,11 @@ public class SchedulingMapperService
     }
 
     public PGY3DTO MapToPGY3DTO(Resident resident, List<Vacation> vacations,
-        List<DatesDTO> dates)
+        List<Date> dates)
     {
         List<DateOnly> committedDates = dates
-            .Where(d => d.ResidentId == resident.ResidentId && d.IsCommitted)
-            .Select(d => d.Date)
+            .Where(d => d.ResidentId == resident.ResidentId)
+            .Select(d => d.ShiftDate)
             .ToList();
 
         return new PGY3DTO
