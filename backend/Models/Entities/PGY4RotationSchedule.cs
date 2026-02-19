@@ -7,12 +7,9 @@ namespace MedicalDemo.Models.Entities;
 public class PGY4RotationSchedule
 {
     [Key]
-    [Column("pgy4_rotation_schedule_id")]
     public Guid PGY4RotationScheduleId { get; set; }
 
-    [Column("seed")]
-    public string Seed { get; set; } = null!;
+    public int Seed { get; set; }
 
-    [ForeignKey(nameof(PGY4RotationScheduleId))]
     public virtual List<Rotation> Rotations { get; set; } = [];
 }

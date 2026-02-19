@@ -9,9 +9,11 @@ public class PGY4ResidenRotationScheduleResponse
 
 public class PGY4RotationScheduleResponse
 {
-    public Guid ScheduleId { get; set; }
+    public Guid PGY4RotationScheduleId { get; set; }
 
     public int ResidentCount { get; set; }
+
+    public int Seed { get; set; }
 
     public List<PGY4ResidenRotationScheduleResponse> Schedule { get; set; } = null!;
 }

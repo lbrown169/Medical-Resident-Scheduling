@@ -1,4 +1,5 @@
 using MedicalDemo.Converters;
+using MedicalDemo.Enums;
 using MedicalDemo.Models.DTO.Requests;
 using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.Entities;
@@ -37,7 +38,10 @@ public class RotationPrefRequestController(MedicalContext context) : ControllerB
     [HttpGet()]
     public async Task<ActionResult<RotationPrefRequestsListResponse>> GetAll()
     {
-        List<RotationPrefRequest> allRequests = await IncludeAllRotationPrefRequestProperties(context.RotationPrefRequests).ToListAsync();
+        List<RotationPrefRequest> allRequests = await IncludeAllRotationPrefRequestProperties(
+                context.RotationPrefRequests
+            )
+            .ToListAsync();
 
         List<RotationPrefResponse> prefsResponse =
         [
@@ -52,6 +56,28 @@ public class RotationPrefRequestController(MedicalContext context) : ControllerB
         return Ok(finalResponse);
     }
 
+    // Get: api/rotation-pref-requests/resident/{residentId}
+    [HttpGet("resident/{residentId}")]
+    public async Task<ActionResult<RotationPrefResponse>> GetByResidentId(
+        [FromRoute] string residentId
+    )
+    {
+        RotationPrefRequest? request = await IncludeAllRotationPrefRequestProperties(
+                context.RotationPrefRequests
+            )
+            .FirstOrDefaultAsync(r => r.ResidentId == residentId);
+
+        if (request == null)
+        {
+            return NotFound();
+        }
+
+        RotationPrefResponse response =
+            RotationPrefRequestConverter.CreateRotationPrefResponseFromModel(request);
+
+        return Ok(response);
+    }
+
     // POST: api/rotation-pref-requests
     [HttpPost]
     public async Task<ActionResult<RotationPrefResponse>> Create(
@@ -63,37 +89,59 @@ public class RotationPrefRequestController(MedicalContext context) : ControllerB
             return BadRequest(ModelState);
         }
 
-        // Validate rotation type ID uniqueness
-        List<Guid> repeatedGuids = ValidateRotationTypeUniqueness(
-            addRequestDto.Priorities,
-            addRequestDto.Alternatives,
-            addRequestDto.Avoids
-        );
-        if (repeatedGuids.Count != 0)
+        List<Guid> prefRotationTypeIds = [];
+        prefRotationTypeIds.AddRange(addRequestDto.Priorities);
+        prefRotationTypeIds.AddRange(addRequestDto.Alternatives);
+        prefRotationTypeIds.AddRange(addRequestDto.Avoids);
+
+        bool isValid = await ValidatePrefRotationTypes(prefRotationTypeIds);
+        if (!isValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        // Check if resident already has already posted a preference request
+        bool residentPrefRequestAlreadyExists =
+            (
+                await context.RotationPrefRequests.FirstOrDefaultAsync(
+                    (request) => request.ResidentId == addRequestDto.ResidentId
+                )
+            ) != null;
+        if (residentPrefRequestAlreadyExists)
         {
             ModelState.AddModelError(
-                "Repeated IDs",
-                $"ID: [{string.Join(", ", repeatedGuids)}] appear in multiple places."
+                "Resident Request Already Exist",
+                $"Resident ID {addRequestDto.ResidentId} has already made a rotation preference request."
             );
             return BadRequest(ModelState);
         }
 
-        // Validate rotation type ID existenace
-        List<Guid> invalidGuids = await ValidateRotationTypeExistence(
-            addRequestDto.Priorities,
-            addRequestDto.Alternatives,
-            addRequestDto.Avoids
+        Resident? requester = await context.Residents.FirstOrDefaultAsync(
+            (resident) => resident.ResidentId == addRequestDto.ResidentId
         );
-        if (invalidGuids.Count != 0)
+        // Check if resident exist
+        if (requester == null)
         {
             ModelState.AddModelError(
-                "Invalid IDs",
-                $"ID: [{string.Join(", ", invalidGuids)}] does not exist."
+                "Resident Not Found",
+                $"Resident ID {addRequestDto.ResidentId} does not exist."
             );
             return BadRequest(ModelState);
         }
 
-        RotationPrefRequest requestModel = RotationPrefRequestConverter.CreateModelFromRequestDto(addRequestDto);
+        // Check if resident is a PGY3
+        if (requester.GraduateYr != 3)
+        {
+            ModelState.AddModelError(
+                "Incorrect Resident PGY",
+                $"Resident ID {addRequestDto.ResidentId} is not a PGY 3."
+            );
+            return BadRequest(ModelState);
+        }
+
+        RotationPrefRequest requestModel = RotationPrefRequestConverter.CreateModelFromRequestDto(
+            addRequestDto
+        );
 
         await context.RotationPrefRequests.AddAsync(requestModel);
         await context.SaveChangesAsync();
@@ -126,33 +174,14 @@ public class RotationPrefRequestController(MedicalContext context) : ControllerB
             return BadRequest(ModelState);
         }
 
-        // Validate rotation type ID uniqueness
-        List<Guid> repeatedGuids = ValidateRotationTypeUniqueness(
-            updateRequest.Priorities,
-            updateRequest.Alternatives,
-            updateRequest.Avoids
-        );
-        if (repeatedGuids.Count != 0)
-        {
-            ModelState.AddModelError(
-                "Repeated IDs",
-                $"ID: [{string.Join(", ", repeatedGuids)}] appear in multiple places."
-            );
-            return BadRequest(ModelState);
-        }
+        List<Guid> prefRotationTypeIds = [];
+        prefRotationTypeIds.AddRange(updateRequest.Priorities);
+        prefRotationTypeIds.AddRange(updateRequest.Alternatives);
+        prefRotationTypeIds.AddRange(updateRequest.Avoids);
 
-        // Validate rotation type ID existence
-        List<Guid> invalidGuids = await ValidateRotationTypeExistence(
-            updateRequest.Priorities,
-            updateRequest.Alternatives,
-            updateRequest.Avoids
-        );
-        if (invalidGuids.Count != 0)
+        bool isValid = await ValidatePrefRotationTypes(prefRotationTypeIds);
+        if (!isValid)
         {
-            ModelState.AddModelError(
-                "Invalid IDs",
-                $"ID: [{string.Join(", ", invalidGuids)}] does not exist."
-            );
             return BadRequest(ModelState);
         }
 
@@ -203,41 +232,24 @@ public class RotationPrefRequestController(MedicalContext context) : ControllerB
         return NoContent();
     }
 
-    private async Task<List<Guid>> ValidateRotationTypeExistence(
-        List<Guid> priorities,
-        List<Guid> alternatives,
-        List<Guid> avoids
-    )
+    private async Task<List<Guid>> ValidateRotationTypeExistence(List<Guid> rotationTypeIds)
     {
-        List<Guid> allGuids = [];
-        allGuids.AddRange(priorities);
-        allGuids.AddRange(alternatives);
-        allGuids.AddRange(avoids);
-
         List<Guid> existingGuids = await context
-            .RotationTypes.Where((rt) => allGuids.Contains(rt.RotationTypeId))
+            .RotationTypes.Where((rt) => rotationTypeIds.Contains(rt.RotationTypeId))
             .Select((rt) => rt.RotationTypeId)
             .ToListAsync();
-        List<Guid> invalidGuids = [.. allGuids.Except(existingGuids)];
+        List<Guid> invalidGuids = [.. rotationTypeIds.Except(existingGuids)];
 
         return invalidGuids;
     }
 
-    private static List<Guid> ValidateRotationTypeUniqueness(
-        List<Guid> priorities,
-        List<Guid> alternatives,
-        List<Guid> avoids
-    )
+    // Check if rotation types are repeated in the preference request
+    private static List<Guid> ValidateRotationTypeUniqueness(List<Guid> rotationTypeIds)
     {
         List<Guid> repeatedGuids = [];
         HashSet<Guid> allGuidsSet = [];
 
-        List<Guid> allGuids = [];
-        allGuids.AddRange(priorities);
-        allGuids.AddRange(alternatives);
-        allGuids.AddRange(avoids);
-
-        foreach (Guid id in allGuids)
+        foreach (Guid id in rotationTypeIds)
         {
             if (allGuidsSet.Contains(id))
             {
@@ -249,11 +261,38 @@ public class RotationPrefRequestController(MedicalContext context) : ControllerB
         return repeatedGuids;
     }
 
+    // Only PGY year 4 rotations can be in the preference
+    private static List<Guid> ValidateToOnlyPGY4RotationTypes(List<RotationType> rotationTypes)
+    {
+        List<Guid> invalidGuids =
+        [
+            .. rotationTypes
+                .Where((rt) => (rt.PgyYearFlags & PgyYearFlags.Pgy4) == 0)
+                .Select((rt) => rt.RotationTypeId),
+        ];
+
+        return invalidGuids;
+    }
+
+    // Only non chief rotation types can be be in the preference
+    private static List<Guid> ValidateToNonChiefRotationTypes(List<RotationType> rotationTypes)
+    {
+        List<Guid> invalidGuids =
+        [
+            .. rotationTypes
+                .Where((rt) => rt.IsChiefRotation == true)
+                .Select((rt) => rt.RotationTypeId),
+        ];
+
+        return invalidGuids;
+    }
+
     private static IQueryable<RotationPrefRequest> IncludeAllRotationPrefRequestProperties(
-        DbSet<RotationPrefRequest> rotations
+        DbSet<RotationPrefRequest> rotationPrefRequestDbSet
     )
     {
-        return rotations
+        return rotationPrefRequestDbSet
+            .Include(r => r.Resident)
             .Include(r => r.FirstPriority)
             .Include(r => r.SecondPriority)
             .Include(r => r.ThirdPriority)
@@ -268,5 +307,59 @@ public class RotationPrefRequestController(MedicalContext context) : ControllerB
             .Include(r => r.FirstAvoid)
             .Include(r => r.SecondAvoid)
             .Include(r => r.ThirdAvoid);
+    }
+
+    // Return false if encountered validation error, true other wise
+    private async Task<bool> ValidatePrefRotationTypes(List<Guid> prefRotationTypeIds)
+    {
+        // Validate rotation type ID uniqueness
+        List<Guid> repeatedGuids = ValidateRotationTypeUniqueness(prefRotationTypeIds);
+        if (repeatedGuids.Count != 0)
+        {
+            ModelState.AddModelError(
+                "Repeated IDs",
+                $"ID: [{string.Join(", ", repeatedGuids)}] appear in multiple places."
+            );
+            return false;
+        }
+
+        // Validate rotation type ID existenace
+        List<Guid> nonExistentGuids = await ValidateRotationTypeExistence(prefRotationTypeIds);
+        if (nonExistentGuids.Count != 0)
+        {
+            ModelState.AddModelError(
+                "Invalid IDs",
+                $"ID: [{string.Join(", ", nonExistentGuids)}] does not exist."
+            );
+            return false;
+        }
+
+        List<RotationType> prefRotationTypes = await context
+            .RotationTypes.Where((rt) => prefRotationTypeIds.Contains(rt.RotationTypeId))
+            .ToListAsync();
+
+        // Only allow PGY4 rotation types
+        List<Guid> nonPgy4RotationTypes = ValidateToOnlyPGY4RotationTypes(prefRotationTypes);
+        if (nonPgy4RotationTypes.Count != 0)
+        {
+            ModelState.AddModelError(
+                "Non PGY4 Rotation Types",
+                $"ID: [{string.Join(", ", nonPgy4RotationTypes)}] is not a PGY4 Rotation Type."
+            );
+            return false;
+        }
+
+        // Only allow non chief rotation types
+        List<Guid> chiefRotationTypes = ValidateToNonChiefRotationTypes(prefRotationTypes);
+        if (chiefRotationTypes.Count != 0)
+        {
+            ModelState.AddModelError(
+                "Chief Rotation Types",
+                $"ID: [{string.Join(", ", chiefRotationTypes)}] is a chief rotation type and should not be passed."
+            );
+            return false;
+        }
+
+        return true;
     }
 }

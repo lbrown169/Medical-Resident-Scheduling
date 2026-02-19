@@ -1,4 +1,3 @@
-using System.Text.Json.Serialization;
 using MedicalDemo.Enums;
 
 namespace MedicalDemo.Models.Entities
@@ -30,7 +29,6 @@ namespace MedicalDemo.Models.Entities
 
         public virtual ICollection<Blackout> Blackouts { get; set; }
         public virtual ICollection<Date> Dates { get; set; }
-        [JsonIgnore]
         public virtual ICollection<Rotation> Rotations { get; set; }
         public virtual ICollection<SwapRequest> SwapRequestRequestees { get; set; }
         public virtual ICollection<SwapRequest> SwapRequestRequesters { get; set; }

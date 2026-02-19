@@ -9,11 +9,12 @@ using Microsoft.EntityFrameworkCore;
 namespace MedicalDemo.Controllers;
 
 [ApiController]
-[Route("api/rotation-type")]
+[Route("api/rotation-types")]
 public class RotationTypeController(MedicalContext context) : ControllerBase
 {
     private readonly MedicalContext context = context;
 
+    // GET: api/rotation-types/{id}
     [HttpGet("{id}")]
     public async Task<ActionResult<RotationTypeResponse>> GetById([FromRoute] Guid id)
     {
@@ -28,15 +29,16 @@ public class RotationTypeController(MedicalContext context) : ControllerBase
         return Ok(response);
     }
 
+    // GET: api/rotation-types
     [HttpGet]
     public async Task<ActionResult<RotationTypesListResponse>> GetAll([FromQuery] List<int> pgyYear)
     {
         // Validations
         foreach (int year in pgyYear)
         {
-            if (year < 0 || year > 4)
+            if (year < 1 || year > 4)
             {
-                return BadRequest("Pgy Year cannot be less than 0 or greater than 4");
+                return BadRequest("Pgy Year cannot be less than 1 or greater than 4");
             }
         }
 

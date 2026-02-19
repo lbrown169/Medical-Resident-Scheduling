@@ -280,12 +280,18 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
               </div>
               <textarea
                 id="description-box"
-                rows={2}
+                rows={4}
+                maxLength={255}
                 className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors resize-none"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="e.g., specific duties, contact info, special considerations..."
               />
+              <div className="flex justify-end">
+                <span className={`text-xs ${description.length >= 255 ? 'text-red-500 font-semibold' : 'text-muted-foreground'}`}>
+                  {description.length}/255
+                </span>
+              </div>
             </div>
 
             {/* Form Summary */}
@@ -334,7 +340,7 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
           </div>
 
           {/* Submit Button / Confirmation */}
-          <div className="pt-3 mt-auto">
+          <div className="mt-auto">
             {!showConfirmation ? (
               <>
                 <Button 
@@ -431,7 +437,7 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
                           className="border border-border rounded-lg p-3 hover:bg-muted/40 transition-colors"
                         >
                           <div className="flex items-start justify-between gap-3">
-                            <div className="space-y-0.5">
+                            <div className="space-y-0.5 min-w-0">
                               <div className="flex items-center gap-2">
                                 <Calendar className="h-4 w-4 text-primary" />
                                 <span className="font-medium">
@@ -447,10 +453,8 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
                                 <span className="font-medium">{g.reason}</span>
                               </div>
                               {g.details ? (
-                                <div className="text-xs text-muted-foreground">
-                                  {g.details.length > 100
-                                    ? g.details.slice(0, 100) + "…"
-                                    : g.details}
+                                <div className="text-xs text-muted-foreground break-all">
+                                  {g.details}
                                 </div>
                               ) : null}
                             </div>

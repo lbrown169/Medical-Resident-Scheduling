@@ -6,6 +6,8 @@ public class RotationPrefResponse
 {
     public Guid RotationPrefRequestId { get; set; }
 
+    public ResidentResponse Resident { get; set; } = null!;
+
     public List<RotationTypeResponse> Priorities { get; set; } = [];
 
     public List<RotationTypeResponse> Alternatives { get; set; } = [];

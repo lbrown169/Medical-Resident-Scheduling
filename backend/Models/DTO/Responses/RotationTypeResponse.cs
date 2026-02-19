@@ -4,7 +4,7 @@ public class RotationTypeResponse
 {
     public Guid RotationTypeId { get; set; }
 
-    public string RotationName { get; set; } = null!;
+    public required string RotationName { get; set; }
 
     public bool DoesLongCall { get; set; }
 

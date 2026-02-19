@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MedicalDemo.Migrations
 {
     [DbContext(typeof(MedicalContext))]
-    [Migration("20260212233237_AddScheduleIdToRotation")]
-    partial class AddScheduleIdToRotation
+    [Migration("20260216235506_RotationTypeAndPrefRequestFirstCleanup")]
+    partial class RotationTypeAndPrefRequestFirstCleanup
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -211,11 +211,6 @@ namespace MedicalDemo.Migrations
                         .HasColumnType("int")
                         .HasColumnName("bi_yearly_hours");
 
-                    b.Property<int>("ChiefType")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0);
-
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(45)
@@ -314,10 +309,6 @@ namespace MedicalDemo.Migrations
                         .IsRequired()
                         .HasColumnType("binary(16)");
 
-                    b.Property<byte[]>("ScheduleId")
-                        .IsRequired()
-                        .HasColumnType("binary(16)");
-
                     b.HasKey("RotationId");
 
                     b.HasIndex("RotationTypeId");
@@ -337,7 +328,8 @@ namespace MedicalDemo.Migrations
                         .HasColumnType("binary(16)");
 
                     b.Property<string>("AdditionalNotes")
-                        .HasColumnType("longtext")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
                         .HasColumnName("additional_notes");
 
                     b.Property<byte[]>("EighthPriorityId")
@@ -475,7 +467,8 @@ namespace MedicalDemo.Migrations
 
                     b.Property<string>("RotationName")
                         .IsRequired()
-                        .HasColumnType("longtext")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
                         .HasColumnName("rotation_name");
 
                     b.HasKey("RotationTypeId");

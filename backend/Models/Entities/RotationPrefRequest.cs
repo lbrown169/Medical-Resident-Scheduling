@@ -9,56 +9,42 @@ public class RotationPrefRequest
     [Key]
     public Guid RotationPrefRequestId { get; set; }
 
-    [Column("resident_id")]
     [ForeignKey(nameof(Resident))]
     public string ResidentId { get; set; } = null!;
 
+    [ForeignKey(nameof(ResidentId))]
     public Resident Resident { get; set; } = null!;
 
-    [Column("first_priority_id")]
     [Required]
     public Guid FirstPriorityId { get; set; }
 
-    [Column("second_priority_id")]
     [Required]
     public Guid SecondPriorityId { get; set; }
 
-    [Column("third_priority_id")]
     [Required]
     public Guid ThirdPriorityId { get; set; }
 
-    [Column("fourth_priority_id")]
     [Required]
     public Guid FourthPriorityId { get; set; }
 
-    [Column("fifth_priority_id")]
     public Guid? FifthPriorityId { get; set; }
 
-    [Column("sixth_priority_id")]
     public Guid? SixthPriorityId { get; set; }
 
-    [Column("seventh_priority_id")]
     public Guid? SeventhPriorityId { get; set; }
 
-    [Column("eighth_priority_id")]
     public Guid? EighthPriorityId { get; set; }
 
-    [Column("first_alternative_id")]
     public Guid? FirstAlternativeId { get; set; }
 
-    [Column("second_alternative_id")]
     public Guid? SecondAlternativeId { get; set; }
 
-    [Column("third_alternative_id")]
     public Guid? ThirdAlternativeId { get; set; }
 
-    [Column("first_avoid_id")]
     public Guid? FirstAvoidId { get; set; }
 
-    [Column("second_avoid_id")]
     public Guid? SecondAvoidId { get; set; }
 
-    [Column("third_avoid_id")]
     public Guid? ThirdAvoidId { get; set; }
 
     [ForeignKey(nameof(FirstPriorityId))]
@@ -103,6 +89,5 @@ public class RotationPrefRequest
     [ForeignKey(nameof(ThirdAvoidId))]
     public RotationType? ThirdAvoid { get; set; }
 
-    [Column("additional_notes")]
     public string? AdditionalNotes { get; set; }
 }

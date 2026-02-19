@@ -63,9 +63,19 @@ public static class PGY4RotationScheduleConverter
 
         return new()
         {
-            ScheduleId = scheduleModel.PGY4RotationScheduleId,
+            PGY4RotationScheduleId = scheduleModel.PGY4RotationScheduleId,
+            Seed = scheduleModel.Seed,
             ResidentCount = residentIdToRotations.Count,
             Schedule = residentScheduleResponses,
+        };
+    }
+
+    public static PGY4ResidenRotationScheduleResponse CreateSingleResidentRotationSchedule(Resident resident, List<Rotation> rotations)
+    {
+        return new()
+        {
+            Resident = new ResidentConverter().CreateResidentResponseFromResident(resident),
+            Rotations = [.. rotations.Select(RotationConverter.CreateRotationResponseFromModel)],
         };
     }
 

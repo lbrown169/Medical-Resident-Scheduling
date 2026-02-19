@@ -255,7 +255,7 @@ namespace MedicalDemo.Models.Entities
                     .HasColumnType("binary(16)")
                     .HasColumnName("rotation_id");
 
-                entity.Property(e => e.Pgy4RotationScheduleId)
+                entity.Property(e => e.PGY4RotationScheduleId)
                     .HasColumnType("binary(16)")
                     .HasConversion(
                         v => v.HasValue ? v.Value.ToByteArray() : null,
@@ -304,6 +304,11 @@ namespace MedicalDemo.Models.Entities
                         v => v.ToByteArray(),
                         v => new Guid(v)
                     );
+
+                entity.HasMany(e => e.Rotations)
+                    .WithOne()
+                    .HasForeignKey(e => e.PGY4RotationScheduleId)
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<SwapRequest>(entity =>
@@ -420,27 +425,23 @@ namespace MedicalDemo.Models.Entities
                     .HasConstraintName("resident_id_vacations");
             });
 
-            modelBuilder.Entity<RotationType>()
-                .Property(v => v.RotationTypeId)
-                .HasColumnType("binary(16)")
-                .HasConversion(
-                    v => v.ToByteArray(),
-                    v => new Guid(v)
-                );
+            modelBuilder.Entity<RotationType>(entity =>
+            {
+                entity.Property(v => v.RotationTypeId)
+                    .HasColumnType("binary(16)")
+                    .HasConversion(
+                        v => v.ToByteArray(),
+                        v => new Guid(v)
+                    );
 
-            modelBuilder.Entity<RotationType>()
-                .Property(e => e.PgyYearFlags)
-                .HasConversion<int>()
-                .HasColumnType("int")
-                .HasDefaultValue(PgyYearFlags.NONE);
+                entity.Property(e => e.RotationName)
+                    .HasMaxLength(20);
 
-            modelBuilder.Entity<RotationPrefRequest>()
-                .Property(v => v.RotationPrefRequestId)
-                .HasColumnType("binary(16)")
-                .HasConversion(
-                    v => v.ToByteArray(),
-                    v => new Guid(v)
-                );
+                entity.Property(e => e.PgyYearFlags)
+                    .HasConversion<int>()
+                    .HasColumnType("int")
+                    .HasDefaultValue(PgyYearFlags.None);
+            });
 
             modelBuilder.Entity<RotationPrefRequest>(entity =>
             {
@@ -524,8 +525,10 @@ namespace MedicalDemo.Models.Entities
                 entity.Property(v => v.ThirdAvoidId)
                     .HasColumnType("binary(16)")
                     .HasConversion(nullableGuidToBytesConverter);
-            });
 
+                entity.Property(v => v.AdditionalNotes)
+                    .HasMaxLength(255);
+            });
 
             OnModelCreatingPartial(modelBuilder);
 
@@ -546,7 +549,7 @@ namespace MedicalDemo.Models.Entities
                     DoesTrainingLongCall = true,
                     DoesTrainingShortCall = true,
                     IsChiefRotation = false,
-                    PgyYearFlags = PgyYearFlags.PGY1 | PgyYearFlags.PGY2 | PgyYearFlags.PGY3 | PgyYearFlags.PGY4
+                    PgyYearFlags = PgyYearFlags.Pgy1 | PgyYearFlags.Pgy2 | PgyYearFlags.Pgy3 | PgyYearFlags.Pgy4
                 },
                 new RotationType
                 {
@@ -557,7 +560,7 @@ namespace MedicalDemo.Models.Entities
                     DoesTrainingLongCall = true,
                     DoesTrainingShortCall = true,
                     IsChiefRotation = false,
-                    PgyYearFlags = PgyYearFlags.PGY1 | PgyYearFlags.PGY2 | PgyYearFlags.PGY3 | PgyYearFlags.PGY4
+                    PgyYearFlags = PgyYearFlags.Pgy1 | PgyYearFlags.Pgy2 | PgyYearFlags.Pgy3 | PgyYearFlags.Pgy4
                 },
                 new RotationType
                 {
@@ -568,7 +571,7 @@ namespace MedicalDemo.Models.Entities
                     DoesTrainingLongCall = true,
                     DoesTrainingShortCall = true,
                     IsChiefRotation = false,
-                    PgyYearFlags = PgyYearFlags.PGY1 | PgyYearFlags.PGY2 | PgyYearFlags.PGY3
+                    PgyYearFlags = PgyYearFlags.Pgy1 | PgyYearFlags.Pgy2 | PgyYearFlags.Pgy3
                 },
                 new RotationType
                 {
@@ -579,7 +582,7 @@ namespace MedicalDemo.Models.Entities
                     DoesTrainingLongCall = true,
                     DoesTrainingShortCall = true,
                     IsChiefRotation = false,
-                    PgyYearFlags = PgyYearFlags.PGY1 | PgyYearFlags.PGY2 | PgyYearFlags.PGY3
+                    PgyYearFlags = PgyYearFlags.Pgy1 | PgyYearFlags.Pgy2 | PgyYearFlags.Pgy3
                 },
                 new RotationType
                 {
@@ -590,7 +593,7 @@ namespace MedicalDemo.Models.Entities
                     DoesTrainingLongCall = true,
                     DoesTrainingShortCall = true,
                     IsChiefRotation = false,
-                    PgyYearFlags = PgyYearFlags.PGY1 | PgyYearFlags.PGY2 | PgyYearFlags.PGY3 | PgyYearFlags.PGY4
+                    PgyYearFlags = PgyYearFlags.Pgy1 | PgyYearFlags.Pgy2 | PgyYearFlags.Pgy3 | PgyYearFlags.Pgy4
                 },
                 new RotationType
                 {
@@ -601,7 +604,7 @@ namespace MedicalDemo.Models.Entities
                     DoesTrainingLongCall = true,
                     DoesTrainingShortCall = true,
                     IsChiefRotation = false,
-                    PgyYearFlags = PgyYearFlags.PGY1 | PgyYearFlags.PGY2 | PgyYearFlags.PGY3 | PgyYearFlags.PGY4
+                    PgyYearFlags = PgyYearFlags.Pgy1 | PgyYearFlags.Pgy2 | PgyYearFlags.Pgy3 | PgyYearFlags.Pgy4
                 },
                 new RotationType
                 {
@@ -612,7 +615,7 @@ namespace MedicalDemo.Models.Entities
                     DoesTrainingLongCall = true,
                     DoesTrainingShortCall = true,
                     IsChiefRotation = false,
-                    PgyYearFlags = PgyYearFlags.PGY1 | PgyYearFlags.PGY2 | PgyYearFlags.PGY3
+                    PgyYearFlags = PgyYearFlags.Pgy1 | PgyYearFlags.Pgy2 | PgyYearFlags.Pgy3
                 },
                 new RotationType
                 {
@@ -623,7 +626,7 @@ namespace MedicalDemo.Models.Entities
                     DoesTrainingLongCall = true,
                     DoesTrainingShortCall = true,
                     IsChiefRotation = false,
-                    PgyYearFlags = PgyYearFlags.PGY1 | PgyYearFlags.PGY2 | PgyYearFlags.PGY3 | PgyYearFlags.PGY4
+                    PgyYearFlags = PgyYearFlags.Pgy1 | PgyYearFlags.Pgy2 | PgyYearFlags.Pgy3 | PgyYearFlags.Pgy4
                 },
                 new RotationType
                 {
@@ -634,7 +637,7 @@ namespace MedicalDemo.Models.Entities
                     DoesTrainingLongCall = true,
                     DoesTrainingShortCall = true,
                     IsChiefRotation = false,
-                    PgyYearFlags = PgyYearFlags.PGY1 | PgyYearFlags.PGY2 | PgyYearFlags.PGY3 | PgyYearFlags.PGY4
+                    PgyYearFlags = PgyYearFlags.Pgy1 | PgyYearFlags.Pgy2 | PgyYearFlags.Pgy3 | PgyYearFlags.Pgy4
                 },
                 new RotationType
                 {
@@ -645,7 +648,7 @@ namespace MedicalDemo.Models.Entities
                     DoesTrainingLongCall = true,
                     DoesTrainingShortCall = true,
                     IsChiefRotation = false,
-                    PgyYearFlags = PgyYearFlags.PGY1 | PgyYearFlags.PGY2 | PgyYearFlags.PGY3
+                    PgyYearFlags = PgyYearFlags.Pgy1 | PgyYearFlags.Pgy2 | PgyYearFlags.Pgy3
                 },
                 new RotationType
                 {
@@ -656,7 +659,7 @@ namespace MedicalDemo.Models.Entities
                     DoesTrainingLongCall = true,
                     DoesTrainingShortCall = true,
                     IsChiefRotation = false,
-                    PgyYearFlags = PgyYearFlags.PGY1 | PgyYearFlags.PGY2 | PgyYearFlags.PGY3
+                    PgyYearFlags = PgyYearFlags.Pgy1 | PgyYearFlags.Pgy2 | PgyYearFlags.Pgy3
                 },
                 new RotationType
                 {
@@ -667,7 +670,7 @@ namespace MedicalDemo.Models.Entities
                     DoesTrainingLongCall = true,
                     DoesTrainingShortCall = true,
                     IsChiefRotation = false,
-                    PgyYearFlags = PgyYearFlags.PGY1 | PgyYearFlags.PGY2 | PgyYearFlags.PGY3
+                    PgyYearFlags = PgyYearFlags.Pgy1 | PgyYearFlags.Pgy2 | PgyYearFlags.Pgy3
                 },
                 new RotationType
                 {
@@ -678,7 +681,7 @@ namespace MedicalDemo.Models.Entities
                     DoesTrainingLongCall = false,
                     DoesTrainingShortCall = false,
                     IsChiefRotation = false,
-                    PgyYearFlags = PgyYearFlags.PGY1 | PgyYearFlags.PGY2 | PgyYearFlags.PGY3
+                    PgyYearFlags = PgyYearFlags.Pgy1 | PgyYearFlags.Pgy2 | PgyYearFlags.Pgy3
                 },
                 new RotationType
                 {
@@ -689,7 +692,7 @@ namespace MedicalDemo.Models.Entities
                     DoesTrainingLongCall = true,
                     DoesTrainingShortCall = true,
                     IsChiefRotation = false,
-                    PgyYearFlags = PgyYearFlags.PGY1 | PgyYearFlags.PGY2 | PgyYearFlags.PGY3
+                    PgyYearFlags = PgyYearFlags.Pgy1 | PgyYearFlags.Pgy2 | PgyYearFlags.Pgy3
                 },
                 new RotationType
                 {
@@ -700,7 +703,7 @@ namespace MedicalDemo.Models.Entities
                     DoesTrainingLongCall = false,
                     DoesTrainingShortCall = false,
                     IsChiefRotation = false,
-                    PgyYearFlags = PgyYearFlags.PGY1 | PgyYearFlags.PGY2 | PgyYearFlags.PGY3
+                    PgyYearFlags = PgyYearFlags.Pgy1 | PgyYearFlags.Pgy2 | PgyYearFlags.Pgy3
                 },
                 new RotationType
                 {
@@ -711,7 +714,7 @@ namespace MedicalDemo.Models.Entities
                     DoesTrainingLongCall = true,
                     DoesTrainingShortCall = true,
                     IsChiefRotation = true,
-                    PgyYearFlags = PgyYearFlags.PGY4
+                    PgyYearFlags = PgyYearFlags.Pgy4
                 },
                 new RotationType
                 {
@@ -722,7 +725,7 @@ namespace MedicalDemo.Models.Entities
                     DoesTrainingLongCall = true,
                     DoesTrainingShortCall = true,
                     IsChiefRotation = false,
-                    PgyYearFlags = PgyYearFlags.PGY4
+                    PgyYearFlags = PgyYearFlags.Pgy4
                 },
                 new RotationType
                 {
@@ -733,7 +736,7 @@ namespace MedicalDemo.Models.Entities
                     DoesTrainingLongCall = true,
                     DoesTrainingShortCall = true,
                     IsChiefRotation = false,
-                    PgyYearFlags = PgyYearFlags.PGY4
+                    PgyYearFlags = PgyYearFlags.Pgy4
                 },
                 new RotationType
                 {
@@ -744,7 +747,7 @@ namespace MedicalDemo.Models.Entities
                     DoesTrainingLongCall = true,
                     DoesTrainingShortCall = true,
                     IsChiefRotation = false,
-                    PgyYearFlags = PgyYearFlags.PGY4
+                    PgyYearFlags = PgyYearFlags.Pgy4
                 },
                 new RotationType
                 {
@@ -755,7 +758,7 @@ namespace MedicalDemo.Models.Entities
                     DoesTrainingLongCall = true,
                     DoesTrainingShortCall = true,
                     IsChiefRotation = false,
-                    PgyYearFlags = PgyYearFlags.PGY4
+                    PgyYearFlags = PgyYearFlags.Pgy4
                 },
                 new RotationType
                 {
@@ -766,7 +769,7 @@ namespace MedicalDemo.Models.Entities
                     DoesTrainingLongCall = true,
                     DoesTrainingShortCall = true,
                     IsChiefRotation = false,
-                    PgyYearFlags = PgyYearFlags.PGY4
+                    PgyYearFlags = PgyYearFlags.Pgy4
                 },
                 new RotationType
                 {
@@ -777,7 +780,7 @@ namespace MedicalDemo.Models.Entities
                     DoesTrainingLongCall = true,
                     DoesTrainingShortCall = true,
                     IsChiefRotation = false,
-                    PgyYearFlags = PgyYearFlags.PGY4
+                    PgyYearFlags = PgyYearFlags.Pgy4
                 },
                 new RotationType
                 {
@@ -788,7 +791,7 @@ namespace MedicalDemo.Models.Entities
                     DoesTrainingLongCall = true,
                     DoesTrainingShortCall = true,
                     IsChiefRotation = false,
-                    PgyYearFlags = PgyYearFlags.PGY4
+                    PgyYearFlags = PgyYearFlags.Pgy4
                 }
             );
         }

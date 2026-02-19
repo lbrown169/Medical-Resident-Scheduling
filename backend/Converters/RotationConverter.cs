@@ -26,7 +26,7 @@ public static class RotationConverter
         return new()
         {
             RotationId = rotation.RotationId,
-            ScheduleId = rotation.Pgy4RotationScheduleId,
+            ScheduleId = rotation.PGY4RotationScheduleId,
             Month = rotation.Month,
             MonthIndex = rotation.MonthIndex,
             PgyYear = rotation.PgyYear,
@@ -40,7 +40,7 @@ public static class RotationConverter
         return new()
         {
             RotationId = Guid.NewGuid(),
-            Pgy4RotationScheduleId = scheduleId,
+            PGY4RotationScheduleId = scheduleId,
             ResidentId = resident.ResidentId,
             MonthIndex = monthIndex,
             Month = monthIndexToName[monthIndex],
