@@ -1755,7 +1755,6 @@ public class AlgorithmService
                     if (!found)
                     {
                         _logger.LogWarning("Unable to fix {curDay} for PGY{pgy} {name} ({id})", curDay, "1", res.Name, res.ResidentId);
-                        didFail = true;
                     }
                 }
             }
