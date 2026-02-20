@@ -3,7 +3,6 @@
 import { config } from "../../../config";
 import React, { useState, useEffect } from "react";
 
-import { useRouter } from "next/navigation";
 import { toast } from "../../../lib/use-toast";
 import { Button } from "../../../components/ui/button";
 import { ClipboardList } from "lucide-react";
@@ -17,6 +16,7 @@ import {
 } from "../../../components/ui/alert-dialog";
 
 /**
+ * ! COLORS REMOVED FOR NOW. I WILL ADD THEM BACK BEFORE PULL. I THINK THEY ADD A LOT
  * Color scheme for rotation options based on the prototype:
  * - Intp Psy: Purple (#8b5cf6)
  * - Consult: Orange (#f97316)
@@ -31,25 +31,21 @@ import {
  * - CLC: Pink (#ec4899)
  */
 
-// Rotation options with their corresponding colors
-const rotationOptions = [
-  { value: "Intp Psy", label: "Intp Psy", color: "#8b5cf6" },
-  { value: "Consult", label: "Consult", color: "#f97316" },
-  { value: "VA", label: "VA", color: "#60a5fa" },
-  { value: "TMS", label: "TMS", color: "#84cc16" },
-  { value: "NFETC", label: "NFETC", color: "#eab308" },
-  { value: "IOP", label: "IOP", color: "#22c55e" },
-  { value: "Comm", label: "Comm", color: "#3b82f6" },
-  { value: "HPC", label: "HPC", color: "#92400e" },
-  { value: "Addiction", label: "Addiction", color: "#14b8a6" },
-  { value: "Forensic", label: "Forensic", color: "#ef4444" },
-  { value: "CLC", label: "CLC", color: "#ec4899" },
-];
+interface RotationOption {
+  value: string;
+  label: string;
+}
 
 interface PGY3RotationFormProps {
   userId: string;
   userPGY: number;
 }
+
+interface RotationTypeDto {
+  rotationTypeId: string;
+  rotationName: string;
+}
+
 
 /**
  * PGY-4 Rotation Request Form Component (Frontend Only)
@@ -64,61 +60,71 @@ interface PGY3RotationFormProps {
  * - Frontend-only (no backend integration yet)
  */
 const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) => {
-  // Form state
-  const [firstPriority, setFirstPriority] = useState("");
-  const [secondPriority, setSecondPriority] = useState("");
-  const [thirdPriority, setThirdPriority] = useState("");
-  const [fourthPriority, setFourthPriority] = useState("");
-  const [fifthPriority, setFifthPriority] = useState("");
-  const [sixthPriority, setSixthPriority] = useState("");
-  const [seventhPriority, setSeventhPriority] = useState("");
-  const [eighthPriority, setEighthPriority] = useState("");
-  const [alternative1, setAlternative1] = useState("");
-  const [alternative2, setAlternative2] = useState("");
-  const [alternative3, setAlternative3] = useState("");
-  const [avoid1, setAvoid] = useState("");
-  const [avoid2, setAvoid2] = useState("");
-  const [avoid3, setAvoid3] = useState("");
+
+  // Rotation options from backend
+  const [rotationOptions, setRotationOptions] = useState<RotationOption[]>([]);
+
+  // Existing request id if editting
+  const [existingRequestId, setExistingRequestId] = useState<string | null>(null);
+
+
+
+  // Form state with GUIDs
+  // Priorities
+  const [firstPriority, setFirstPriority] = useState<string | null>(null);
+  const [secondPriority, setSecondPriority] = useState<string | null>(null);
+  const [thirdPriority, setThirdPriority] = useState<string | null>(null);
+  const [fourthPriority, setFourthPriority] = useState<string | null>(null);
+  const [fifthPriority, setFifthPriority] = useState<string | null>(null);
+  const [sixthPriority, setSixthPriority] = useState<string | null>(null);
+  const [seventhPriority, setSeventhPriority] = useState<string | null>(null);
+  const [eighthPriority, setEighthPriority] = useState<string | null>(null);
+
+  // Alternates
+  const [alternative1, setAlternative1] = useState<string | null>(null);
+  const [alternative2, setAlternative2] = useState<string | null>(null);
+  const [alternative3, setAlternative3] = useState<string | null>(null);
+
+  // Avoids
+  const [avoid1, setAvoid1] = useState<string | null>(null);
+  const [avoid2, setAvoid2] = useState<string | null>(null);
+  const [avoid3, setAvoid3] = useState<string | null>(null);
+
+  // User notes
   const [additionalNotes, setAdditionalNotes] = useState("");
 
   // UI state
   const [loading, setLoading] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-  const router = useRouter();
 
   // Deadline configuration (March 15, 2026 at 11:59 PM EST)
-  const deadline = new Date("2026-03-15T23:59:00-05:00");
+  const deadline = new Date("2026-03-15T23:59:00-05:00"); // ! later have this be adjustable by admin of course
   const isDeadlinePassed = new Date() > deadline;
 
   useEffect(() => {
   
   // Get the existing residents request
-  const loadExistingRequest = async () => {
+  const loadRotationTypes = async () => {
     try {
       const res = await fetch(
-        `${config.apiUrl}/api/PGY4RotationRequests/${userId}`
+        `${config.apiUrl}/api/rotation-types?pgyYear=4`
       );
 
-      // If no prior submission
-      if (!res.ok) return;
-
+      if (!res.ok) throw new Error();
+      
       const data = await res.json();
 
-      setFirstPriority(data.firstPriority ?? "");
-      setSecondPriority(data.secondPriority ?? "");
-      setThirdPriority(data.thirdPriority ?? "");
-      setFourthPriority(data.fourthPriority ?? "");
-      setFifthPriority(data.fifthPriority ?? "");
-      setSixthPriority(data.sixthPriority ?? "");
-      setSeventhPriority(data.seventhPriority ?? "");
-      setEighthPriority(data.eighthPriority ?? "");
-      setAlternative1(data.alternative1 ?? "");
-      setAlternative2(data.alternative2 ?? "");
-      setAlternative3(data.alternative3 ?? "");
-      setAvoid(data.avoid1 ?? "");
-      setAvoid2(data.avoid2 ?? "");
-      setAvoid3(data.avoid3 ?? "");
-      setAdditionalNotes(data.additionalNotes ?? "");
+      const EXCLUDED_ROTATIONS = ["Chief", "Unassigned", "Sum"]; // these are here, and should not be. if anyone knows a better way to exclude these go ahead.
+
+      // set rotation options
+      const options = data.rotationTypes
+      .filter((rt: RotationTypeDto) => !EXCLUDED_ROTATIONS.includes(rt.rotationName)) // exclude bad rotations
+      .map((rt: RotationTypeDto) => ({
+        value: rt.rotationTypeId,
+        label: rt.rotationName,
+      }));
+
+      setRotationOptions(options);
     } catch {
       toast({
         variant: "destructive",
@@ -128,56 +134,95 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) 
     }
   };
 
-  loadExistingRequest();
-}, [userId]);
+  loadRotationTypes();
 
+}, []);
+
+
+  useEffect(() => {
+    const loadExistingRequest = async () => {
+      try {
+        const res = await fetch(
+          `${config.apiUrl}/api/rotation-pref-request/resident/${userId}`
+        );
+
+        if (!res.ok) return;
+
+        const data = await res.json();
+
+        setExistingRequestId(data.rotationPrefRequestId);
+
+        const priorities = data.priorities ?? [];
+        const alternatives = data.alternatives ?? [];
+        const avoids = data.avoids ?? [];
+
+        setFirstPriority(priorities[0]?.rotationTypeId ?? null);
+        setSecondPriority(priorities[1]?.rotationTypeId ?? null);
+        setThirdPriority(priorities[2]?.rotationTypeId ?? null);
+        setFourthPriority(priorities[3]?.rotationTypeId ?? null);
+        setFifthPriority(priorities[4]?.rotationTypeId ?? null);
+        setSixthPriority(priorities[5]?.rotationTypeId ?? null);
+        setSeventhPriority(priorities[6]?.rotationTypeId ?? null);
+        setEighthPriority(priorities[7]?.rotationTypeId ?? null);
+
+        setAlternative1(alternatives[0]?.rotationTypeId ?? null);
+        setAlternative2(alternatives[1]?.rotationTypeId ?? null);
+        setAlternative3(alternatives[2]?.rotationTypeId ?? null);
+
+        setAvoid1(avoids[0]?.rotationTypeId ?? null);
+        setAvoid2(avoids[1]?.rotationTypeId ?? null);
+        setAvoid3(avoids[2]?.rotationTypeId ?? null);
+
+        setAdditionalNotes(data.additionalNotes ?? "");
+      } catch {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Could not load existing rotation request.",
+        });
+      }
+    };
+
+    loadExistingRequest();
+  }, [userId]);
 
   /**
-   * Validates that all priority selections are unique (alternatives and avoid can duplicate)
+   * Validates that all priority selections are unique (alternatives and avoid can duplicate) ! we probably shouldnt have this in final version right. ill keep it for now.
    */
-  const validateNoDuplicates = (): boolean => {
-    const prioritySelections = [
-      firstPriority,
-      secondPriority,
-      thirdPriority,
-      fourthPriority,
-      fifthPriority,
-      sixthPriority,
-      seventhPriority,
-      eighthPriority,
-    ].filter(s => s !== "");
+  // Priorities array to pass
+  const getPrioritiesArray = () => [
+    firstPriority,
+    secondPriority,
+    thirdPriority,
+    fourthPriority,
+    fifthPriority,
+    sixthPriority,
+    seventhPriority,
+    eighthPriority,
+  ].filter(Boolean) as string[];
 
-    // Only check that priority fields don't have duplicates among themselves
-    const uniquePriorities = new Set(prioritySelections);
-    return uniquePriorities.size === prioritySelections.length;
-  };
+  const validateNoDuplicates = () => {
+    const arr = getPrioritiesArray();
+    return new Set(arr).size === arr.length;
+  };  
+
+
+  
+  /**
+    * Validates that at least 4 priority fields are filled
+    */
+  const validateMinFourFields= (): boolean => {
+    return getPrioritiesArray().length >= 4
+  }
 
   /**
-   * Validates that at least 4 priority fields are filled
-   */
-  const validateAllFieldsFilled = (): boolean => {
-    const filledPriorities = [
-      firstPriority,
-      secondPriority,
-      thirdPriority,
-      fourthPriority,
-      fifthPriority,
-      sixthPriority,
-      seventhPriority,
-      eighthPriority,
-    ].filter(p => p !== "").length;
-
-    return filledPriorities >= 4;
-  };
-
-  /**
-   * Handles form submission (frontend only - just validates and shows success) - edit: backend included
+   * Handles form submission
    */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validate at least 4 priorities are filled
-    if (!validateAllFieldsFilled()) {
+    if (!validateMinFourFields()) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -200,31 +245,33 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) 
 
     // Try to upload users request after the validation above
     try {
-      const res = await fetch(
-        `${config.apiUrl}/api/PGY4RotationRequests`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            residentId: userId,
-            firstPriority,
-            secondPriority,
-            thirdPriority,
-            fourthPriority,
-            fifthPriority,
-            sixthPriority,
-            seventhPriority,
-            eighthPriority,
-            alternative1,
-            alternative2,
-            alternative3,
-            avoid1, // Changed this to avoid1 instead of avoid above to allow shorthand. Didn't seem to break anything. Just a note.
-            avoid2,
-            avoid3,
-            additionalNotes,
-          }),
-        }
-      );
+      // Use the input from user
+      const priorities = getPrioritiesArray();
+      const alternatives = [alternative1, alternative2, alternative3].filter(Boolean);
+      const avoids = [avoid1, avoid2, avoid3].filter(Boolean);
+
+      const payload = {
+        residentId: userId,
+        priorities,
+        alternatives,
+        avoids,
+        additionalNotes,
+      };
+
+      // Basically, if the id exists we update it, otherwise we make a new one
+      const url = existingRequestId
+        ? `${config.apiUrl}/api/rotation-pref-request/${existingRequestId}`
+        : `${config.apiUrl}/api/rotation-pref-request`;
+
+      // Use the url we selected
+      const method = existingRequestId ? "PUT" : "POST";
+
+      // call the correct method, pass payload
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
       if (!res.ok) {
         throw new Error("Failed to submit");
@@ -244,42 +291,18 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) 
 
     // Log the data to console for demonstration (its also posted but for convenience for now), remove this later
     console.log("Rotation Preferences:", {
-      userId,
-      firstPriority,
-      secondPriority,
-      thirdPriority,
-      fourthPriority,
-      fifthPriority,
-      sixthPriority,
-      seventhPriority,
-      eighthPriority,
-      alternative1,
-      alternative2,
-      alternative3,
-      avoid1,
-      avoid2,
-      avoid3,
-      additionalNotes,
+      getPrioritiesArray
     });
     
   };
 
   /**
    * Gets available options for priority fields, excluding already selected priorities
+   * used to render less options for the dropdown
    */
-  const getAvailablePriorityOptions = (currentValue: string): typeof rotationOptions => {
-    const selectedPriorities = [
-      firstPriority,
-      secondPriority,
-      thirdPriority,
-      fourthPriority,
-      fifthPriority,
-      sixthPriority,
-      seventhPriority,
-      eighthPriority,
-    ].filter(v => v && v !== currentValue);
-
-    return rotationOptions.filter(option => !selectedPriorities.includes(option.value));
+  const getAvailablePriorityOptions = (currentValue: string | null): typeof rotationOptions => {
+    const selected = getPrioritiesArray().filter(v => v !== currentValue);
+    return rotationOptions.filter(opt => !selected.includes(opt.value));
   };
 
   /**
@@ -342,7 +365,7 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) 
             <Button
               onClick={() => {
                 setShowSuccessDialog(false);
-                router.push("/dashboard");
+                window.location.href = "/dashboard"; // ! this fixes update not working immediately after submit. its kinda harsh. maybe find alternative, but it also feels super submitted to the user. y'know?
               }}
               className="w-full sm:w-auto"
             >
@@ -474,7 +497,7 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) 
               <SelectField
                 label="Avoid 1"
                 value={avoid1}
-                onChange={setAvoid}
+                onChange={setAvoid1}
                 options={getAllOptions()}
               />
               <SelectField
@@ -531,14 +554,14 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) 
  */
 interface SelectFieldProps {
   label: string;
-  value: string;
-  onChange: (value: string) => void;
-  options: typeof rotationOptions;
+  value: string | null;
+  onChange: (value: string | null) => void;
+  options: RotationOption[];
   required?: boolean;
 }
 
 const SelectField: React.FC<SelectFieldProps> = ({ label, value, onChange, options, required = false }) => {
-  const selectedOption = rotationOptions.find(opt => opt.value === value);
+  const selectedOption = options.find(opt => opt.value === value);
   
   return (
     <div>
@@ -554,7 +577,7 @@ const SelectField: React.FC<SelectFieldProps> = ({ label, value, onChange, optio
           style={
             selectedOption
               ? {
-                  borderLeft: `4px solid ${selectedOption.color}`,
+                  // borderLeft: `4px solid ${selectedOption.color}`,  ! TEMPORARY COLOR REMOVAL
                   paddingLeft: "12px",
                 }
               : undefined
