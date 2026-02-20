@@ -922,7 +922,7 @@ public class AlgorithmService
 
             swappableShiftTypes = giverShiftTypes.Intersect(receiverShiftTypes).ToList();
 
-            needsToCalculate = giveHour <= receiveHour + 12
+            needsToCalculate = giveHour <= receiveHour + 6
                                || giverIndex == receiverIndex
                                || swappableShiftTypes.Count == 0;
         } while (needsToCalculate && count < 100);
@@ -952,7 +952,7 @@ public class AlgorithmService
     {
         // find the person who worked the least
         int receiverIndex = 0;
-        int receiverHour = -1;
+        int receiverHour = int.MaxValue;
         for (int i = 0; i < pgy1s.Count; i++)
         {
             if (receiverHour > pgy1WorkTime[i])
@@ -1015,7 +1015,7 @@ public class AlgorithmService
 
             swappableShiftTypes = giverShiftTypes.Intersect(receiverShiftTypes).ToList();
 
-            needsToCalculate = giverHour <= receiverHour + 12
+            needsToCalculate = giverHour <= receiverHour + 6
                                || giverIndex == receiverIndex
                                || swappableShiftTypes.Count == 0;
         } while (needsToCalculate && count < 100);
@@ -1023,7 +1023,7 @@ public class AlgorithmService
         if (needsToCalculate)
         {
             // Too many attempts
-            _logger.LogWarning("Failed to swap shifts with giver rooted after 100 attempts.");
+            _logger.LogWarning("Failed to swap shifts with receiver rooted after 100 attempts.");
             return false;
         }
 
@@ -1530,9 +1530,20 @@ public class AlgorithmService
             /*Console.WriteLine($"[DEBUG] fixing weekends");*/
 
             // fix weekends
-            FixWeekends1and2(pgy1s, pgy2s);
+            if (FixWeekends1and2(pgy1s, pgy2s))
+            {
+                return true; // all shifts were assigned correctly
+            }
 
-            return true; // all shifts were assigned correctly
+            foreach (PGY1DTO pgy1 in pgy1s)
+            {
+                pgy1.WorkDays.Clear();
+            }
+
+            foreach (PGY2DTO pgy2 in pgy2s)
+            {
+                pgy2.WorkDays.Clear();
+            }
         }
 
         // if we reach here, we were not able to assign shifts correctly with 10 attempts
@@ -1573,9 +1584,10 @@ public class AlgorithmService
         res2.AddWorkDay(day1);
     }
 
-    public void
+    public bool
         FixWeekends1(List<PGY1DTO> pgy1s) // function to fix pgy1 weekends
     {
+        bool didFail = false;
         foreach (PGY1DTO res in pgy1s)
         {
             // get the first and last day the resident works
@@ -1629,18 +1641,22 @@ public class AlgorithmService
 
                     if (!found)
                     {
-                        _logger.LogWarning("Unable to fix weekends for pgy1");
+                        _logger.LogWarning("Unable to fix {curDay} for PGY{pgy} {name} ({id})", curDay, "1", res.Name, res.ResidentId);
+                        didFail = true;
                     }
                 }
             }
         }
+
+        return !didFail;
     }
 
 
-    public static void
+    public bool
         FixWeekends1and2(List<PGY1DTO> pgy1s,
             List<PGY2DTO> pgy2s) // function to fix resident weekends
     {
+        bool didFail = false;
         foreach (PGY1DTO res in pgy1s)
         {
             // get the first and last day the resident works
@@ -1734,6 +1750,12 @@ public class AlgorithmService
                                 break;
                             }
                         }
+                    }
+
+                    if (!found)
+                    {
+                        _logger.LogWarning("Unable to fix {curDay} for PGY{pgy} {name} ({id})", curDay, "1", res.Name, res.ResidentId);
+                        didFail = true;
                     }
                 }
             }
@@ -1834,14 +1856,23 @@ public class AlgorithmService
                             }
                         }
                     }
+
+                    if (!found)
+                    {
+                        _logger.LogWarning("Unable to fix {curDay} for PGY{pgy} {name} ({id})", curDay, "2", res.Name, res.ResidentId);
+                        didFail = true;
+                    }
                 }
             }
         }
+
+        return !didFail;
     }
 
-    public void
+    public bool
         FixWeekends2(List<PGY2DTO> pgy2s) // function to fix pgy2 weekens
     {
+        bool didFail = false;
         foreach (PGY2DTO res in pgy2s)
         {
             // get the first and last day the resident works
@@ -1895,11 +1926,14 @@ public class AlgorithmService
 
                     if (!found)
                     {
-                        _logger.LogWarning("Unable to fix weekends for pgy2");
+                        _logger.LogWarning("Unable to fix {curDay} for PGY{pgy} {name} ({id})", curDay, "2", res.Name, res.ResidentId);
+                        didFail = true;
                     }
                 }
             }
         }
+
+        return !didFail;
     }
 
     public static List<DatesDTO> GenerateDateRecords(Guid scheduleId,
