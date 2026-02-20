@@ -1675,6 +1675,7 @@ public class AlgorithmService
                         = CallShiftTypeExtensions.GetCallShiftTypeForDate(
                             curDay, 1);
                     bool found = false;
+
                     foreach (PGY1DTO res2 in pgy1s)
                     {
                         if (res == res2)
@@ -1697,7 +1698,7 @@ public class AlgorithmService
                         {
                             CallShiftType otherShiftType
                                 = CallShiftTypeExtensions.GetCallShiftTypeForDate(
-                                    curDay, 1);
+                                    otherDay, 1);
 
                             if (res2.IsWorking(otherDay)
                                 && curShiftType == otherShiftType
@@ -1734,7 +1735,7 @@ public class AlgorithmService
                             {
                                 CallShiftType otherShiftType
                                     = CallShiftTypeExtensions.GetCallShiftTypeForDate(
-                                        curDay, 2);
+                                        otherDay, 2);
                                 if (res2.IsWorking(otherDay)
                                     && curShiftType == otherShiftType
                                     && res.CanAddWorkDay(otherDay))
@@ -1801,7 +1802,7 @@ public class AlgorithmService
                         {
                             CallShiftType otherShiftType
                                 = CallShiftTypeExtensions.GetCallShiftTypeForDate(
-                                    curDay, 2);
+                                    otherDay, 2);
                             if (res2.IsWorking(otherDay)
                                 && curShiftType == otherShiftType
                                 && res.CanAddWorkDay(otherDay))
@@ -1837,7 +1838,7 @@ public class AlgorithmService
                             {
                                 CallShiftType otherShiftType
                                     = CallShiftTypeExtensions.GetCallShiftTypeForDate(
-                                        curDay, 1);
+                                        otherDay, 1);
 
                                 if (res2.IsWorking(otherDay)
                                     && curShiftType == otherShiftType
