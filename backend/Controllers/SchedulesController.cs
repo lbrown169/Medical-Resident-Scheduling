@@ -29,42 +29,67 @@ public class SchedulesController : ControllerBase
         _scheduleConverter = scheduleConverter;
     }
 
-    // GET: api/schedules?status=&generatedYear=
+    // GET: api/schedules/
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ScheduleResponse>>> GetAllSchedules(
-        [FromQuery] ScheduleStatus? status,
-        [FromQuery] int? generatedYear)
+    public async Task<ActionResult<IEnumerable<ScheduleResponse>>> GetSchedules(
+        [FromQuery] Guid? scheduleId = null,
+        [FromQuery] int? generatedYear = null,
+        [FromQuery] Semester? semester = null,
+        [FromQuery] ScheduleStatus? status = null)
     {
-        IQueryable<Schedule> query = _context.Schedules.AsQueryable();
+        IQueryable<Schedule> query = _context.Schedules
+            .Include(s => s.Dates)
+            .AsQueryable();
 
-        if (status != null)
+        // filters
+        if (scheduleId.HasValue)
         {
-            query = query.Where(s => s.Status == status);
+            query = query.Where(s => s.ScheduleId == scheduleId.Value);
         }
 
-        if (generatedYear != null)
+        if (generatedYear.HasValue)
         {
-            query = query.Where(s => s.GeneratedYear == generatedYear);
+            query = query.Where(s => s.GeneratedYear == generatedYear.Value);
         }
 
-        List<ScheduleResponse> results = await query.Select(s => _scheduleConverter.CreateScheduleResponseFromSchedule(s)).ToListAsync();
+        if (semester.HasValue)
+        {
+            query = query.Where(s => s.Semester == semester.Value);
+        }
 
-        return Ok(results);
-    }
+        if (status.HasValue)
+        {
+            query = query.Where(s => s.Status == status.Value);
+        }
 
-    // GET: api/schedules/published/{year}
-    [HttpGet("published/{year}")]
-    public async Task<ActionResult<ScheduleResponse>>
-        GetPublishedSchedule(int year)
-    {
-        Schedule? schedule = await _context.Schedules.FirstOrDefaultAsync(s => s.Status == ScheduleStatus.Published && s.GeneratedYear == year);
+        List<Schedule> schedules = await query.ToListAsync();
 
-        if (schedule == null)
+        if (!schedules.Any())
         {
             return NotFound();
         }
+        // dictionary of resident ID to hours for the Schedule
+        List<ScheduleResponse> scheduleResponses = schedules
+            .Select(schedule =>
+            {
+                ScheduleResponse response
+                    = _scheduleConverter.CreateScheduleResponseFromSchedule(schedule);
+                if (schedule.Dates.Any())
+                {
+                    response.ResidentHours = schedule.Dates
+                        .GroupBy(d => d.ResidentId)
+                        .ToDictionary(
+                            g => g.Key,
+                            g => g.Sum(d => d.Hours)
+                        );
+                    response.TotalHours = response.ResidentHours.Values.Sum();
+                    response.TotalResidents = response.ResidentHours.Count();
+                }
+                return response;
+            })
+            .ToList();
 
-        return Ok(_scheduleConverter.CreateScheduleResponseFromSchedule(schedule));
+        return Ok(scheduleResponses);
     }
 
     // PUT: api/schedules/{id}

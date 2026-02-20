@@ -14,6 +14,11 @@ public class ScheduleConverter
             ScheduleId = schedule.ScheduleId,
             Status = new ScheduleStatusResponse(schedule.Status),
             GeneratedYear = schedule.GeneratedYear,
+            Semester = new SemesterInfo
+            {
+                Id = (int)schedule.Semester,
+                Name = schedule.Semester.ToString()
+            }
         };
     }
 }
