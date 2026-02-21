@@ -16,8 +16,7 @@ import {
 } from "../../../components/ui/alert-dialog";
 
 /**
- * ! COLORS REMOVED FOR NOW. I WILL ADD THEM BACK BEFORE PULL. I THINK THEY ADD A LOT
- * Color scheme for rotation options based on the prototype:
+ * Color scheme for rotation options are based on the prototype:
  * - Intp Psy: Purple (#8b5cf6)
  * - Consult: Orange (#f97316)
  * - Addiction: Teal (#14b8a6)
@@ -34,6 +33,7 @@ import {
 interface RotationOption {
   value: string;
   label: string;
+  color?: string;
 }
 
 interface PGY3RotationFormProps {
@@ -46,9 +46,24 @@ interface RotationTypeDto {
   rotationName: string;
 }
 
+// map colors to rotation type
+// ! this is hardcoded, if rotations change, this needs to change too. im not sure how we are implementing changing rotations yet
+const ROTATION_COLORS: Record<string, string> = {
+  "Inpatient Psy": "#8b5cf6",
+  "Psy Consults": "#f97316",
+  "Addiction": "#14b8a6",
+  "VA": "#60a5fa",
+  "TMS": "#84cc16",
+  "NFETC": "#eab308",
+  "IOP": "#22c55e",
+  "Community Psy": "#3b82f6",
+  "HPC": "#92400e",
+  "Forensic": "#ef4444",
+  "CLC": "#ec4899",
+};
 
 /**
- * PGY-4 Rotation Request Form Component (Frontend Only)
+ * PGY-4 Rotation Request Form Component
  * 
  * This component displays a rotation preference form for PGY-3 residents.
  * Features:
@@ -57,7 +72,6 @@ interface RotationTypeDto {
  * - 3 optional avoidance selections
  * - Additional notes field
  * - Validation to prevent duplicate selections in priority fields
- * - Frontend-only (no backend integration yet)
  */
 const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) => {
 
@@ -98,7 +112,7 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) 
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
   // Deadline configuration (March 15, 2026 at 11:59 PM EST)
-  const deadline = new Date("2026-03-15T23:59:00-05:00"); // ! later have this be adjustable by admin of course
+  const deadline = new Date("2026-03-15T23:59:00-05:00"); // ! later have this be adjustable by admin
   const isDeadlinePassed = new Date() > deadline;
 
   useEffect(() => {
@@ -114,7 +128,7 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) 
       
       const data = await res.json();
 
-      const EXCLUDED_ROTATIONS = ["Chief", "Unassigned", "Sum"]; // these are here, and should not be. if anyone knows a better way to exclude these go ahead.
+      const EXCLUDED_ROTATIONS = ["Chief", "Unassigned", "Sum"]; // ! these are here, and should not be. if anyone knows a better way to exclude these go ahead.
 
       // set rotation options
       const options = data.rotationTypes
@@ -122,6 +136,7 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) 
       .map((rt: RotationTypeDto) => ({
         value: rt.rotationTypeId,
         label: rt.rotationName,
+        color: ROTATION_COLORS[rt.rotationName] ?? "#94a3b8", // just use grey as fallback, should not happen unless rotations change
       }));
 
       setRotationOptions(options);
@@ -288,11 +303,6 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) 
     } finally {
       setLoading(false);
     }
-
-    // Log the data to console for demonstration (its also posted but for convenience for now), remove this later
-    console.log("Rotation Preferences:", {
-      getPrioritiesArray
-    });
     
   };
 
@@ -416,7 +426,6 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) 
                 value={fifthPriority}
                 onChange={setFifthPriority}
                 options={getAvailablePriorityOptions(fifthPriority)}
-                required
               />
               <SelectField
                 label="Second Priority (required)"
@@ -430,7 +439,6 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) 
                 value={sixthPriority}
                 onChange={setSixthPriority}
                 options={getAvailablePriorityOptions(sixthPriority)}
-                required
               />
               <SelectField
                 label="Third Priority (required)"
@@ -444,7 +452,6 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) 
                 value={seventhPriority}
                 onChange={setSeventhPriority}
                 options={getAvailablePriorityOptions(seventhPriority)}
-                required
               />
               <SelectField
                 label="Fourth Priority (required)"
@@ -458,7 +465,6 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) 
                 value={eighthPriority}
                 onChange={setEighthPriority}
                 options={getAvailablePriorityOptions(eighthPriority)}
-                required
               />
             </div>
           </div>
@@ -577,7 +583,7 @@ const SelectField: React.FC<SelectFieldProps> = ({ label, value, onChange, optio
           style={
             selectedOption
               ? {
-                  // borderLeft: `4px solid ${selectedOption.color}`,  ! TEMPORARY COLOR REMOVAL
+                  borderLeft: `4px solid ${selectedOption.color}`,
                   paddingLeft: "12px",
                 }
               : undefined
