@@ -30,9 +30,9 @@ public static class RotationPrefRequestConverter
         ]);
 
         List<RotationTypeResponse> AvoidsResponse = FilterNullAndConvertToResponse([
-            request.FirstAlternative,
-            request.SecondAlternative,
-            request.ThirdAlternative,
+            request.FirstAvoid,
+            request.SecondAvoid,
+            request.ThirdAvoid,
         ]);
 
         return new RotationPrefResponse
@@ -135,9 +135,9 @@ public static class RotationPrefRequestConverter
         ])];
 
         PGY4RotationTypeEnum[] AlgorithmAvoids = [.. FilterNullAndConvertToAlgorithmType([
-            requestModel.FirstAlternative,
-            requestModel.SecondAlternative,
-            requestModel.ThirdAlternative,
+            requestModel.FirstAvoid,
+            requestModel.SecondAvoid,
+            requestModel.ThirdAvoid,
         ])];
 
         return new()

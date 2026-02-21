@@ -30,7 +30,6 @@ public static class RotationConverter
             Month = rotation.Month,
             MonthIndex = rotation.MonthIndex,
             PgyYear = rotation.PgyYear,
-            // Resident = new ResidentConverter().CreateResidentResponseFromResident(rotation.Resident),
             RotationType = RotationTypeConverter.CreateRotationTypeResponse(rotation.RotationType),
         };
     }
