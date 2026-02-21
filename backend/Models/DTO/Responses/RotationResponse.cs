@@ -6,8 +6,6 @@ public class RotationResponse
 
     public Guid? ScheduleId { get; set; }
 
-    // public ResidentResponse Resident { get; set; } = null!;
-
     public string Month { get; set; } = null!;
 
     public int MonthIndex { get; set; }
