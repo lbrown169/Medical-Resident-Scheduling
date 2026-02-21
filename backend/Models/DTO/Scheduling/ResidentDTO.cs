@@ -4,11 +4,12 @@ public abstract class ResidentDTO
 {
     public string ResidentId { get; set; }
     public string Name { get; set; }
-    public string Id { get; set; }
     public bool InTraining { get; set; }
     public HashSet<DateOnly> VacationRequests { get; set; } = new();
     public HashSet<DateOnly> WorkDays { get; set; } = new();
     public HashSet<DateOnly> CommitedWorkDays { get; set; } = new();
+    public HashSet<DateOnly> PendingSaveWorkDays { get; set; } = new();
+    public HashSet<DateOnly> AllPendingWorkDays => [.. PendingSaveWorkDays, .. WorkDays];
 
     public HospitalRole?[] RolePerMonth { get; set; } = new HospitalRole?[12];
 
@@ -23,9 +24,12 @@ public abstract class ResidentDTO
 
     public void SaveWorkDays()
     {
-        foreach (DateOnly day in WorkDays)
+        for (int i = WorkDays.Count - 1; i >= 0; i--)
         {
+            DateOnly day = WorkDays.ElementAt(i);
             CommitedWorkDays.Add(day);
+            PendingSaveWorkDays.Add(day);
+            WorkDays.Remove(day);
         }
     }
 
@@ -51,5 +55,24 @@ public abstract class ResidentDTO
     public bool IsWorking(DateOnly curDay)
     {
         return WorkDays.Contains(curDay);
+    }
+
+    public bool CanAddWorkDay(DateOnly curDay)
+    {
+        return CanWork(curDay) && !IsWorking(curDay);
+    }
+
+    /// <summary>
+    ///     Get hospital role for a resident for a month.
+    /// </summary>
+    /// <param name="index">Academic year indexed, July is 0.</param>
+    /// <returns></returns>
+    public HospitalRole GetHospitalRoleForMonth(int index)
+    {
+        if (RolePerMonth is null || RolePerMonth.Length < index + 1)
+        {
+            return HospitalRole.Unassigned;
+        }
+        return RolePerMonth[index] ?? HospitalRole.Unassigned;
     }
 }
