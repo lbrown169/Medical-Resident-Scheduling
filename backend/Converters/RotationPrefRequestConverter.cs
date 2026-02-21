@@ -1,3 +1,4 @@
+using MedicalDemo.Enums;
 using MedicalDemo.Models.DTO.Requests;
 using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.Entities;
@@ -116,7 +117,7 @@ public static class RotationPrefRequestConverter
         RotationPrefRequest requestModel
     )
     {
-        AlgorithmRotationType[] AlgorithmPriorities = [.. FilterNullAndConvertToAlgorithmType([
+        PGY4RotationTypeEnum[] AlgorithmPriorities = [.. FilterNullAndConvertToAlgorithmType([
             requestModel.FirstPriority,
             requestModel.SecondPriority,
             requestModel.ThirdPriority,
@@ -127,13 +128,13 @@ public static class RotationPrefRequestConverter
             requestModel.EighthPriority,
         ])];
 
-        AlgorithmRotationType[] AlgorithmAlternatives = [.. FilterNullAndConvertToAlgorithmType([
+        PGY4RotationTypeEnum[] AlgorithmAlternatives = [.. FilterNullAndConvertToAlgorithmType([
             requestModel.FirstAlternative,
             requestModel.SecondAlternative,
             requestModel.ThirdAlternative,
         ])];
 
-        AlgorithmRotationType[] AlgorithmAvoids = [.. FilterNullAndConvertToAlgorithmType([
+        PGY4RotationTypeEnum[] AlgorithmAvoids = [.. FilterNullAndConvertToAlgorithmType([
             requestModel.FirstAlternative,
             requestModel.SecondAlternative,
             requestModel.ThirdAlternative,
@@ -162,14 +163,14 @@ public static class RotationPrefRequestConverter
         ];
     }
 
-    private static List<AlgorithmRotationType> FilterNullAndConvertToAlgorithmType(List<RotationType?> rotationTypes)
+    private static List<PGY4RotationTypeEnum> FilterNullAndConvertToAlgorithmType(List<RotationType?> rotationTypes)
     {
         return
         [
             .. rotationTypes
                 .Where((avoid) => avoid != null)
                 .Cast<RotationType>()
-                .Select(RotationTypeConverter.CreateAlgorithmRotationTypeFromModel),
+                .Select(RotationTypeConverter.ConvertRotationTypeModelToEnum),
         ];
     }
 }

@@ -73,7 +73,7 @@ public class RotationTypeConverter
         };
     }
 
-    public static AlgorithmRotationType CreateAlgorithmRotationTypeFromModel(
+    public static PGY4RotationTypeEnum ConvertRotationTypeModelToEnum(
         RotationType rotationTypeModel
     )
     {
@@ -89,13 +89,7 @@ public class RotationTypeConverter
             );
         }
 
-        return new()
-        {
-            RotationTypeId = rotationTypeModel.RotationTypeId,
-            Type = value,
-            RotationName = rotationTypeModel.RotationName,
-            IsChiefRotation = rotationTypeModel.IsChiefRotation,
-        };
+        return value;
     }
 
     public static string ConvertRotationTypeEnumToName(PGY4RotationTypeEnum enumType)

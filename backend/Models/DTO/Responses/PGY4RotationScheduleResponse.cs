@@ -15,5 +15,9 @@ public class PGY4RotationScheduleResponse
 
     public int Seed { get; set; }
 
+    public int Year { get; set; }
+
+    public bool IsPublished { get; set; }
+
     public List<PGY4ResidenRotationScheduleResponse> Schedule { get; set; } = null!;
 }

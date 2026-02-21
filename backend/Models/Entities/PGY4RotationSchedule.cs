@@ -12,4 +12,8 @@ public class PGY4RotationSchedule
     public int Seed { get; set; }
 
     public virtual List<Rotation> Rotations { get; set; } = [];
+
+    public int Year { get; set; }
+
+    public bool IsPublished { get; set; }
 }

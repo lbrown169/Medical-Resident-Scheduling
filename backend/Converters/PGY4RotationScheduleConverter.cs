@@ -5,35 +5,9 @@ namespace MedicalDemo.Converters;
 
 public static class PGY4RotationScheduleConverter
 {
-    // public static PGY4RotationScheduleResponse CreateRotationScheduleResponseFromModel(
-    //     Dictionary<Resident, Rotation[]> scheduleModel
-    // )
-    // {
-    //     List<PGY4ResidenRotationScheduleResponse> scheduleResponse =
-    //     [
-    //         .. scheduleModel.Select(
-    //             (kvp) =>
-    //             {
-    //                 return new PGY4ResidenRotationScheduleResponse()
-    //                 {
-    //                     ResidentResponse =
-    //                         new ResidentConverter().CreateResidentResponseFromResident(kvp.Key),
-    //                     Rotations =
-    //                     [
-    //                         .. kvp.Value.Select(
-    //                             (rotation) =>
-    //                                 RotationConverter.CreateRotationResponseFromModel(rotation)
-    //                         ),
-    //                     ],
-    //                 };
-    //             }
-    //         ),
-    //     ];
-
-    //     return new() { ResidentCount = scheduleModel.Count, Schedule = scheduleResponse };
-    // }
-
-    public static PGY4RotationScheduleResponse CreateRotationScheduleResponseFromModel(PGY4RotationSchedule scheduleModel)
+    public static PGY4RotationScheduleResponse CreateRotationScheduleResponseFromModel(
+        PGY4RotationSchedule scheduleModel
+    )
     {
         Dictionary<string, List<Rotation>> residentIdToRotations = [];
 
@@ -50,41 +24,53 @@ public static class PGY4RotationScheduleConverter
             }
         }
 
-        List<PGY4ResidenRotationScheduleResponse> residentScheduleResponses = [.. residentIdToRotations.Select((kvp) =>
-        {
-            Resident resident = kvp.Value[0].Resident;
-
-            return new PGY4ResidenRotationScheduleResponse()
-            {
-                Resident = new ResidentConverter().CreateResidentResponseFromResident(resident),
-                Rotations = [.. kvp.Value.Select(RotationConverter.CreateRotationResponseFromModel)]
-            };
-        })];
+        List<PGY4ResidenRotationScheduleResponse> residentScheduleResponses =
+        [
+            .. residentIdToRotations.Select(
+                (kvp) =>
+                {
+                    Resident resident = kvp.Value[0].Resident;
+                    return CreateSingleResidentRotationSchedule(resident, kvp.Value);
+                }
+            ),
+        ];
 
         return new()
         {
             PGY4RotationScheduleId = scheduleModel.PGY4RotationScheduleId,
             Seed = scheduleModel.Seed,
             ResidentCount = residentIdToRotations.Count,
+            Year = scheduleModel.Year,
+            IsPublished = scheduleModel.IsPublished,
             Schedule = residentScheduleResponses,
         };
     }
 
-    public static PGY4ResidenRotationScheduleResponse CreateSingleResidentRotationSchedule(Resident resident, List<Rotation> rotations)
+    public static PGY4ResidenRotationScheduleResponse CreateSingleResidentRotationSchedule(
+        Resident resident,
+        List<Rotation> rotations
+    )
     {
         return new()
         {
             Resident = new ResidentConverter().CreateResidentResponseFromResident(resident),
-            Rotations = [.. rotations.Select(RotationConverter.CreateRotationResponseFromModel)],
+            Rotations =
+            [
+                .. rotations
+                    .Select(RotationConverter.CreateRotationResponseFromModel)
+                    .OrderBy((rotationRes) => rotationRes.MonthIndex),
+            ],
         };
     }
 
-    public static PGY4RotationSchedulesListResponse CreateRotationSchedulesListResponseFromModel(List<PGY4RotationSchedule> scheduleModel)
+    public static PGY4RotationSchedulesListResponse CreateRotationSchedulesListResponseFromModel(
+        List<PGY4RotationSchedule> scheduleModel
+    )
     {
         return new()
         {
             Count = scheduleModel.Count,
-            Schedules = [.. scheduleModel.Select(CreateRotationScheduleResponseFromModel)]
+            Schedules = [.. scheduleModel.Select(CreateRotationScheduleResponseFromModel)],
         };
     }
 }

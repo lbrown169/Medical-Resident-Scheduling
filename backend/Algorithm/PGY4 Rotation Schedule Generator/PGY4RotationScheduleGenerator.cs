@@ -131,24 +131,7 @@ public class PGY4RotationScheduleGenerator
 
         if (availableRotations.Length == 0)
         {
-            // if (printed > 0)
-            // {
-            //     for (int i = 0; i < numRequiredConstraints; i++)
-            //     {
-            //         Console.WriteLine(requiredConstraints[i].ToString());
-            //     }
-            //     Console.WriteLine($"{resident.Name}, {month}");
-            //     PrintSchedule();
-            // }
-
             JumpByRequiredConstraints(numRequiredConstraints, requestIndex, month);
-
-            // if (printed > 0)
-            // {
-            //     PrintSchedule();
-            //     printed--;
-            // }
-
             return false;
         }
 
@@ -406,28 +389,28 @@ public class PGY4RotationScheduleGenerator
 
         // Populate priorities, alternatives, and avoids
         int frontIndex = 0;
-        foreach (AlgorithmRotationType priority in request.Priorities)
+        foreach (PGY4RotationTypeEnum priority in request.Priorities)
         {
-            if (allowedRotations.Remove(priority.Type))
+            if (allowedRotations.Remove(priority))
             {
-                rankedRotations[frontIndex++] = priority.Type;
+                rankedRotations[frontIndex++] = priority;
             }
         }
 
-        foreach (AlgorithmRotationType alternative in request.Alternatives)
+        foreach (PGY4RotationTypeEnum alternative in request.Alternatives)
         {
-            if (allowedRotations.Remove(alternative.Type))
+            if (allowedRotations.Remove(alternative))
             {
-                rankedRotations[frontIndex++] = alternative.Type;
+                rankedRotations[frontIndex++] = alternative;
             }
         }
 
         int backIndex = rankedRotations.Length - 1;
-        foreach (AlgorithmRotationType avoid in request.Avoids)
+        foreach (PGY4RotationTypeEnum avoid in request.Avoids)
         {
-            if (allowedRotations.Remove(avoid.Type))
+            if (allowedRotations.Remove(avoid))
             {
-                rankedRotations[backIndex--] = avoid.Type;
+                rankedRotations[backIndex--] = avoid;
             }
         }
 
@@ -548,49 +531,6 @@ public class PGY4RotationScheduleGenerator
         return rankedRotationTypeEnum;
     }
 
-    // public void PrintRequestsOverview()
-    // {
-    //     Console.WriteLine(string.Concat(Enumerable.Repeat("*", 144)));
-    //     Console.WriteLine("Requests: ");
-    //     Console.WriteLine(string.Concat(Enumerable.Repeat("*", 144)));
-    //     foreach (AlgorithmSchedulePrefRequest request in requests)
-    //     {
-    //         Console.WriteLine(request.Requester.FirstName);
-    //         Console.Write("    Priorities: [");
-    //         for (int i = 0; i < request.Priorities.Length; i++)
-    //         {
-    //             Console.Write(request.Priorities[i].Type.ToString());
-    //             if (i < request.Priorities.Length - 1)
-    //             {
-    //                 Console.Write(", ");
-    //             }
-    //         }
-    //         Console.WriteLine("]");
-
-    //         Console.Write("    Alternative: [");
-    //         for (int i = 0; i < request.Alternatives.Length; i++)
-    //         {
-    //             Console.Write(request.Alternatives[i].Type.ToString());
-    //             if (i < request.Alternatives.Length - 1)
-    //             {
-    //                 Console.Write(", ");
-    //             }
-    //         }
-    //         Console.WriteLine("]");
-
-    //         Console.Write("    Avoids: [");
-    //         for (int i = 0; i < request.Avoids.Length; i++)
-    //         {
-    //             Console.Write(request.Avoids[i].Type.ToString());
-    //             if (i < request.Avoids.Length - 1)
-    //             {
-    //                 Console.Write(", ");
-    //             }
-    //         }
-    //         Console.WriteLine("]");
-    //     }
-    // }
-
     public void PrintSchedule()
     {
         // Header
@@ -678,21 +618,6 @@ public class PGY4RotationScheduleGenerator
         Console.WriteLine($"Schedule Fitness: {scheduleFitness:0.0}");
     }
 
-    // public void PrintFitnessScoreBreakdown()
-    // {
-    //     Console.WriteLine(string.Concat(Enumerable.Repeat("*", 60)));
-    //     Console.WriteLine($"Fitness Score Total: {scheduleFitness:0.00}");
-    //     Console.WriteLine(string.Concat(Enumerable.Repeat("*", 60)));
-    //     Console.WriteLine($"\tPriority Score: {priorityGainedScore:0.00}");
-    //     Console.WriteLine($"\tPer Month Diversity Score: {perMonthDiversityGainedScore:0.00}");
-    //     Console.WriteLine($"\tSingle Month Diversity Score: {singleMonthGainedScore:0.00}");
-    //     Console.WriteLine($"\tNon Cluster Score: {nonClusterGainedScore:0.00}");
-    //     Console.WriteLine(
-    //         $"\tSingle Month Inpatient and Consult Diversity Score: {singleMonthInpatientConsultDiversitScore:0.00}"
-    //     );
-    //     Console.WriteLine(string.Concat(Enumerable.Repeat("*", 60)));
-    // }
-
     private void EvaluatePerformance()
     {
         // Increase score for resident priorities picked
@@ -716,7 +641,7 @@ public class PGY4RotationScheduleGenerator
                 // Increase score for resident priorities picked
                 int priorityIndex = Array.FindIndex(
                     residentRequest.Priorities,
-                    priority => priority.Type == currentMonthRotation
+                    priority => priority == currentMonthRotation
                 );
                 if (priorityIndex != -1)
                 {
