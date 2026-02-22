@@ -16,38 +16,12 @@ public class AlgorithmService
     }
 
     // === NEW OVERLOAD METHODS FOR BACKEND INTEGRATION ===
-    public bool Training(int year, List<PGY1> pgy1s, List<PGY2> pgy2s,
-        List<PGY3> pgy3s)
+    public bool Training(int year, List<PGY1DTO> pgy1s, List<PGY2DTO> pgy2s,
+        List<PGY3DTO> pgy3s)
     {
-        ArrayList pgys1 = new(pgy1s);
-        ArrayList pgys2 = new(pgy2s);
-        ArrayList pgys3 = new(pgy3s);
-        return Training(year, pgys1, pgys2, pgys3);
-    }
-
-    public bool Part1(int year, List<PGY1> pgy1s, List<PGY2> pgy2s, bool loosely)
-    {
-        ArrayList pgys1 = new(pgy1s);
-        ArrayList pgys2 = new(pgy2s);
-        return Part1(year, pgys1, pgys2, loosely);
-    }
-
-    public bool Part2(int year, List<PGY1> pgy1s, List<PGY2> pgy2s, bool loosely)
-    {
-        ArrayList pgys1 = new(pgy1s);
-        ArrayList pgys2 = new(pgy2s);
-        return Part2(year, pgys1, pgys2, loosely);
-    }
-
-    public bool Training(int year, ArrayList pgy1s, ArrayList pgy2s,
-        ArrayList pgy3s)
-    {
-        int pgy1 = 8;
-        int pgy2 = 8;
-        int pgy3 = 8;
-        ArrayList AllPgy1s = pgy1s;
-        ArrayList AllPgy2s = pgy2s;
-        ArrayList AllPgy3s = pgy3s;
+        int pgy1 = pgy1s.Count;
+        int pgy2 = pgy2s.Count;
+        int pgy3 = pgy3s.Count;
         TrainingCalendar tCalendar = new(year);
 
         int Sat24hCallAmt
@@ -85,8 +59,8 @@ public class AlgorithmService
                 //are we in july?
                 if (month == 7)
                 {
-                    if (((PGY1)AllPgy1s[i]).rolePerMonth[0].DoesShort == false &&
-                        ((PGY1)AllPgy1s[i]).rolePerMonth[0].DoesTrainingShort ==
+                    if (pgy1s[i].GetHospitalRoleForMonth(0).DoesShort == false &&
+                        pgy1s[i].GetHospitalRoleForMonth(0).DoesTrainingShort ==
                         false) // if their role doesnt do short calls this month
                     {
                         continue;
@@ -97,8 +71,8 @@ public class AlgorithmService
                 // are we in august?
                 if (month == 8)
                 {
-                    if (((PGY1)AllPgy1s[i]).rolePerMonth[1].DoesShort == false &&
-                        ((PGY1)AllPgy1s[i]).rolePerMonth[1].DoesTrainingShort == false)
+                    if (pgy1s[i].GetHospitalRoleForMonth(1).DoesShort == false &&
+                        pgy1s[i].GetHospitalRoleForMonth(1).DoesTrainingShort == false)
                     {
                         continue;
                     }
@@ -158,8 +132,7 @@ public class AlgorithmService
                 if (currEdge.flow() > 0)
                 //Console.WriteLine($"  Day {tCalendar.whatShortDayIsIt(currEdge.destination / 2)}");
                 {
-                    ((PGY1)AllPgy1s[i]).addWorkDay(
-                        tCalendar.whatShortDayIsIt(currEdge.destination / 2));
+                    pgy1s[i].AddWorkDay(tCalendar.whatShortDayIsIt(currEdge.destination / 2));
                 }
             }
         }
@@ -177,8 +150,7 @@ public class AlgorithmService
                 if (currEdge.flow() < 0)
                 //Console.WriteLine($"  Day {tCalendar.whatShortDayIsIt(currEdge.destination / 2)}");
                 {
-                    ((PGY3)AllPgy3s[i]).addWorkDay(
-                        tCalendar.whatShortDayIsIt(currEdge.destination / 2));
+                    pgy3s[i].AddWorkDay(tCalendar.whatShortDayIsIt(currEdge.destination / 2));
                 }
             }
         }
@@ -209,9 +181,9 @@ public class AlgorithmService
                 //are we in july?
                 if (month == 7)
                 {
-                    if (((PGY1)AllPgy1s[i]).rolePerMonth[0].DoesLong == false &&
-                        ((PGY1)AllPgy1s[i]).rolePerMonth[0].DoesTrainingLong ==
-                        false) // if their role doesnt do long calls this month
+                    if (pgy1s[i].GetHospitalRoleForMonth(0).DoesLong == false &&
+                        pgy1s[i].GetHospitalRoleForMonth(0).DoesTrainingLong ==
+                         false) // if their role doesnt do long calls this month
                     {
                         continue;
                     }
@@ -221,8 +193,9 @@ public class AlgorithmService
                 // are we in august?
                 if (month == 8)
                 {
-                    if (((PGY1)AllPgy1s[i]).rolePerMonth[1].DoesLong == false &&
-                        ((PGY1)AllPgy1s[i]).rolePerMonth[1].DoesTrainingLong == false)
+                    if (pgy1s[i].GetHospitalRoleForMonth(1).DoesLong == false &&
+                        pgy1s[i].GetHospitalRoleForMonth(1).DoesTrainingLong ==
+                        false) // if their role doesnt do long calls this month
                     {
                         continue;
                     }
@@ -253,8 +226,8 @@ public class AlgorithmService
                 //are we in july?
                 if (month == 7)
                 {
-                    if (((PGY2)AllPgy2s[i]).rolePerMonth[0].DoesLong == false &&
-                        ((PGY2)AllPgy2s[i]).rolePerMonth[0].DoesTrainingLong ==
+                    if (pgy2s[i].GetHospitalRoleForMonth(0).DoesLong == false &&
+                        pgy2s[i].GetHospitalRoleForMonth(0).DoesTrainingLong ==
                         false) // if their role doesnt do long calls this month
                     {
                         continue;
@@ -265,8 +238,9 @@ public class AlgorithmService
                 // are we in august?
                 if (month == 8)
                 {
-                    if (((PGY2)AllPgy2s[i]).rolePerMonth[1].DoesLong == false &&
-                        ((PGY2)AllPgy2s[i]).rolePerMonth[1].DoesTrainingLong == false)
+                    if (pgy2s[i].GetHospitalRoleForMonth(1).DoesLong == false &&
+                        pgy2s[i].GetHospitalRoleForMonth(1).DoesTrainingLong ==
+                        false) // if their role doesnt do long calls this month
                     {
                         continue;
                     }
@@ -311,8 +285,7 @@ public class AlgorithmService
                 // check if flow is leaving the current edge
                 if (currEdge.flow() > 0)
                 {
-                    ((PGY1)AllPgy1s[i]).addWorkDay(
-                        tCalendar.whatSaturdayIsIt(currEdge.destination / 2));
+                    pgy1s[i].AddWorkDay(tCalendar.whatSaturdayIsIt(currEdge.destination / 2));
                 }
                 //Console.WriteLine($"  Day {tCalendar.whatSaturdayIsIt(currEdge.destination / 2)}");
             }
@@ -330,8 +303,7 @@ public class AlgorithmService
                 // check if the flow is negative
                 if (currEdge.flow() < 0)
                 {
-                    ((PGY2)AllPgy2s[i]).addWorkDay(
-                        tCalendar.whatSaturdayIsIt(currEdge.destination / 2));
+                    pgy2s[i].AddWorkDay(tCalendar.whatSaturdayIsIt(currEdge.destination / 2));
                 }
                 //Console.WriteLine($"  Day {tCalendar.whatSaturdayIsIt(currEdge.destination / 2)}");
             }
@@ -364,8 +336,8 @@ public class AlgorithmService
                 //are we in july?
                 if (month == 7)
                 {
-                    if (((PGY1)AllPgy1s[i]).rolePerMonth[0].DoesLong == false &&
-                        ((PGY1)AllPgy1s[i]).rolePerMonth[0].DoesTrainingLong ==
+                    if (pgy1s[i].GetHospitalRoleForMonth(0).DoesLong == false &&
+                        pgy1s[i].GetHospitalRoleForMonth(0).DoesTrainingLong ==
                         false) // if their role doesnt do long calls this month
                     {
                         continue;
@@ -376,8 +348,9 @@ public class AlgorithmService
                 // are we in august?
                 if (month == 8)
                 {
-                    if (((PGY1)AllPgy1s[i]).rolePerMonth[1].DoesLong == false &&
-                        ((PGY1)AllPgy1s[i]).rolePerMonth[1].DoesTrainingLong == false)
+                    if (pgy1s[i].GetHospitalRoleForMonth(1).DoesLong == false &&
+                        pgy1s[i].GetHospitalRoleForMonth(1).DoesTrainingLong ==
+                        false) // if their role doesnt do long calls this month
                     {
                         continue;
                     }
@@ -409,8 +382,8 @@ public class AlgorithmService
                 //are we in july?
                 if (month == 7)
                 {
-                    if (((PGY2)AllPgy2s[i]).rolePerMonth[0].DoesLong == false &&
-                        ((PGY2)AllPgy2s[i]).rolePerMonth[0].DoesTrainingLong ==
+                    if (pgy2s[i].GetHospitalRoleForMonth(0).DoesLong == false &&
+                        pgy2s[i].GetHospitalRoleForMonth(0).DoesTrainingLong ==
                         false) // if their role doesnt do long calls this month
                     {
                         continue;
@@ -421,8 +394,9 @@ public class AlgorithmService
                 // are we in august?
                 if (month == 8)
                 {
-                    if (((PGY2)AllPgy2s[i]).rolePerMonth[1].DoesLong == false &&
-                        ((PGY2)AllPgy2s[i]).rolePerMonth[1].DoesTrainingLong == false)
+                    if (pgy2s[i].GetHospitalRoleForMonth(1).DoesLong == false &&
+                        pgy2s[i].GetHospitalRoleForMonth(1).DoesTrainingLong ==
+                        false) // if their role doesnt do long calls this month
                     {
                         continue;
                     }
@@ -460,8 +434,7 @@ public class AlgorithmService
                 // check if flow is leaving the current edge
                 if (currEdge.flow() > 0)
                 {
-                    ((PGY1)AllPgy1s[i]).addWorkDay(
-                        tCalendar.whatSundayIsIt(currEdge.destination / 2));
+                    pgy1s[i].AddWorkDay(tCalendar.whatSundayIsIt(currEdge.destination / 2));
                 }
             }
         }
@@ -476,51 +449,49 @@ public class AlgorithmService
                 // check if the flow is negative
                 if (currEdge.flow() < 0)
                 {
-                    ((PGY2)AllPgy2s[i]).addWorkDay(
-                        tCalendar.whatSundayIsIt(currEdge.destination / 2));
+                    pgy2s[i].AddWorkDay(tCalendar.whatSundayIsIt(currEdge.destination / 2));
                 }
             }
         }
 
         // fix the weekends post schedule generation
-        FixWeekends1(AllPgy1s);
-        FixWeekends2(AllPgy2s);
+        FixWeekends1(pgy1s);
+        FixWeekends2(pgy2s);
 
         // debug print for verification
-        Print(AllPgy1s, AllPgy2s, AllPgy3s);
+        Print(pgy1s, pgy2s, pgy3s);
 
-        // savecontent
-        Save(AllPgy1s, AllPgy2s, AllPgy3s);
+        SaveWorkDays(pgy1s, pgy2s, pgy3s);
+
         return true;
     }
 
-    public void Save(ArrayList pgy1s, ArrayList pgy2s, ArrayList pgy3s)
+    public void SaveWorkDays(List<PGY1DTO> pgy1s, List<PGY2DTO> pgy2s, List<PGY3DTO> pgy3s)
     {
-        // save the work days of each resident to a file
-        foreach (PGY1 res in pgy1s)
+        foreach (PGY1DTO pgy1 in pgy1s)
         {
-            res.saveWorkDays();
+            pgy1.SaveWorkDays();
         }
 
-        foreach (PGY2 res in pgy2s)
+        foreach (PGY2DTO pgy2 in pgy2s)
         {
-            res.saveWorkDays();
+            pgy2.SaveWorkDays();
         }
 
-        foreach (PGY3 res in pgy3s)
+        foreach (PGY3DTO pgy3 in pgy3s)
         {
-            res.saveWorkDays();
+            pgy3.SaveWorkDays();
         }
     }
 
-    public void Print(ArrayList pgy1s, ArrayList pgy2s, ArrayList pgy3s)
+    public void Print(List<PGY1DTO> pgy1s, List<PGY2DTO> pgy2s, List<PGY3DTO> pgy3s)
     {
-        foreach (PGY1 res in pgy1s)
+        foreach (PGY1DTO res in pgy1s)
         {
-            _logger.LogTrace("PGY1 {ResName} works:", res.name);
+            _logger.LogTrace("PGY1 {ResName} works:", res.Name);
             // print all their work days in sorted order
             ArrayList workedDays = new();
-            foreach (DateOnly curDay in res.workDaySet())
+            foreach (DateOnly curDay in res.WorkDays)
             {
                 workedDays.Add(curDay);
             }
@@ -534,12 +505,12 @@ public class AlgorithmService
             }
         }
 
-        foreach (PGY2 res in pgy2s)
+        foreach (PGY2DTO res in pgy2s)
         {
-            _logger.LogTrace("PGY2 {ResName} works:", res.name);
+            _logger.LogTrace("PGY2 {ResName} works:", res.Name);
             // print all their work days in sorted order
             ArrayList workedDays = new();
-            foreach (DateOnly curDay in res.workDaySet())
+            foreach (DateOnly curDay in res.WorkDays)
             {
                 workedDays.Add(curDay);
             }
@@ -553,12 +524,12 @@ public class AlgorithmService
             }
         }
 
-        foreach (PGY3 res in pgy3s)
+        foreach (PGY3DTO res in pgy3s)
         {
-            _logger.LogTrace("PGY3 {ResName} works:", res.name);
+            _logger.LogTrace("PGY3 {ResName} works:", res.Name);
             // print all their work days in sorted order
             ArrayList workedDays = new();
-            foreach (DateOnly curDay in res.workDaySet())
+            foreach (DateOnly curDay in res.WorkDays)
             {
                 workedDays.Add(curDay);
             }
@@ -573,25 +544,22 @@ public class AlgorithmService
         }
     }
 
-    public bool Part2(int year, ArrayList pgy1s, ArrayList pgy2s, bool loosely)
+    public bool Part2(int year, List<PGY1DTO> pgy1s, List<PGY2DTO> pgy2s, int looseFactor)
     {
         _logger.LogInformation("Generating part 2: normal schedule (january through june)");
-        ArrayList AllPgy1s = pgy1s;
-        ArrayList AllPgy2s = pgy2s;
-
         // store days currently worked by anyone
-        HashSet<DateOnly> workedDays = new();
-        foreach (PGY1 res in AllPgy1s)
+        HashSet<DateOnly> workedDays = [];
+        foreach (PGY1DTO res in pgy1s)
         {
-            foreach (DateOnly curDay in res.workDaySet())
+            foreach (DateOnly curDay in res.WorkDays)
             {
                 workedDays.Add(curDay);
             }
         }
 
-        foreach (PGY2 res in AllPgy2s)
+        foreach (PGY2DTO res in pgy2s)
         {
-            foreach (DateOnly curDay in res.workDaySet())
+            foreach (DateOnly curDay in res.WorkDays)
             {
                 workedDays.Add(curDay);
             }
@@ -631,8 +599,8 @@ public class AlgorithmService
         bool assigned = false;
         for (int attempt = 0; attempt < maxTries && !assigned; attempt++)
         {
-            assigned = RandomAssignment(AllPgy1s, AllPgy2s, startDay, endDay,
-                shiftTypeCount, workedDays, loosely);
+            assigned = RandomAssignment(pgy1s, pgy2s, startDay, endDay,
+                shiftTypeCount, workedDays, looseFactor);
         }
 
         if (!assigned)
@@ -642,51 +610,39 @@ public class AlgorithmService
             return false;
         }
 
-        // save (and commit)
-        Save(AllPgy1s, AllPgy2s,
-            new ArrayList()); // PGY3s are not used in part 1
         _logger.LogInformation("Part 2 completed successfully.");
         // Print
-        Print(AllPgy1s, AllPgy2s,
-            new ArrayList()); // PGY3s are not used in part 1
+        Print(pgy1s, pgy2s, []); // PGY3s are not used in part 1
+
+        SaveWorkDays(pgy1s, pgy2s, []);
         return true;
     }
 
-    public bool Part1(int year, ArrayList pgy1s, ArrayList pgy2s, bool loosely)
+    public bool Part1(int year, List<PGY1DTO> pgy1s, List<PGY2DTO> pgy2s, int looseFactor)
     {
         _logger.LogInformation("part 1: normal schedule (july through december)");
-        int pgy1 = 8;
-        int pgy2 = 8;
-        ArrayList AllPgy1s = pgy1s;
-        ArrayList AllPgy2s = pgy2s;
-
+        int pgy1 = pgy1s.Count;
         for (int i = 0; i < pgy1; i++)
         {
-            ((PGY1)AllPgy1s[i]).inTraining = false;
+            pgy1s[i].InTraining = false;
 
             // assign the training date of the pgy1s based on their last worked day
-            ((PGY1)AllPgy1s[i]).lastTrainingDate
-                = ((PGY1)AllPgy1s[i]).workDaySet().Max();
-        }
-
-        for (int i = 0; i < pgy2; i++)
-        {
-            ((PGY2)AllPgy2s[i]).inTraining = false;
+            pgy1s[i].LastTrainingDate = pgy1s[i].PendingSaveWorkDays.Max();
         }
 
         // store days currently worked by anyone
         HashSet<DateOnly> workedDays = new();
-        foreach (PGY1 res in AllPgy1s)
+        foreach (PGY1DTO res in pgy1s)
         {
-            foreach (DateOnly curDay in res.workDaySet())
+            foreach (DateOnly curDay in res.PendingSaveWorkDays)
             {
                 workedDays.Add(curDay);
             }
         }
 
-        foreach (PGY2 res in AllPgy2s)
+        foreach (PGY2DTO res in pgy2s)
         {
-            foreach (DateOnly curDay in res.workDaySet())
+            foreach (DateOnly curDay in res.PendingSaveWorkDays)
             {
                 workedDays.Add(curDay);
             }
@@ -726,8 +682,8 @@ public class AlgorithmService
         bool assigned = false;
         for (int attempt = 0; attempt < maxTries && !assigned; attempt++)
         {
-            assigned = RandomAssignment(AllPgy1s, AllPgy2s, startDay, endDay,
-                shiftTypeCount, workedDays, loosely);
+            assigned = RandomAssignment(pgy1s, pgy2s, startDay, endDay,
+                shiftTypeCount, workedDays, looseFactor);
         }
 
         if (!assigned)
@@ -737,36 +693,30 @@ public class AlgorithmService
             return false;
         }
 
-        // save (and commit)
-        Save(AllPgy1s, AllPgy2s,
-            new ArrayList()); // PGY3s are not used in part 1
         _logger.LogInformation("Part 1 completed successfully.");
         // Print
-        Print(AllPgy1s, AllPgy2s,
-            new ArrayList()); // PGY3s are not used in part 1
+        Print(pgy1s, pgy2s, []); // PGY3s are not used in part 1
+        SaveWorkDays(pgy1s, pgy2s, []);
         return true;
     }
 
 
-    public void ComputeWorkTime(ArrayList pgy1s, ArrayList pgy2s,
+    public void ComputeWorkTime(List<PGY1DTO> pgy1s, List<PGY2DTO> pgy2s,
         int[] pgy1WorkTime, int[] pgy2WorkTime,
         Dictionary<CallShiftType, int>[] pgy1ShiftCount,
-        Dictionary<CallShiftType, int>[] pgy2ShiftCount, bool loosely)
+        Dictionary<CallShiftType, int>[] pgy2ShiftCount)
     {
         for (int i = 0; i < pgy1s.Count; i++)
         {
             pgy1WorkTime[i] = 0;
-            if (!loosely)
+
+            PGY1DTO res = pgy1s[i];
+            foreach (DateOnly workDay in res.WorkDays)
             {
-                PGY1? res = (PGY1)pgy1s[i];
-                foreach (DateOnly workDay in
-                         res.workDaySet())
-                {
-                    CallShiftType shiftType
-                        = CallShiftTypeExtensions.GetCallShiftTypeForDate(workDay,
-                            1);
-                    pgy1WorkTime[i] += shiftType.GetHours();
-                }
+                CallShiftType shiftType
+                    = CallShiftTypeExtensions.GetCallShiftTypeForDate(workDay,
+                        1);
+                pgy1WorkTime[i] += shiftType.GetHours();
             }
 
             // add the shift type time to the work time
@@ -781,18 +731,13 @@ public class AlgorithmService
         for (int i = 0; i < pgy2s.Count; i++)
         {
             pgy2WorkTime[i] = 0;
-
-            if (!loosely)
+            PGY2DTO res = pgy2s[i];
+            foreach (DateOnly workDay in res.WorkDays)
             {
-                PGY2? res = (PGY2)pgy2s[i];
-                foreach (DateOnly workDay in
-                         res.workDaySet())
-                {
-                    CallShiftType shiftType
-                        = CallShiftTypeExtensions.GetCallShiftTypeForDate(workDay,
-                            2);
-                    pgy2WorkTime[i] += shiftType.GetHours();
-                }
+                CallShiftType shiftType
+                    = CallShiftTypeExtensions.GetCallShiftTypeForDate(workDay,
+                        2);
+                pgy2WorkTime[i] += shiftType.GetHours();
             }
 
             // add the shift type time to the work time
@@ -806,7 +751,7 @@ public class AlgorithmService
     }
 
 #pragma warning disable IDE0060
-    public void InitialShiftAssignment(ArrayList pgy1s, ArrayList pgy2s,
+    public void InitialShiftAssignment(List<PGY1DTO> pgy1s, List<PGY2DTO> pgy2s,
         Dictionary<CallShiftType, int> shiftTypeCount,
         Dictionary<CallShiftType, int>[] pgy1ShiftCount,
         Dictionary<CallShiftType, int>[] pgy2ShiftCount, Random rand,
@@ -883,7 +828,7 @@ public class AlgorithmService
 
 #pragma warning restore IDE0060
 
-    public void SwapSomeShiftCount(ArrayList pgy1s, ArrayList pgy2s,
+    public void SwapSomeShiftCount(List<PGY1DTO> pgy1s, List<PGY2DTO> pgy2s,
         Dictionary<CallShiftType, int>[] pgy1ShiftCount,
         Dictionary<CallShiftType, int>[] pgy2ShiftCount, Random rand, int[] pgy1WorkTime,
         int[] pgy2WorkTime,
@@ -907,7 +852,7 @@ public class AlgorithmService
         }
     }
 
-    public bool SwapWithGiverRooted(ArrayList pgy1s, ArrayList pgy2s,
+    public bool SwapWithGiverRooted(List<PGY1DTO> pgy1s, List<PGY2DTO> pgy2s,
         Dictionary<CallShiftType, int>[] pgy1ShiftCount,
         Dictionary<CallShiftType, int>[] pgy2ShiftCount, Random rand,
         int[] pgy1WorkTime,
@@ -977,7 +922,7 @@ public class AlgorithmService
 
             swappableShiftTypes = giverShiftTypes.Intersect(receiverShiftTypes).ToList();
 
-            needsToCalculate = giveHour <= receiveHour + 12
+            needsToCalculate = giveHour <= receiveHour + 6
                                || giverIndex == receiverIndex
                                || swappableShiftTypes.Count == 0;
         } while (needsToCalculate && count < 100);
@@ -998,7 +943,7 @@ public class AlgorithmService
         return true;
     }
 
-    public bool SwapWithReceiverRooted(ArrayList pgy1s, ArrayList pgy2s,
+    public bool SwapWithReceiverRooted(List<PGY1DTO> pgy1s, List<PGY2DTO> pgy2s,
         Dictionary<CallShiftType, int>[] pgy1ShiftCount,
         Dictionary<CallShiftType, int>[] pgy2ShiftCount, Random rand,
         int[] pgy1WorkTime,
@@ -1007,7 +952,7 @@ public class AlgorithmService
     {
         // find the person who worked the least
         int receiverIndex = 0;
-        int receiverHour = -1;
+        int receiverHour = int.MaxValue;
         for (int i = 0; i < pgy1s.Count; i++)
         {
             if (receiverHour > pgy1WorkTime[i])
@@ -1070,7 +1015,7 @@ public class AlgorithmService
 
             swappableShiftTypes = giverShiftTypes.Intersect(receiverShiftTypes).ToList();
 
-            needsToCalculate = giverHour <= receiverHour + 12
+            needsToCalculate = giverHour <= receiverHour + 6
                                || giverIndex == receiverIndex
                                || swappableShiftTypes.Count == 0;
         } while (needsToCalculate && count < 100);
@@ -1078,7 +1023,7 @@ public class AlgorithmService
         if (needsToCalculate)
         {
             // Too many attempts
-            _logger.LogWarning("Failed to swap shifts with giver rooted after 100 attempts.");
+            _logger.LogWarning("Failed to swap shifts with receiver rooted after 100 attempts.");
             return false;
         }
 
@@ -1091,9 +1036,9 @@ public class AlgorithmService
         return true;
     }
 
-    public bool RandomAssignment(ArrayList pgy1s, ArrayList pgy2s,
+    public bool RandomAssignment(List<PGY1DTO> pgy1s, List<PGY2DTO> pgy2s,
         DateOnly startDay, DateOnly endDay,
-        Dictionary<CallShiftType, int> shiftTypeCount, HashSet<DateOnly> workedDays, bool loosely)
+        Dictionary<CallShiftType, int> shiftTypeCount, HashSet<DateOnly> workedDays, int looseFactor)
     {
         //Console.WriteLine("[DEBUG] Attempting random assignment of shifts...");
 
@@ -1145,8 +1090,8 @@ public class AlgorithmService
             // iterate through each resident and determine if they can work this day
             for (int i = 0; i < pgy1s.Count; i++)
             {
-                PGY1? res = (PGY1)pgy1s[i];
-                if (res.canWork(curDay) && !workedDays.Contains(curDay))
+                PGY1DTO res = pgy1s[i];
+                if (res.CanWork(curDay) && !workedDays.Contains(curDay))
                 {
                     // determine the shift type for this day
                     CallShiftType shiftTypeValue
@@ -1159,8 +1104,8 @@ public class AlgorithmService
 
             for (int i = 0; i < pgy2s.Count; i++)
             {
-                PGY2? res = (PGY2)pgy2s[i];
-                if (res.canWork(curDay) && !workedDays.Contains(curDay))
+                PGY2DTO res = pgy2s[i];
+                if (res.CanWork(curDay) && !workedDays.Contains(curDay))
                 {
                     // determine the shift type for this day
                     CallShiftType shiftTypeValue
@@ -1185,7 +1130,7 @@ public class AlgorithmService
             int[] pgy1WorkTime = new int[pgy1s.Count];
             int[] pgy2WorkTime = new int[pgy2s.Count];
             ComputeWorkTime(pgy1s, pgy2s, pgy1WorkTime, pgy2WorkTime,
-                pgy1ShiftCount, pgy2ShiftCount, loosely);
+                pgy1ShiftCount, pgy2ShiftCount);
 
             // loop until within 24-hour window
             bool inWindow = false;
@@ -1206,7 +1151,7 @@ public class AlgorithmService
 
                 // check if within range
                 // if algorithm has run more than 50 times, only concern ourselves with matching up hours in each part of schedule
-                if (max - min <= (loosely ? 12 : 24))
+                if (max - min <= looseFactor)
                 {
                     inWindow = true; // if so, we are done
                 }
@@ -1218,7 +1163,7 @@ public class AlgorithmService
 
                     // recompute work time for each resident
                     ComputeWorkTime(pgy1s, pgy2s, pgy1WorkTime, pgy2WorkTime,
-                        pgy1ShiftCount, pgy2ShiftCount, loosely);
+                        pgy1ShiftCount, pgy2ShiftCount);
                 }
             }
 
@@ -1263,7 +1208,7 @@ public class AlgorithmService
                 }
             }
 
-            ArrayList dayList = new();
+            List<DateOnly> dayList = [];
 
             // iterate through each day
             for (DateOnly curDay = startDay;
@@ -1292,7 +1237,7 @@ public class AlgorithmService
                     {
                         for (int i = 0; i < pgy1s.Count; i++)
                         {
-                            if (((PGY1)pgy1s[i]).canWork(curDay))
+                            if (pgy1s[i].CanWork(curDay))
                             {
                                 g.addEdge(i * numShiftTypes + shiftOffset,
                                     shiftStart + dayList.Count - 1,
@@ -1305,7 +1250,7 @@ public class AlgorithmService
                     {
                         for (int i = 0; i < pgy2s.Count; i++)
                         {
-                            if (((PGY2)pgy2s[i]).canWork(curDay))
+                            if (pgy2s[i].CanWork(curDay))
                             {
                                 g.addEdge(pgy2Start + i * numShiftTypes + shiftOffset,
                                     shiftStart + dayList.Count - 1,
@@ -1344,8 +1289,8 @@ public class AlgorithmService
                     {
                         // Get the resident's name
                         string residentName = residentIndex < pgy1s.Count
-                            ? ((PGY1)pgy1s[residentIndex]).name
-                            : ((PGY2)pgy2s[residentIndex - pgy1s.Count]).name;
+                            ? pgy1s[residentIndex].Name
+                            : pgy2s[residentIndex - pgy1s.Count].Name;
 
                         // print the resident who did not handle their shifts
                         _logger.LogWarning(
@@ -1478,7 +1423,7 @@ public class AlgorithmService
 
                     _logger.LogDebug(
                         "PGY1 {I}: Short: {I1}, Saturday Long: {I2}, Sunday: {I3}, Hours: {hours}",
-                        ((PGY1)pgy1s[i]).name, pgy1ShiftCount[i][CallShiftType.WeekdayShortCall],
+                        pgy1s[i].Name, pgy1ShiftCount[i][CallShiftType.WeekdayShortCall],
                         pgy1ShiftCount[i][CallShiftType.SaturdayFullCall],
                         pgy1ShiftCount[i][CallShiftType.SundayHalfCall],
                         totalHours
@@ -1494,7 +1439,7 @@ public class AlgorithmService
 
                     _logger.LogInformation(
                         "PGY2 {I}: Short: {I1}, Saturday Long: {I2}, Sunday: {I3}, Hours: {hours}",
-                        ((PGY2)pgy2s[i]).name, pgy2ShiftCount[i][CallShiftType.WeekdayShortCall],
+                        pgy2s[i].Name, pgy2ShiftCount[i][CallShiftType.WeekdayShortCall],
                         pgy2ShiftCount[i][CallShiftType.SaturdayHalfCall],
                         pgy2ShiftCount[i][CallShiftType.SundayHalfCall],
                         totalHours
@@ -1515,7 +1460,7 @@ public class AlgorithmService
 
                 _logger.LogDebug(
                     "PGY1 {I}: Short: {I1}, Saturday Long: {I2}, Sunday: {I3}, Hours: {hours}",
-                    ((PGY1)pgy1s[i]).name, pgy1ShiftCount[i][CallShiftType.WeekdayShortCall],
+                    pgy1s[i].Name, pgy1ShiftCount[i][CallShiftType.WeekdayShortCall],
                     pgy1ShiftCount[i][CallShiftType.SaturdayFullCall],
                     pgy1ShiftCount[i][CallShiftType.SundayHalfCall],
                     totalHours
@@ -1531,7 +1476,7 @@ public class AlgorithmService
 
                 _logger.LogDebug(
                     "PGY2 {I}: Short: {I1}, Saturday Long: {I2}, Sunday: {I3}, Hours: {hours}",
-                    ((PGY2)pgy2s[i]).name, pgy2ShiftCount[i][CallShiftType.WeekdayShortCall],
+                    pgy2s[i].Name, pgy2ShiftCount[i][CallShiftType.WeekdayShortCall],
                     pgy2ShiftCount[i][CallShiftType.SaturdayHalfCall],
                     pgy2ShiftCount[i][CallShiftType.SundayHalfCall],
                     totalHours
@@ -1553,9 +1498,9 @@ public class AlgorithmService
                         if (edge.flow() >
                             0) // if the flow is positive, this resident works this day
                         {
-                            DateOnly workDay = (DateOnly)dayList[
+                            DateOnly workDay = dayList[
                                 edge.destination - shiftStart];
-                            ((PGY1)pgy1s[i]).addWorkDay(workDay);
+                            pgy1s[i].AddWorkDay(workDay);
                         }
                     }
                 }
@@ -1573,9 +1518,9 @@ public class AlgorithmService
                         if (edge.flow() >
                             0) // if the flow is positive, this resident works this day
                         {
-                            DateOnly workDay = (DateOnly)dayList[
+                            DateOnly workDay = dayList[
                                 edge.destination - shiftStart];
-                            ((PGY2)pgy2s[i]).addWorkDay(workDay);
+                            pgy2s[i].AddWorkDay(workDay);
                         }
                     }
                 }
@@ -1585,9 +1530,20 @@ public class AlgorithmService
             /*Console.WriteLine($"[DEBUG] fixing weekends");*/
 
             // fix weekends
-            FixWeekends1and2(pgy1s, pgy2s);
+            if (FixWeekends1and2(pgy1s, pgy2s))
+            {
+                return true; // all shifts were assigned correctly
+            }
 
-            return true; // all shifts were assigned correctly
+            foreach (PGY1DTO pgy1 in pgy1s)
+            {
+                pgy1.WorkDays.Clear();
+            }
+
+            foreach (PGY2DTO pgy2 in pgy2s)
+            {
+                pgy2.WorkDays.Clear();
+            }
         }
 
         // if we reach here, we were not able to assign shifts correctly with 10 attempts
@@ -1596,46 +1552,47 @@ public class AlgorithmService
 
 
     // swap 2 residents work days (avoid back to back long calls)
-    public static void SwapWorkDays1(PGY1 res1, PGY1 res2, DateOnly day1,
+    public static void SwapWorkDays1(PGY1DTO res1, PGY1DTO res2, DateOnly day1,
         DateOnly day2)
     {
-        res1.removeWorkDay(day1);
-        res2.removeWorkDay(day2);
+        res1.RemoveWorkDay(day1);
+        res2.RemoveWorkDay(day2);
 
-        res1.addWorkDay(day2);
-        res2.addWorkDay(day1);
+        res1.AddWorkDay(day2);
+        res2.AddWorkDay(day1);
     }
 
-    public static void SwapWorkDays12(PGY1 res1, PGY2 res2, DateOnly day1,
+    public static void SwapWorkDays12(PGY1DTO res1, PGY2DTO res2, DateOnly day1,
         DateOnly day2)
     {
-        res1.removeWorkDay(day1);
-        res2.removeWorkDay(day2);
+        res1.RemoveWorkDay(day1);
+        res2.RemoveWorkDay(day2);
 
-        res1.addWorkDay(day2);
-        res2.addWorkDay(day1);
+        res1.AddWorkDay(day2);
+        res2.AddWorkDay(day1);
     }
 
 
     // swap 2 residents work days (avoid back to back long calls)
-    public static void SwapWorkDays2(PGY2 res1, PGY2 res2, DateOnly day1,
+    public static void SwapWorkDays2(PGY2DTO res1, PGY2DTO res2, DateOnly day1,
         DateOnly day2)
     {
-        res1.removeWorkDay(day1);
-        res2.removeWorkDay(day2);
+        res1.RemoveWorkDay(day1);
+        res2.RemoveWorkDay(day2);
 
-        res1.addWorkDay(day2);
-        res2.addWorkDay(day1);
+        res1.AddWorkDay(day2);
+        res2.AddWorkDay(day1);
     }
 
-    public void
-        FixWeekends1(ArrayList pgy1s) // function to fix pgy1 weekends
+    public bool
+        FixWeekends1(List<PGY1DTO> pgy1s) // function to fix pgy1 weekends
     {
-        foreach (PGY1 res in pgy1s)
+        bool didFail = false;
+        foreach (PGY1DTO res in pgy1s)
         {
             // get the first and last day the resident works
-            DateOnly firstDay = res.firstWorkDay();
-            DateOnly lastDay = res.lastWorkDay();
+            DateOnly firstDay = res.FirstWorkDay();
+            DateOnly lastDay = res.LastWorkDay();
 
             // iterate through all the days
             for (DateOnly curDay = firstDay;
@@ -1643,34 +1600,32 @@ public class AlgorithmService
                  curDay = curDay.AddDays(1))
             // check if the day is a conflict
             {
-                if (res.isWorking(curDay) && !res.canWork(curDay) &&
-                    !res.commitedWorkDay(curDay))
+                if (res.IsWorking(curDay) && !res.CanWork(curDay))
                 {
                     bool found = false;
-                    foreach (PGY1 res2 in pgy1s)
+                    foreach (PGY1DTO res2 in pgy1s)
                     {
                         if (res == res2)
                         {
                             continue;
                         }
 
-                        if (!res2.canWork(curDay))
+                        if (!res2.CanAddWorkDay(curDay))
                         {
                             continue;
                         }
 
                         // Iterate through all the days for resident 2
-                        DateOnly firstDay2 = res2.firstWorkDay();
-                        DateOnly lastDay2 = res2.lastWorkDay();
+                        DateOnly firstDay2 = res2.FirstWorkDay();
+                        DateOnly lastDay2 = res2.LastWorkDay();
 
                         for (DateOnly otherDay = firstDay2;
                              otherDay <= lastDay2;
                              otherDay = otherDay.AddDays(1))
                         {
-                            if (res2.isWorking(otherDay)
+                            if (res2.IsWorking(otherDay)
                                 && CallShiftTypeExtensions.GetCallShiftTypeForDate(curDay, 1) == CallShiftTypeExtensions.GetCallShiftTypeForDate(otherDay, 1)
-                                && res.canWork(otherDay)
-                                && !res2.commitedWorkDay(otherDay))
+                                && res.CanAddWorkDay(otherDay))
                             {
                                 found = true;
                                 SwapWorkDays1(res, res2, curDay, otherDay);
@@ -1686,23 +1641,27 @@ public class AlgorithmService
 
                     if (!found)
                     {
-                        _logger.LogWarning("Unable to fix weekends for pgy1");
+                        _logger.LogWarning("Unable to fix {curDay} for PGY{pgy} {name} ({id})", curDay, "1", res.Name, res.ResidentId);
+                        didFail = true;
                     }
                 }
             }
         }
+
+        return !didFail;
     }
 
 
-    public static void
-        FixWeekends1and2(ArrayList pgy1s,
-            ArrayList pgy2s) // function to fix resident weekends
+    public bool
+        FixWeekends1and2(List<PGY1DTO> pgy1s,
+            List<PGY2DTO> pgy2s) // function to fix resident weekends
     {
-        foreach (PGY1 res in pgy1s)
+        bool didFail = false;
+        foreach (PGY1DTO res in pgy1s)
         {
             // get the first and last day the resident works
-            DateOnly firstDay = res.firstWorkDay();
-            DateOnly lastDay = res.lastWorkDay();
+            DateOnly firstDay = res.FirstWorkDay();
+            DateOnly lastDay = res.LastWorkDay();
 
             // iterate through all the days
             for (DateOnly curDay = firstDay;
@@ -1710,28 +1669,28 @@ public class AlgorithmService
                  curDay = curDay.AddDays(1))
             // check if the day is a conflict
             {
-                if (res.isWorking(curDay) && !res.canWork(curDay) &&
-                    !res.commitedWorkDay(curDay))
+                if (res.IsWorking(curDay) && !res.CanWork(curDay))
                 {
                     CallShiftType curShiftType
                         = CallShiftTypeExtensions.GetCallShiftTypeForDate(
                             curDay, 1);
                     bool found = false;
-                    foreach (PGY1 res2 in pgy1s)
+
+                    foreach (PGY1DTO res2 in pgy1s)
                     {
                         if (res == res2)
                         {
                             continue;
                         }
 
-                        if (!res2.canWork(curDay))
+                        if (!res2.CanAddWorkDay(curDay))
                         {
                             continue;
                         }
 
                         // Iterate through all the days for resident 2
-                        DateOnly firstDay2 = res2.firstWorkDay();
-                        DateOnly lastDay2 = res2.lastWorkDay();
+                        DateOnly firstDay2 = res2.FirstWorkDay();
+                        DateOnly lastDay2 = res2.LastWorkDay();
 
                         for (DateOnly otherDay = firstDay2;
                              otherDay <= lastDay2;
@@ -1739,12 +1698,11 @@ public class AlgorithmService
                         {
                             CallShiftType otherShiftType
                                 = CallShiftTypeExtensions.GetCallShiftTypeForDate(
-                                    curDay, 1);
+                                    otherDay, 1);
 
-                            if (res2.isWorking(otherDay)
+                            if (res2.IsWorking(otherDay)
                                 && curShiftType == otherShiftType
-                                && res.canWork(otherDay)
-                                && !res2.commitedWorkDay(otherDay))
+                                && res.CanAddWorkDay(otherDay))
                             {
                                 found = true;
                                 SwapWorkDays1(res, res2, curDay, otherDay);
@@ -1760,16 +1718,16 @@ public class AlgorithmService
 
                     if (!found)
                     {
-                        foreach (PGY2 res2 in pgy2s)
+                        foreach (PGY2DTO res2 in pgy2s)
                         {
-                            if (!res2.canWork(curDay))
+                            if (!res2.CanAddWorkDay(curDay))
                             {
                                 continue;
                             }
 
                             // Iterate through all the days for resident 2
-                            DateOnly firstDay2 = res2.firstWorkDay();
-                            DateOnly lastDay2 = res2.lastWorkDay();
+                            DateOnly firstDay2 = res2.FirstWorkDay();
+                            DateOnly lastDay2 = res2.LastWorkDay();
 
                             for (DateOnly otherDay = firstDay2;
                                  otherDay <= lastDay2;
@@ -1777,11 +1735,10 @@ public class AlgorithmService
                             {
                                 CallShiftType otherShiftType
                                     = CallShiftTypeExtensions.GetCallShiftTypeForDate(
-                                        curDay, 2);
-                                if (res2.isWorking(otherDay)
+                                        otherDay, 2);
+                                if (res2.IsWorking(otherDay)
                                     && curShiftType == otherShiftType
-                                    && res.canWork(otherDay)
-                                    && !res2.commitedWorkDay(otherDay))
+                                    && res.CanAddWorkDay(otherDay))
                                 {
                                     found = true;
                                     SwapWorkDays12(res, res2, curDay, otherDay);
@@ -1795,15 +1752,20 @@ public class AlgorithmService
                             }
                         }
                     }
+
+                    if (!found)
+                    {
+                        _logger.LogWarning("Unable to fix {curDay} for PGY{pgy} {name} ({id})", curDay, "1", res.Name, res.ResidentId);
+                    }
                 }
             }
         }
 
-        foreach (PGY2 res in pgy2s)
+        foreach (PGY2DTO res in pgy2s)
         {
             // get the first and last day the resident works
-            DateOnly firstDay = res.firstWorkDay();
-            DateOnly lastDay = res.lastWorkDay();
+            DateOnly firstDay = res.FirstWorkDay();
+            DateOnly lastDay = res.LastWorkDay();
 
             // iterate through all the days
             for (DateOnly curDay = firstDay;
@@ -1811,29 +1773,28 @@ public class AlgorithmService
                  curDay = curDay.AddDays(1))
             // check if the day is a conflict
             {
-                if (res.isWorking(curDay) && !res.canWork(curDay) &&
-                    !res.commitedWorkDay(curDay))
+                if (res.IsWorking(curDay) && !res.CanWork(curDay))
                 {
                     CallShiftType curShiftType
                         = CallShiftTypeExtensions.GetCallShiftTypeForDate(
                             curDay, 2);
 
                     bool found = false;
-                    foreach (PGY2 res2 in pgy2s)
+                    foreach (PGY2DTO res2 in pgy2s)
                     {
                         if (res == res2)
                         {
                             continue;
                         }
 
-                        if (!res2.canWork(curDay))
+                        if (!res2.CanAddWorkDay(curDay))
                         {
                             continue;
                         }
 
                         // Iterate through all the days for resident 2
-                        DateOnly firstDay2 = res2.firstWorkDay();
-                        DateOnly lastDay2 = res2.lastWorkDay();
+                        DateOnly firstDay2 = res2.FirstWorkDay();
+                        DateOnly lastDay2 = res2.LastWorkDay();
 
                         for (DateOnly otherDay = firstDay2;
                              otherDay <= lastDay2;
@@ -1841,11 +1802,10 @@ public class AlgorithmService
                         {
                             CallShiftType otherShiftType
                                 = CallShiftTypeExtensions.GetCallShiftTypeForDate(
-                                    curDay, 2);
-                            if (res2.isWorking(otherDay)
+                                    otherDay, 2);
+                            if (res2.IsWorking(otherDay)
                                 && curShiftType == otherShiftType
-                                && res.canWork(otherDay)
-                                && !res2.commitedWorkDay(otherDay))
+                                && res.CanAddWorkDay(otherDay))
                             {
                                 found = true;
                                 SwapWorkDays2(res, res2, curDay, otherDay);
@@ -1861,16 +1821,16 @@ public class AlgorithmService
 
                     if (!found)
                     {
-                        foreach (PGY1 res2 in pgy1s)
+                        foreach (PGY1DTO res2 in pgy1s)
                         {
-                            if (!res2.canWork(curDay))
+                            if (!res2.CanAddWorkDay(curDay))
                             {
                                 continue;
                             }
 
                             // Iterate through all the days for resident 2
-                            DateOnly firstDay2 = res2.firstWorkDay();
-                            DateOnly lastDay2 = res2.lastWorkDay();
+                            DateOnly firstDay2 = res2.FirstWorkDay();
+                            DateOnly lastDay2 = res2.LastWorkDay();
 
                             for (DateOnly otherDay = firstDay2;
                                  otherDay <= lastDay2;
@@ -1878,12 +1838,11 @@ public class AlgorithmService
                             {
                                 CallShiftType otherShiftType
                                     = CallShiftTypeExtensions.GetCallShiftTypeForDate(
-                                        curDay, 1);
+                                        otherDay, 1);
 
-                                if (res2.isWorking(otherDay)
+                                if (res2.IsWorking(otherDay)
                                     && curShiftType == otherShiftType
-                                    && res.canWork(otherDay)
-                                    && !res2.commitedWorkDay(otherDay))
+                                    && res.CanAddWorkDay(otherDay))
                                 {
                                     found = true;
                                     SwapWorkDays12(res2, res, otherDay, curDay);
@@ -1897,19 +1856,28 @@ public class AlgorithmService
                             }
                         }
                     }
+
+                    if (!found)
+                    {
+                        _logger.LogWarning("Unable to fix {curDay} for PGY{pgy} {name} ({id})", curDay, "2", res.Name, res.ResidentId);
+                        didFail = true;
+                    }
                 }
             }
         }
+
+        return !didFail;
     }
 
-    public void
-        FixWeekends2(ArrayList pgy2s) // function to fix pgy2 weekens
+    public bool
+        FixWeekends2(List<PGY2DTO> pgy2s) // function to fix pgy2 weekens
     {
-        foreach (PGY2 res in pgy2s)
+        bool didFail = false;
+        foreach (PGY2DTO res in pgy2s)
         {
             // get the first and last day the resident works
-            DateOnly firstDay = res.firstWorkDay();
-            DateOnly lastDay = res.lastWorkDay();
+            DateOnly firstDay = res.FirstWorkDay();
+            DateOnly lastDay = res.LastWorkDay();
 
             // iterate through all the days
             for (DateOnly curDay = firstDay;
@@ -1917,32 +1885,32 @@ public class AlgorithmService
                  curDay = curDay.AddDays(1))
             // check if the day is a conflict
             {
-                if (res.isWorking(curDay) && !res.canWork(curDay))
+                if (res.IsWorking(curDay) && !res.CanWork(curDay))
                 {
                     bool found = false;
-                    foreach (PGY2 res2 in pgy2s)
+                    foreach (PGY2DTO res2 in pgy2s)
                     {
                         if (res == res2)
                         {
                             continue;
                         }
 
-                        if (!res2.canWork(curDay))
+                        if (!res2.CanAddWorkDay(curDay))
                         {
                             continue;
                         }
 
                         // Iterate through all the days for resident 2
-                        DateOnly firstDay2 = res2.firstWorkDay();
-                        DateOnly lastDay2 = res2.lastWorkDay();
+                        DateOnly firstDay2 = res2.FirstWorkDay();
+                        DateOnly lastDay2 = res2.LastWorkDay();
 
                         for (DateOnly otherDay = firstDay2;
                              otherDay <= lastDay2;
                              otherDay = otherDay.AddDays(1))
                         {
-                            if (res2.isWorking(otherDay)
+                            if (res2.IsWorking(otherDay)
                                 && CallShiftTypeExtensions.GetCallShiftTypeForDate(curDay, 2) == CallShiftTypeExtensions.GetCallShiftTypeForDate(otherDay, 2)
-                                && res.canWork(otherDay))
+                                && res.CanAddWorkDay(otherDay))
                             {
                                 found = true;
                                 SwapWorkDays2(res, res2, curDay, otherDay);
@@ -1958,22 +1926,25 @@ public class AlgorithmService
 
                     if (!found)
                     {
-                        _logger.LogWarning("Unable to fix weekends for pgy2");
+                        _logger.LogWarning("Unable to fix {curDay} for PGY{pgy} {name} ({id})", curDay, "2", res.Name, res.ResidentId);
+                        didFail = true;
                     }
                 }
             }
         }
+
+        return !didFail;
     }
 
     public static List<DatesDTO> GenerateDateRecords(Guid scheduleId,
-        List<PGY1> pgy1s, List<PGY2> pgy2s,
-        List<PGY3> pgy3s)
+        List<PGY1DTO> pgy1s, List<PGY2DTO> pgy2s,
+        List<PGY3DTO> pgy3s)
     {
-        List<DatesDTO> dateRecords = new();
+        List<DatesDTO> dateRecords = [];
 
-        foreach (PGY1 res in pgy1s)
+        foreach (PGY1DTO res in pgy1s)
         {
-            foreach (DateOnly day in res.workDaySet())
+            foreach (DateOnly day in res.PendingSaveWorkDays)
             {
                 CallShiftType shiftType
                     = CallShiftTypeExtensions.GetCallShiftTypeForDate(day, 1);
@@ -1982,7 +1953,7 @@ public class AlgorithmService
                     DateId = Guid.NewGuid(),
                     ScheduleId = scheduleId,
                     ResidentId
-                        = res.id, // Assuming `id` exists in PGY1 class and maps to the backend
+                        = res.ResidentId, // Assuming `id` exists in PGY1 class and maps to the backend
                     Date = day,
                     CallType = shiftType,
                     Hours = shiftType.GetHours(),
@@ -1991,9 +1962,9 @@ public class AlgorithmService
             }
         }
 
-        foreach (PGY2 res in pgy2s)
+        foreach (PGY2DTO res in pgy2s)
         {
-            foreach (DateOnly day in res.workDaySet())
+            foreach (DateOnly day in res.PendingSaveWorkDays)
             {
                 CallShiftType shiftType
                     = CallShiftTypeExtensions.GetCallShiftTypeForDate(day, 2);
@@ -2001,7 +1972,7 @@ public class AlgorithmService
                 {
                     DateId = Guid.NewGuid(),
                     ScheduleId = scheduleId,
-                    ResidentId = res.id,
+                    ResidentId = res.ResidentId,
                     Date = day,
                     CallType = shiftType,
                     Hours = shiftType.GetHours(),
@@ -2010,9 +1981,9 @@ public class AlgorithmService
             }
         }
 
-        foreach (PGY3 res in pgy3s)
+        foreach (PGY3DTO res in pgy3s)
         {
-            foreach (DateOnly day in res.workDaySet())
+            foreach (DateOnly day in res.PendingSaveWorkDays)
             {
                 CallShiftType shiftType
                     = CallShiftTypeExtensions.GetCallShiftTypeForDate(day, 3);
@@ -2020,7 +1991,7 @@ public class AlgorithmService
                 {
                     DateId = Guid.NewGuid(),
                     ScheduleId = scheduleId,
-                    ResidentId = res.id,
+                    ResidentId = res.ResidentId,
                     Date = day,
                     CallType = shiftType,
                     Hours = shiftType.GetHours(),

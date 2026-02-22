@@ -3,6 +3,7 @@ using System;
 using MedicalDemo.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MedicalDemo.Migrations
 {
     [DbContext(typeof(MedicalContext))]
-    partial class MedicalContextModelSnapshot : ModelSnapshot
+    [Migration("20260216235558_RotationTypeAndPrefRequestSecondCleanup")]
+    partial class RotationTypeAndPrefRequestSecondCleanup
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -713,9 +715,6 @@ namespace MedicalDemo.Migrations
                         .HasColumnName("schedule_id");
 
                     b.Property<int>("GeneratedYear")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Semester")
                         .HasColumnType("int");
 
                     b.Property<int>("Status")

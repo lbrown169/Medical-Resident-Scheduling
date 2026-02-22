@@ -3,6 +3,7 @@ using System;
 using MedicalDemo.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MedicalDemo.Migrations
 {
     [DbContext(typeof(MedicalContext))]
-    partial class MedicalContextModelSnapshot : ModelSnapshot
+    [Migration("20260216235506_RotationTypeAndPrefRequestFirstCleanup")]
+    partial class RotationTypeAndPrefRequestFirstCleanup
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -327,57 +329,73 @@ namespace MedicalDemo.Migrations
 
                     b.Property<string>("AdditionalNotes")
                         .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("additional_notes");
 
                     b.Property<byte[]>("EighthPriorityId")
-                        .HasColumnType("binary(16)");
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("eighth_priority_id");
 
                     b.Property<byte[]>("FifthPriorityId")
-                        .HasColumnType("binary(16)");
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("fifth_priority_id");
 
                     b.Property<byte[]>("FirstAlternativeId")
-                        .HasColumnType("binary(16)");
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("first_alternative_id");
 
                     b.Property<byte[]>("FirstAvoidId")
-                        .HasColumnType("binary(16)");
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("first_avoid_id");
 
                     b.Property<byte[]>("FirstPriorityId")
                         .IsRequired()
-                        .HasColumnType("binary(16)");
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("first_priority_id");
 
                     b.Property<byte[]>("FourthPriorityId")
                         .IsRequired()
-                        .HasColumnType("binary(16)");
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("fourth_priority_id");
 
                     b.Property<string>("ResidentId")
                         .IsRequired()
-                        .HasColumnType("varchar(15)");
+                        .HasColumnType("varchar(15)")
+                        .HasColumnName("resident_id");
 
                     b.Property<byte[]>("SecondAlternativeId")
-                        .HasColumnType("binary(16)");
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("second_alternative_id");
 
                     b.Property<byte[]>("SecondAvoidId")
-                        .HasColumnType("binary(16)");
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("second_avoid_id");
 
                     b.Property<byte[]>("SecondPriorityId")
                         .IsRequired()
-                        .HasColumnType("binary(16)");
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("second_priority_id");
 
                     b.Property<byte[]>("SeventhPriorityId")
-                        .HasColumnType("binary(16)");
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("seventh_priority_id");
 
                     b.Property<byte[]>("SixthPriorityId")
-                        .HasColumnType("binary(16)");
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("sixth_priority_id");
 
                     b.Property<byte[]>("ThirdAlternativeId")
-                        .HasColumnType("binary(16)");
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("third_alternative_id");
 
                     b.Property<byte[]>("ThirdAvoidId")
-                        .HasColumnType("binary(16)");
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("third_avoid_id");
 
                     b.Property<byte[]>("ThirdPriorityId")
                         .IsRequired()
-                        .HasColumnType("binary(16)");
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("third_priority_id");
 
                     b.HasKey("RotationPrefRequestId");
 
@@ -418,32 +436,40 @@ namespace MedicalDemo.Migrations
                 {
                     b.Property<byte[]>("RotationTypeId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("binary(16)");
+                        .HasColumnType("binary(16)")
+                        .HasColumnName("rotation_type_id");
 
                     b.Property<bool>("DoesLongCall")
-                        .HasColumnType("tinyint(1)");
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("does_long_call");
 
                     b.Property<bool>("DoesShortCall")
-                        .HasColumnType("tinyint(1)");
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("does_short_call");
 
                     b.Property<bool>("DoesTrainingLongCall")
-                        .HasColumnType("tinyint(1)");
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("does_training_long_call");
 
                     b.Property<bool>("DoesTrainingShortCall")
-                        .HasColumnType("tinyint(1)");
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("does_training_short_call");
 
                     b.Property<bool>("IsChiefRotation")
-                        .HasColumnType("tinyint(1)");
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("is_chief_rotation");
 
                     b.Property<int>("PgyYearFlags")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
-                        .HasDefaultValue(0);
+                        .HasDefaultValue(0)
+                        .HasColumnName("pgy_year_flags");
 
                     b.Property<string>("RotationName")
                         .IsRequired()
                         .HasMaxLength(20)
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("rotation_name");
 
                     b.HasKey("RotationTypeId");
 
@@ -713,9 +739,6 @@ namespace MedicalDemo.Migrations
                         .HasColumnName("schedule_id");
 
                     b.Property<int>("GeneratedYear")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Semester")
                         .HasColumnType("int");
 
                     b.Property<int>("Status")
