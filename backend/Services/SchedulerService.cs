@@ -27,12 +27,10 @@ public class SchedulerService
         _logger = logger;
     }
 
-    public async Task<(bool Success, string Error)> GenerateFullSchedule(
-        int year)
+    public async Task<(bool Success, string? Error)> GenerateScheduleForSemester(int year, Semester semester)
     {
         const int maxRetries = 100;
         int attempt = 0;
-        string error = null;
 
         while (attempt < maxRetries)
         {
@@ -42,19 +40,30 @@ public class SchedulerService
                 ResidentData residentData = await LoadResidentData(year);
 
                 // Map DTOs to original algorithm classes
-                List<PGY1> pgy1Models = residentData.PGY1s
-                    .Select(MapToPGY1).ToList();
-                List<PGY2> pgy2Models = residentData.PGY2s
-                    .Select(MapToPGY2).ToList();
-                List<PGY3> pgy3Models = residentData.PGY3s
-                    .Select(MapToPGY3).ToList();
+                // List<PGY1> pgy1Models = residentData.PGY1s
+                //     .Select(MapToPGY1).ToList();
+                // List<PGY2> pgy2Models = residentData.PGY2s
+                //     .Select(MapToPGY2).ToList();
+                // List<PGY3> pgy3Models = residentData.PGY3s
+                //     .Select(MapToPGY3).ToList();
 
-                bool loosely = attempt > 50;
-                bool success =
-                    _algorithmService.Training(year, pgy1Models, pgy2Models,
-                        pgy3Models) &&
-                    _algorithmService.Part1(year, pgy1Models, pgy2Models, loosely)
-                    && _algorithmService.Part2(year, pgy1Models, pgy2Models, loosely);
+                int looseFactor = 6 + Math.Min(18, attempt / 10 * 2);
+
+                bool success;
+                switch (semester)
+                {
+                    case Semester.Fall:
+                        success =
+                            _algorithmService.Training(year, residentData.PGY1s, residentData.PGY2s,
+                                residentData.PGY3s) &&
+                            _algorithmService.Part1(year, residentData.PGY1s, residentData.PGY2s, looseFactor);
+                        break;
+                    case Semester.Spring:
+                        success = _algorithmService.Part2(year, residentData.PGY1s, residentData.PGY2s, looseFactor);
+                        break;
+                    default:
+                        return (false, "Semester not recognized.");
+                }
 
                 if (!success)
                 {
@@ -65,14 +74,15 @@ public class SchedulerService
 
                 // Save schedule record
                 Schedule schedule = new()
-                { ScheduleId = Guid.NewGuid(), Status = ScheduleStatus.UnderReview, GeneratedYear = year };
+                { ScheduleId = Guid.NewGuid(), Status = ScheduleStatus.UnderReview, GeneratedYear = year, Semester = semester };
                 _context.Schedules.Add(schedule);
                 await _context.SaveChangesAsync();
 
                 // Generate DatesDTOs from PGY models
                 List<DatesDTO> dateDTOs =
-                    AlgorithmService.GenerateDateRecords(schedule.ScheduleId,
-                        pgy1Models, pgy2Models, pgy3Models);
+                    AlgorithmService.GenerateDateRecords(schedule.ScheduleId, residentData.PGY1s,
+                        residentData.PGY2s,
+                        residentData.PGY3s);
 
                 // Convert DTOs to Entities
                 List<Date> dateEntities = dateDTOs.Select(dto => new Date
@@ -108,79 +118,6 @@ public class SchedulerService
             "Failed after to generate a viable schedule. Try again.");
     }
 
-    private static PGY1 MapToPGY1(PGY1DTO dto)
-    {
-        PGY1 model = new(dto.Name)
-        {
-            id = dto.ResidentId,
-            inTraining = dto.InTraining,
-            lastTrainingDate = dto.LastTrainingDate,
-        };
-
-        for (int i = 0; i < 12; i++)
-        {
-            model.rolePerMonth[i] = dto.RolePerMonth[i] ?? HospitalRole.Unassigned;
-        }
-
-        foreach (DateOnly v in dto.VacationRequests)
-        {
-            model.requestVacation(v);
-        }
-
-        foreach (DateOnly c in dto.CommitedWorkDays)
-        {
-            model.addWorkDay(c);
-        }
-
-        return model;
-    }
-
-    private static PGY2 MapToPGY2(PGY2DTO dto)
-    {
-        PGY2 model = new(dto.Name)
-        {
-            id = dto.ResidentId,
-            inTraining = dto.InTraining
-        };
-
-        for (int i = 0; i < 12; i++)
-        {
-            model.rolePerMonth[i] = dto.RolePerMonth[i] ?? HospitalRole.Unassigned;
-        }
-
-        foreach (DateOnly v in dto.VacationRequests)
-        {
-            model.requestVacation(v);
-        }
-
-        foreach (DateOnly c in dto.CommitedWorkDays)
-        {
-            model.addWorkDay(c);
-        }
-
-        return model;
-    }
-
-    private static PGY3 MapToPGY3(PGY3DTO dto)
-    {
-        PGY3 model = new(dto.Name)
-        {
-            id = dto.ResidentId
-        };
-
-        foreach (DateOnly v in dto.VacationRequests)
-        {
-            model.requestVacation(v);
-        }
-
-        foreach (DateOnly c in dto.CommitedWorkDays)
-        {
-            model.addWorkDay(c);
-        }
-
-        return model;
-    }
-
 #pragma warning disable IDE0060
     private async Task<ResidentData> LoadResidentData(int year)
     {
@@ -188,7 +125,7 @@ public class SchedulerService
         List<Rotation> rotations = await _context.Rotations.ToListAsync();
         List<Vacation> vacations = await _context.Vacations
             .Where(v => v.Status == "Approved").ToListAsync();
-        List<DatesDTO> datesDTOs = new(); // Empty list
+        List<Date> dates = await _context.Dates.Where(d => d.Schedule.Status == ScheduleStatus.Published && d.Schedule.GeneratedYear == year).ToListAsync();
 
         List<PGY1DTO> pgy1s = residents
             .Where(r => r.GraduateYr == 1)
@@ -196,20 +133,20 @@ public class SchedulerService
                 r,
                 r.HospitalRoleProfile is { } role ? HospitalRole.Pgy1Profiles[role] : [],
                 vacations.Where(v => v.ResidentId == r.ResidentId).ToList(),
-                datesDTOs)).ToList();
+                dates)).ToList();
 
         List<PGY2DTO> pgy2s = residents
             .Where(r => r.GraduateYr == 2)
             .Select(r => _mapper.MapToPGY2DTO(r,
                 r.HospitalRoleProfile is { } role ? HospitalRole.Pgy2Profiles[role - 8] : [],
                 vacations.Where(v => v.ResidentId == r.ResidentId).ToList(),
-                datesDTOs)).ToList();
+                dates)).ToList();
 
         List<PGY3DTO> pgy3s = residents
             .Where(r => r.GraduateYr == 3)
             .Select(r => _mapper.MapToPGY3DTO(r,
                 vacations.Where(v => v.ResidentId == r.ResidentId).ToList(),
-                datesDTOs)).ToList();
+                dates)).ToList();
 
         return new ResidentData { PGY1s = pgy1s, PGY2s = pgy2s, PGY3s = pgy3s };
     }
