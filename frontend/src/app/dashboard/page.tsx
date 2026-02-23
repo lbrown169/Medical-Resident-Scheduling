@@ -107,7 +107,7 @@ const menuItems: MenuItem[] = [
 
 const leaveReasons: { id: string; name: string; halfDay?: string }[] = [
   { id: "vacation", name: "Vacation" },
-  { id: "sick", name: "Sick Leave (Full Day)" },
+  { id: "sick", name: "Sick Leave" },
   { id: "sick-am", name: "Sick Leave (AM)", halfDay: "A" },
   { id: "sick-pm", name: "Sick Leave (PM)", halfDay: "P" },
   { id: "cme", name: "ED (Education Days)" },

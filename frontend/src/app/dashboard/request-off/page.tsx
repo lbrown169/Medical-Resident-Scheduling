@@ -3,9 +3,11 @@ import React, { useEffect, useState } from 'react';
 import RequestOffPage from '../components/RequestOffPage';
 import { getUser, User } from '../../../lib/auth';
 
-const leaveReasons = [
+const leaveReasons: { id: string; name: string; halfDay?: string }[] = [
   { id: "vacation", name: "Vacation" },
   { id: "sick", name: "Sick Leave" },
+  { id: "sick-am", name: "Sick AM", halfDay: "A" },
+  { id: "sick-pm", name: "Sick PM", halfDay: "P" },
   { id: "cme", name: "ED (Education Days)" },
   { id: "personal", name: "Personal Leave" },
   { id: "other", name: "Other" },
@@ -22,9 +24,8 @@ useEffect(() => {
     setUser(getUser()); 
   }, []);
 
-  const handleSubmitRequestOff = () => {
-    // You can implement the real submit logic here
-    alert("Request submitted! (implement real logic)");
+  const handleSubmitRequestOff = async () => {
+    alert("Request submitted!");
   };
 
   return (

@@ -30,11 +30,13 @@ type ApiVacation = {
   status: "Pending" | "Approved" | "Denied" | string;
   details?: string | null;
   groupId?: string | null;
+  halfDay?: string | null;
 };
 
 type GroupedRequest = {
   groupId: string;
   reason: string;
+  halfDay?: string | null;
   status: string;
   details?: string | null;
   dates: string[];
@@ -113,6 +115,7 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
         mp.set(key, {
           groupId: key,
           reason: v.reason,
+          halfDay: v.halfDay ?? null,
           status: v.status,
           details: v.details ?? null,
           dates: [v.date],
@@ -128,7 +131,7 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
     arr.forEach((g) => g.dates.sort((a, b) => +new Date(a) - +new Date(b)));
     arr.sort(
       (A, B) =>
-        +new Date(B.dates[B.dates.length - 1]) - +new Date(A.dates[A.dates.length - 1])
+        +new Date(A.dates[0]) - +new Date(B.dates[0])
     );
     return arr;
   }, [requests]);
@@ -442,7 +445,10 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
                               </div>
                               <div className="text-sm">
                                 <span className="text-muted-foreground">Reason: </span>
-                                <span className="font-medium">{g.reason}</span>
+                                <span className="font-medium">
+                                  {g.reason}
+                                  {g.halfDay === "A" ? " (AM)" : g.halfDay === "P" ? " (PM)" : ""}
+                                </span>
                               </div>
                               {g.details ? (
                                 <div className="text-xs text-muted-foreground break-all">

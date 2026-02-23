@@ -40,6 +40,7 @@ interface Request {
   firstName: string;
   lastName: string;
   reason: string;
+  halfDay?: string | null;
   status: string;
   date: string;
   startDate?: string;
@@ -228,6 +229,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
           lastName: string;
           date: string;
           reason: string;
+          halfDay?: string | null;
           status: string;
           residentId: string;
           details?: string;
@@ -240,6 +242,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
           startDate: vac.date,
           endDate: vac.date,
           reason: vac.reason,
+          halfDay: vac.halfDay ?? null,
           status: vac.status,
           residentId: vac.residentId,
           details: vac.details,
@@ -462,7 +465,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
     const groupedMap = new Map<string, Request[]>();
 
     for (const req of requests) {
-      const key = `${req.firstName} ${req.lastName}||${req.reason}`;
+      const key = `${req.firstName} ${req.lastName}||${req.reason}||${req.halfDay ?? ''}`;
       if (!groupedMap.has(key)) {
         groupedMap.set(key, []);
       }
@@ -497,6 +500,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
           firstName: current.firstName,
           lastName: current.lastName,
           reason: current.reason,
+          halfDay: current.halfDay ?? null,
           status: current.status,
           startDate: start,
           endDate: end,
@@ -508,6 +512,10 @@ const AdminPage: React.FC<AdminPageProps> = ({
         i = j;
       }
     }
+
+    result.sort((a, b) =>
+      new Date(a.startDate || "").getTime() - new Date(b.startDate || "").getTime()
+    );
 
     return result;
   }
@@ -929,7 +937,9 @@ const AdminPage: React.FC<AdminPageProps> = ({
                         className="hover:bg-gray-50 dark:hover:bg-neutral-800">
                         <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{getRequestDate(request)}</td>
                         <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{getResidentName(request)}</td>
-                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{request.reason}</td>
+                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {request.reason}{request.halfDay === "A" ? " (AM)" : request.halfDay === "P" ? " (PM)" : ""}
+                        </td>
                         <td className="px-2 sm:px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs break-all">{request.details || '-'}</td>
                         <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{request.status}</td>
                         <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -1292,7 +1302,9 @@ const AdminPage: React.FC<AdminPageProps> = ({
                     className="hover:bg-gray-50 dark:hover:bg-neutral-800">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{getRequestDate(request)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{getResidentName(request)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{request.reason}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      {request.reason}{request.halfDay === "A" ? " (AM)" : request.halfDay === "P" ? " (PM)" : ""}
+                    </td>
                     <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs break-all">{request.details || '-'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{request.status}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
