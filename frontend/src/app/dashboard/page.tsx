@@ -105,9 +105,11 @@ const menuItems: MenuItem[] = [
   { title: "Settings", icon: <Settings className="w-6 h-6 mr-3" /> },
 ];
 
-const leaveReasons = [
+const leaveReasons: { id: string; name: string; halfDay?: string }[] = [
   { id: "vacation", name: "Vacation" },
-  { id: "sick", name: "Sick Leave" },
+  { id: "sick", name: "Sick Leave (Full Day)" },
+  { id: "sick-am", name: "Sick Leave (AM)", halfDay: "A" },
+  { id: "sick-pm", name: "Sick Leave (PM)", halfDay: "P" },
   { id: "cme", name: "ED (Education Days)" },
   { id: "personal", name: "Personal Leave" },
   { id: "other", name: "Other" },
@@ -868,13 +870,20 @@ function Dashboard() {
         return `${year}-${month}-${day}`;
       };
 
+      const selectedReason = leaveReasons.find((r) => r.id === reason);
+      const apiReason = selectedReason?.id?.startsWith("sick")
+        ? "Sick Leave"
+        : (selectedReason?.name ?? reason);
+      const halfDay = selectedReason?.halfDay ?? null;
+
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
         requests.push({
           GroupId: groupId, //New request
           ResidentId: user.id,
           Date: formatLocalDate(d),
-          Reason: reason,
-          Details: description || ''
+          Reason: apiReason,
+          Details: description || '',
+          ...(halfDay ? { HalfDay: halfDay } : {}),
         });
       }
   
