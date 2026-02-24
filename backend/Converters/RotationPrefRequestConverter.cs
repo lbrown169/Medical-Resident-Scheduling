@@ -1,5 +1,5 @@
-using MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator;
 using MedicalDemo.Enums;
+using MedicalDemo.Models.DTO.Pgy4Scheduling;
 using MedicalDemo.Models.DTO.Requests;
 using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.Entities;

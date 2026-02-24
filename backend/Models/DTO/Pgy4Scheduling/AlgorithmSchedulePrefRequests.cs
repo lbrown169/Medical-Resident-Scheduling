@@ -1,7 +1,7 @@
 using MedicalDemo.Enums;
 using MedicalDemo.Models.Entities;
 
-namespace MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator;
+namespace MedicalDemo.Models.DTO.Pgy4Scheduling;
 
 public class AlgorithmRotationPrefRequest
 {

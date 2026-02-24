@@ -1,4 +1,5 @@
 using MedicalDemo.Enums;
+using MedicalDemo.Models.DTO.Pgy4Scheduling;
 using MedicalDemo.Models.Entities;
 
 namespace MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator.Constraints;
