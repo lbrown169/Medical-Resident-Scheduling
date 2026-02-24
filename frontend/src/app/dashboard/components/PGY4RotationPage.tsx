@@ -1,11 +1,50 @@
 "use client";
 
-import React, { useState } from "react";
+import { config } from "../../../config";
+import React, { useState, useEffect } from "react";
+
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { CalendarRange, Users, UserX, CalendarClock, Trash2, Save, Download, X, Calendar } from "lucide-react";
 import { ConfirmDialog } from "./ConfirmDialog";
 
+// individual responses
+interface RotationPrefResponse {
+	rotationPrefRequestId: string;
+
+	resident: {
+		resident_id: string;
+		first_name: string;
+		last_name: string;
+		graduate_yr?: number;
+		email?: string;
+		phone_num?: string;
+	};
+
+	priorities: {
+    	rotationTypeId: string;
+    	rotationName: string;
+  	}[];
+
+  	alternatives: {
+    	rotationTypeId: string;
+    	rotationName: string;
+  	}[];
+
+  	avoids: {
+    	rotationTypeId: string;
+    	rotationName: string;
+  	}[];
+
+  	additionalNotes?: string;
+}
+
+
+// check how many submissions exist
+interface RotationPrefRequestsListResponse {
+  count: number;
+  rotationPrefRequests: RotationPrefResponse[];
+}
 
 /**
  * Color scheme for rotation options based on the prototype:
@@ -71,11 +110,37 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 
 
 	const [showRotationChangeModal, setShowRotationChangeModal] = useState(false);
+	const [submissions, setSubmissions] = useState<RotationPrefResponse[]>([]);
+	const [loadingSubmissions, setLoadingSubmissions] = useState(false);
 
 	// Extract only PGY-3 residents
 	const PGY3Residents = residents.filter (resident =>
 		resident.pgyLevel === 3 || resident.pgyLevel === '3'
 	);
+
+	useEffect(() => {
+		const loadSubmissions = async () => {
+			try {
+				setLoadingSubmissions(true);
+
+				const res = await fetch(
+					`${config.apiUrl}/api/rotation-pref-request`
+				);
+
+				if (!res.ok) throw new Error("Failed to fetch submissions");
+
+				const data: RotationPrefRequestsListResponse = await res.json();
+
+				setSubmissions(data.rotationPrefRequests ?? []);
+			} catch (err) {
+				console.error("Failed to load submissions", err);
+			} finally {
+				setLoadingSubmissions(false);
+			}
+		};
+
+		loadSubmissions();
+	}, []);
 
 	return (
 		<div className="w-full pt-4 h-[calc(100vh-4rem)] flex flex-col items-center px-4 md:pl-8">
@@ -296,26 +361,55 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 							</thead>
 							<tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
 								{/*check if submissions exists here*/}
-								{1 > 0 ? (
-									<tr className="hover:bg-gray-50 dark:hover:bg-neutral-800">
-										<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">first name last name</td>
-										<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">10-10-1010</td>
-										<td className="px-3 py-2 whitespace-nowrap text-sm font-medium">
-											<Button variant="outline" size="sm" className="border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" onClick={() => (null)}>
-												View
-											</Button>
-										</td>
-										<td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-											<Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white" onClick={() => null}>
-												Delete
-											</Button>
-										</td>
-									</tr>
-								) : (
+								{/* replaced with checking. boxes are created based on number of submissions */}
+								{loadingSubmissions ? (
 									<tr>
-										<td colSpan={4} className="px-6 py-4 text-center text-gray-500 italic">No submissions yet.</td>
+										<td colSpan={4} className="px-6 py-4 text-center">
+										Loading...
+										</td>
 									</tr>
-								)}
+									) : submissions.length > 0 ? (
+									submissions.map((submission) => (
+										<tr
+										key={submission.rotationPrefRequestId}
+										className="hover:bg-gray-50 dark:hover:bg-neutral-800"
+										>
+										<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+											{submission.resident?.first_name} {submission.resident?.last_name}
+										</td>
+
+										<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+											—
+										</td>
+
+										<td className="px-3 py-2 whitespace-nowrap text-sm font-medium">
+											<Button
+											variant="outline"
+											size="sm"
+											onClick={() => console.log(submission) /* ! REPLACE WITH POP UP VIEWING WINDOW, this just confirm that it works (it does) */} 
+											>
+											View
+											</Button>
+										</td>
+
+										<td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+											<Button
+											variant="outline"
+											size="sm"
+											className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white"
+											>
+											Delete
+											</Button>
+										</td>
+										</tr>
+									))
+									) : (
+									<tr>
+										<td colSpan={4} className="px-6 py-4 text-center text-gray-500 italic">
+										No submissions yet.
+										</td>
+									</tr>
+									)}
 							</tbody>
 						</table>
 					</div>
