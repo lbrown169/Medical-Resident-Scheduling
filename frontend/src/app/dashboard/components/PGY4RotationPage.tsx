@@ -109,14 +109,31 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 	const deadline = new Date("2026-03-15T23:59:00-05:00");
 
 
+	// State for viewing a resident's rotation
 	const [showRotationChangeModal, setShowRotationChangeModal] = useState(false);
+
+	// Submission
 	const [submissions, setSubmissions] = useState<RotationPrefResponse[]>([]);
 	const [loadingSubmissions, setLoadingSubmissions] = useState(false);
+
+	// State for viewing a resident's submission
+	const [viewDialogOpen, setViewDialogOpen] = useState(false);
+	const [viewResident, setViewResident] = useState<RotationPrefResponse | null>(null);
+
+	const handleViewSubmission = (submission: RotationPrefResponse) => {
+		setViewResident(submission);
+		setViewDialogOpen(true);
+	};
+
 
 	// Extract only PGY-3 residents
 	const PGY3Residents = residents.filter (resident =>
 		resident.pgyLevel === 3 || resident.pgyLevel === '3'
 	);
+
+	// Submission tracking
+	const submittedCount = submissions.length;
+	const missingCount = PGY3Residents.length - submittedCount;
 
 	useEffect(() => {
 		const loadSubmissions = async () => {
@@ -156,14 +173,14 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 						<div className="flex flex-col items-center">
 							<div className="flex items-center gap-2 mb-1">
 								<Users className="w-5 h-5 text-blue-500" />
-								<span className="text-2xl font-bold text-gray-900 dark:text-white">NULL</span>
+								<span className="text-2xl font-bold text-gray-900 dark:text-white">{submittedCount}</span>
 							</div>
 							<span className="text-xs text-gray-500">Submitted</span>
 						</div>
 						<div className="flex flex-col items-center border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-700 pt-4 sm:pt-0 sm:pl-8">
 							<div className="flex items-center gap-2 mb-1">
 								<UserX className="w-5 h-5 text-red-500" />
-								<span className="text-2xl font-bold text-gray-900 dark:text-white">NULL</span>
+								<span className="text-2xl font-bold text-gray-900 dark:text-white">{missingCount}</span>
 							</div>
 							<span className="text-xs text-gray-500">Missing</span>
 						</div>
@@ -296,7 +313,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 								</tr>
 							</thead>
 							<tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
-								{/* Check if schedule exists*/}
+								{/* Check if schedule exists ! ADD SCHEDULE CHECKING HERE*/}
 								{1 > 0 ? (
 									PGY3Residents.map((PGY3Resident) =>(
 										<tr key={PGY3Resident.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800 divide-x divide-gray-200 dark:divide-gray-700">
@@ -354,7 +371,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 							<thead className="bg-gray-100 dark:bg-neutral-800">
 								<tr>
 									<th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Residents</th>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date of Submission</th>
+									<th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date of Submission</th> {/* currently we dont support this. either add support or remove */}
 									<th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">View Submissions</th>
 									<th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
 								</tr>
@@ -384,9 +401,9 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 
 										<td className="px-3 py-2 whitespace-nowrap text-sm font-medium">
 											<Button
-											variant="outline"
-											size="sm"
-											onClick={() => console.log(submission) /* ! REPLACE WITH POP UP VIEWING WINDOW, this just confirm that it works (it does) */} 
+												variant="outline"
+												size="sm"
+												onClick={() => handleViewSubmission(submission) /* ! REPLACE WITH POP UP VIEWING WINDOW, this just confirm that it works (it does) */} 
 											>
 											View
 											</Button>
@@ -394,9 +411,9 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 
 										<td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
 											<Button
-											variant="outline"
-											size="sm"
-											className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white"
+												variant="outline"
+												size="sm"
+												className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white"
 											>
 											Delete
 											</Button>
@@ -513,9 +530,52 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 				</div>
 
 			</Modal>
-		</div>
 
+			{/* ! template modal, honestly might be good enough, we'll call it a stretch */}
+			{viewResident && (
+				<Modal
+					open={viewDialogOpen}
+					onClose={() => setViewDialogOpen(false)}
+					title={`${viewResident.resident.first_name} ${viewResident.resident.last_name} Submissions`}
+				>
+					<div className="space-y-4">
+						<div>
+							<strong>Priorities Ranked:</strong>
+							<ul className="list-disc ml-6">
+								{viewResident.priorities.map(p => (
+									<li key={p.rotationTypeId}>{p.rotationName}</li>
+								))}
+							</ul>
+						</div>
+						<div>
+							<strong>Alternatives:</strong>
+							<ul className="list-disc ml-6">
+								{viewResident.alternatives.map(a => (
+									<li key={a.rotationTypeId}>{a.rotationName}</li>
+								))}
+							</ul>
+						</div>
+						<div>
+							<strong>Avoids:</strong>
+							<ul className="list-disc ml-6">
+								{viewResident.avoids.map(a => (
+									<li key={a.rotationTypeId}>{a.rotationName}</li>
+								))}
+							</ul>
+						</div>
+						{viewResident.additionalNotes && (
+							<div>
+								<strong>Additional Notes:</strong>
+								<p>{viewResident.additionalNotes}</p>
+							</div>
+						)}
+					</div>
+				</Modal>
+			)}
+		</div>
 	);
 };
+
+
 
 export default PGY4RotationSchedulePage;
