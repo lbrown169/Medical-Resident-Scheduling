@@ -1,8 +1,8 @@
 namespace MedicalDemo.Models.DTO.Responses;
 
-public class PGY4RotationSchedulesListResponse
+public class Pgy4RotationSchedulesListResponse
 {
     public int Count { get; set; }
 
-    public List<PGY4RotationScheduleResponse> Schedules { get; set; } = null!;
+    public List<Pgy4RotationScheduleResponse> Schedules { get; set; } = null!;
 }

@@ -1,14 +1,17 @@
+using MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator;
 using MedicalDemo.Enums;
 using MedicalDemo.Models.DTO.Requests;
 using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.Entities;
-using RotationScheduleGenerator.Algorithm;
 
 namespace MedicalDemo.Converters;
 
-public static class RotationPrefRequestConverter
+public class RotationPrefRequestConverter(RotationTypeConverter rotationTypeConverter, ResidentConverter residentConverter)
 {
-    public static RotationPrefResponse CreateRotationPrefResponseFromModel(
+    private readonly RotationTypeConverter rotationTypeConverter = rotationTypeConverter;
+    private readonly ResidentConverter residentConverter = residentConverter;
+
+    public RotationPrefResponse CreateRotationPrefResponseFromModel(
         RotationPrefRequest request
     )
     {
@@ -38,7 +41,7 @@ public static class RotationPrefRequestConverter
         return new RotationPrefResponse
         {
             RotationPrefRequestId = request.RotationPrefRequestId,
-            Resident = new ResidentConverter().CreateResidentResponseFromResident(request.Resident),
+            Resident = residentConverter.CreateResidentResponseFromResident(request.Resident),
             Priorities = PrioritiesResponse,
             Alternatives = AlternativesResponse,
             Avoids = AvoidsResponse,
@@ -46,7 +49,7 @@ public static class RotationPrefRequestConverter
         };
     }
 
-    public static RotationPrefRequest CreateModelFromRequestDto(
+    public RotationPrefRequest CreateModelFromRequestDto(
         RotationPrefRequestDto addRequestDto
     )
     {
@@ -67,7 +70,7 @@ public static class RotationPrefRequestConverter
         return requestModel;
     }
 
-    public static void UpdateModelFromUpdateRequest(
+    public void UpdateModelFromUpdateRequest(
         RotationPrefRequest prefRequestModel,
         UpdateRotationPrefRequest updateRequest
     )
@@ -79,6 +82,43 @@ public static class RotationPrefRequestConverter
             updateRequest.Avoids,
             updateRequest.AdditionalNotes
         );
+    }
+
+    public AlgorithmRotationPrefRequest CreateAlgorithmSchedulePrefRequestFromModel(
+        RotationPrefRequest requestModel
+    )
+    {
+        Pgy4RotationTypeEnum[] AlgorithmPriorities = [.. FilterNullAndConvertToAlgorithmType([
+            requestModel.FirstPriority,
+            requestModel.SecondPriority,
+            requestModel.ThirdPriority,
+            requestModel.FourthPriority,
+            requestModel.FifthPriority,
+            requestModel.SixthPriority,
+            requestModel.SeventhPriority,
+            requestModel.EighthPriority,
+        ])];
+
+        Pgy4RotationTypeEnum[] AlgorithmAlternatives = [.. FilterNullAndConvertToAlgorithmType([
+            requestModel.FirstAlternative,
+            requestModel.SecondAlternative,
+            requestModel.ThirdAlternative,
+        ])];
+
+        Pgy4RotationTypeEnum[] AlgorithmAvoids = [.. FilterNullAndConvertToAlgorithmType([
+            requestModel.FirstAvoid,
+            requestModel.SecondAvoid,
+            requestModel.ThirdAvoid,
+        ])];
+
+        return new()
+        {
+            RotationPrefRequestId = requestModel.RotationPrefRequestId,
+            Requester = requestModel.Resident,
+            Priorities = AlgorithmPriorities,
+            Alternatives = AlgorithmAlternatives,
+            Avoids = AlgorithmAvoids
+        };
     }
 
     private static void UpdateModelFromRotationTypes(
@@ -113,44 +153,7 @@ public static class RotationPrefRequestConverter
         requestModel.AdditionalNotes = additionalNotes;
     }
 
-    public static AlgorithmRotationPrefRequest CreateAlgorithmSchedulePrefRequestFromModel(
-        RotationPrefRequest requestModel
-    )
-    {
-        PGY4RotationTypeEnum[] AlgorithmPriorities = [.. FilterNullAndConvertToAlgorithmType([
-            requestModel.FirstPriority,
-            requestModel.SecondPriority,
-            requestModel.ThirdPriority,
-            requestModel.FourthPriority,
-            requestModel.FifthPriority,
-            requestModel.SixthPriority,
-            requestModel.SeventhPriority,
-            requestModel.EighthPriority,
-        ])];
-
-        PGY4RotationTypeEnum[] AlgorithmAlternatives = [.. FilterNullAndConvertToAlgorithmType([
-            requestModel.FirstAlternative,
-            requestModel.SecondAlternative,
-            requestModel.ThirdAlternative,
-        ])];
-
-        PGY4RotationTypeEnum[] AlgorithmAvoids = [.. FilterNullAndConvertToAlgorithmType([
-            requestModel.FirstAvoid,
-            requestModel.SecondAvoid,
-            requestModel.ThirdAvoid,
-        ])];
-
-        return new()
-        {
-            RotationPrefRequestId = requestModel.RotationPrefRequestId,
-            Requester = requestModel.Resident,
-            Priorities = AlgorithmPriorities,
-            Alternatives = AlgorithmAlternatives,
-            Avoids = AlgorithmAvoids
-        };
-    }
-
-    private static List<RotationTypeResponse> FilterNullAndConvertToResponse(
+    private List<RotationTypeResponse> FilterNullAndConvertToResponse(
         List<RotationType?> rotationTypes
     )
     {
@@ -159,18 +162,18 @@ public static class RotationPrefRequestConverter
             .. rotationTypes
                 .Where((avoid) => avoid != null)
                 .Cast<RotationType>()
-                .Select(RotationTypeConverter.CreateRotationTypeResponse),
+                .Select(rotationTypeConverter.CreateRotationTypeResponse),
         ];
     }
 
-    private static List<PGY4RotationTypeEnum> FilterNullAndConvertToAlgorithmType(List<RotationType?> rotationTypes)
+    private List<Pgy4RotationTypeEnum> FilterNullAndConvertToAlgorithmType(List<RotationType?> rotationTypes)
     {
         return
         [
             .. rotationTypes
                 .Where((avoid) => avoid != null)
                 .Cast<RotationType>()
-                .Select(RotationTypeConverter.ConvertRotationTypeModelToEnum),
+                .Select(rotationTypeConverter.ConvertRotationTypeModelToEnum),
         ];
     }
 }

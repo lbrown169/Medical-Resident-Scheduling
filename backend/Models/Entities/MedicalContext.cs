@@ -27,7 +27,7 @@ namespace MedicalDemo.Models.Entities
         public virtual DbSet<Vacation> Vacations { get; set; } = null!;
         public virtual DbSet<RotationType> RotationTypes { get; set; } = null!;
         public virtual DbSet<RotationPrefRequest> RotationPrefRequests { get; set; } = null!;
-        public virtual DbSet<PGY4RotationSchedule> PGY4RotationSchedules { get; set; } = null!;
+        public virtual DbSet<Pgy4RotationSchedule> Pgy4RotationSchedules { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -255,7 +255,7 @@ namespace MedicalDemo.Models.Entities
                     .HasColumnType("binary(16)")
                     .HasColumnName("rotation_id");
 
-                entity.Property(e => e.PGY4RotationScheduleId)
+                entity.Property(e => e.Pgy4RotationScheduleId)
                     .HasColumnType("binary(16)")
                     .HasConversion(
                         v => v.HasValue ? v.Value.ToByteArray() : null,
@@ -296,9 +296,9 @@ namespace MedicalDemo.Models.Entities
                     .HasColumnName("status");
             });
 
-            modelBuilder.Entity<PGY4RotationSchedule>(entity =>
+            modelBuilder.Entity<Pgy4RotationSchedule>(entity =>
             {
-                entity.Property(e => e.PGY4RotationScheduleId)
+                entity.Property(e => e.Pgy4RotationScheduleId)
                     .HasColumnType("binary(16)")
                     .HasConversion(
                         v => v.ToByteArray(),
@@ -307,7 +307,7 @@ namespace MedicalDemo.Models.Entities
 
                 entity.HasMany(e => e.Rotations)
                     .WithOne()
-                    .HasForeignKey(e => e.PGY4RotationScheduleId)
+                    .HasForeignKey(e => e.Pgy4RotationScheduleId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 

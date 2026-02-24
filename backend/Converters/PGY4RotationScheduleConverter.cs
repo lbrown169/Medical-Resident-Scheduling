@@ -3,10 +3,13 @@ using MedicalDemo.Models.Entities;
 
 namespace MedicalDemo.Converters;
 
-public static class PGY4RotationScheduleConverter
+public class Pgy4RotationScheduleConverter(RotationConverter rotationConverter, ResidentConverter residentConverter)
 {
-    public static PGY4RotationScheduleResponse CreateRotationScheduleResponseFromModel(
-        PGY4RotationSchedule scheduleModel
+    private readonly RotationConverter rotationConverter = rotationConverter;
+    private readonly ResidentConverter residentConverter = residentConverter;
+
+    public Pgy4RotationScheduleResponse CreateRotationScheduleResponseFromModel(
+        Pgy4RotationSchedule scheduleModel
     )
     {
         Dictionary<string, List<Rotation>> residentIdToRotations = [];
@@ -24,7 +27,7 @@ public static class PGY4RotationScheduleConverter
             }
         }
 
-        List<PGY4ResidenRotationScheduleResponse> residentScheduleResponses =
+        List<Pgy4ResidenRotationScheduleResponse> residentScheduleResponses =
         [
             .. residentIdToRotations.Select(
                 (kvp) =>
@@ -37,7 +40,7 @@ public static class PGY4RotationScheduleConverter
 
         return new()
         {
-            PGY4RotationScheduleId = scheduleModel.PGY4RotationScheduleId,
+            Pgy4RotationScheduleId = scheduleModel.Pgy4RotationScheduleId,
             Seed = scheduleModel.Seed,
             ResidentCount = residentIdToRotations.Count,
             Year = scheduleModel.Year,
@@ -46,25 +49,25 @@ public static class PGY4RotationScheduleConverter
         };
     }
 
-    public static PGY4ResidenRotationScheduleResponse CreateSingleResidentRotationSchedule(
+    public Pgy4ResidenRotationScheduleResponse CreateSingleResidentRotationSchedule(
         Resident resident,
         List<Rotation> rotations
     )
     {
         return new()
         {
-            Resident = new ResidentConverter().CreateResidentResponseFromResident(resident),
+            Resident = residentConverter.CreateResidentResponseFromResident(resident),
             Rotations =
             [
                 .. rotations
-                    .Select(RotationConverter.CreateRotationResponseFromModel)
+                    .Select(rotationConverter.CreateRotationResponseFromModel)
                     .OrderBy((rotationRes) => rotationRes.MonthIndex),
             ],
         };
     }
 
-    public static PGY4RotationSchedulesListResponse CreateRotationSchedulesListResponseFromModel(
-        List<PGY4RotationSchedule> scheduleModel
+    public Pgy4RotationSchedulesListResponse CreateRotationSchedulesListResponseFromModel(
+        List<Pgy4RotationSchedule> scheduleModel
     )
     {
         return new()

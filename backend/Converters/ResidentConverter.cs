@@ -1,4 +1,4 @@
-using MedicalDemo.Enums;
+using MedicalDemo.Extensions;
 using MedicalDemo.Models.DTO.Requests;
 using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.Entities;
@@ -10,15 +10,6 @@ public class ResidentConverter
     public ResidentResponse CreateResidentResponseFromResident(
         Resident resident)
     {
-        string? chiefType = resident.ChiefType switch
-        {
-            ChiefType.None => null,
-            ChiefType.Admin => "Admin",
-            ChiefType.Clinic => "Clinic",
-            ChiefType.Education => "Education",
-            _ => null
-        };
-
         return new ResidentResponse
         {
             resident_id = resident.ResidentId,
@@ -31,7 +22,7 @@ public class ResidentConverter
             total_hours = resident.TotalHours,
             bi_yearly_hours = resident.BiYearlyHours,
             hospital_role_profile = resident.HospitalRoleProfile,
-            chief_type = chiefType
+            chief_type = resident.ChiefType.GetDisplayNameOrDefault()
         };
     }
 
