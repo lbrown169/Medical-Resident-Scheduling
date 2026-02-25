@@ -33,6 +33,7 @@ public class ScheduleController : ControllerBase
             return BadRequest(new AlgorithmResponse
             {
                 Success = false,
+                Message = message
             });
         }
 
