@@ -20,84 +20,47 @@ public class ScheduleController : ControllerBase
         _context = context;
     }
 
-    [HttpPost("training/{year}")]
-    public async Task<IActionResult> GenerateFullSchedule(int year)
+    // for testing purposes -> logic check is in SchedulerService, implemented in Generate endpoint
+    [HttpGet("{year}/{semester}/check")]
+    public async Task<IActionResult> CheckScheduleRequirements(int year, Semester semester)
     {
-        if (year < (DateTime.Now.Year - 1))
+        // requirements logic method
+        (bool success, string? message)
+            = await _schedulerService.CheckScheduleRequirements(year, semester);
+
+        if (!success && message != null)
         {
-            return BadRequest(new
-            {
-                success = false,
-                error = "Year must be the current year or later."
-            });
-        }
-
-        // validate resident hospital role profile assigned
-        bool hasMissingProfiles = await _context.Residents
-            .AnyAsync(r => !r.HospitalRoleProfile.HasValue);
-
-        if (hasMissingProfiles)
-        {
-            List<string> missingList = await _context.Residents
-                .Where(r => !r.HospitalRoleProfile.HasValue)
-                .Select(r => $"{r.FirstName} {r.LastName} (PGY{r.GraduateYr})")
-                .ToListAsync();
-
             return BadRequest(new AlgorithmResponse
             {
                 Success = false,
-                Message = $"Invalid Input - Cannot generate schedules: {missingList.Count} resident(s) missing hospital role profiles"
             });
-        }
-
-        // Generate the new schedule
-        (bool success, string? error)
-            = await _schedulerService.GenerateScheduleForSemester(year, Semester.Fall);
-        await _schedulerService.GenerateScheduleForSemester(year, Semester.Spring);
-        if (!success)
-        {
-            return StatusCode(500, new AlgorithmResponse { Success = false, Message = error ?? $"Failed to generate {year} schedule"});
         }
 
         return Ok(new AlgorithmResponse
         {
             Success = true,
-            Message = "Schedule generated and saved successfully."
+            Message = message
         });
     }
+
 
     [HttpPost("{year}/fall")]
     public async Task<IActionResult> GenerateFallSchedule(int year)
     {
-        if (year < (DateTime.Now.Year - 1))
+        // validate schedule generation requirements
+        (bool requirementsMet, string? requirementsMessage) = await _schedulerService.CheckScheduleRequirements(year, Semester.Fall);
+
+        if (!requirementsMet)
         {
-            return BadRequest(new
-            {
-                success = false,
-                error = "Year must be the current year or later."
-            });
-        }
-
-        // validate resident hospital role profile assigned
-        bool hasMissingProfiles = await _context.Residents
-            .AnyAsync(r => !r.HospitalRoleProfile.HasValue);
-
-        if (hasMissingProfiles)
-        {
-            List<string> missingList = await _context.Residents
-                .Where(r => !r.HospitalRoleProfile.HasValue)
-                .Select(r => $"{r.FirstName} {r.LastName} (PGY{r.GraduateYr})")
-                .ToListAsync();
-
             return BadRequest(new AlgorithmResponse
             {
                 Success = false,
-                Message = $"Invalid Input - Cannot generate schedules: {missingList.Count} resident(s) missing hospital role profiles"
+                Message = requirementsMessage
             });
         }
 
         // Generate the fall schedule
-        (bool success, string? error)
+        (bool success, string? error, ScheduleResponse? schedule)
             = await _schedulerService.GenerateScheduleForSemester(year, Semester.Fall);
         if (!success)
         {
@@ -108,45 +71,31 @@ public class ScheduleController : ControllerBase
             });
         }
 
-        return Ok(new AlgorithmResponse
+        return Ok(new
         {
             Success = true,
-            Message = "Fall Schedule generated and saved successfully."
+            Message = "Fall Schedule generated and saved successfully.",
+            Data = schedule
         });
     }
 
     [HttpPost("{year}/spring")]
     public async Task<IActionResult> GenerateSpringSchedule(int year)
     {
-        if (year < (DateTime.Now.Year - 1))
-        {
-            return BadRequest(new
-            {
-                success = false,
-                error = "Year must be the current year or later."
-            });
-        }
-
         // validate resident hospital role profile assigned
-        bool hasMissingProfiles = await _context.Residents
-            .AnyAsync(r => !r.HospitalRoleProfile.HasValue);
+        (bool requirementsMet, string? requirementsMessage) = await _schedulerService.CheckScheduleRequirements(year, Semester.Fall);
 
-        if (hasMissingProfiles)
+        if (!requirementsMet)
         {
-            List<string> missingList = await _context.Residents
-                .Where(r => !r.HospitalRoleProfile.HasValue)
-                .Select(r => $"{r.FirstName} {r.LastName} (PGY{r.GraduateYr})")
-                .ToListAsync();
-
             return BadRequest(new AlgorithmResponse
             {
                 Success = false,
-                Message = $"Invalid Input - Cannot generate schedules: {missingList.Count} resident(s) missing hospital role profiles"
+                Message = requirementsMessage
             });
         }
 
         // Generate the spring schedule
-        (bool success, string? error)
+        (bool success, string? error, ScheduleResponse? schedule)
             = await _schedulerService.GenerateScheduleForSemester(year, Semester.Spring);
         if (!success)
         {
@@ -157,10 +106,11 @@ public class ScheduleController : ControllerBase
             });
         }
 
-        return Ok(new AlgorithmResponse
+        return Ok(new
         {
             Success = true,
-            Message = "Spring Schedule generated and saved successfully."
+            Message = "Spring Schedule generated and saved successfully.",
+            Data = schedule
         });
     }
 }

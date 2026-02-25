@@ -1,6 +1,7 @@
 using MedicalDemo.Algorithm;
 using MedicalDemo.Enums;
 using MedicalDemo.Models;
+using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.DTO.Scheduling;
 using MedicalDemo.Models.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -27,7 +28,86 @@ public class SchedulerService
         _logger = logger;
     }
 
-    public async Task<(bool Success, string? Error)> GenerateScheduleForSemester(int year, Semester semester)
+    public async Task<(bool Success, string? Message)> CheckScheduleRequirements(int year,
+        Semester semester)
+    {
+        // validate year input
+        if (year < DateTime.Now.Year - 1)
+        {
+            return (false,
+                $"Year must be the current year or later."
+            );
+        }
+
+        // validate semester input
+        if (!(semester == Semester.Spring || semester == Semester.Fall))
+        {
+            return (false, $"Invalid semester input, must be Fall or Spring.");
+        }
+
+        int pgy1Count = await _context.Residents.CountAsync(r => r.GraduateYr == 1);
+        int pgy2Count = await _context.Residents.CountAsync(r => r.GraduateYr == 2);
+        int pgy3Count = await _context.Residents.CountAsync(r => r.GraduateYr == 3);
+
+        int pgy1HospitalRoleCount = await _context.Residents.CountAsync(r => r.GraduateYr == 1 && r.HospitalRoleProfile.HasValue);
+        int pgy2HospitalRoleCount = await _context.Residents.CountAsync(r => r.GraduateYr == 2 && r.HospitalRoleProfile.HasValue);
+
+        // 8 pgys exist
+        bool hasRequiredPgy1 = pgy1Count >= 8;
+        bool hasRequiredPgy2 = pgy2Count >= 8;
+        bool hasRequiredPgy3 = pgy3Count >= 8;
+
+        // all residents of PGY have hospital role profile assigned
+        bool hasHospitalProfilePgy1 = pgy1Count == pgy1HospitalRoleCount;
+        bool hasHospitalProfilePgy2 = pgy2Count == pgy2HospitalRoleCount;
+
+        if (!hasRequiredPgy1)
+        {
+            return (false, $"Invalid Input - Cannot generate schedules: Missing {8 - pgy1Count} PGY-1(s). Minimum 8 PGY-1s required to generate schedule.");
+        }
+
+        if (!hasHospitalProfilePgy1)
+        {
+            return (false,
+                $"Invalid Input - Cannot generate schedules: All PGY1s required to have hospital role assigned generate schedule, {pgy1Count - pgy1HospitalRoleCount} resident(s) missing hospital role."
+            );
+        }
+
+        if (!hasRequiredPgy2)
+        {
+            return (false,
+                    $"Invalid Input - Cannot generate schedules: Missing {8 - pgy2Count} PGY-2(s). Minimum 8 PGY-2s required to generate schedule."
+            );
+        }
+
+        if (!hasHospitalProfilePgy2)
+        {
+            return (false,
+                $"Invalid Input - Cannot generate schedules: All PGY2s required to have hospital role assigned generate schedule, {pgy2Count - pgy2HospitalRoleCount} resident(s) missing hospital role."
+            );
+        }
+
+        if (semester == Semester.Spring)
+        {
+            return (true,
+                $"Spring Schedule Generation Requirements Passed."
+            );
+        }
+
+        // fall semester
+        if (hasRequiredPgy3)
+        {
+            return (true,
+                $"Fall Schedule Generation Requirements Passed."
+            );
+        }
+
+        return (false,
+                $"Invalid Input - Cannot generate schedules: Missing {8 - pgy3Count} PGY-3(s). Minimum 8 PGY-3s required to generate Fall Schedule."
+        );
+    }
+
+    public async Task<(bool Success, string? Error, ScheduleResponse? Schedule)> GenerateScheduleForSemester(int year, Semester semester)
     {
         const int maxRetries = 100;
         int attempt = 0;
@@ -62,7 +142,7 @@ public class SchedulerService
                         success = _algorithmService.Part2(year, residentData.PGY1s, residentData.PGY2s, looseFactor);
                         break;
                     default:
-                        return (false, "Semester not recognized.");
+                        return (false, "Semester not recognized.", null);
                 }
 
                 if (!success)
@@ -103,8 +183,29 @@ public class SchedulerService
                 // await _misc.FindTotalHours();
                 // await _misc.FindBiYearlyHours(year);
 
+                // Calc residents hours for ScheduleResponse in AlgorithmController
+                Dictionary<string, int> residentHours = dateEntities
+                    .GroupBy(d => d.ResidentId)
+                    .ToDictionary(g => g.Key, g => (int)g.Sum(d => d.Hours));
+
+                ScheduleResponse scheduleResponse = new ScheduleResponse()
+                {
+                    ScheduleId = schedule.ScheduleId,
+                    Status = new ScheduleStatusResponse(schedule.Status),
+                    GeneratedYear = schedule.GeneratedYear,
+                    Semester = new SemesterInfo
+                    {
+                        Id = (int)schedule.Semester,
+                        Name = schedule.Semester.ToString()
+                    },
+                    ResidentHours = residentHours,
+                    TotalHours = residentHours.Values.Sum(),
+                    TotalResidents = residentHours.Count
+                };
+
+
                 _logger.LogInformation("Succeeded on attempt #{attempt}", attempt);
-                return (true, null);
+                return (true, null, scheduleResponse);
             }
             catch (Exception ex)
             {
@@ -115,7 +216,7 @@ public class SchedulerService
         }
 
         return (false,
-            "Failed after to generate a viable schedule. Try again.");
+            "Failed after to generate a viable schedule. Try again.", null);
     }
 
 #pragma warning disable IDE0060
