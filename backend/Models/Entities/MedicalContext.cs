@@ -266,6 +266,10 @@ namespace MedicalDemo.Models.Entities
                     .HasMaxLength(45)
                     .HasColumnName("month");
 
+                entity.Property(e => e.AcademicMonthIndex)
+                    .HasConversion<int>()
+                    .HasColumnType("int");
+
                 entity.Property(e => e.ResidentId)
                     .HasMaxLength(15)
                     .HasColumnName("resident_id");

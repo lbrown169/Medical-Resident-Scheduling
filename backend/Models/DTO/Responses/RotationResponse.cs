@@ -1,3 +1,5 @@
+using MedicalDemo.Enums;
+
 namespace MedicalDemo.Models.DTO.Responses;
 
 public class RotationResponse
@@ -8,7 +10,7 @@ public class RotationResponse
 
     public string Month { get; set; } = null!;
 
-    public int MonthIndex { get; set; }
+    public MonthOfYear AcademicMonthIndex { get; set; }
 
     public int PgyYear { get; set; }
 

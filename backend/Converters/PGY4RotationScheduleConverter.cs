@@ -61,7 +61,7 @@ public class Pgy4RotationScheduleConverter(RotationConverter rotationConverter, 
             [
                 .. rotations
                     .Select(rotationConverter.CreateRotationResponseFromModel)
-                    .OrderBy((rotationRes) => rotationRes.MonthIndex),
+                    .OrderBy((rotationRes) => rotationRes.AcademicMonthIndex),
             ],
         };
     }
