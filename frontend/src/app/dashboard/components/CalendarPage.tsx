@@ -62,9 +62,39 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
     return event.backgroundColor || '#6b7280'; // Fallback to gray if no color set
   };
 
+  // Finds amount of days in the month to avoid date rollover behavior
+  const daysInMonth = (year: number, monthIndex0: number) =>
+    new Date(year, monthIndex0 + 1, 0).getDate();
+  
+
+  // Month navigation date setting to avoid date rollover behavior
+  const addMonthsClamped = (date: Date, deltaMonths: number) => {
+    const y = date.getFullYear();
+    const m = date.getMonth();
+
+    // Target year/month
+    const target = new Date(y, m + deltaMonths, 1);
+    const targetY = target.getFullYear();
+    const targetM = target.getMonth();
+
+    const d = date.getDate();
+    const maxD = daysInMonth(targetY, targetM);
+
+    // Build final date in target month with clamped day
+    return new Date(
+      targetY,
+      targetM,
+      Math.min(d, maxD),
+      date.getHours(),
+      date.getMinutes(),
+      date.getSeconds(),
+      date.getMilliseconds()
+    );
+  };
+
   // Navigation functions for different views
   const navigatePeriod = (direction: 'prev' | 'next') => {
-    const newDate = new Date(currentDate);
+    let newDate = new Date(currentDate);
     switch (viewMode) {
       case 'day':
         newDate.setDate(newDate.getDate() + (direction === 'next' ? 1 : -1));
@@ -73,7 +103,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
         newDate.setDate(newDate.getDate() + (direction === 'next' ? 7 : -7));
         break;
       case 'month':
-        newDate.setMonth(newDate.getMonth() + (direction === 'next' ? 1 : -1));
+        newDate = addMonthsClamped(currentDate, direction === 'next' ? 1 : -1);
         break;
       case 'year':
         newDate.setFullYear(newDate.getFullYear() + (direction === 'next' ? 1 : -1));
