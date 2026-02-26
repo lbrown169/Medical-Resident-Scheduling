@@ -293,7 +293,7 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
             <div className="space-y-3 flex-1">
               {filteredRecentActivity.length > 0 ? (
                 filteredRecentActivity.map((activity) => (
-                  <div key={activity.id} className={`flex items-start gap-3 p-3 rounded-lg ${activity.type === 'swap_approved' ? 'bg-green-100' : activity.type === 'swap_denied' ? 'bg-red-100' : 'bg-muted/50'}`}>
+                  <div key={activity.id} className={`flex items-start gap-3 p-3 rounded-lg ${activity.type === 'swap_approved' ? 'bg-green-100 dark:bg-green-950/40' : activity.type === 'swap_denied' ? 'bg-red-100 dark:bg-red-950/40' : 'bg-muted/50'}`}>
                     <div className="p-2 bg-primary/10 rounded-full">
                       {activity.type.startsWith('swap') ? (
                         <RotateCcw className="h-4 w-4 text-primary" />
