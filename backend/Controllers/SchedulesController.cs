@@ -68,25 +68,10 @@ public class SchedulesController : ControllerBase
         {
             return NotFound();
         }
+
         // dictionary of resident ID to hours for the Schedule
         List<ScheduleResponse> scheduleResponses = schedules
-            .Select(schedule =>
-            {
-                ScheduleResponse response
-                    = _scheduleConverter.CreateScheduleResponseFromSchedule(schedule);
-                if (schedule.Dates.Any())
-                {
-                    response.ResidentHours = schedule.Dates
-                        .GroupBy(d => d.ResidentId)
-                        .ToDictionary(
-                            g => g.Key,
-                            g => g.Sum(d => d.Hours)
-                        );
-                    response.TotalHours = response.ResidentHours.Values.Sum();
-                    response.TotalResidents = response.ResidentHours.Count();
-                }
-                return response;
-            })
+            .Select(schedule => _scheduleConverter.CreateScheduleResponseFromSchedule(schedule))
             .ToList();
 
         return Ok(scheduleResponses);

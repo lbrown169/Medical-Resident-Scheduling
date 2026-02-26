@@ -1,6 +1,7 @@
 using MedicalDemo.Algorithm;
 using MedicalDemo.Enums;
 using MedicalDemo.Models;
+using MedicalDemo.Extensions;
 using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.DTO.Scheduling;
 using MedicalDemo.Models.Entities;
@@ -28,11 +29,11 @@ public class SchedulerService
         _logger = logger;
     }
 
-    public async Task<(bool Success, string? Message)> CheckScheduleRequirements(int year,
+    public async Task<(bool Success, string Message)> CheckScheduleRequirements(int year,
         Semester semester)
     {
         // validate year input
-        if (year < DateTime.Now.Year - 1)
+        if (year < DateTime.Now.AcademicYear)
         {
             return (false,
                 $"Year must be the current year or later."
@@ -45,12 +46,21 @@ public class SchedulerService
             return (false, $"Invalid semester input, must be Fall or Spring.");
         }
 
-        int pgy1Count = await _context.Residents.CountAsync(r => r.GraduateYr == 1);
-        int pgy2Count = await _context.Residents.CountAsync(r => r.GraduateYr == 2);
-        int pgy3Count = await _context.Residents.CountAsync(r => r.GraduateYr == 3);
+        List<ResidentRequirementInfo> residentRequirementInfo = await _context.Residents
+            .Select(r => new ResidentRequirementInfo
+            {
+                GraduateYr = r.GraduateYr,
+                HasHospitalRoleProfile = r.HospitalRoleProfile.HasValue
+            })
+            .ToListAsync();
 
-        int pgy1HospitalRoleCount = await _context.Residents.CountAsync(r => r.GraduateYr == 1 && r.HospitalRoleProfile.HasValue);
-        int pgy2HospitalRoleCount = await _context.Residents.CountAsync(r => r.GraduateYr == 2 && r.HospitalRoleProfile.HasValue);
+
+        int pgy1Count = residentRequirementInfo.Count(r => r.GraduateYr == 1);
+        int pgy2Count = residentRequirementInfo.Count(r => r.GraduateYr == 2);
+        int pgy3Count = residentRequirementInfo.Count(r => r.GraduateYr == 3);
+
+        int pgy1HospitalRoleCount = residentRequirementInfo.Count(r => r.GraduateYr == 1 && r.HasHospitalRoleProfile);
+        int pgy2HospitalRoleCount = residentRequirementInfo.Count(r => r.GraduateYr == 2 && r.HasHospitalRoleProfile);
 
         // 8 pgys exist
         bool hasRequiredPgy1 = pgy1Count >= 8;
@@ -186,18 +196,14 @@ public class SchedulerService
                 // Calc residents hours for ScheduleResponse in AlgorithmController
                 Dictionary<string, int> residentHours = dateEntities
                     .GroupBy(d => d.ResidentId)
-                    .ToDictionary(g => g.Key, g => (int)g.Sum(d => d.Hours));
+                    .ToDictionary(g => g.Key, g => g.Sum(d => d.Hours));
 
                 ScheduleResponse scheduleResponse = new ScheduleResponse()
                 {
                     ScheduleId = schedule.ScheduleId,
                     Status = new ScheduleStatusResponse(schedule.Status),
                     GeneratedYear = schedule.GeneratedYear,
-                    Semester = new SemesterInfo
-                    {
-                        Id = (int)schedule.Semester,
-                        Name = schedule.Semester.ToString()
-                    },
+                    Semester = new SemesterInfoResponse(schedule.Semester),
                     ResidentHours = residentHours,
                     TotalHours = residentHours.Values.Sum(),
                     TotalResidents = residentHours.Count

@@ -28,7 +28,7 @@ public class ScheduleController : ControllerBase
         (bool success, string? message)
             = await _schedulerService.CheckScheduleRequirements(year, semester);
 
-        if (!success && message != null)
+        if (!success)
         {
             return BadRequest(new AlgorithmResponse
             {
@@ -44,47 +44,11 @@ public class ScheduleController : ControllerBase
         });
     }
 
-
-    [HttpPost("{year}/fall")]
-    public async Task<IActionResult> GenerateFallSchedule(int year)
-    {
-        // validate schedule generation requirements
-        (bool requirementsMet, string? requirementsMessage) = await _schedulerService.CheckScheduleRequirements(year, Semester.Fall);
-
-        if (!requirementsMet)
-        {
-            return BadRequest(new AlgorithmResponse
-            {
-                Success = false,
-                Message = requirementsMessage
-            });
-        }
-
-        // Generate the fall schedule
-        (bool success, string? error, ScheduleResponse? schedule)
-            = await _schedulerService.GenerateScheduleForSemester(year, Semester.Fall);
-        if (!success)
-        {
-            return StatusCode(500, new AlgorithmResponse
-            {
-                Success = false,
-                Message = error ?? "Failed to generate fall schedule"
-            });
-        }
-
-        return Ok(new
-        {
-            Success = true,
-            Message = "Fall Schedule generated and saved successfully.",
-            Data = schedule
-        });
-    }
-
-    [HttpPost("{year}/spring")]
-    public async Task<IActionResult> GenerateSpringSchedule(int year)
+    [HttpPost("{year}/{semester}/generate")]
+    public async Task<IActionResult> GenerateSemesterSchedule(int year, Semester semester)
     {
         // validate resident hospital role profile assigned
-        (bool requirementsMet, string? requirementsMessage) = await _schedulerService.CheckScheduleRequirements(year, Semester.Fall);
+        (bool requirementsMet, string? requirementsMessage) = await _schedulerService.CheckScheduleRequirements(year, semester);
 
         if (!requirementsMet)
         {
@@ -95,23 +59,24 @@ public class ScheduleController : ControllerBase
             });
         }
 
-        // Generate the spring schedule
+        // Generate the schedule
         (bool success, string? error, ScheduleResponse? schedule)
-            = await _schedulerService.GenerateScheduleForSemester(year, Semester.Spring);
+            = await _schedulerService.GenerateScheduleForSemester(year, semester);
         if (!success)
         {
             return StatusCode(500, new AlgorithmResponse
             {
                 Success = false,
-                Message = error ?? "Failed to generate spring schedule"
+                Message = error ?? $"Failed to generate {semester} schedule",
+                Schedule = schedule
             });
         }
 
-        return Ok(new
+        return Ok(new AlgorithmResponse
         {
             Success = true,
-            Message = "Spring Schedule generated and saved successfully.",
-            Data = schedule
+            Message = $"{semester} Schedule generated and saved successfully.",
+            Schedule = schedule
         });
     }
 }
