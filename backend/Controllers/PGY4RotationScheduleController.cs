@@ -1,5 +1,3 @@
-using MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator;
-using MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator.Constraints;
 using MedicalDemo.Converters;
 using MedicalDemo.Extensions;
 using MedicalDemo.Models.DTO.Pgy4Scheduling;
@@ -16,21 +14,16 @@ namespace MedicalDemo.Controllers;
 public class Pgy4RotationScheduleController(
     MedicalContext context,
     Pgy4RotationScheduleConverter pgy4RotationScheduleConverter,
-    RotationPrefRequestConverter rotationPrefRequestConverter,
     ResidentConverter residentConverter,
-    Pgy4RotationScheduleService pgy4RotationScheduleService,
-    Pgy4RotationScheduleGenerator scheduleGenerator
+    Pgy4RotationScheduleService pgy4RotationScheduleService
 ) : ControllerBase
 {
     private readonly MedicalContext context = context;
     private readonly Pgy4RotationScheduleConverter pgy4RotationScheduleConverter =
         pgy4RotationScheduleConverter;
-    private readonly RotationPrefRequestConverter rotationPrefRequestConverter =
-        rotationPrefRequestConverter;
     private readonly ResidentConverter residentConverter = residentConverter;
     private readonly Pgy4RotationScheduleService pgy4RotationScheduleService =
         pgy4RotationScheduleService;
-    private readonly Pgy4RotationScheduleGenerator scheduleGenerator = scheduleGenerator;
 
     [HttpGet("{id}")]
     public async Task<ActionResult<Pgy4RotationScheduleResponse>> GetScheduleById(
