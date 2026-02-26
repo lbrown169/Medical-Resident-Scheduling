@@ -1,4 +1,5 @@
-﻿namespace MedicalDemo.Models.DTO.Responses;
+namespace MedicalDemo.Models.DTO.Responses;
+
 using MedicalDemo.Enums;
 using MedicalDemo.Extensions;
 

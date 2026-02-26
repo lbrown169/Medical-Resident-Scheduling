@@ -1,4 +1,4 @@
-﻿namespace MedicalDemo.Extensions;
+namespace MedicalDemo.Extensions;
 
 public static class DateTimeExtensions
 {

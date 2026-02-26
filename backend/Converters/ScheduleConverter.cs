@@ -1,7 +1,7 @@
 using MedicalDemo.Enums;
+using MedicalDemo.Extensions;
 using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.Entities;
-using MedicalDemo.Extensions;
 
 namespace MedicalDemo.Converters;
 
