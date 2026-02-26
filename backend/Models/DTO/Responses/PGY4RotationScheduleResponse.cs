@@ -12,5 +12,5 @@ public class Pgy4RotationScheduleResponse
 
     public bool IsPublished { get; set; }
 
-    public List<Pgy4ResidenRotationScheduleResponse> Schedule { get; set; } = null!;
+    public List<Pgy4ResidentRotationScheduleResponse> Schedule { get; set; } = null!;
 }

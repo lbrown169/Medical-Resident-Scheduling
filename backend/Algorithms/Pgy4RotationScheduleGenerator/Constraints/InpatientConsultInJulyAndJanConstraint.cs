@@ -1,7 +1,6 @@
 
 using MedicalDemo.Enums;
 using MedicalDemo.Models.DTO.Pgy4Scheduling;
-using MedicalDemo.Models.Entities;
 
 namespace MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator.Constraints;
 
@@ -10,8 +9,8 @@ public class InpatientConsultInJulyAndJanConstraint : IConstraint
     public int Weight => 2;
 
     public bool IsValidAssignment(
-        Dictionary<Resident, Pgy4RotationTypeEnum?[]> schedule,
-        Resident resident,
+        Dictionary<AlgorithmResident, Pgy4RotationTypeEnum?[]> schedule,
+        AlgorithmResident resident,
         int month,
         Pgy4RotationTypeEnum rotationType,
         int totalMonths = 12
@@ -29,7 +28,7 @@ public class InpatientConsultInJulyAndJanConstraint : IConstraint
         int consultsCount = 0;
         int unassignedCount = 0;
 
-        foreach (Resident res in schedule.Keys)
+        foreach (AlgorithmResident res in schedule.Keys)
         {
             Pgy4RotationTypeEnum? rotation = schedule[res][month];
             if (rotation != null)
@@ -74,8 +73,8 @@ public class InpatientConsultInJulyAndJanConstraint : IConstraint
     }
 
     public HashSet<Pgy4RotationTypeEnum> GetRequiredRotationByConstraint(
-        Dictionary<Resident, Pgy4RotationTypeEnum?[]> schedule,
-        Resident resident,
+        Dictionary<AlgorithmResident, Pgy4RotationTypeEnum?[]> schedule,
+        AlgorithmResident resident,
         int month,
         int totalMonths = 12
     )
@@ -95,7 +94,7 @@ public class InpatientConsultInJulyAndJanConstraint : IConstraint
         int consultsCount = 0;
         int unassignedCount = 0;
 
-        foreach (Resident res in schedule.Keys)
+        foreach (AlgorithmResident res in schedule.Keys)
         {
             Pgy4RotationTypeEnum? rotation = schedule[res][month];
             if (rotation != null)
@@ -133,8 +132,8 @@ public class InpatientConsultInJulyAndJanConstraint : IConstraint
     }
 
     public HashSet<Pgy4RotationTypeEnum> GetBlockedRotationByConstraint(
-        Dictionary<Resident, Pgy4RotationTypeEnum?[]> schedule,
-        Resident resident,
+        Dictionary<AlgorithmResident, Pgy4RotationTypeEnum?[]> schedule,
+        AlgorithmResident resident,
         int month,
         int totalMonths = 12
     )
@@ -143,7 +142,7 @@ public class InpatientConsultInJulyAndJanConstraint : IConstraint
     }
 
     public void GetJumpPosition(
-        Dictionary<Resident, Pgy4RotationTypeEnum?[]> schedule,
+        Dictionary<AlgorithmResident, Pgy4RotationTypeEnum?[]> schedule,
         AlgorithmRotationPrefRequest[] requests,
         int requestIndex,
         int month,
@@ -159,7 +158,7 @@ public class InpatientConsultInJulyAndJanConstraint : IConstraint
 
         for (int i = 0; i < requestIndex; i++)
         {
-            Resident resident = requests[i].Requester;
+            AlgorithmResident resident = requests[i].Requester;
             Pgy4RotationTypeEnum? rotation = schedule[resident][month];
 
             if (rotation == null)

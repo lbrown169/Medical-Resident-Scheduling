@@ -1,7 +1,6 @@
 
 using MedicalDemo.Enums;
 using MedicalDemo.Models.DTO.Pgy4Scheduling;
-using MedicalDemo.Models.Entities;
 
 namespace MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator.Constraints;
 
@@ -14,8 +13,8 @@ public class HasChiefRotationConstraint : IConstraint
     private readonly int[] educationChiefMonths = [0, 7];
 
     public bool IsValidAssignment(
-        Dictionary<Resident, Pgy4RotationTypeEnum?[]> schedule,
-        Resident resident,
+        Dictionary<AlgorithmResident, Pgy4RotationTypeEnum?[]> schedule,
+        AlgorithmResident resident,
         int month,
         Pgy4RotationTypeEnum rotationType,
         int totalMonths = 12
@@ -48,8 +47,8 @@ public class HasChiefRotationConstraint : IConstraint
     }
 
     public HashSet<Pgy4RotationTypeEnum> GetRequiredRotationByConstraint(
-        Dictionary<Resident, Pgy4RotationTypeEnum?[]> schedule,
-        Resident resident,
+        Dictionary<AlgorithmResident, Pgy4RotationTypeEnum?[]> schedule,
+        AlgorithmResident resident,
         int month,
         int totalMonths = 12
     )
@@ -69,8 +68,8 @@ public class HasChiefRotationConstraint : IConstraint
     }
 
     public HashSet<Pgy4RotationTypeEnum> GetBlockedRotationByConstraint(
-        Dictionary<Resident, Pgy4RotationTypeEnum?[]> schedule,
-        Resident resident,
+        Dictionary<AlgorithmResident, Pgy4RotationTypeEnum?[]> schedule,
+        AlgorithmResident resident,
         int month,
         int totalMonths = 12
     )
@@ -93,7 +92,7 @@ public class HasChiefRotationConstraint : IConstraint
     }
 
     public void GetJumpPosition(
-        Dictionary<Resident, Pgy4RotationTypeEnum?[]> schedule,
+        Dictionary<AlgorithmResident, Pgy4RotationTypeEnum?[]> schedule,
         AlgorithmRotationPrefRequest[] requests,
         int requestIndex,
         int month,

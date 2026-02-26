@@ -9,6 +9,7 @@ public class RotationTypeConverter
 {
     private readonly Dictionary<string, Pgy4RotationTypeEnum> stringToRotationTypeEnumDictionary =
     [];
+    private bool isRotationTypesDictionaryPopulated = false;
 
     public RotationTypeResponse CreateRotationTypeResponse(RotationType rotationType)
     {
@@ -38,6 +39,19 @@ public class RotationTypeConverter
 
     public Pgy4RotationTypeEnum ConvertRotationTypeModelToEnum(RotationType rotationTypeModel)
     {
+        // Populate rotation type enum dictionary if needed
+        if (!isRotationTypesDictionaryPopulated)
+        {
+            foreach (Pgy4RotationTypeEnum rotationTypeEnum in Enum.GetValues<Pgy4RotationTypeEnum>())
+            {
+                // Find corresponding typeEnum by comparing it to display name, add it dictionary
+                string displayName = rotationTypeEnum.GetDisplayName();
+                stringToRotationTypeEnumDictionary.Add(displayName, rotationTypeEnum);
+            }
+
+            isRotationTypesDictionaryPopulated = true;
+        }
+
         // Try to get typeEnum from dictionary
         if (
             stringToRotationTypeEnumDictionary.TryGetValue(
@@ -49,21 +63,8 @@ public class RotationTypeConverter
             return value;
         }
 
-        // typeEnum does not yet exist in the dictionary
-
-        foreach (Pgy4RotationTypeEnum rotationTypeEnum in Enum.GetValues<Pgy4RotationTypeEnum>())
-        {
-            // Find corresponding typeEnum by comparing it to display name, add it dictionary
-            string displayName = rotationTypeEnum.GetDisplayName();
-            if (rotationTypeModel.RotationName == rotationTypeEnum.GetDisplayName())
-            {
-                stringToRotationTypeEnumDictionary.Add(displayName, rotationTypeEnum);
-                return rotationTypeEnum;
-            }
-        }
-
         // Throw error if it cannot find the corresponding rotation type enum
-        throw new Exception(
+        throw new ArgumentException(
             "ERROR: Failed to convert RotationType to AlgorithmRotationType because it cannot find the corresponding enum!"
         );
     }

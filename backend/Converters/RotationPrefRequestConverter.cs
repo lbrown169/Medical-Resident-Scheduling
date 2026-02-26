@@ -111,10 +111,15 @@ public class RotationPrefRequestConverter(RotationTypeConverter rotationTypeConv
             requestModel.ThirdAvoid,
         ])];
 
+
         return new()
         {
             RotationPrefRequestId = requestModel.RotationPrefRequestId,
-            Requester = requestModel.Resident,
+            Requester = new()
+            {
+                ResidentId = requestModel.Resident.ResidentId,
+                ChiefType = requestModel.Resident.ChiefType
+            },
             Priorities = AlgorithmPriorities,
             Alternatives = AlgorithmAlternatives,
             Avoids = AlgorithmAvoids

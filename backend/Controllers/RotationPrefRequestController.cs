@@ -1,5 +1,6 @@
 using MedicalDemo.Converters;
 using MedicalDemo.Enums;
+using MedicalDemo.Extensions;
 using MedicalDemo.Models.DTO.Requests;
 using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.Entities;
@@ -27,8 +28,8 @@ public class RotationPrefRequestController(
     [HttpGet("{id}")]
     public async Task<ActionResult<RotationPrefResponse>> GetById([FromRoute] Guid id)
     {
-        RotationPrefRequest? request = await pgy4RotationScheduleService
-            .IncludeAllRotationPrefRequestProperties(context.RotationPrefRequests)
+        RotationPrefRequest? request = await context
+            .RotationPrefRequests.IncludeAllRotationPrefRequestProperties()
             .FirstOrDefaultAsync(r => r.RotationPrefRequestId == id);
 
         if (request == null)
@@ -46,8 +47,8 @@ public class RotationPrefRequestController(
     [HttpGet()]
     public async Task<ActionResult<RotationPrefRequestsListResponse>> GetAll()
     {
-        List<RotationPrefRequest> allRequests = await pgy4RotationScheduleService
-            .IncludeAllRotationPrefRequestProperties(context.RotationPrefRequests)
+        List<RotationPrefRequest> allRequests = await context
+            .RotationPrefRequests.IncludeAllRotationPrefRequestProperties()
             .ToListAsync();
 
         List<RotationPrefResponse> prefsResponse =
@@ -69,8 +70,8 @@ public class RotationPrefRequestController(
         [FromRoute] string residentId
     )
     {
-        RotationPrefRequest? request = await pgy4RotationScheduleService
-            .IncludeAllRotationPrefRequestProperties(context.RotationPrefRequests)
+        RotationPrefRequest? request = await context
+            .RotationPrefRequests.IncludeAllRotationPrefRequestProperties()
             .FirstOrDefaultAsync(r => r.ResidentId == residentId);
 
         if (request == null)
@@ -152,8 +153,8 @@ public class RotationPrefRequestController(
         await context.RotationPrefRequests.AddAsync(requestModel);
         await context.SaveChangesAsync();
 
-        RotationPrefRequest resultModel = await pgy4RotationScheduleService
-            .IncludeAllRotationPrefRequestProperties(context.RotationPrefRequests)
+        RotationPrefRequest resultModel = await context
+            .RotationPrefRequests.IncludeAllRotationPrefRequestProperties()
             .FirstAsync(r => r.RotationPrefRequestId == requestModel.RotationPrefRequestId);
 
         RotationPrefResponse response =
@@ -206,8 +207,8 @@ public class RotationPrefRequestController(
         // Save changes
         await context.SaveChangesAsync();
 
-        RotationPrefRequest foundUpdatedPrefRequest = await pgy4RotationScheduleService
-            .IncludeAllRotationPrefRequestProperties(context.RotationPrefRequests)
+        RotationPrefRequest foundUpdatedPrefRequest = await context
+            .RotationPrefRequests.IncludeAllRotationPrefRequestProperties()
             .FirstAsync(r => r.RotationPrefRequestId == id);
 
         RotationPrefResponse response =

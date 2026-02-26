@@ -1,7 +1,6 @@
 
 using MedicalDemo.Enums;
 using MedicalDemo.Models.DTO.Pgy4Scheduling;
-using MedicalDemo.Models.Entities;
 
 namespace MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator.Constraints;
 
@@ -10,8 +9,8 @@ public class Min2ConsultsInpatientConstraint : IConstraint
     public int Weight => 3;
 
     public bool IsValidAssignment(
-        Dictionary<Resident, Pgy4RotationTypeEnum?[]> schedule,
-        Resident resident,
+        Dictionary<AlgorithmResident, Pgy4RotationTypeEnum?[]> schedule,
+        AlgorithmResident resident,
         int month,
         Pgy4RotationTypeEnum rotationType,
         int totalMonths = 12
@@ -66,8 +65,8 @@ public class Min2ConsultsInpatientConstraint : IConstraint
     }
 
     public HashSet<Pgy4RotationTypeEnum> GetRequiredRotationByConstraint(
-        Dictionary<Resident, Pgy4RotationTypeEnum?[]> schedule,
-        Resident resident,
+        Dictionary<AlgorithmResident, Pgy4RotationTypeEnum?[]> schedule,
+        AlgorithmResident resident,
         int month,
         int totalMonths = 12
     )
@@ -115,8 +114,8 @@ public class Min2ConsultsInpatientConstraint : IConstraint
     }
 
     public HashSet<Pgy4RotationTypeEnum> GetBlockedRotationByConstraint(
-        Dictionary<Resident, Pgy4RotationTypeEnum?[]> schedule,
-        Resident resident,
+        Dictionary<AlgorithmResident, Pgy4RotationTypeEnum?[]> schedule,
+        AlgorithmResident resident,
         int month,
         int totalMonths = 12
     )
@@ -125,7 +124,7 @@ public class Min2ConsultsInpatientConstraint : IConstraint
     }
 
     public void GetJumpPosition(
-        Dictionary<Resident, Pgy4RotationTypeEnum?[]> schedule,
+        Dictionary<AlgorithmResident, Pgy4RotationTypeEnum?[]> schedule,
         AlgorithmRotationPrefRequest[] requests,
         int requestIndex,
         int month,
@@ -142,7 +141,7 @@ public class Min2ConsultsInpatientConstraint : IConstraint
         }
 
         AlgorithmRotationPrefRequest request = requests[requestIndex];
-        Resident resident = request.Requester;
+        AlgorithmResident resident = request.Requester;
 
         newRequestIndex = requestIndex;
         newMonth = 0;

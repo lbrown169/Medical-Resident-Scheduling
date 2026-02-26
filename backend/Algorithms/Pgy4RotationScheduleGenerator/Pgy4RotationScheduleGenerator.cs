@@ -1,7 +1,6 @@
 using MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator.Constraints;
 using MedicalDemo.Enums;
 using MedicalDemo.Models.DTO.Pgy4Scheduling;
-using MedicalDemo.Models.Entities;
 
 namespace MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator;
 
@@ -12,7 +11,7 @@ public class Pgy4RotationScheduleGenerator
     private AlgorithmRotationPrefRequest[] requests = null!;
     private IConstraint[] constraints = null!;
 
-    private Dictionary<Resident, Pgy4RotationTypeEnum?[]> rotationSchedule = []; // Generated schedule
+    private Dictionary<AlgorithmResident, Pgy4RotationTypeEnum?[]> rotationSchedule = []; // Generated schedule
     private readonly int totalMonths = 12;
 
     private IConstraint[] requiredConstraints = null!;
@@ -52,7 +51,10 @@ public class Pgy4RotationScheduleGenerator
 
             return new()
             {
-                Schedule = rotationSchedule.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Cast<Pgy4RotationTypeEnum>().ToArray())
+                Schedule = rotationSchedule.ToDictionary(
+                    kvp => kvp.Key.ResidentId,
+                    kvp => kvp.Value.Cast<Pgy4RotationTypeEnum>().ToArray()
+                ),
             };
         }
     }
@@ -141,7 +143,7 @@ public class Pgy4RotationScheduleGenerator
         }
 
         AlgorithmRotationPrefRequest request = requests[requestIndex];
-        Resident resident = request.Requester;
+        AlgorithmResident resident = request.Requester;
 
         Pgy4RotationTypeEnum[] availableRotations = GetPreferredRotationTypeEnum(
             request,
@@ -229,7 +231,7 @@ public class Pgy4RotationScheduleGenerator
 
     public bool CheckScheduleCompletion()
     {
-        foreach (KeyValuePair<Resident, Pgy4RotationTypeEnum?[]> entry in rotationSchedule)
+        foreach (KeyValuePair<AlgorithmResident, Pgy4RotationTypeEnum?[]> entry in rotationSchedule)
         {
             foreach (Pgy4RotationTypeEnum? rotationInMonth in entry.Value)
             {
@@ -249,7 +251,7 @@ public class Pgy4RotationScheduleGenerator
         Pgy4RotationTypeEnum rotationType
     )
     {
-        Resident resident = requests[requestIndex].Requester;
+        AlgorithmResident resident = requests[requestIndex].Requester;
         foreach (IConstraint constraintRule in constraints)
         {
             if (constraintRule.IsValidAssignment(rotationSchedule, resident, month, rotationType))
@@ -278,13 +280,13 @@ public class Pgy4RotationScheduleGenerator
         {
             if (month > 0)
             {
-                Resident previousResident = requests[^1].Requester;
+                AlgorithmResident previousResident = requests[^1].Requester;
                 previousRotationType = rotationSchedule[previousResident][month - 1];
             }
         }
         else
         {
-            Resident previousResident = requests[requestIndex - 1].Requester;
+            AlgorithmResident previousResident = requests[requestIndex - 1].Requester;
             previousRotationType = rotationSchedule[previousResident][month];
         }
 
@@ -314,7 +316,7 @@ public class Pgy4RotationScheduleGenerator
                     // First erase month, erase from request index to bottom
                     for (int j = jumpBackRequestIndex; j < requests.Length; j++)
                     {
-                        Resident jumpResident = requests[j].Requester;
+                        AlgorithmResident jumpResident = requests[j].Requester;
                         rotationSchedule[jumpResident][jumpBackMonth] = null;
                     }
                 }
@@ -323,7 +325,7 @@ public class Pgy4RotationScheduleGenerator
                     // Final erase month, erase from top to request index
                     for (int j = 0; j <= requestIndex; j++)
                     {
-                        Resident jumpResident = requests[j].Requester;
+                        AlgorithmResident jumpResident = requests[j].Requester;
                         rotationSchedule[jumpResident][month] = null;
                     }
                 }
@@ -332,7 +334,7 @@ public class Pgy4RotationScheduleGenerator
                     // In between month, erase everything
                     for (int j = 0; j < requests.Length; j++)
                     {
-                        Resident jumpResident = requests[j].Requester;
+                        AlgorithmResident jumpResident = requests[j].Requester;
                         rotationSchedule[jumpResident][i] = null;
                     }
                 }
@@ -344,7 +346,7 @@ public class Pgy4RotationScheduleGenerator
 
             for (int i = jumpBackRequestIndex; i <= requestIndex; i++)
             {
-                Resident jumpResident = requests[i].Requester;
+                AlgorithmResident jumpResident = requests[i].Requester;
                 rotationSchedule[jumpResident][month] = null;
             }
         }
@@ -488,7 +490,7 @@ public class Pgy4RotationScheduleGenerator
         // Apply penalty if rotation was already chosen once or more by other residents
         for (int i = 0; i < requests.Length; i++)
         {
-            Resident resident = requests[i].Requester;
+            AlgorithmResident resident = requests[i].Requester;
             Pgy4RotationTypeEnum? rotation = rotationSchedule[resident][month];
 
             if (rotation == null)
@@ -561,7 +563,7 @@ public class Pgy4RotationScheduleGenerator
     private void EvaluatePerformance()
     {
         // Increase score for resident priorities picked
-        foreach (KeyValuePair<Resident, Pgy4RotationTypeEnum?[]> entry in rotationSchedule)
+        foreach (KeyValuePair<AlgorithmResident, Pgy4RotationTypeEnum?[]> entry in rotationSchedule)
         {
             AlgorithmRotationPrefRequest residentRequest = requests.First(
                 (request) => request.Requester == entry.Key
@@ -616,7 +618,7 @@ public class Pgy4RotationScheduleGenerator
             int inpatientCount = 0;
             int consultCount = 0;
 
-            foreach (Resident resident in rotationSchedule.Keys)
+            foreach (AlgorithmResident resident in rotationSchedule.Keys)
             {
                 // Increase score for higher single-month diversity
 

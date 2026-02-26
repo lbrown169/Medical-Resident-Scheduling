@@ -27,7 +27,7 @@ public class Pgy4RotationScheduleConverter(RotationConverter rotationConverter, 
             }
         }
 
-        List<Pgy4ResidenRotationScheduleResponse> residentScheduleResponses =
+        List<Pgy4ResidentRotationScheduleResponse> residentScheduleResponses =
         [
             .. residentIdToRotations.Select(
                 (kvp) =>
@@ -49,7 +49,7 @@ public class Pgy4RotationScheduleConverter(RotationConverter rotationConverter, 
         };
     }
 
-    public Pgy4ResidenRotationScheduleResponse CreateSingleResidentRotationSchedule(
+    public Pgy4ResidentRotationScheduleResponse CreateSingleResidentRotationSchedule(
         Resident resident,
         List<Rotation> rotations
     )

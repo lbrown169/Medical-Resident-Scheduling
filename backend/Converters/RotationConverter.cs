@@ -22,13 +22,13 @@ public class RotationConverter(RotationTypeConverter rotationTypeConverter)
         };
     }
 
-    public Rotation CreateRotationFromResidentAndType(Resident resident, RotationType rotationType, Guid scheduleId, MonthOfYear calendarMonthIndex)
+    public Rotation CreateRotationFromResidentAndType(string residentId, RotationType rotationType, Guid scheduleId, MonthOfYear calendarMonthIndex)
     {
         return new()
         {
             RotationId = Guid.NewGuid(),
             Pgy4RotationScheduleId = scheduleId,
-            ResidentId = resident.ResidentId,
+            ResidentId = residentId,
             MonthIndex = calendarMonthIndex.ToAcademicIndex(),
             Month = calendarMonthIndex.GetDisplayName(),
             PgyYear = 4,

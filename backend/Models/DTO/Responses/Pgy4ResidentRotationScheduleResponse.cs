@@ -1,6 +1,6 @@
 namespace MedicalDemo.Models.DTO.Responses;
 
-public class Pgy4ResidenRotationScheduleResponse
+public class Pgy4ResidentRotationScheduleResponse
 {
     public ResidentResponse Resident { get; set; } = null!;
 

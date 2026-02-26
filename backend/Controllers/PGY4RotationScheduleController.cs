@@ -1,7 +1,7 @@
 using MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator;
 using MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator.Constraints;
 using MedicalDemo.Converters;
-using MedicalDemo.Enums;
+using MedicalDemo.Extensions;
 using MedicalDemo.Models.DTO.Pgy4Scheduling;
 using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.Entities;
@@ -13,7 +13,7 @@ namespace MedicalDemo.Controllers;
 
 [ApiController]
 [Route("api/pgy4-rotation-schedule")]
-public class Pgy4RotatoinScheduleController(
+public class Pgy4RotationScheduleController(
     MedicalContext context,
     Pgy4RotationScheduleConverter pgy4RotationScheduleConverter,
     RotationPrefRequestConverter rotationPrefRequestConverter,
@@ -88,7 +88,7 @@ public class Pgy4RotatoinScheduleController(
         }
 
         const int maxScheduleCount = 5;
-        int existingScheduleCount = await GetScheduleCount();
+        int existingScheduleCount = await pgy4RotationScheduleService.GetScheduleCount();
 
         if (existingScheduleCount + count > maxScheduleCount)
         {
@@ -99,7 +99,7 @@ public class Pgy4RotatoinScheduleController(
             return BadRequest(ModelState);
         }
 
-        List<Resident> unsubmittedResidents = await ValidateAllPrefRequestSubmitted();
+        List<Resident> unsubmittedResidents = await pgy4RotationScheduleService.ValidateAllPrefRequestSubmitted();
         if (unsubmittedResidents.Count != 0)
         {
             UnsubmittedResidentsResponse errorResponse = new()
@@ -119,7 +119,8 @@ public class Pgy4RotatoinScheduleController(
         int[] seeds = pgy4RotationScheduleService.GenerateSeeds(count);
 
         // Find all resident whose graduate year is 3
-        List<RotationPrefRequest> rotationPrefRequests = await GetAllPGY3RotationPrefRequests();
+        List<RotationPrefRequest> rotationPrefRequests =
+            await pgy4RotationScheduleService.GetAllPgy3RotationPrefRequests();
 
         if (rotationPrefRequests.Count == 0)
         {
@@ -132,7 +133,7 @@ public class Pgy4RotatoinScheduleController(
         foreach (int seed in seeds)
         {
             // Generate a schedule
-            Pgy4ScheduleData? generatedSchedule = GenerateSchedule(
+            Pgy4ScheduleData? generatedSchedule = pgy4RotationScheduleService.GenerateSchedule(
                 seed,
                 rotationPrefRequests
             );
@@ -143,13 +144,21 @@ public class Pgy4RotatoinScheduleController(
             }
 
             // Add generated schedule to DB
-            Pgy4RotationSchedule rotationSchedule = await AddScheduleToDb(seed, generatedSchedule);
-            Pgy4RotationScheduleResponse scheduleResponse = await GetScheduleResponseById(
+            Pgy4RotationSchedule rotationSchedule =
+                await pgy4RotationScheduleService.AddScheduleToDb(seed, generatedSchedule);
+            Pgy4RotationSchedule? addedSchedule = await pgy4RotationScheduleService.GetScheduleById(
                 rotationSchedule.Pgy4RotationScheduleId
             );
 
             // Convert to response
-            scheduleResponses.Add(scheduleResponse);
+            if (addedSchedule != null)
+            {
+                Pgy4RotationScheduleResponse response =
+                    pgy4RotationScheduleConverter.CreateRotationScheduleResponseFromModel(
+                        addedSchedule
+                    );
+                scheduleResponses.Add(response);
+            }
         }
 
         Pgy4RotationSchedulesListResponse listResponse = new()
@@ -183,12 +192,11 @@ public class Pgy4RotatoinScheduleController(
     [HttpPost("publish/{id}")]
     public async Task<ActionResult> PublishSchedule([FromRoute] Guid id)
     {
-        int scheduleYear = GetScheduleYear();
+        int scheduleYear = pgy4RotationScheduleService.GetScheduleYear();
 
-        Pgy4RotationSchedule? scheduleToBePublished =
-            await context.Pgy4RotationSchedules.FirstOrDefaultAsync(
-                (schedule) => schedule.Pgy4RotationScheduleId == id
-            );
+        Pgy4RotationSchedule? scheduleToBePublished = await context
+            .Pgy4RotationSchedules.IncludeRotationTypeAndResidentProperties()
+            .FirstOrDefaultAsync((schedule) => schedule.Pgy4RotationScheduleId == id);
 
         if (scheduleToBePublished == null)
         {
@@ -207,15 +215,14 @@ public class Pgy4RotatoinScheduleController(
             await context.Pgy4RotationSchedules.FirstOrDefaultAsync(
                 (schedule) => schedule.Year == scheduleYear
             );
-        existingPublishedSchedule?.IsPublished = false;
 
+        existingPublishedSchedule?.IsPublished = false;
         scheduleToBePublished.IsPublished = true;
 
         await context.SaveChangesAsync();
 
-        Pgy4RotationScheduleResponse response = await GetScheduleResponseById(
-            scheduleToBePublished.Pgy4RotationScheduleId
-        );
+        Pgy4RotationScheduleResponse response =
+            pgy4RotationScheduleConverter.CreateRotationScheduleResponseFromModel(scheduleToBePublished);
 
         return Ok(response);
     }
@@ -223,9 +230,12 @@ public class Pgy4RotatoinScheduleController(
     [HttpGet("published")]
     public async Task<ActionResult<Pgy4RotationScheduleResponse>> GetPublishedSchedule()
     {
-        Pgy4RotationSchedule? foundSchedule =
-            await context.Pgy4RotationSchedules.FirstOrDefaultAsync(
-                (schedule) => schedule.Year == GetScheduleYear() && schedule.IsPublished
+        Pgy4RotationSchedule? foundSchedule = await context
+            .Pgy4RotationSchedules.IncludeRotationTypeAndResidentProperties()
+            .FirstOrDefaultAsync(
+                (schedule) =>
+                    schedule.Year == pgy4RotationScheduleService.GetScheduleYear()
+                    && schedule.IsPublished
             );
 
         if (foundSchedule == null)
@@ -233,14 +243,14 @@ public class Pgy4RotatoinScheduleController(
             return NotFound();
         }
 
-        Pgy4RotationScheduleResponse response = await GetScheduleResponseById(
-            foundSchedule.Pgy4RotationScheduleId
-        );
+        Pgy4RotationScheduleResponse response =
+            pgy4RotationScheduleConverter.CreateRotationScheduleResponseFromModel(foundSchedule);
+
         return response;
     }
 
     [HttpGet("resident/{id}")]
-    public async Task<ActionResult<Pgy4ResidenRotationScheduleResponse>> GetScheduleByResident(
+    public async Task<ActionResult<Pgy4ResidentRotationScheduleResponse>> GetScheduleByResident(
         [FromRoute] string id
     )
     {
@@ -268,7 +278,9 @@ public class Pgy4RotatoinScheduleController(
             .Pgy4RotationSchedules.Include((schedule) => schedule.Rotations)
                 .ThenInclude((r) => r.RotationType)
             .FirstOrDefaultAsync(
-                (schedule) => schedule.Year == GetScheduleYear() && schedule.IsPublished
+                (schedule) =>
+                    schedule.Year == pgy4RotationScheduleService.GetScheduleYear()
+                    && schedule.IsPublished
             );
 
         // Check published schedule existence
@@ -291,144 +303,11 @@ public class Pgy4RotatoinScheduleController(
         }
 
         // Convert to response and return
-        Pgy4ResidenRotationScheduleResponse response =
+        Pgy4ResidentRotationScheduleResponse response =
             pgy4RotationScheduleConverter.CreateSingleResidentRotationSchedule(
                 foundResident,
                 residentRotations
             );
         return Ok(response);
-    }
-
-    private async Task<List<RotationPrefRequest>> GetAllPGY3RotationPrefRequests()
-    {
-        List<RotationPrefRequest> rotationPrefRequests =
-        [
-            .. await pgy4RotationScheduleService
-                .IncludeAllRotationPrefRequestProperties(context.RotationPrefRequests)
-                .Include(request => request.Resident)
-                .Where(request => request.Resident.GraduateYr == 3)
-                .ToListAsync(),
-        ];
-        return rotationPrefRequests;
-    }
-
-    private Pgy4ScheduleData? GenerateSchedule(
-        int seed,
-        List<RotationPrefRequest> rotationPrefRequests
-    )
-    {
-        // Convert all rotationPrefRequest models to the special algorithm type: ALgorithmRotationPrefRequest
-        AlgorithmRotationPrefRequest[] algorithmPrefRequests =
-        [
-            .. rotationPrefRequests.Select(
-                rotationPrefRequestConverter.CreateAlgorithmSchedulePrefRequestFromModel
-            ),
-        ];
-        // Populate constraints
-        IConstraint[] constraints =
-        [
-            new HasChiefRotationConstraint(),
-            new InpatientConsultInJulyAndJanConstraint(),
-            new Min2ConsultsInpatientConstraint(),
-            new OneIopForenCommAddictPerMonthConstraint(),
-        ];
-
-        // Generate schedule
-        scheduleGenerator.Initialize(algorithmPrefRequests, constraints, seed);
-        scheduleGenerator.GenerateSchedule();
-        Pgy4ScheduleData? generatedSchedule =
-            scheduleGenerator.RotationSchedule;
-
-        return generatedSchedule;
-    }
-
-    private async Task<Pgy4RotationSchedule> AddScheduleToDb(
-        int seed,
-        Pgy4ScheduleData generatedSchedule
-    )
-    {
-        // Insert schedule
-        Guid newScheduleId = Guid.NewGuid();
-
-        Pgy4RotationSchedule schedule = new()
-        {
-            Pgy4RotationScheduleId = newScheduleId,
-            Seed = seed,
-            Year = GetScheduleYear(),
-            IsPublished = false,
-        };
-
-        await context.Pgy4RotationSchedules.AddAsync(schedule);
-        await context.SaveChangesAsync();
-
-        // Add result to rotations table
-        List<Rotation> rotationsToAdd =
-            await pgy4RotationScheduleService.GetRotationsFromGeneratedSchedule(
-                generatedSchedule,
-                newScheduleId
-            );
-
-        // Insert rotations
-        await context.Rotations.AddRangeAsync(rotationsToAdd);
-        await context.SaveChangesAsync();
-
-        return schedule;
-    }
-
-    private async Task<Pgy4RotationScheduleResponse> GetScheduleResponseById(Guid scheduleId)
-    {
-        Pgy4RotationSchedule addedSchedule = await context
-            .Pgy4RotationSchedules.Include(s => s.Rotations)
-                .ThenInclude((r) => r.RotationType)
-            .Include((s) => s.Rotations)
-                .ThenInclude((r) => r.Resident)
-            .FirstAsync((s) => s.Pgy4RotationScheduleId == scheduleId);
-
-        Pgy4RotationScheduleResponse response =
-            pgy4RotationScheduleConverter.CreateRotationScheduleResponseFromModel(addedSchedule);
-        return response;
-    }
-
-    private async Task<List<Resident>> ValidateAllPrefRequestSubmitted()
-    {
-        List<Resident> residents = await context
-            .Residents.Where((resident) => resident.GraduateYr == 3)
-            .ToListAsync();
-        List<RotationPrefRequest> requests = await context.RotationPrefRequests.ToListAsync();
-
-        List<Resident> unsubmittedResidents = [];
-
-        foreach (Resident resident in residents)
-        {
-            RotationPrefRequest? foundRequest = requests.FirstOrDefault(
-                (request) => request.ResidentId == resident.ResidentId
-            );
-            if (foundRequest == null)
-            {
-                unsubmittedResidents.Add(resident);
-            }
-        }
-
-        return unsubmittedResidents;
-    }
-
-    private async Task<int> GetScheduleCount()
-    {
-        int count = (await context.Pgy4RotationSchedules.ToListAsync()).Count;
-        return count;
-    }
-
-    private static int GetScheduleYear()
-    {
-        int currentYear = DateTime.Today.Year;
-        int currentMonth = DateTime.Today.Month;
-
-        int scheduleYear = currentYear;
-        if (currentMonth < 7)
-        {
-            scheduleYear--;
-        }
-
-        return scheduleYear;
     }
 }
