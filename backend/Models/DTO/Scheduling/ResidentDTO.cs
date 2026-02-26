@@ -24,8 +24,9 @@ public abstract class ResidentDTO
 
     public void SaveWorkDays()
     {
-        foreach (DateOnly day in WorkDays)
+        for (int i = WorkDays.Count - 1; i >= 0; i--)
         {
+            DateOnly day = WorkDays.ElementAt(i);
             CommitedWorkDays.Add(day);
             PendingSaveWorkDays.Add(day);
             WorkDays.Remove(day);
