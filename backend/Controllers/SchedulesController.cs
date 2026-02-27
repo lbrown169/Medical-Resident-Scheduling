@@ -64,11 +64,6 @@ public class SchedulesController : ControllerBase
 
         List<Schedule> schedules = await query.ToListAsync();
 
-        if (!schedules.Any())
-        {
-            return NotFound();
-        }
-
         // dictionary of resident ID to hours for the Schedule
         List<ScheduleResponse> scheduleResponses = schedules
             .Select(schedule => _scheduleConverter.CreateScheduleResponseFromSchedule(schedule))
@@ -90,30 +85,36 @@ public class SchedulesController : ControllerBase
             return NotFound();
         }
 
-        if (existingSchedule.Status == updateSchedule.Status)
+        bool updated = false;
+
+        if (updateSchedule.Status != null)
+        {
+            // Only one schedule per year/semester can be published
+            if (updateSchedule.Status == ScheduleStatus.Published)
+            {
+                bool isSchedulePublished = await _context.Schedules.AnyAsync(s =>
+                    s.Year == existingSchedule.Year
+                    && s.Semester == existingSchedule.Semester
+                    && s.Status == ScheduleStatus.Published
+                );
+                if (isSchedulePublished)
+                {
+                    return Conflict(new GenericResponse
+                    {
+                        Success = false,
+                        Message = $"A schedule for {existingSchedule.Semester.GetDisplayName()} {existingSchedule.Year} is already published"
+                    });
+                }
+            }
+
+            updated = existingSchedule.Status != updateSchedule.Status;
+            existingSchedule.Status = (ScheduleStatus) updateSchedule.Status;
+        }
+
+        if (!updated)
         {
             return NoContent();
         }
-
-        // Only one schedule per year/semester can be published
-        if (updateSchedule.Status == ScheduleStatus.Published)
-        {
-            bool isSchedulePublished = await _context.Schedules.AnyAsync(s =>
-                s.Year == existingSchedule.Year
-                && s.Semester == existingSchedule.Semester
-                && s.Status == ScheduleStatus.Published
-            );
-            if (isSchedulePublished)
-            {
-                return Conflict(new GenericResponse
-                {
-                    Success = false,
-                    Message = $"A schedule for {existingSchedule.Semester.GetDisplayName()} {existingSchedule.Year} is already published"
-                });
-            }
-        }
-
-        existingSchedule.Status = updateSchedule.Status;
 
         try
         {
