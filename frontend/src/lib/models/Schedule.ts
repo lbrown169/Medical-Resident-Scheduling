@@ -3,10 +3,16 @@ export interface ScheduleStatus {
   description: string;
 }
 
+export interface ScheduleSemester {
+  id: number;
+  name: string;
+}
+
 export interface Schedule {
   scheduleId: string;
   status: ScheduleStatus;
-  generatedYear: number;
+  year: number;
+  semester: ScheduleSemester;
 }
 
 export interface SchedulesByYear {

@@ -26,6 +26,7 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
   // Generate schedule state
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
+  const [selectedSemester, setSelectedSemester] = useState<"Fall" | "Spring">("Fall");
   const [generating, setGenerating] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
@@ -64,18 +65,26 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
   }, [fetchSchedules]);
 
   const getUniqueYears = (scheduleList: Schedule[]): number[] => {
-    const years = [...new Set(scheduleList.map((s) => s.generatedYear))];
+    const years = [...new Set(scheduleList.map((s) => s.year))];
     return years.sort((a, b) => a - b); // Sort ascending
   };
 
   const groupSchedulesByYear = (scheduleList: Schedule[]): SchedulesByYear => {
     const grouped: SchedulesByYear = {};
     scheduleList.forEach((schedule) => {
-      if (!grouped[schedule.generatedYear]) {
-        grouped[schedule.generatedYear] = [];
+      if (!grouped[schedule.year]) {
+        grouped[schedule.year] = [];
       }
-      grouped[schedule.generatedYear].push(schedule);
+      grouped[schedule.year].push(schedule);
     });
+    // Sort within each year: published first, then Fall before Spring
+    Object.values(grouped).forEach((list) =>
+      list.sort((a: Schedule, b: Schedule) => {
+        const pubDiff = (b.status.id === 1 ? 1 : 0) - (a.status.id === 1 ? 1 : 0);
+        if (pubDiff !== 0) return pubDiff;
+        return a.semester.id - b.semester.id;
+      })
+    );
     return grouped;
   };
 
@@ -91,21 +100,23 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
     });
   };
 
-  const handleGenerateSchedule = async (year: number) => {
+  const handleGenerateSchedule = async (year: number, semester: "Fall" | "Spring") => {
     setGenerating(true);
     try {
-      const response = await fetch(`${config.apiUrl}/api/algorithm/training/${year}`, {
+      const semesterValue = semester === "Fall" ? 1 : 2;
+      const response = await fetch(`${config.apiUrl}/api/algorithm/${year}/${semesterValue}/generate`, {
         method: "POST",
       });
 
       if (!response.ok) {
-        throw new Error("Failed to generate schedule");
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || "Failed to generate schedule");
       }
 
       toast({
         variant: "success",
         title: "Schedule Generated",
-        description: `New schedule for ${year} generated successfully!`,
+        description: `New ${semester} ${year} schedule generated successfully!`,
       });
 
       // Refresh the schedules list and expand the new year
@@ -116,7 +127,7 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to generate schedule. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to generate schedule. Please try again.",
       });
     } finally {
       setGenerating(false);
@@ -203,7 +214,7 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
         toast({
           variant: "destructive",
           title: "Cannot Publish",
-          description: `A schedule for ${schedule.generatedYear} is already published. Unpublish it first.`,
+          description: `A schedule for ${schedule.semester.name} ${schedule.year} is already published. Unpublish it first.`,
         });
       } else {
         throw new Error("Failed to update schedule");
@@ -259,31 +270,29 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
                 disabled={generating}
                 className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-5 text-base font-semibold rounded-r-none shadow-md"
               >
-                {generating ? "Generating..." : `Generate ${selectedYear}`}
+                {generating ? "Generating..." : `Generate ${selectedSemester} ${selectedYear}`}
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-5 rounded-l-none border-l border-blue-400 shadow-md"
                     disabled={generating}
-                    aria-label="Choose year"
+                    aria-label="Choose semester and year"
                   >
                     <ChevronDown className="w-5 h-5" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setSelectedYear(currentYear - 1)}>
-                    Generate for {currentYear - 1}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSelectedYear(currentYear)}>
-                    Generate for {currentYear}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSelectedYear(currentYear + 1)}>
-                    Generate for {currentYear + 1}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSelectedYear(currentYear + 2)}>
-                    Generate for {currentYear + 2}
-                  </DropdownMenuItem>
+                  {[currentYear - 1, currentYear, currentYear + 1, currentYear + 2].map((yr) => (
+                    <React.Fragment key={yr}>
+                      <DropdownMenuItem onClick={() => { setSelectedSemester("Fall"); setSelectedYear(yr); }}>
+                        Fall {yr}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => { setSelectedSemester("Spring"); setSelectedYear(yr); }}>
+                        Spring {yr}
+                      </DropdownMenuItem>
+                    </React.Fragment>
+                  ))}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -296,10 +305,10 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
         title="Generate new schedule?"
-        message={`This will create a new schedule for ${selectedYear}. Continue?`}
+        message={`This will create a new ${selectedSemester} schedule for ${selectedYear}. Continue?`}
         confirmText="Generate"
         cancelText="Cancel"
-        onConfirm={() => handleGenerateSchedule(selectedYear)}
+        onConfirm={() => handleGenerateSchedule(selectedYear, selectedSemester)}
         loading={generating}
         variant="default"
       />
@@ -316,7 +325,9 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
           <div className="space-y-2">
             {years.map((year) => {
               const yearSchedules = groupedSchedules[year] || [];
-              const publishedSchedule = yearSchedules.find((s) => s.status.id === 1);
+              const publishedSemesters = yearSchedules
+                .filter((s) => s.status.id === 1)
+                .map((s) => s.semester.name);
 
               return (
                 <Card key={year} className="overflow-hidden">
@@ -324,9 +335,9 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
                   <div className="w-full flex items-center justify-between p-4">
                     <div className="flex items-center gap-3">
                       <span className="text-lg font-medium">{year}</span>
-                      {publishedSchedule && (
+                      {publishedSemesters.length > 0 && (
                         <span className="text-xs bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 px-2 py-0.5 rounded">
-                          Published
+                          {publishedSemesters.join(" & ")} Published
                         </span>
                       )}
                       <span className="text-sm text-gray-400">
@@ -358,6 +369,11 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
                                 className="border-b border-gray-100 dark:border-gray-700 last:border-b-0"
                               >
                                 <td className="py-3 pr-4 text-gray-500 w-12">#{index + 1}</td>
+                                <td className="py-3 pr-4">
+                                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                    {schedule.semester.name}
+                                  </span>
+                                </td>
                                 <td className="py-3">
                                   <div className="flex items-center gap-2">
                                     <button
@@ -382,7 +398,7 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
                                 </td>
                                 <td className="py-3 text-right">
                                   <div className="flex items-center justify-end gap-4">
-                                    <Button variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-500 hover:text-white" onClick={() => handleEdit(schedule.scheduleId, schedule.generatedYear)}>
+                                    <Button variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-500 hover:text-white" onClick={() => handleEdit(schedule.scheduleId, schedule.year)}>
                                       <Edit className="h-4 w-4 mr-2" /> Edit
                                     </Button>
                                     <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white" onClick={() => handleDeleteClick(schedule)}>
@@ -409,7 +425,7 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
         open={deleteConfirmOpen}
         onOpenChange={setDeleteConfirmOpen}
         title="Delete Schedule?"
-        message={`Are you sure you want to delete this schedule for ${scheduleToDelete?.generatedYear}? This action cannot be undone.`}
+        message={`Are you sure you want to delete this ${scheduleToDelete?.semester.name} ${scheduleToDelete?.year} schedule? This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"
         onConfirm={handleConfirmDelete}
@@ -426,8 +442,8 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
         title={scheduleToToggle?.status.id === 1 ? "Unpublish Schedule?" : "Publish Schedule?"}
         message={
           scheduleToToggle?.status.id === 1
-            ? `Are you sure you want to unpublish the schedule for ${scheduleToToggle?.generatedYear}? It will no longer be visible to residents.`
-            : `Are you sure you want to publish this schedule for ${scheduleToToggle?.generatedYear}? It will be visible to all residents.`
+            ? `Are you sure you want to unpublish the ${scheduleToToggle?.semester.name} ${scheduleToToggle?.year} schedule? It will no longer be visible to residents.`
+            : `Are you sure you want to publish this ${scheduleToToggle?.semester.name} ${scheduleToToggle?.year} schedule? It will be visible to all residents.`
         }
         confirmText={scheduleToToggle?.status.id === 1 ? "Unpublish" : "Publish"}
         cancelText="Cancel"
