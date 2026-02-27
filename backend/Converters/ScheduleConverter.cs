@@ -14,7 +14,7 @@ public class ScheduleConverter
         {
             ScheduleId = schedule.ScheduleId,
             Status = new ScheduleStatusResponse(schedule.Status),
-            GeneratedYear = schedule.GeneratedYear,
+            Year = schedule.Year,
             Semester = new SemesterInfoResponse(schedule.Semester)
         };
 

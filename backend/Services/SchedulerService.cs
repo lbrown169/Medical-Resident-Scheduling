@@ -34,10 +34,11 @@ public class SchedulerService
         Semester semester)
     {
         // validate year input
-        if (year < DateTime.Now.AcademicYear)
+        int academicYear = semester == Semester.Fall ? year : year - 1;
+        if (academicYear < DateTime.Now.AcademicYear)
         {
             return (false,
-                $"Year must be the current year or later."
+                $"Year must be the current academic year or later."
             );
         }
 
@@ -165,7 +166,7 @@ public class SchedulerService
 
                 // Save schedule record
                 Schedule schedule = new()
-                { ScheduleId = Guid.NewGuid(), Status = ScheduleStatus.UnderReview, GeneratedYear = year, Semester = semester };
+                { ScheduleId = Guid.NewGuid(), Status = ScheduleStatus.UnderReview, Year = year, Semester = semester };
                 _context.Schedules.Add(schedule);
                 await _context.SaveChangesAsync();
 
@@ -203,7 +204,7 @@ public class SchedulerService
                 {
                     ScheduleId = schedule.ScheduleId,
                     Status = new ScheduleStatusResponse(schedule.Status),
-                    GeneratedYear = schedule.GeneratedYear,
+                    Year = schedule.Year,
                     Semester = new SemesterInfoResponse(schedule.Semester),
                     ResidentHours = residentHours,
                     TotalHours = residentHours.Values.Sum(),
@@ -233,7 +234,7 @@ public class SchedulerService
         List<Rotation> rotations = await _context.Rotations.ToListAsync();
         List<Vacation> vacations = await _context.Vacations
             .Where(v => v.Status == "Approved").ToListAsync();
-        List<Date> dates = await _context.Dates.Where(d => d.Schedule.Status == ScheduleStatus.Published && d.Schedule.GeneratedYear == year).ToListAsync();
+        List<Date> dates = await _context.Dates.Where(d => d.Schedule.Status == ScheduleStatus.Published && d.Schedule.Year == year).ToListAsync();
 
         List<PGY1DTO> pgy1s = residents
             .Where(r => r.GraduateYr == 1)

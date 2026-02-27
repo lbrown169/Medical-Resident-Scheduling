@@ -33,7 +33,7 @@ public class SchedulesController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ScheduleResponse>>> GetSchedules(
         [FromQuery] Guid? scheduleId = null,
-        [FromQuery] int? generatedYear = null,
+        [FromQuery] int? year = null,
         [FromQuery] Semester? semester = null,
         [FromQuery] ScheduleStatus? status = null)
     {
@@ -47,9 +47,9 @@ public class SchedulesController : ControllerBase
             query = query.Where(s => s.ScheduleId == scheduleId.Value);
         }
 
-        if (generatedYear.HasValue)
+        if (year.HasValue)
         {
-            query = query.Where(s => s.GeneratedYear == generatedYear.Value);
+            query = query.Where(s => s.Year == year.Value);
         }
 
         if (semester.HasValue)
@@ -95,11 +95,12 @@ public class SchedulesController : ControllerBase
             return NoContent();
         }
 
-        // Only one schedule per year can be published
+        // Only one schedule per year/semester can be published
         if (updateSchedule.Status == ScheduleStatus.Published)
         {
             bool isSchedulePublished = await _context.Schedules.AnyAsync(s =>
-                s.GeneratedYear == existingSchedule.GeneratedYear
+                s.Year == existingSchedule.Year
+                && s.Semester == existingSchedule.Semester
                 && s.Status == ScheduleStatus.Published
             );
             if (isSchedulePublished)
@@ -107,7 +108,7 @@ public class SchedulesController : ControllerBase
                 return Conflict(new GenericResponse
                 {
                     Success = false,
-                    Message = $"A schedule for {existingSchedule.GeneratedYear} is already published"
+                    Message = $"A schedule for {existingSchedule.Semester.GetDisplayName()} {existingSchedule.Year} is already published"
                 });
             }
         }

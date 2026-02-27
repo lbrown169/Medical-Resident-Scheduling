@@ -274,6 +274,9 @@ namespace MedicalDemo.Models.Entities
                 entity.HasIndex(e => e.ScheduleId, "schedule_id_UNIQUE")
                     .IsUnique();
 
+                entity.Property(e => e.Year)
+                    .HasColumnName("GeneratedYear");
+
                 entity.Property(e => e.ScheduleId)
                     .HasColumnType("binary(16)")
                     .HasColumnName("schedule_id");
