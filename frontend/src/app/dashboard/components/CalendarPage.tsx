@@ -281,35 +281,38 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
       {/* Header - Hidden on mobile */}
       <div className="bg-card border pt-6 pb-8 fixed left-0 right-0 top-0 z-10 px-8 hidden md:block">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <h1 className="text-5xl font-bold text-foreground">
+          {/* Left side of header */}
+          <div className="flex flex-col">
+            <h1 className="text-4xl font-bold text-foreground">
               {getPeriodTitle()}
             </h1>
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-3 mt-4">
               <button
                 onClick={() => navigatePeriod('prev')}
-                className="p-3 hover:bg-muted rounded-full transition-colors duration-200"
+                className="p-2 hover:bg-muted rounded-full transition-colors duration-200"
               >
-                <ChevronLeft className="w-6 h-6 text-muted-foreground" />
+                <ChevronLeft className="w-5 h-5 text-muted-foreground" />
               </button>
               <button
                 onClick={goToToday}
-                className="px-6 py-3 text-sm font-semibold text-primary hover:bg-primary/10 rounded-xl transition-colors duration-200"
+                className="px-5 py-2 text-sm font-semibold text-primary hover:bg-primary/10 rounded-xl transition-colors duration-200"
               >
                 Today
               </button>
               <button
                 onClick={() => navigatePeriod('next')}
-                className="p-3 hover:bg-muted rounded-full transition-colors duration-200"
+                className="p-2 hover:bg-muted rounded-full transition-colors duration-200"
               >
-                <ChevronRight className="w-6 h-6 text-muted-foreground" />
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
               </button>
             </div>
           </div>
-          <div className="flex space-x-3 items-center">
+
+          {/* Right side of header */}
+          <div className="flex space-x-3 items-center mt-2">
             <button 
               onClick={() => setViewMode('day')}
-              className={`px-5 py-3 text-sm font-medium rounded-xl transition-colors duration-200 ${
+              className={`px-5 py-2 text-sm font-medium rounded-xl transition-colors duration-200 ${
                 viewMode === 'day' 
                   ? 'text-primary-foreground bg-primary border border-primary hover:bg-primary/90 shadow-lg'
                   : 'text-muted-foreground bg-card border border-border hover:bg-muted'
@@ -319,7 +322,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
             </button>
             <button 
               onClick={() => setViewMode('week')}
-              className={`px-5 py-3 text-sm font-medium rounded-xl transition-colors duration-200 ${
+              className={`px-5 py-2 text-sm font-medium rounded-xl transition-colors duration-200 ${
                 viewMode === 'week' 
                   ? 'text-primary-foreground bg-primary border border-primary hover:bg-primary/90 shadow-lg'
                   : 'text-muted-foreground bg-card border border-border hover:bg-muted'
@@ -329,7 +332,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
             </button>
             <button 
               onClick={() => setViewMode('month')}
-              className={`px-5 py-3 text-sm font-medium rounded-xl transition-colors duration-200 ${
+              className={`px-5 py-2 text-sm font-medium rounded-xl transition-colors duration-200 ${
                 viewMode === 'month' 
                   ? 'text-primary-foreground bg-primary border border-primary hover:bg-primary/90 shadow-lg'
                   : 'text-muted-foreground bg-card border border-border hover:bg-muted'
@@ -339,7 +342,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
             </button>
             <button 
               onClick={() => setViewMode('year')}
-              className={`px-5 py-3 text-sm font-medium rounded-xl transition-colors duration-200 ${
+              className={`px-5 py-2 text-sm font-medium rounded-xl transition-colors duration-200 ${
                 viewMode === 'year' 
                   ? 'text-primary-foreground bg-primary border border-primary hover:bg-primary/90 shadow-lg'
                   : 'text-muted-foreground bg-card border border-border hover:bg-muted'
