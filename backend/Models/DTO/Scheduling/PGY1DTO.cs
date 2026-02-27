@@ -6,7 +6,7 @@ public class PGY1DTO : ResidentDTO
 
     public override bool CanWork(DateOnly curDay)
     {
-        if (IsVacation(curDay))
+        if (IsVacation(curDay) || CommitedWorkDay(curDay))
         {
             return false;
         }
@@ -65,7 +65,7 @@ public class PGY1DTO : ResidentDTO
         if (WorkDays.Contains(curDay))
         {
             throw new InvalidOperationException(
-                "Resident already scheduled this day");
+                $"Resident already scheduled for {curDay}");
         }
 
         WorkDays.Add(curDay);
@@ -76,7 +76,7 @@ public class PGY1DTO : ResidentDTO
         if (!WorkDays.Contains(curDay))
         {
             throw new InvalidOperationException(
-                "Resident not scheduled this day");
+                $"Resident not scheduled for {curDay}");
         }
 
         WorkDays.Remove(curDay);

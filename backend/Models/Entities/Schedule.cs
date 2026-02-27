@@ -12,7 +12,8 @@ namespace MedicalDemo.Models.Entities
 
         public Guid ScheduleId { get; set; }
         public ScheduleStatus Status { get; set; }
-        public int GeneratedYear { get; set; }
+        public int Year { get; set; }
+        public Semester Semester { get; set; }
 
         public virtual ICollection<Date> Dates { get; set; }
         public virtual ICollection<SwapRequest> SwapRequests { get; set; }
