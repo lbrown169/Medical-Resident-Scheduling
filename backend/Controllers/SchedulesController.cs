@@ -108,7 +108,7 @@ public class SchedulesController : ControllerBase
             }
 
             updated = existingSchedule.Status != updateSchedule.Status;
-            existingSchedule.Status = (ScheduleStatus) updateSchedule.Status;
+            existingSchedule.Status = (ScheduleStatus)updateSchedule.Status;
         }
 
         if (!updated)
