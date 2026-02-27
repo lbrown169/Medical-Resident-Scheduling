@@ -2,6 +2,7 @@ using MedicalDemo.Algorithm;
 using MedicalDemo.Enums;
 using MedicalDemo.Extensions;
 using MedicalDemo.Models;
+using MedicalDemo.Models.DTO;
 using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.DTO.Scheduling;
 using MedicalDemo.Models.Entities;
