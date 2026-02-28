@@ -252,6 +252,7 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
   const groupedSchedules = groupSchedulesByAcademicYear(schedules);
   const academicYears = getUniqueAcademicYears(schedules);
   const publishedCount = schedules.filter((s) => s.status.id === 1).length;
+  const underReviewCount = schedules.length - publishedCount;
   if (loading) {
     return (
       <div className="w-full pt-4 flex flex-col items-center">
@@ -272,9 +273,9 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
           <div className="flex flex-col items-center">
             <div className="flex items-center gap-2 mb-1">
               <FileText className="w-5 h-5 text-yellow-500" />
-              <span className="text-2xl font-bold text-gray-900 dark:text-white">{schedules.length}</span>
+              <span className="text-2xl font-bold text-gray-900 dark:text-white">{underReviewCount}</span>
             </div>
-            <span className="text-xs text-gray-500">Schedules Generated</span>
+            <span className="text-xs text-gray-500">Schedules Under Review</span>
           </div>
           <div className="flex flex-col items-center border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-700 pt-4 sm:pt-0 sm:pl-8">
             <div className="flex items-center gap-2 mb-1">
