@@ -18,4 +18,5 @@ public class DateCreateRequest
     [Required]
     public required CallShiftType CallType { get; set; }
 
+    public int? Hours { get; set; }
 }

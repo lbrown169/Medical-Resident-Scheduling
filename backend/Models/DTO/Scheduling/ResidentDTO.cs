@@ -1,3 +1,5 @@
+using MedicalDemo.Enums;
+
 namespace MedicalDemo.Models.DTO.Scheduling;
 
 public abstract class ResidentDTO
@@ -13,7 +15,7 @@ public abstract class ResidentDTO
 
     public HospitalRole?[] RolePerMonth { get; set; } = new HospitalRole?[12];
 
-    public abstract bool CanWork(DateOnly date);
+    public abstract bool CanWork(DateOnly date, CallLengthType lengthType);
     public abstract void AddWorkDay(DateOnly date);
     public abstract void RemoveWorkDay(DateOnly date);
 
@@ -57,9 +59,9 @@ public abstract class ResidentDTO
         return WorkDays.Contains(curDay);
     }
 
-    public bool CanAddWorkDay(DateOnly curDay)
+    public bool CanAddWorkDay(DateOnly curDay, CallLengthType lengthType)
     {
-        return CanWork(curDay) && !IsWorking(curDay);
+        return CanWork(curDay, lengthType) && !IsWorking(curDay);
     }
 
     /// <summary>

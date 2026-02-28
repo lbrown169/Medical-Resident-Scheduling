@@ -8,6 +8,7 @@ using MedicalDemo.Models.DTO.Requests;
 using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.DTO.Scheduling;
 using MedicalDemo.Models.Entities;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -40,9 +41,33 @@ public class DatesController : ControllerBase
             return BadRequest();
         }
 
-        date.Hours = CallShiftTypeExtensions
-            .GetCallShiftTypeForDate(date.ShiftDate, resident.GraduateYr)
-            .GetHours();
+        if (request.CallType is not CallShiftType.Custom)
+        {
+            if (CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(date.ShiftDate, resident.GraduateYr) is
+                not { } shiftType)
+            {
+                return BadRequest(new GenericResponse
+                {
+                    Success = false,
+                    Message = "Shift is not valid for given resident year"
+                });
+            }
+
+            date.Hours = request.Hours ?? shiftType.GetHours();
+        }
+        else
+        {
+            if (request.Hours is null)
+            {
+                return BadRequest(new GenericResponse
+                {
+                    Success = false,
+                    Message = "Hours is required if the CallType is Custom"
+                });
+            }
+
+            date.Hours = request.Hours.Value;
+        }
 
         _context.Dates.Add(date);
         await _context.SaveChangesAsync();
@@ -123,11 +148,26 @@ public class DatesController : ControllerBase
             return BadRequest();
         }
 
-        if (updatedDate.Hours is null)
+        if (updatedDate.CallType is not null and not CallShiftType.Custom)
         {
-            existingDate.Hours = CallShiftTypeExtensions
-                .GetCallShiftTypeForDate(existingDate.ShiftDate,
-                    resident.GraduateYr).GetHours();
+            if (CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(existingDate.ShiftDate, resident.GraduateYr) is
+                not { } shiftType)
+            {
+                return BadRequest(new GenericResponse
+                {
+                    Success = false,
+                    Message = "Shift is not valid for given resident year"
+                });
+            }
+
+            existingDate.Hours = updatedDate.Hours ?? shiftType.GetHours();
+        }
+        else
+        {
+            if (updatedDate.Hours is not null)
+            {
+                existingDate.Hours = updatedDate.Hours.Value;
+            }
         }
 
         try

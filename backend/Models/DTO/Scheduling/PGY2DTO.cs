@@ -1,8 +1,10 @@
+using MedicalDemo.Enums;
+
 namespace MedicalDemo.Models.DTO.Scheduling;
 
 public class PGY2DTO : ResidentDTO
 {
-    public override bool CanWork(DateOnly curDay)
+    public override bool CanWork(DateOnly curDay, CallLengthType lengthType)
     {
         if (IsVacation(curDay) || CommitedWorkDay(curDay))
         {
@@ -12,7 +14,7 @@ public class PGY2DTO : ResidentDTO
         int monthIndex = (curDay.Month + 5) % 12;
         HospitalRole? role = RolePerMonth[monthIndex];
 
-        if (curDay.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
+        if (lengthType == CallLengthType.Long)
         {
             if (role is { DoesLong: false } && (!InTraining || !role.DoesTrainingLong))
             {

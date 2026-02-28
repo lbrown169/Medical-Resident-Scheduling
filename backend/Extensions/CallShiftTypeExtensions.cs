@@ -1,118 +1,70 @@
+using System.Reflection;
+using MedicalDemo.Attributes;
+using MedicalDemo.Enums;
 using MedicalDemo.Models.DTO.Scheduling;
 
 namespace MedicalDemo.Extensions;
 
 public static class CallShiftTypeExtensions
 {
-    public static List<CallShiftType> GetAllCallShiftTypes()
+    private static readonly Dictionary<CallShiftType, CallShiftAttribute> _cache =
+        Enum.GetValues<CallShiftType>()
+            .ToDictionary(
+                shift => shift,
+                shift => typeof(CallShiftType)
+                             .GetField(shift.ToString())!
+                             .GetCustomAttribute<CallShiftAttribute>())
+            .Where(kvp => kvp.Value is not null)
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value!);
+
+    private static CallShiftAttribute Attr(this CallShiftType shift) => _cache[shift];
+
+    public static List<CallShiftType> GetAllAlgorithmCallShiftTypes()
     {
-        return Enum.GetValues<CallShiftType>().ToList();
+        return _cache.Keys.ToList();
     }
 
-    public static List<CallShiftType> GetAllCallShiftTypesForDate(DateOnly date)
+    public static List<CallShiftType> GetAllAlgorithmCallShiftTypesForDate(DateOnly date)
     {
-        switch (date.DayOfWeek)
+        List<CallShiftType> matches = GetAllAlgorithmCallShiftTypes().Where(s =>
         {
-            case DayOfWeek.Monday:
-            case DayOfWeek.Tuesday:
-            case DayOfWeek.Wednesday:
-            case DayOfWeek.Thursday:
-            case DayOfWeek.Friday:
-                return [CallShiftType.WeekdayShortCall];
-            case DayOfWeek.Saturday:
-                return [CallShiftType.SaturdayFullCall, CallShiftType.SaturdayHalfCall];
-            case DayOfWeek.Sunday:
-                return [CallShiftType.SundayHalfCall];
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
-    }
+            CallShiftAttribute attr = s.Attr();
+            bool dayMatches = attr.ApplicableDays is null ||
+                              attr.ApplicableDays.Contains(date.DayOfWeek);
+            bool ruleMatches = attr.DateRule.Applies(date);
+            return dayMatches && ruleMatches;
+        }).ToList();
 
-    public static CallShiftType GetCallShiftTypeForDate(DateOnly date, int year)
-    {
-        switch (date.DayOfWeek)
+        if (matches.Count == 0)
         {
-            case DayOfWeek.Monday:
-            case DayOfWeek.Tuesday:
-            case DayOfWeek.Wednesday:
-            case DayOfWeek.Thursday:
-            case DayOfWeek.Friday:
-                return CallShiftType.WeekdayShortCall;
-            case DayOfWeek.Saturday when year == 1:
-                return CallShiftType.SaturdayFullCall;
-            case DayOfWeek.Saturday when year == 2:
-                return CallShiftType.SaturdayHalfCall;
-            case DayOfWeek.Sunday:
-                return CallShiftType.SundayHalfCall;
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
-    }
-
-    public static List<CallShiftType> GetAllCallShiftsForYear(int year)
-    {
-        List<CallShiftType> shifts = [CallShiftType.WeekdayShortCall, CallShiftType.SundayHalfCall];
-
-        switch (year)
-        {
-            case 1:
-                shifts.Add(CallShiftType.SaturdayFullCall);
-                break;
-            case 2:
-                shifts.Add(CallShiftType.SaturdayHalfCall);
-                break;
+            return matches;
         }
 
-        return shifts;
+        int maxPriority = matches.Max(s => s.Attr().Priority);
+        return matches.Where(s => s.Attr().Priority == maxPriority).ToList();
     }
 
-    public static int? GetRequiredYear(this CallShiftType callShiftType)
+    public static CallShiftType? GetAlgorithmCallShiftTypeForDate(DateOnly date, int year)
     {
-        switch (callShiftType)
+        return GetAllAlgorithmCallShiftTypesForDate(date).Cast<CallShiftType?>().FirstOrDefault(s =>
         {
-            case CallShiftType.WeekdayShortCall:
-            case CallShiftType.SundayHalfCall:
-                return null;
-            case CallShiftType.SaturdayFullCall:
-                return 1;
-            case CallShiftType.SaturdayHalfCall:
-                return 2;
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
+            int requiredPgy = ((CallShiftType) s!).Attr().RequiredPgy;
+            return requiredPgy == 0 || requiredPgy == year;
+        });
     }
 
-    public static int GetHours(this CallShiftType callShiftType)
+    public static List<CallShiftType> GetAllAlgorithmCallShiftsForYear(int year)
     {
-        switch (callShiftType)
+        return GetAllAlgorithmCallShiftTypes().Where(s =>
         {
-            case CallShiftType.WeekdayShortCall:
-                return 3;
-            case CallShiftType.SundayHalfCall:
-                return 12;
-            case CallShiftType.SaturdayFullCall:
-                return 24;
-            case CallShiftType.SaturdayHalfCall:
-                return 12;
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
+            int requiredPgy = s.Attr().RequiredPgy;
+            return requiredPgy == 0 || requiredPgy == year;
+        }).ToList();
     }
 
-    public static string GetDescription(this CallShiftType callShiftType)
-    {
-        switch (callShiftType)
-        {
-            case CallShiftType.WeekdayShortCall:
-                return "Short";
-            case CallShiftType.SaturdayHalfCall:
-                return "Saturday (12h)";
-            case CallShiftType.SaturdayFullCall:
-                return "Saturday (24h)";
-            case CallShiftType.SundayHalfCall:
-                return "Sunday (12h)";
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
-    }
+    public static int? GetRequiredYear(this CallShiftType shift) => shift.Attr().RequiredPgy == 0 ? null : shift.Attr().RequiredPgy;
+
+    public static int GetHours(this CallShiftType shift) => shift.Attr().Hours;
+
+    public static CallLengthType GetLengthType(this CallShiftType shift) => shift.Attr().CallLengthType;
 }
