@@ -596,7 +596,7 @@ public class DatabaseSeeder
 
             while (start <= end)
             {
-                for (int i = 0; i < 6; i++)
+                for (int i = 0; i < 3; i++)
                 {
                     vacations.Add(new Vacation
                     {

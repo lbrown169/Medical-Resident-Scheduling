@@ -866,10 +866,6 @@ public class AlgorithmService
         int[] pgy2WorkTime,
         Dictionary<CallShiftType, int>[] allowedCallTypes)
     {
-        int max = Math.Max(pgy1WorkTime.Max(), pgy2WorkTime.Max());
-        int min = Math.Min(pgy1WorkTime.Min(), pgy2WorkTime.Min());
-        int diff = max - min;
-
         // find the person who worked the most
         int giverIndex = 0;
         int giveHour = -1;
@@ -926,11 +922,13 @@ public class AlgorithmService
             int normalizedIndex = receiverYear == 1 ? i : i - pgy1s.Count;
             Dictionary<CallShiftType, int> shiftCount = receiverYear == 1 ? pgy1ShiftCount[normalizedIndex] : pgy2ShiftCount[normalizedIndex];
 
-            List<CallShiftType> swappable = shiftCount
-                .Where(kvp => kvp.Value > 0)
+            List<CallShiftType> swappable = allowedCallTypes[i]
+                .Where(kvp => kvp.Value > shiftCount[kvp.Key])
                 .Select(kvp => kvp.Key)
                 .Intersect(giverShiftTypes)
-                .Where(s => giveHour - s.GetHours() > receiverHour)
+                .Where(s =>
+                    giveHour - s.GetHours() > receiverHour
+                )
                 .ToList();
 
             if (swappable.Count == 0)
@@ -963,45 +961,6 @@ public class AlgorithmService
             }
         }
 
-        // bool needsToCalculate;
-        // do
-        // {
-        //     count++;
-        //     // choose a random giving resident and a random receiving resident
-        //     receiverIndex = rand.Next(pgy1s.Count + pgy2s.Count);
-        //
-        //     // check that giver and receiver are not the same AND that giver works more than receiver
-        //     int receiveHour = receiverIndex < pgy1s.Count
-        //         ? pgy1WorkTime[receiverIndex]
-        //         : pgy2WorkTime[receiverIndex - pgy1s.Count];
-        //
-        //     // make sure they have common shift types
-        //     int receiverYear = receiverIndex < pgy1s.Count ? 1 : 2;
-        //     int normalizedReceiverIndex = receiverYear == 1 ? receiverIndex : receiverIndex - pgy1s.Count;
-        //     receiverShiftCount =
-        //         receiverYear == 1
-        //             ? pgy1ShiftCount[normalizedReceiverIndex]
-        //             : pgy2ShiftCount[normalizedReceiverIndex];
-        //     IEnumerable<CallShiftType> receiverShiftTypes = receiverShiftCount
-        //         .Where(kvp => allowedCallTypes[receiverIndex].ContainsKey(kvp.Key)
-        //                       && allowedCallTypes[receiverIndex][kvp.Key] > receiverShiftCount[kvp.Key]
-        //         )
-        //         .Select(kvp => kvp.Key);
-        //
-        //     swappableShiftTypes = giverShiftTypes.Intersect(receiverShiftTypes).ToList();
-        //
-        //     needsToCalculate = giveHour - receiveHour > diff / 2
-        //                        || giverIndex == receiverIndex
-        //                        || swappableShiftTypes.Count == 0;
-        // } while (needsToCalculate && count < 100);
-        //
-        // if (needsToCalculate)
-        // {
-        //     // Too many attempts
-        //     _logger.LogWarning("Failed to swap shifts with giver rooted after 100 attempts.");
-        //     return false;
-        // }
-
         int finalReceiverYear = selectedReceiverIndex < pgy1s.Count ? 1 : 2;
         int normalizedReceiverIndex = finalReceiverYear == 1 ? selectedReceiverIndex : selectedReceiverIndex - pgy1s.Count;
         int finalReceiverHour = finalReceiverYear == 1
@@ -1010,8 +969,7 @@ public class AlgorithmService
         Dictionary<CallShiftType, int> receiverShiftCount = finalReceiverYear == 1
             ? pgy1ShiftCount[normalizedReceiverIndex]
             : pgy2ShiftCount[normalizedReceiverIndex];
-        IEnumerable<CallShiftType> receiverShiftTypes = receiverShiftCount
-            .Where(kvp => kvp.Value > 0).Select(kvp => kvp.Key);
+        IEnumerable<CallShiftType> receiverShiftTypes = allowedCallTypes[selectedReceiverIndex].Select(kvp => kvp.Key);
         List<CallShiftType> swappableShiftTypes = giverShiftTypes.Intersect(receiverShiftTypes).ToList();
 
         int shiftIndex = rand.Next(0, swappableShiftTypes.Count);
@@ -1020,6 +978,7 @@ public class AlgorithmService
         _logger.LogDebug("Receiver {index} has {hour} hours. Receiving {shift}", selectedReceiverIndex, finalReceiverHour, shift.GetDisplayName());
 
         giverShiftCount[shift]--;
+        receiverShiftCount.TryAdd(shift, 0);
         receiverShiftCount[shift]++;
 
         return true;
@@ -1147,6 +1106,7 @@ public class AlgorithmService
         _logger.LogDebug("Giver {index} has {hour} hours. Giving {shift}", selectedGiverIndex, finalGiverHour, shift.GetDisplayName());
 
         giverShiftCount[shift]--;
+        receiverShiftCount.TryAdd(shift, 0);
         receiverShiftCount[shift]++;
 
         return true;
@@ -1438,116 +1398,7 @@ public class AlgorithmService
                         );
                         return false;
                     }
-
-                    /*
-                    // give a different resdient the shifts that were not assigned
-                    if (edge.flow() < edge.originalCap)
-                    {
-                        // get the shift type based on the modulo by 3 of the destination index
-                        // there are 3 shift types: 3h, 12h, and 24h
-                        int shiftTypeValue = edge.destination % 3 == 0 ? 3 :
-                            edge.destination % 3 == 1 ? 12 : 24;
-
-                        // check if the shift type is already in the map
-                        if (unhandledShifts.ContainsKey(shiftTypeValue))
-                        {
-                            unhandledShifts[shiftTypeValue] +=
-                                edge.originalCap - edge.flow();
-                        }
-                        // increment the count for this shift type
-                        else
-                        {
-                            unhandledShifts[shiftTypeValue] =
-                                edge.originalCap - edge.flow();
-                        }
-                        // initialize the count for this shift type
-
-                        // decrement the count for this shift type for the corresponding resident
-                        if (residentIndex < pgy1s.Count) // pgy1
-                        {
-                            if (pgy1ShiftCount[residentIndex]
-                                .ContainsKey(shiftTypeValue))
-                            {
-                                pgy1ShiftCount[residentIndex][shiftTypeValue]
-                                    -= edge.originalCap - edge.flow();
-                            }
-
-                            // Update the allowed call types for this resident
-                            allowedCallTypes[residentIndex][shiftTypeValue]
-                                = edge.flow();
-                        }
-                        else // pgy2
-                        {
-                            if (pgy2ShiftCount[residentIndex - pgy1s.Count]
-                                .ContainsKey(shiftTypeValue))
-                            {
-                                pgy2ShiftCount[residentIndex - pgy1s.Count][
-                                        shiftTypeValue] -=
-                                    edge.originalCap - edge.flow();
-                            }
-
-                            // Update the allowed call types for this resident
-                            allowedCallTypes[residentIndex][shiftTypeValue]
-                                = edge.flow();
-                        }
-                    } */
                 }
-
-                /*
-                // iterate through the unhandled shifts
-                foreach (KeyValuePair<int, int> kvp in unhandledShifts)
-                {
-                    for (int i = 0; i < kvp.Value; i++)
-                    {
-                        // find a random resident who can take this shift type
-                        int residentIndex
-                            = rand.Next(pgy1s.Count + pgy2s.Count);
-
-                        // check if the resident can take this shift type
-                        if (residentIndex < pgy1s.Count) // pgy1
-                        {
-                            if (allowedCallTypes[residentIndex]
-                                    .ContainsKey(kvp.Key) &&
-                                allowedCallTypes[residentIndex][kvp.Key] >
-                                pgy1ShiftCount[residentIndex][kvp.Key])
-                            // assign the shift to this resident
-                            {
-                                pgy1ShiftCount[residentIndex][kvp.Key]++;
-                            }
-                            else
-                            {
-                                i--;
-                            }
-                        }
-                        else
-                        {
-                            if (allowedCallTypes[residentIndex]
-                                    .ContainsKey(kvp.Key) &&
-                                allowedCallTypes[residentIndex][kvp.Key] >
-                                pgy2ShiftCount[residentIndex - pgy1s.Count][
-                                    kvp.Key])
-                            // assign the shift to this resident
-                            {
-                                pgy2ShiftCount[residentIndex - pgy1s.Count][
-                                    kvp.Key]++;
-                            }
-                            else
-                            {
-                                i--;
-                            }
-                        }
-                    }
-                }*/
-
-
-                /*
-                // print the unhandled shifts
-                Console.WriteLine("[DEBUG] Unhandled shifts:");
-                foreach (KeyValuePair<int, int> kvp in unhandledShifts)
-                {
-                    Console.WriteLine(
-                        $"Shift {kvp.Key} hours: {kvp.Value} days");
-                } */
 
                 // print the shift counts for each resident
                 _logger.LogDebug("Shift counts for each resident:");
