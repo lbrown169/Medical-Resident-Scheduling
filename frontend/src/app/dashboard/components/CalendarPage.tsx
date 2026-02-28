@@ -519,7 +519,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                           className="border-r border-gray-100 dark:border-gray-600 p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                           onClick={() => handleDateClick(date)}
                         >
-                          <div className="space-y-2">
+                          <div className="py-3 space-y-4">
                             {dayEvents.slice(0, 6).map((event, eventIndex) => (
                               <div
                                 key={eventIndex}
