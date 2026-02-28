@@ -285,19 +285,19 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
             <div className="pl-7 flex items-center space-x-3">
               <button
                 onClick={() => navigatePeriod('prev')}
-                className="p-3 hover:bg-muted rounded-full transition-colors duration-200"
+                className="p-3 hover:bg-muted rounded-full transition-colors duration-200 cursor-pointer"
               >
                 <ChevronLeft className="w-6 h-6 text-muted-foreground" />
               </button>
               <button
                 onClick={goToToday}
-                className="px-6 py-3 text-sm font-semibold text-primary hover:bg-primary/10 rounded-xl transition-colors duration-200"
+                className="px-6 py-3 text-sm font-semibold text-primary hover:bg-primary/10 rounded-xl transition-colors duration-200 cursor-pointer"
               >
                 Today
               </button>
               <button
                 onClick={() => navigatePeriod('next')}
-                className="p-3 hover:bg-muted rounded-full transition-colors duration-200"
+                className="p-3 hover:bg-muted rounded-full transition-colors duration-200 cursor-pointer"
               >
                 <ChevronRight className="w-6 h-6 text-muted-foreground" />
               </button>
@@ -309,7 +309,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
           <div className="flex space-x-3 items-center">
             <button
               onClick={() => setViewMode('day')}
-              className={`px-5 py-3 text-sm font-medium rounded-xl transition-colors duration-200 ${viewMode === 'day'
+              className={`cursor-pointer px-5 py-3 text-sm font-medium rounded-xl transition-colors duration-200 ${viewMode === 'day'
                   ? 'text-primary-foreground bg-primary border border-primary hover:bg-primary/90 shadow-lg'
                   : 'text-muted-foreground bg-card border border-border hover:bg-muted'
                 }`}
@@ -318,7 +318,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
             </button>
             <button
               onClick={() => setViewMode('week')}
-              className={`px-5 py-3 text-sm font-medium rounded-xl transition-colors duration-200 ${viewMode === 'week'
+              className={`cursor-pointer px-5 py-3 text-sm font-medium rounded-xl transition-colors duration-200 ${viewMode === 'week'
                   ? 'text-primary-foreground bg-primary border border-primary hover:bg-primary/90 shadow-lg'
                   : 'text-muted-foreground bg-card border border-border hover:bg-muted'
                 }`}
@@ -327,7 +327,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
             </button>
             <button
               onClick={() => setViewMode('month')}
-              className={`px-5 py-3 text-sm font-medium rounded-xl transition-colors duration-200 ${viewMode === 'month'
+              className={`cursor-pointer px-5 py-3 text-sm font-medium rounded-xl transition-colors duration-200 ${viewMode === 'month'
                   ? 'text-primary-foreground bg-primary border border-primary hover:bg-primary/90 shadow-lg'
                   : 'text-muted-foreground bg-card border border-border hover:bg-muted'
                 }`}
@@ -336,7 +336,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
             </button>
             <button
               onClick={() => setViewMode('year')}
-              className={`px-5 py-3 text-sm font-medium rounded-xl transition-colors duration-200 ${viewMode === 'year'
+              className={`cursor-pointer px-5 py-3 text-sm font-medium rounded-xl transition-colors duration-200 ${viewMode === 'year'
                   ? 'text-primary-foreground bg-primary border border-primary hover:bg-primary/90 shadow-lg'
                   : 'text-muted-foreground bg-card border border-border hover:bg-muted'
                 }`}
@@ -344,7 +344,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
               Year
             </button>
             <button
-              className={`flex items-center text-sm font-medium rounded-xl transition-colors duration-200 px-5 py-3 border border-border ${isUpcomingOpen ? 'bg-primary text-primary-foreground border-primary shadow-lg' : 'bg-card text-muted-foreground hover:bg-muted'}`}
+              className={`cursor-pointer flex items-center text-sm font-medium rounded-xl transition-colors duration-200 px-5 py-3 border border-border ${isUpcomingOpen ? 'bg-primary text-primary-foreground border-primary shadow-lg' : 'bg-card text-muted-foreground hover:bg-muted'}`}
               onClick={() => setIsUpcomingOpen((open) => !open)}
               aria-expanded={isUpcomingOpen}
               aria-controls="upcoming-panel-content"
@@ -394,34 +394,34 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
       <div className="py-4 border bg-card fixed left-0 right-0 z-10 px-8 mt-2 hidden md:block" style={{ top: 'calc(4.5rem + 1px)' }}>
         <div className="flex items-center justify-end">
           <div className="flex space-x-2">
-            <button onClick={onNavigateToHome} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground">
+            <button onClick={onNavigateToHome} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground cursor-pointer">
               <Home className="w-5 h-5" /> Home
             </button>
             {/* Swap Calls button: only show if not admin */}
             {!isAdmin && (
-              <button onClick={onNavigateToSwapCalls} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground">
+              <button onClick={onNavigateToSwapCalls} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground cursor-pointer">
                 <Repeat2 className="w-5 h-5" /> Swap Calls
               </button>
             )}
             {/* Request Off button: only show if not admin */}
             {!isAdmin && (
-              <button onClick={onNavigateToRequestOff} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground">
+              <button onClick={onNavigateToRequestOff} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground cursor-pointer">
                 <CalendarX className="w-5 h-5" /> Request Off
               </button>
             )}
             {/* Check My Schedule button: only show if not admin */}
             {!isAdmin && (
-              <button onClick={onNavigateToCheckSchedule} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground">
+              <button onClick={onNavigateToCheckSchedule} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground cursor-pointer">
                 <UserCheck className="w-5 h-5" /> Check My Schedule
               </button>
             )}
             {/* Schedules button: only show for admin */}
             {isAdmin && (
-              <button onClick={onNavigateToSchedules} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground">
+              <button onClick={onNavigateToSchedules} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground cursor-pointer">
                 <LayoutList className="w-5 h-5" /> Schedules
               </button>
             )}
-            <button onClick={onNavigateToSettings} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground">
+            <button onClick={onNavigateToSettings} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground cursor-pointer">
               <SettingsIcon className="w-5 h-5" /> Settings
             </button>
           </div>
