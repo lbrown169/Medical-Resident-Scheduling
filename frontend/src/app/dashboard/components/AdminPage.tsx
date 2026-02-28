@@ -12,6 +12,7 @@ import { Dialog } from "../../../components/ui/dialog";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { Trash2 } from "lucide-react";
 
+
 interface AdminPageProps {
   residents: { id: string; name: string; email: string; pgyLevel: number | string }[];
   myTimeOffRequests: { id: string; startDate: string; endDate: string; resident: string; reason: string; status: string; }[];
@@ -121,7 +122,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
   const [deletingAnnouncement, setDeletingAnnouncement] = useState<string | null>(null);
   const [switchingRole, setSwitchingRole] = useState<string | null>(null);
   const [deletingSchedule, setDeletingSchedule] = useState(false);
-
+  
   const handleGenerateSchedule = async () => {
     setGenerating(true);
     setMessage("");
@@ -414,7 +415,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
       setSavingPGY(prev => ({ ...prev, [residentId]: false }));
     }
   };
-
+  
   // Fetch announcements when switching to the announcements tab
   useEffect(() => {
     if (activeTab === 'announcements') {
@@ -826,6 +827,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
             </div>
           </Card>
         )}
+
         {activeTab === 'requests' && (
           <Card className="p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-4 mb-6 sm:mb-8 border border-gray-200 dark:border-gray-800">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
@@ -1284,8 +1286,6 @@ const AdminPage: React.FC<AdminPageProps> = ({
           </div>
         </div>
       </Modal>
-
-
     </div>
   )
 }

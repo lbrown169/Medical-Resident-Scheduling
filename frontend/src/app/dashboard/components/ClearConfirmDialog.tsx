@@ -16,6 +16,9 @@ interface ClearConfirmDialogProps {
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
   isLoading?: boolean;
+  title?: string;
+  message?: string;
+  confirmText?: string;
 }
 
 export const ClearConfirmDialog: React.FC<ClearConfirmDialogProps> = ({
@@ -23,6 +26,9 @@ export const ClearConfirmDialog: React.FC<ClearConfirmDialogProps> = ({
   onOpenChange,
   onConfirm,
   isLoading = false,
+  title = "Warning",
+  message = "You are about to clear all submissions. This cannot be undone. Do you still want to clear all?",
+  confirmText = "Clear",
 }) => {
   const handleConfirm = () => {
     onConfirm();

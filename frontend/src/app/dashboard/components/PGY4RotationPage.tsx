@@ -5,6 +5,9 @@ import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { CalendarRange, Users, UserX, CalendarClock, Trash2, Save, Download, X, Calendar } from "lucide-react";
 import { ConfirmDialog } from "./ConfirmDialog";
+import SubmissionViewDialog from "./SubmissionViewDialog";
+import ClearConfirmDialog from "./ClearConfirmDialog";
+import {DeleteConfirmDialog} from "./DeleteConfirmDialog";
 
 
 /**
@@ -69,8 +72,75 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 	const [selectedYear] = useState<number>(currentYear);
 	const deadline = new Date("2026-03-15T23:59:00-05:00");
 
+	// Submissions state
+	const [submissions, setSubmissions] = useState<{residentId: string; residentName: string; dateOfSubmission: string}[]>([
+	// Mock data for testing - replace with API call later
+	{ residentId: "1", residentName: "first name last name", dateOfSubmission: "10-10-1010" },
+  	]);
+  
+	// View Dialog state
+	const [submissionDialogOpen, setSubmissionDialogOpen] = useState(false);
+	const [selectedSubmission, setSelectedSubmission] = useState<{id: string, name: string} | null>(null);
+  
+	// Delete Dialog state
+	const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+	const [deletingSubmissionId, setDeletingSubmissionId] = useState<string | null>(null);
+	const [isDeleting, setIsDeleting] = useState(false);
+  
+	// Clear All Dialog state
+	const [clearDialogOpen, setClearDialogOpen] = useState(false);
+	const [isClearing, setIsClearing] = useState(false);
 
 	const [showRotationChangeModal, setShowRotationChangeModal] = useState(false);
+
+	// Handle View submission
+	const handleViewSubmission = (residentId: string, residentName: string) => {
+		setSelectedSubmission({ id: residentId, name: residentName });
+		setSubmissionDialogOpen(true);
+	};
+  
+	// Handle Delete single submission
+	const handleDeleteSubmission = (residentId: string) => {
+		setDeletingSubmissionId(residentId);
+		setDeleteDialogOpen(true);
+	};
+  
+	const confirmDeleteSubmission = async () => {
+		if (!deletingSubmissionId) return;
+		
+		setIsDeleting(true);
+		try {
+		// TODO: Replace with actual API call
+		// await fetch(`${config.apiUrl}/api/pgy4/submissions/${deletingSubmissionId}`, { method: 'DELETE' });
+		
+		// Remove from local state
+		setSubmissions(prev => prev.filter(s => s.residentId !== deletingSubmissionId));
+		console.log("Deleted submission for:", deletingSubmissionId);
+		} catch (error) {
+		console.error("Error deleting submission:", error);
+		} finally {
+		setIsDeleting(false);
+		setDeleteDialogOpen(false);
+		setDeletingSubmissionId(null);
+		}
+	};
+	
+	// Handle Clear All submissions
+	const handleClearAll = async () => {
+		setIsClearing(true);
+		try {
+		// TODO: Replace with actual API call
+		// await fetch(`${config.apiUrl}/api/pgy4/submissions`, { method: 'DELETE' });
+		
+		setSubmissions([]);
+		console.log("Cleared all submissions");
+		} catch (error) {
+		console.error("Error clearing submissions:", error);
+		} finally {
+		setIsClearing(false);
+		setClearDialogOpen(false);
+		}
+	};
 
 	// Extract only PGY-3 residents
 	const PGY3Residents = residents.filter (resident =>
@@ -264,71 +334,72 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 
 
 			{activeTab === 'submissions' && (
-				<Card className="p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-4 mb-6 sm:mb-8 border border-gray-200 dark:border-gray-800">
-					<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
-						<h2 className="text-lg sm:text-xl font-bold">Submissions</h2>
-						<div className="flex gap-2">
-							<ConfirmDialog
-								triggerText={
-									<>
-										<X className="h-4 w-4" />
-										<span>Clear</span>
-									</>
-								}
-								title="Clear all vacation requests?"
-								message="This action cannot be undone."
-								confirmText="Clear"
-								cancelText="Cancel"
-								onConfirm={null}
-								variant="danger"
-							/>
-						</div>
-					</div>
-					<div className="overflow-x-auto max-h-96 overflow-y-auto w-full">
-						<table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
-							<thead className="bg-gray-100 dark:bg-neutral-800">
-								<tr>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Residents</th>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date of Submission</th>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">View Submissions</th>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-								</tr>
-							</thead>
-							<tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
-								{/*check if submissions exists here*/}
-								{1 > 0 ? (
-									<tr className="hover:bg-gray-50 dark:hover:bg-neutral-800">
-										<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">first name last name</td>
-										<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">10-10-1010</td>
-										<td className="px-3 py-2 whitespace-nowrap text-sm font-medium">
-											<Button variant="outline" size="sm" className="border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" onClick={() => (null)}>
-												View
-											</Button>
-										</td>
-										<td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-											<Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white" onClick={() => null}>
-												Delete
-											</Button>
-										</td>
-									</tr>
-								) : (
-									<tr>
-										<td colSpan={4} className="px-6 py-4 text-center text-gray-500 italic">No submissions yet.</td>
-									</tr>
-								)}
-							</tbody>
-						</table>
-					</div>
-				</Card>
+			<Card className="p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-4 mb-6 sm:mb-8 border border-gray-200 dark:border-gray-800">
+				<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+				<h2 className="text-lg sm:text-xl font-bold">Submissions</h2>
+				<div className="flex gap-2">
+					<Button 
+					variant="outline" 
+					className="flex items-center gap-2 text-red-600 border-red-600 hover:bg-red-500 hover:text-white"
+					onClick={() => setClearDialogOpen(true)}
+					>
+					<X className="h-4 w-4" />
+					<span>Clear</span>
+					</Button>
+				</div>
+				</div>
+				<div className="overflow-x-auto max-h-96 overflow-y-auto w-full">
+				<table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
+					<thead className="bg-gray-100 dark:bg-neutral-800">
+					<tr>
+						<th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Residents</th>
+						<th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date of Submission</th>
+						<th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">View Submissions</th>
+						<th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+					</tr>
+					</thead>
+					<tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
+					{submissions.length > 0 ? (
+						submissions.map((submission) => (
+						<tr key={submission.residentId} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
+							<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+							{submission.residentName}
+							</td>
+							<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+							{submission.dateOfSubmission}
+							</td>
+							<td className="px-3 py-2 whitespace-nowrap text-sm font-medium">
+							<Button 
+								variant="outline" 
+								size="sm" 
+								className="border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+								onClick={() => handleViewSubmission(submission.residentId, submission.residentName)}
+							>
+								View
+							</Button>
+							</td>
+							<td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+							<Button 
+								variant="outline" 
+								size="sm" 
+								className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white" 
+								onClick={() => handleDeleteSubmission(submission.residentId)}
+							>
+								Delete
+							</Button>
+							</td>
+						</tr>
+						))
+					) : (
+						<tr>
+						<td colSpan={4} className="px-6 py-4 text-center text-gray-500 italic">No submissions yet.</td>
+						</tr>
+					)}
+					</tbody>
+				</table>
+				</div>
+			</Card>
 			)}
-
-
-
-
-
-
-
-
 
 
 			{activeTab === 'configure' && (
@@ -419,6 +490,33 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 				</div>
 
 			</Modal>
+			{/* View Submission Dialog */}
+			{selectedSubmission && (
+			<SubmissionViewDialog
+				open={submissionDialogOpen}
+				onOpenChange={setSubmissionDialogOpen}
+				residentId={selectedSubmission.id}
+				residentName={selectedSubmission.name}
+			/>
+			)}
+
+			{/* Delete Single Submission Confirmation */}
+			<DeleteConfirmDialog
+				open={deleteDialogOpen}
+				onOpenChange={setDeleteDialogOpen}
+				onConfirm={confirmDeleteSubmission}
+				loading={isDeleting}
+			/>
+
+			{/* Clear All Submissions Confirmation */}
+			<ClearConfirmDialog
+			open={clearDialogOpen}
+			onOpenChange={setClearDialogOpen}
+			onConfirm={handleClearAll}
+			isLoading={isClearing}
+			title="Clear All Submissions?"
+			message="This will delete all PGY4 rotation submissions. This action cannot be undone."
+			/>
 		</div>
 
 	);
