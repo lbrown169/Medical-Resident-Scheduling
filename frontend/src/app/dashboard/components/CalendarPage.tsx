@@ -165,21 +165,37 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
     }
 
     // Add days from next month to fill the calendar
-    const remainingCells = 42 - days.length;
+    const remainder = days.length % 7;
+    const remainingCells = remainder === 0 ? 0 : 7 - remainder;
+
     for (let day = 1; day <= remainingCells; day++) {
-      const nextMonthDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, day);
-      days.push({ day, isCurrentMonth: false, date: nextMonthDate });
+      const nextMonthDate = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth() + 1,
+        day
+      );
+
+      days.push({
+        day: nextMonthDate.getDate(),
+        isCurrentMonth: false,
+        date: nextMonthDate
+      });
     }
 
     return days;
   };
 
   // Get events for a specific date
+  const sameDay = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+
   const getEventsForDate = (date: Date) => {
-    return events.filter(event => {
-      const eventDate = ensureDate(event.start);
-      return eventDate.getTime() === date.getTime();
-    });
+    const target = ensureDate(date);
+
+    return events.filter((event) =>
+      sameDay(ensureDate(event.start), target));
   };
 
   const generateWeekDays = () => {
@@ -507,7 +523,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                             {dayEvents.slice(0, 6).map((event, eventIndex) => (
                               <div
                                 key={eventIndex}
-                                className="text-xs px-2 py-1 rounded truncate font-medium cursor-pointer"
+                                className="text-xs px-2 md:px-3 py-1 md:py-2 rounded-lg cursor-pointer hover:shadow-md transition-all duration-200 truncate font-medium"
                                 style={{ backgroundColor: getPGYColor(event), color: 'white' }}
                                 onClick={(e) => {
                                   e.stopPropagation();
