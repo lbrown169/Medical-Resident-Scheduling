@@ -24,7 +24,22 @@ import {DeleteConfirmDialog} from "./DeleteConfirmDialog";
  * - Forensic: Red (#ef4444)
  * - CLC: Pink (#ec4899)
  */
-
+interface Submission {
+	residentId: string;
+	residentName: string;
+	dateOfSubmission: string;
+  }
+  
+// Mock data for testing - replace with API call
+const MOCK_SUBMISSIONS: Submission[] = [
+	{ residentId: "1", residentName: "Indresh S.", dateOfSubmission: "12/24/2025" },
+	{ residentId: "2", residentName: "Lawrence C.", dateOfSubmission: "12/24/2025" },
+	{ residentId: "3", residentName: "Rachel P.", dateOfSubmission: "12/24/2025" },
+	{ residentId: "4", residentName: "Rashmi R.", dateOfSubmission: "12/24/2025" },
+	{ residentId: "5", residentName: "Alexis S.", dateOfSubmission: "12/24/2025" },
+	{ residentId: "6", residentName: "Carolyn L.", dateOfSubmission: "12/24/2025" },
+	{ residentId: "7", residentName: "Lauren M.", dateOfSubmission: "12/24/2025" },
+  ];
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const rotationOptions: { value: string; label: string; color: string }[] = [
   { value: "Intp Psy", label: "Intp Psy", color: "#8b5cf6" },
@@ -73,11 +88,9 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 	const deadline = new Date("2026-03-15T23:59:00-05:00");
 
 	// Submissions state
-	const [submissions, setSubmissions] = useState<{residentId: string; residentName: string; dateOfSubmission: string}[]>([
 	// Mock data for testing - replace with API call later
-	{ residentId: "1", residentName: "first name last name", dateOfSubmission: "10-10-1010" },
-  	]);
-  
+	const [submissions, setSubmissions] = useState<Submission[]>(MOCK_SUBMISSIONS);
+	
 	// View Dialog state
 	const [submissionDialogOpen, setSubmissionDialogOpen] = useState(false);
 	const [selectedSubmission, setSelectedSubmission] = useState<{id: string, name: string} | null>(null);
