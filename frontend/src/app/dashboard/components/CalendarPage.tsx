@@ -282,27 +282,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
       <div className="bg-card border pt-6 pb-8 fixed left-0 right-0 top-0 z-10 px-8 hidden md:block">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className="pl-7 flex items-center space-x-3">
-              <button
-                onClick={() => navigatePeriod('prev')}
-                className="p-3 hover:bg-muted rounded-full transition-colors duration-200 cursor-pointer"
-              >
-                <ChevronLeft className="w-6 h-6 text-muted-foreground" />
-              </button>
-              <button
-                onClick={goToToday}
-                className="px-6 py-3 text-sm font-semibold text-primary hover:bg-primary/10 rounded-xl transition-colors duration-200 cursor-pointer"
-              >
-                Today
-              </button>
-              <button
-                onClick={() => navigatePeriod('next')}
-                className="p-3 hover:bg-muted rounded-full transition-colors duration-200 cursor-pointer"
-              >
-                <ChevronRight className="w-6 h-6 text-muted-foreground" />
-              </button>
-            </div>
-            <h1 className="pl-5 text-5xl font-bold text-foreground">
+            <h1 className="pl-7 text-5xl font-bold text-foreground">
               {getPeriodTitle()}
             </h1>
           </div>
@@ -392,7 +372,27 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
 
       {/* Navigation Buttons - Hidden on mobile */}
       <div className="py-4 border bg-card fixed left-0 right-0 z-10 px-8 mt-2 hidden md:block" style={{ top: 'calc(4.5rem + 1px)' }}>
-        <div className="flex items-center justify-end">
+        <div className="flex items-center justify-between">
+          <div className="pl-6 flex items-center space-x-3">
+            <button
+              onClick={() => navigatePeriod('prev')}
+              className="p-2 hover:bg-muted rounded-full transition-colors duration-200 cursor-pointer"
+            >
+              <ChevronLeft className="w-6 h-6 text-muted-foreground" />
+            </button>
+            <button
+              onClick={goToToday}
+              className="px-6 py-2 text-sm font-semibold text-primary hover:bg-primary/10 rounded-xl transition-colors duration-200 cursor-pointer"
+            >
+              Today
+            </button>
+            <button
+              onClick={() => navigatePeriod('next')}
+              className="p-2 hover:bg-muted rounded-full transition-colors duration-200 cursor-pointer"
+            >
+              <ChevronRight className="w-6 h-6 text-muted-foreground" />
+            </button>
+          </div>
           <div className="flex space-x-2">
             <button onClick={onNavigateToHome} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground cursor-pointer">
               <Home className="w-5 h-5" /> Home
