@@ -376,7 +376,7 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
 
                   {/* Expanded Content */}
                   {expandedYears.has(ayStart) && (
-                    <div className="border-t border-gray-200 dark:border-gray-700 px-4 pb-4">
+                    <div className="border-t border-gray-200 dark:border-gray-700 px-4">
                       <table className="w-full mt-2">
                         <tbody>
                           {aySchedules.map((schedule, index) => {
