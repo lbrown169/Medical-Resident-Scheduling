@@ -289,14 +289,14 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
               <Button
                 onClick={() => setConfirmOpen(true)}
                 disabled={generating}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-5 text-base font-semibold rounded-r-none shadow-md"
+                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-5 text-base font-semibold rounded-r-none shadow-md cursor-pointer"
               >
                 {generating ? "Generating..." : `Generate ${selectedSemester} ${selectedYear}`}
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-5 rounded-l-none border-l border-blue-400 shadow-md"
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-5 rounded-l-none border-l border-blue-400 shadow-md cursor-pointer"
                     disabled={generating}
                     aria-label="Choose semester and year"
                   >
@@ -308,6 +308,7 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
                     <DropdownMenuItem
                       key={`${opt.semester}-${opt.year}`}
                       onClick={() => { setSelectedSemester(opt.semester); setSelectedYear(opt.year); }}
+                      className="cursor-pointer"
                     >
                       {opt.semester} {opt.year}
                     </DropdownMenuItem>
@@ -378,7 +379,7 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
                   {/* Expanded Content */}
                   {expandedYears.has(ayStart) && (
                     <div className="border-t border-gray-200 dark:border-gray-700 px-4">
-                      <table className="w-full mt-2">
+                      <table className="w-full mt-2 table-fixed">
                         <tbody>
                           {aySchedules.map((schedule, index) => {
                             const isPublished = schedule.status.id === 1;
@@ -388,39 +389,38 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
                                 className="border-b border-gray-100 dark:border-gray-700 last:border-b-0"
                               >
                                 <td className="py-3 pr-4 text-gray-500 w-12">#{index + 1}</td>
-                                <td className="py-3 pr-4">
+                                <td className="py-3 pr-4 w-1/5">
                                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                                     {schedule.semester.name} {schedule.year}
                                   </span>
                                 </td>
-                                <td className="py-3">
+                                <td className="py-3 w-40">
                                   <div className="flex items-center gap-2">
                                     <button
                                       onClick={() => {
                                         setScheduleToToggle(schedule);
                                         setPublishConfirmOpen(true);
                                       }}
-                                      className="transition-colors"
+                                      className="inline-flex items-center gap-2 transition-colors cursor-pointer"
                                     >
                                       {isPublished ? (
-                                        <CheckSquare className="h-5 w-5 text-green-500 hover:text-green-700 dark:hover:text-green-300" />
+                                        <>
+                                          <CheckSquare className="h-5 w-5 text-green-500 hover:text-green-700 dark:hover:text-green-300" /> <span className="text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300">Published</span>
+                                        </>
                                       ) : (
-                                        <Square className="h-5 w-5 text-yellow-500 hover:text-yellow-700 dark:hover:text-yellow-300" />
+                                        <>
+                                            <Square className="h-5 w-5 text-yellow-500 hover:text-yellow-700 dark:hover:text-yellow-300" /> <span className="text-yellow-600 hover:text-yellow-700 dark:text-yellow-400 dark:hover:text-yellow-300">Under Review</span>
+                                        </>
                                       )}
                                     </button>
-                                    {isPublished ? (
-                                      <span className="text-green-600 dark:text-green-400">Published</span>
-                                    ) : (
-                                      <span className="text-yellow-600 dark:text-yellow-400">Under Review</span>
-                                    )}
                                   </div>
                                 </td>
-                                <td className="py-3 text-right">
+                                <td className="py-3 text-right w-64">
                                   <div className="flex items-center justify-end gap-4">
-                                    <Button variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-500 hover:text-white" onClick={() => handleEdit(schedule.scheduleId, schedule.year, schedule.semester.name)}>
+                                    <Button variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-500 hover:text-white cursor-pointer" onClick={() => handleEdit(schedule.scheduleId, schedule.year, schedule.semester.name)}>
                                       <Edit className="h-4 w-4 mr-2" /> Edit
                                     </Button>
-                                    <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white" onClick={() => handleDeleteClick(schedule)}>
+                                    <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white cursor-pointer" onClick={() => handleDeleteClick(schedule)}>
                                       <Trash2 className="h-4 w-4 mr-2" /> Delete
                                     </Button>
                                   </div>
