@@ -24,9 +24,20 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
   const [expandedYears, setExpandedYears] = useState<Set<number>>(new Set());
 
   // Generate schedule state
-  const currentYear = new Date().getFullYear();
-  const [selectedYear, setSelectedYear] = useState<number>(currentYear);
-  const [selectedSemester, setSelectedSemester] = useState<"Fall" | "Spring">("Fall");
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth() + 1; // 1-12
+  const currentAYStart = currentMonth <= 6 ? currentYear - 1 : currentYear;
+  const nextAYStart = currentAYStart + 1;
+  // Available semester options: current AY (Fall + Spring) then next AY (Fall + Spring)
+  const semesterOptions: { semester: "Fall" | "Spring"; year: number }[] = [
+    { semester: "Fall", year: currentAYStart },
+    { semester: "Spring", year: currentAYStart + 1 },
+    { semester: "Fall", year: nextAYStart },
+    { semester: "Spring", year: nextAYStart + 1 },
+  ];
+  const [selectedYear, setSelectedYear] = useState<number>(semesterOptions[0].year);
+  const [selectedSemester, setSelectedSemester] = useState<"Fall" | "Spring">(semesterOptions[0].semester);
   const [generating, setGenerating] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
@@ -42,6 +53,7 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(null);
   const [selectedScheduleYear, setSelectedScheduleYear] = useState<number | undefined>();
+  const [selectedScheduleSemester, setSelectedScheduleSemester] = useState<string | undefined>();
 
   const fetchSchedules = useCallback(async () => {
     try {
@@ -64,20 +76,26 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
     fetchSchedules();
   }, [fetchSchedules]);
 
-  const getUniqueYears = (scheduleList: Schedule[]): number[] => {
-    const years = [...new Set(scheduleList.map((s) => s.year))];
-    return years.sort((a, b) => a - b); // Sort ascending
+  // The "start year" is Fall's year; Spring belongs to the previous fall's Academic Year.
+  const getAcademicYearStart = (schedule: Schedule): number => {
+    return schedule.semester.id === 1 ? schedule.year : schedule.year - 1;
   };
 
-  const groupSchedulesByYear = (scheduleList: Schedule[]): SchedulesByYear => {
+  const getUniqueAcademicYears = (scheduleList: Schedule[]): number[] => {
+    const years = [...new Set(scheduleList.map(getAcademicYearStart))];
+    return years.sort((a, b) => a - b);
+  };
+
+  const groupSchedulesByAcademicYear = (scheduleList: Schedule[]): SchedulesByYear => {
     const grouped: SchedulesByYear = {};
     scheduleList.forEach((schedule) => {
-      if (!grouped[schedule.year]) {
-        grouped[schedule.year] = [];
+      const ayStart = getAcademicYearStart(schedule);
+      if (!grouped[ayStart]) {
+        grouped[ayStart] = [];
       }
-      grouped[schedule.year].push(schedule);
+      grouped[ayStart].push(schedule);
     });
-    // Sort within each year: published first, then Fall before Spring
+    // Sort within each Academic Year: published first, then Fall before Spring
     Object.values(grouped).forEach((list) =>
       list.sort((a: Schedule, b: Schedule) => {
         const pubDiff = (b.status.id === 1 ? 1 : 0) - (a.status.id === 1 ? 1 : 0);
@@ -119,9 +137,10 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
         description: `New ${semester} ${year} schedule generated successfully!`,
       });
 
-      // Refresh the schedules list and expand the new year
+      // Refresh the schedules list and expand the academic year
       await fetchSchedules();
-      setExpandedYears((prev) => new Set([...prev, year]));
+      const ayStart = semester === "Fall" ? year : year - 1;
+      setExpandedYears((prev) => new Set([...prev, ayStart]));
     } catch (error) {
       console.error("Error generating schedule:", error);
       toast({
@@ -134,9 +153,10 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
     }
   };
 
-  const handleEdit = (scheduleId: string, year: number) => {
+  const handleEdit = (scheduleId: string, year: number, semester: string) => {
     setSelectedScheduleId(scheduleId);
     setSelectedScheduleYear(year);
+    setSelectedScheduleSemester(semester);
     setEditModalOpen(true);
   };
 
@@ -229,9 +249,10 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
     }
   };
 
-  const groupedSchedules = groupSchedulesByYear(schedules);
-  const years = getUniqueYears(schedules);
+  const groupedSchedules = groupSchedulesByAcademicYear(schedules);
+  const academicYears = getUniqueAcademicYears(schedules);
   const publishedCount = schedules.filter((s) => s.status.id === 1).length;
+  const underReviewCount = schedules.length - publishedCount;
   if (loading) {
     return (
       <div className="w-full pt-4 flex flex-col items-center">
@@ -252,9 +273,9 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
           <div className="flex flex-col items-center">
             <div className="flex items-center gap-2 mb-1">
               <FileText className="w-5 h-5 text-yellow-500" />
-              <span className="text-2xl font-bold text-gray-900 dark:text-white">{schedules.length}</span>
+              <span className="text-2xl font-bold text-gray-900 dark:text-white">{underReviewCount}</span>
             </div>
-            <span className="text-xs text-gray-500">Schedules Generated</span>
+            <span className="text-xs text-gray-500">Schedules Under Review</span>
           </div>
           <div className="flex flex-col items-center border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-700 pt-4 sm:pt-0 sm:pl-8">
             <div className="flex items-center gap-2 mb-1">
@@ -283,15 +304,13 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  {[currentYear - 1, currentYear, currentYear + 1, currentYear + 2].map((yr) => (
-                    <React.Fragment key={yr}>
-                      <DropdownMenuItem onClick={() => { setSelectedSemester("Fall"); setSelectedYear(yr); }}>
-                        Fall {yr}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => { setSelectedSemester("Spring"); setSelectedYear(yr); }}>
-                        Spring {yr}
-                      </DropdownMenuItem>
-                    </React.Fragment>
+                  {semesterOptions.map((opt) => (
+                    <DropdownMenuItem
+                      key={`${opt.semester}-${opt.year}`}
+                      onClick={() => { setSelectedSemester(opt.semester); setSelectedYear(opt.year); }}
+                    >
+                      {opt.semester} {opt.year}
+                    </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -317,38 +336,38 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
       <Card className="p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full max-w-6xl flex flex-col gap-4 mb-6 sm:mb-8 border border-gray-200 dark:border-gray-800">
         <h2 className="text-lg sm:text-xl font-bold mb-4">Saved Schedules</h2>
 
-        {years.length === 0 ? (
+        {academicYears.length === 0 ? (
           <div className="p-6 text-center text-gray-500">
             No schedules found. Generate a new schedule to get started.
           </div>
         ) : (
           <div className="space-y-2">
-            {years.map((year) => {
-              const yearSchedules = groupedSchedules[year] || [];
-              const publishedSemesters = yearSchedules
+            {academicYears.map((ayStart) => {
+              const aySchedules = groupedSchedules[ayStart] || [];
+              const publishedSemesters = aySchedules
                 .filter((s) => s.status.id === 1)
                 .map((s) => s.semester.name);
 
               return (
-                <Card key={year} className="overflow-hidden">
-                  {/* Year Header */}
-                  <div className="w-full flex items-center justify-between p-4">
+                <Card key={ayStart} className="overflow-hidden">
+                  {/* Academic Year Header */}
+                  <div className="w-full flex items-center justify-between px-4 py-1">
                     <div className="flex items-center gap-3">
-                      <span className="text-lg font-medium">{year}</span>
+                      <span className="text-lg font-medium">Academic Year {ayStart}-{ayStart + 1}</span>
                       {publishedSemesters.length > 0 && (
                         <span className="text-xs bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 px-2 py-0.5 rounded">
                           {publishedSemesters.join(" & ")} Published
                         </span>
                       )}
                       <span className="text-sm text-gray-400">
-                        ({yearSchedules.length} schedule{yearSchedules.length !== 1 ? "s" : ""})
+                        ({aySchedules.length} schedule{aySchedules.length !== 1 ? "s" : ""})
                       </span>
                     </div>
                     <button
-                      onClick={() => toggleYear(year)}
+                      onClick={() => toggleYear(ayStart)}
                       className="p-2 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
                     >
-                      {expandedYears.has(year) ? (
+                      {expandedYears.has(ayStart) ? (
                         <ChevronUp className="h-5 w-5" />
                       ) : (
                         <ChevronDown className="h-5 w-5" />
@@ -357,11 +376,11 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
                   </div>
 
                   {/* Expanded Content */}
-                  {expandedYears.has(year) && (
-                    <div className="border-t border-gray-200 dark:border-gray-700 px-4 pb-4">
+                  {expandedYears.has(ayStart) && (
+                    <div className="border-t border-gray-200 dark:border-gray-700 px-4">
                       <table className="w-full mt-2">
                         <tbody>
-                          {yearSchedules.map((schedule, index) => {
+                          {aySchedules.map((schedule, index) => {
                             const isPublished = schedule.status.id === 1;
                             return (
                               <tr
@@ -371,7 +390,7 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
                                 <td className="py-3 pr-4 text-gray-500 w-12">#{index + 1}</td>
                                 <td className="py-3 pr-4">
                                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    {schedule.semester.name}
+                                    {schedule.semester.name} {schedule.year}
                                   </span>
                                 </td>
                                 <td className="py-3">
@@ -398,7 +417,7 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
                                 </td>
                                 <td className="py-3 text-right">
                                   <div className="flex items-center justify-end gap-4">
-                                    <Button variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-500 hover:text-white" onClick={() => handleEdit(schedule.scheduleId, schedule.year)}>
+                                    <Button variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-500 hover:text-white" onClick={() => handleEdit(schedule.scheduleId, schedule.year, schedule.semester.name)}>
                                       <Edit className="h-4 w-4 mr-2" /> Edit
                                     </Button>
                                     <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white" onClick={() => handleDeleteClick(schedule)}>
@@ -463,6 +482,7 @@ const SchedulesPage: React.FC<SchedulesPageProps> = ({ onNavigateToCalendar }) =
         onOpenChange={setEditModalOpen}
         scheduleId={selectedScheduleId}
         scheduleYear={selectedScheduleYear}
+        scheduleSemester={selectedScheduleSemester}
       />
     </div>
   );
