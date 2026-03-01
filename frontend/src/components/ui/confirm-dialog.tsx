@@ -63,7 +63,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       {triggerText && (
         <AlertDialogTrigger asChild>
           <Button
-            className={`${baseBtnClass} ${colorClass} ${className ?? ""}`}
+            className={`${baseBtnClass} ${colorClass} cursor-pointer ${className ?? ""}`}
             onClick={() => setDialogOpen(true)}
             disabled={loading}
           >
@@ -78,13 +78,19 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           <AlertDialogDescription>{message}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={loading}>{cancelText}</AlertDialogCancel>
+          <AlertDialogCancel
+            disabled={loading}
+            className="cursor-pointer disabled:cursor-not-allowed"
+          >
+            {cancelText}
+          </AlertDialogCancel>
           <AlertDialogAction
             onClick={async () => {
               await onConfirm();
               setDialogOpen(false);
             }}
             disabled={loading}
+            className="cursor-pointer disabled:cursor-not-allowed"
           >
             {loading ? "Processing…" : confirmText}
           </AlertDialogAction>
