@@ -48,7 +48,7 @@ public static class CallShiftTypeExtensions
     {
         return GetAllAlgorithmCallShiftTypesForDate(date).Cast<CallShiftType?>().FirstOrDefault(s =>
         {
-            int requiredPgy = ((CallShiftType) s!).Attr().RequiredPgy;
+            int requiredPgy = ((CallShiftType)s!).Attr().RequiredPgy;
             return requiredPgy == 0 || requiredPgy == year;
         });
     }

@@ -13,8 +13,8 @@ public static class CallShiftRuleExtensions
         CallShiftRule.LaborDay => IsNthWeekdayOfMonth(date, DayOfWeek.Monday, 9, 1),
         CallShiftRule.Thanksgiving => IsNthWeekdayOfMonth(date, DayOfWeek.Thursday, 11, 4),
         CallShiftRule.BlackFriday => CallShiftRule.Thanksgiving.Applies(date.AddDays(-1)),
-        CallShiftRule.ChristmasDay => date is {Month: 12, Day: 25},
-        CallShiftRule.NewYearsDay => date is { Month: 1, Day: 1},
+        CallShiftRule.ChristmasDay => date is { Month: 12, Day: 25 },
+        CallShiftRule.NewYearsDay => date is { Month: 1, Day: 1 },
         CallShiftRule.MemorialDay => IsLastWeekdayOfMonth(date, DayOfWeek.Monday, 5),
         _ => throw new ArgumentOutOfRangeException(nameof(rule), rule, null)
     };
