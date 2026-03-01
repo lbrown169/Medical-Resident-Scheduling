@@ -69,12 +69,17 @@ public abstract class ResidentDTO
     /// </summary>
     /// <param name="index">Academic year indexed, July is 0.</param>
     /// <returns></returns>
-    public HospitalRole GetHospitalRoleForMonth(int index)
+    public HospitalRole GetHospitalRoleForAcademicMonth(int index)
     {
         if (RolePerMonth is null || RolePerMonth.Length < index + 1)
         {
             return HospitalRole.Unassigned;
         }
         return RolePerMonth[index] ?? HospitalRole.Unassigned;
+    }
+
+    public HospitalRole GetHospitalRoleForCalendarMonth(int index)
+    {
+        return GetHospitalRoleForAcademicMonth((index + 5) % 12);
     }
 }

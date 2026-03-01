@@ -33,8 +33,8 @@ public enum CallShiftType
     [Display(Name = "July Fourth (12h)")]
     JulyFourth = 5,
 
-    [CallShift(Hours = 2, CallLengthType = CallLengthType.Short, RequiredPgy = 2, DateRule = CallShiftRule.LaborDay, Priority = 10)]
-    [Display(Name = "Labor Day (2h)")]
+    [CallShift(Hours = 12, CallLengthType = CallLengthType.Short, RequiredPgy = 2, DateRule = CallShiftRule.LaborDay, Priority = 10)]
+    [Display(Name = "Labor Day (12h)")]
     LaborDay = 6,
 
     [CallShift(Hours = 24, CallLengthType = CallLengthType.Long, RequiredPgy = 1, DateRule = CallShiftRule.Thanksgiving, Priority = 10)]

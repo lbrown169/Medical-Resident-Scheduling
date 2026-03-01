@@ -26,8 +26,10 @@ public class PGY1DTO : ResidentDTO
 
             DateOnly prevDay = curDay.AddDays(-1);
             DateOnly nextDay = curDay.AddDays(1);
-            if (WorkDays.Contains(prevDay) ||
-                WorkDays.Contains(nextDay))
+            if (IsWorking(prevDay)
+                || CommitedWorkDay(nextDay)
+                || IsWorking(nextDay)
+                || CommitedWorkDay(prevDay))
             {
                 return false;
             }
@@ -43,13 +45,13 @@ public class PGY1DTO : ResidentDTO
             DateOnly nextDay = curDay.AddDays(1);
             DateOnly prevDay = curDay.AddDays(-1);
 
-            if (WorkDays.Contains(nextDay) &&
+            if ((IsWorking(nextDay) || CommitedWorkDay(nextDay)) &&
                 nextDay.DayOfWeek == DayOfWeek.Saturday)
             {
                 return false;
             }
 
-            if (WorkDays.Contains(prevDay) &&
+            if ((IsWorking(prevDay) || CommitedWorkDay(prevDay)) &&
                 prevDay.DayOfWeek == DayOfWeek.Sunday)
             {
                 return false;

@@ -60,8 +60,8 @@ public class AlgorithmService
                 //are we in july?
                 if (month == 7)
                 {
-                    if (pgy1s[i].GetHospitalRoleForMonth(0).DoesShort == false &&
-                        pgy1s[i].GetHospitalRoleForMonth(0).DoesTrainingShort ==
+                    if (pgy1s[i].GetHospitalRoleForAcademicMonth(0).DoesShort == false &&
+                        pgy1s[i].GetHospitalRoleForAcademicMonth(0).DoesTrainingShort ==
                         false) // if their role doesnt do short calls this month
                     {
                         continue;
@@ -72,8 +72,8 @@ public class AlgorithmService
                 // are we in august?
                 if (month == 8)
                 {
-                    if (pgy1s[i].GetHospitalRoleForMonth(1).DoesShort == false &&
-                        pgy1s[i].GetHospitalRoleForMonth(1).DoesTrainingShort == false)
+                    if (pgy1s[i].GetHospitalRoleForAcademicMonth(1).DoesShort == false &&
+                        pgy1s[i].GetHospitalRoleForAcademicMonth(1).DoesTrainingShort == false)
                     {
                         continue;
                     }
@@ -182,8 +182,8 @@ public class AlgorithmService
                 //are we in july?
                 if (month == 7)
                 {
-                    if (pgy1s[i].GetHospitalRoleForMonth(0).DoesLong == false &&
-                        pgy1s[i].GetHospitalRoleForMonth(0).DoesTrainingLong ==
+                    if (pgy1s[i].GetHospitalRoleForAcademicMonth(0).DoesLong == false &&
+                        pgy1s[i].GetHospitalRoleForAcademicMonth(0).DoesTrainingLong ==
                          false) // if their role doesnt do long calls this month
                     {
                         continue;
@@ -194,8 +194,8 @@ public class AlgorithmService
                 // are we in august?
                 if (month == 8)
                 {
-                    if (pgy1s[i].GetHospitalRoleForMonth(1).DoesLong == false &&
-                        pgy1s[i].GetHospitalRoleForMonth(1).DoesTrainingLong ==
+                    if (pgy1s[i].GetHospitalRoleForAcademicMonth(1).DoesLong == false &&
+                        pgy1s[i].GetHospitalRoleForAcademicMonth(1).DoesTrainingLong ==
                         false) // if their role doesnt do long calls this month
                     {
                         continue;
@@ -227,8 +227,8 @@ public class AlgorithmService
                 //are we in july?
                 if (month == 7)
                 {
-                    if (pgy2s[i].GetHospitalRoleForMonth(0).DoesLong == false &&
-                        pgy2s[i].GetHospitalRoleForMonth(0).DoesTrainingLong ==
+                    if (pgy2s[i].GetHospitalRoleForAcademicMonth(0).DoesLong == false &&
+                        pgy2s[i].GetHospitalRoleForAcademicMonth(0).DoesTrainingLong ==
                         false) // if their role doesnt do long calls this month
                     {
                         continue;
@@ -239,8 +239,8 @@ public class AlgorithmService
                 // are we in august?
                 if (month == 8)
                 {
-                    if (pgy2s[i].GetHospitalRoleForMonth(1).DoesLong == false &&
-                        pgy2s[i].GetHospitalRoleForMonth(1).DoesTrainingLong ==
+                    if (pgy2s[i].GetHospitalRoleForAcademicMonth(1).DoesLong == false &&
+                        pgy2s[i].GetHospitalRoleForAcademicMonth(1).DoesTrainingLong ==
                         false) // if their role doesnt do long calls this month
                     {
                         continue;
@@ -337,8 +337,8 @@ public class AlgorithmService
                 //are we in july?
                 if (month == 7)
                 {
-                    if (pgy1s[i].GetHospitalRoleForMonth(0).DoesLong == false &&
-                        pgy1s[i].GetHospitalRoleForMonth(0).DoesTrainingLong ==
+                    if (pgy1s[i].GetHospitalRoleForAcademicMonth(0).DoesLong == false &&
+                        pgy1s[i].GetHospitalRoleForAcademicMonth(0).DoesTrainingLong ==
                         false) // if their role doesnt do long calls this month
                     {
                         continue;
@@ -349,8 +349,8 @@ public class AlgorithmService
                 // are we in august?
                 if (month == 8)
                 {
-                    if (pgy1s[i].GetHospitalRoleForMonth(1).DoesLong == false &&
-                        pgy1s[i].GetHospitalRoleForMonth(1).DoesTrainingLong ==
+                    if (pgy1s[i].GetHospitalRoleForAcademicMonth(1).DoesLong == false &&
+                        pgy1s[i].GetHospitalRoleForAcademicMonth(1).DoesTrainingLong ==
                         false) // if their role doesnt do long calls this month
                     {
                         continue;
@@ -383,8 +383,8 @@ public class AlgorithmService
                 //are we in july?
                 if (month == 7)
                 {
-                    if (pgy2s[i].GetHospitalRoleForMonth(0).DoesLong == false &&
-                        pgy2s[i].GetHospitalRoleForMonth(0).DoesTrainingLong ==
+                    if (pgy2s[i].GetHospitalRoleForAcademicMonth(0).DoesLong == false &&
+                        pgy2s[i].GetHospitalRoleForAcademicMonth(0).DoesTrainingLong ==
                         false) // if their role doesnt do long calls this month
                     {
                         continue;
@@ -395,8 +395,8 @@ public class AlgorithmService
                 // are we in august?
                 if (month == 8)
                 {
-                    if (pgy2s[i].GetHospitalRoleForMonth(1).DoesLong == false &&
-                        pgy2s[i].GetHospitalRoleForMonth(1).DoesTrainingLong ==
+                    if (pgy2s[i].GetHospitalRoleForAcademicMonth(1).DoesLong == false &&
+                        pgy2s[i].GetHospitalRoleForAcademicMonth(1).DoesTrainingLong ==
                         false) // if their role doesnt do long calls this month
                     {
                         continue;
@@ -887,8 +887,6 @@ public class AlgorithmService
             }
         }
 
-        _logger.LogDebug("Giver {index} has {hour} hours", giverIndex, giveHour);
-
         // Calculate give-able shifts
         int giverYear = giverIndex < pgy1s.Count ? 1 : 2;
         int normalizedGiverIndex = giverYear == 1 ? giverIndex : giverIndex - pgy1s.Count;
@@ -897,6 +895,8 @@ public class AlgorithmService
                 ? pgy1ShiftCount[normalizedGiverIndex]
                 : pgy2ShiftCount[normalizedGiverIndex];
         List<CallShiftType> giverShiftTypes = giverShiftCount.Where(kvp => kvp.Value > 0).Select(kvp => kvp.Key).ToList();
+
+        _logger.LogDebug("Giver {index} has {hour} hours. Can give: {shifts}", giverIndex, giveHour, string.Join(", ", giverShiftTypes));
 
         // Build weighted list of eligible receivers
         List<(int index, int weight)> eligibleReceivers = [];
@@ -1011,7 +1011,6 @@ public class AlgorithmService
                 receiverIndex = i + pgy1s.Count;
             }
         }
-        _logger.LogDebug("Receiver {index} has {hour} hours", receiverIndex, receiverHour);
 
         // Calculate give-able shifts
         int receiverYear = receiverIndex < pgy1s.Count ? 1 : 2;
@@ -1026,6 +1025,8 @@ public class AlgorithmService
             )
             .Select(kvp => kvp.Key)
             .ToList();
+
+        _logger.LogDebug("Receiver {index} has {hour} hours. Can accept: {shifts}", receiverIndex, receiverHour, string.Join(", ", receiverShiftTypes));
 
         // Build weighted list of eligible givers
         List<(int index, int weight)> eligibleGivers = [];
@@ -1567,7 +1568,7 @@ public class AlgorithmService
     public bool
         FixWeekends1(List<PGY1DTO> pgy1s) // function to fix pgy1 weekends
     {
-        bool didFail = false;
+        bool successful = true;
         foreach (PGY1DTO res in pgy1s)
         {
             // get the first and last day the resident works
@@ -1639,13 +1640,13 @@ public class AlgorithmService
                     if (!found)
                     {
                         _logger.LogWarning("Unable to fix {curDay} for PGY{pgy} {name} ({id})", curDay, "1", res.Name, res.ResidentId);
-                        didFail = true;
+                        successful = false;
                     }
                 }
             }
         }
 
-        return !didFail;
+        return successful;
     }
 
 
@@ -1653,7 +1654,7 @@ public class AlgorithmService
         FixWeekends1and2(List<PGY1DTO> pgy1s,
             List<PGY2DTO> pgy2s) // function to fix resident weekends
     {
-        bool didFail = false;
+        bool successful = true;
         foreach (PGY1DTO res in pgy1s)
         {
             // get the first and last day the resident works
@@ -1780,6 +1781,11 @@ public class AlgorithmService
                     if (!found)
                     {
                         _logger.LogWarning("Unable to fix {curDay} for PGY{pgy} {name} ({id})", curDay, "1", res.Name, res.ResidentId);
+                        _logger.LogDebug("vacations: {vacations}", string.Join(", ", res.VacationRequests.Order()));
+                        _logger.LogDebug("committed work days: {workdays}", string.Join(", ", res.CommitedWorkDays.Order()));
+                        _logger.LogDebug("work days: {workdays}", string.Join(", ", res.WorkDays.Order()));
+                        _logger.LogDebug("role: {role}", res.GetHospitalRoleForCalendarMonth(curDay.Month).ToString());
+                        successful = false;
                     }
                 }
             }
@@ -1905,13 +1911,17 @@ public class AlgorithmService
                     if (!found)
                     {
                         _logger.LogWarning("Unable to fix {curDay} for PGY{pgy} {name} ({id})", curDay, "2", res.Name, res.ResidentId);
-                        didFail = true;
+                        _logger.LogDebug("vacations: {vacations}", string.Join(", ", res.VacationRequests.Order()));
+                        _logger.LogDebug("committed work days: {workdays}", string.Join(", ", res.CommitedWorkDays.Order()));
+                        _logger.LogDebug("work days: {workdays}", string.Join(", ", res.WorkDays.Order()));
+                        _logger.LogDebug("role: {role}", res.GetHospitalRoleForCalendarMonth(curDay.Month).ToString());
+                        successful = false;
                     }
                 }
             }
         }
 
-        return !didFail;
+        return successful;
     }
 
     public bool
