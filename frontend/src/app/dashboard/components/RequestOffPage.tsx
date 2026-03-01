@@ -14,10 +14,10 @@ interface RequestOffPageProps {
   setEndDate: (value: string) => void;
   reason: string;
   setReason: (value: string) => void;
-  leaveReasons: { id: string; name: string }[];
+  leaveReasons: { id: string; name: string; halfDay?: string }[];
   description: string;
   setDescription: (value: string) => void;
-  handleSubmitRequestOff: () => void;
+  handleSubmitRequestOff: () => Promise<void>;
 }
 
 type ApiVacation = {
@@ -30,11 +30,13 @@ type ApiVacation = {
   status: "Pending" | "Approved" | "Denied" | string;
   details?: string | null;
   groupId?: string | null;
+  halfDay?: string | null;
 };
 
 type GroupedRequest = {
   groupId: string;
   reason: string;
+  halfDay?: string | null;
   status: string;
   details?: string | null;
   dates: string[];
@@ -113,6 +115,7 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
         mp.set(key, {
           groupId: key,
           reason: v.reason,
+          halfDay: v.halfDay ?? null,
           status: v.status,
           details: v.details ?? null,
           dates: [v.date],
@@ -128,10 +131,12 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
     arr.forEach((g) => g.dates.sort((a, b) => +new Date(a) - +new Date(b)));
     arr.sort(
       (A, B) =>
-        +new Date(B.dates[B.dates.length - 1]) - +new Date(A.dates[A.dates.length - 1])
+        +new Date(A.dates[0]) - +new Date(B.dates[0])
     );
     return arr;
   }, [requests]);
+
+  const reasonName = leaveReasons.find((r) => r.id === reason)?.name ?? reason;
 
   const handleInitialSubmit = () => {
     if (isFormValid) {
@@ -139,9 +144,10 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
     }
   };
 
-  const handleConfirmSubmit = () => {
-    handleSubmitRequestOff();
+  const handleConfirmSubmit = async () => {
+    await handleSubmitRequestOff();
     setShowConfirmation(false);
+    setRefreshKey((k) => k + 1);
   };
 
   const handleCancelSubmit = () => {
@@ -263,7 +269,7 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
               >
                 <option value="" disabled>Select a reason</option>
                 {leaveReasons.map((r) => (
-                  <option key={r.id} value={r.name}>
+                  <option key={r.id} value={r.id}>
                     {r.name}
                   </option>
                 ))}
@@ -331,7 +337,7 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Reason:</span>
                     <span className="font-medium text-foreground">
-                      {reason}
+                      {reasonName}
                     </span>
                   </div>
                 </div>
@@ -371,7 +377,7 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
                   </p>
                   <div className="text-xs text-yellow-600 dark:text-yellow-400">
                     <strong>Duration:</strong> {new Date(startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })} - {new Date(endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })} ({calculateDays()} day{calculateDays() !== 1 ? 's' : ''})<br/>
-                    <strong>Reason:</strong> {reason}
+                    <strong>Reason:</strong> {reasonName}
                     {description && (
                       <>
                         <br/>
@@ -401,19 +407,8 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
 
           {/* Resident Submitted Requests */}
             <div className="mt-6">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-semibold">Your Submitted Requests</h2>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setRefreshKey((k) => k + 1)}
-                  className="gap-1"
-                  title="Refresh"
-                >
-                  Refresh
-                </Button>
+              <div className="flex items-center mb-2">
+                <h2 className="text-lg font-semibold">Your Submitted Requests</h2>
               </div>
 
               <Card className="p-3 shadow-lg border border-border">
@@ -450,7 +445,10 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
                               </div>
                               <div className="text-sm">
                                 <span className="text-muted-foreground">Reason: </span>
-                                <span className="font-medium">{g.reason}</span>
+                                <span className="font-medium">
+                                  {g.reason}
+                                  {g.halfDay === "A" ? " (AM)" : g.halfDay === "P" ? " (PM)" : ""}
+                                </span>
                               </div>
                               {g.details ? (
                                 <div className="text-xs text-muted-foreground break-all">
