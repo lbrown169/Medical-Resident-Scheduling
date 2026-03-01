@@ -253,32 +253,34 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
           <div className="flex-1 overflow-auto">
             {/* Calendar Navigation */}
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <h2 className="text-xl font-semibold">
+              <div className="flex flex-col gap-1">
+                <h2 className="pl-2 text-xl font-semibold">
                   {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
                 </h2>
-                <button
-                  onClick={() => navigateMonth('prev')}
-                  disabled={!canNavigatePrev}
-                  className="p-2 hover:bg-muted rounded-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                {isTodayInScheduleYear && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => navigateMonth('prev')}
+                    disabled={!canNavigatePrev}
+                    className="p-2 hover:bg-muted rounded-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  {isTodayInScheduleYear && (
                   <button
                     onClick={goToToday}
                     className="px-3 py-1 text-sm font-medium text-primary hover:bg-primary/10 rounded-lg transition-colors"
                   >
                     Today
                   </button>
-                )}
-                <button
-                  onClick={() => navigateMonth('next')}
-                  disabled={!canNavigateNext}
-                  className="p-2 hover:bg-muted rounded-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
+                  )}
+                  <button
+                    onClick={() => navigateMonth('next')}
+                    disabled={!canNavigateNext}
+                    className="p-2 hover:bg-muted rounded-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
               {/* Legend */}
               <div className="flex items-center gap-4 text-xs">
