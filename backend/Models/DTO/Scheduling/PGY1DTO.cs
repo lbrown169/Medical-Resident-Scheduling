@@ -18,7 +18,8 @@ public class PGY1DTO : ResidentDTO
 
         if (lengthType == CallLengthType.Long)
         {
-            if (role is { DoesLong: false } && (!InTraining || !role.DoesTrainingLong))
+            if (curDay.Month is 7 or 8 && role is { DoesTrainingLong: false} ||
+                curDay.Month is not 7 and not 8 && role is { DoesLong: false })
             {
                 return false;
             }
@@ -33,7 +34,8 @@ public class PGY1DTO : ResidentDTO
         }
         else // Weekday
         {
-            if (role is { DoesShort: false } && (!InTraining || !role.DoesTrainingShort))
+            if (curDay.Month is 7 or 8 && role is { DoesTrainingShort: false} ||
+                curDay.Month is not 7 and not 8 && role is { DoesShort: false })
             {
                 return false;
             }
