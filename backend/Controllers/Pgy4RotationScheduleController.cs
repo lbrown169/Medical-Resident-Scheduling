@@ -1,6 +1,8 @@
 using MedicalDemo.Converters;
+using MedicalDemo.Enums;
 using MedicalDemo.Extensions;
 using MedicalDemo.Models.DTO.Pgy4Scheduling;
+using MedicalDemo.Models.DTO.Requests;
 using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.Entities;
 using MedicalDemo.Services;
@@ -15,7 +17,8 @@ public class Pgy4RotationScheduleController(
     MedicalContext context,
     Pgy4RotationScheduleConverter pgy4RotationScheduleConverter,
     ResidentConverter residentConverter,
-    Pgy4RotationScheduleService pgy4RotationScheduleService
+    Pgy4RotationScheduleService pgy4RotationScheduleService,
+    Pgy4RotationScheduleOverrideConverter pgy4RotationScheduleOverrideConverter
 ) : ControllerBase
 {
     private readonly MedicalContext context = context;
@@ -24,22 +27,37 @@ public class Pgy4RotationScheduleController(
     private readonly ResidentConverter residentConverter = residentConverter;
     private readonly Pgy4RotationScheduleService pgy4RotationScheduleService =
         pgy4RotationScheduleService;
+    private readonly Pgy4RotationScheduleOverrideConverter pgy4RotationScheduleOverrideConverter =
+        pgy4RotationScheduleOverrideConverter;
 
-    [HttpGet("{id}")]
+    [HttpGet("{scheduleId}")]
     public async Task<ActionResult<Pgy4RotationScheduleResponse>> GetScheduleById(
-        [FromRoute] Guid id
+        [FromRoute] Guid scheduleId,
+        [FromQuery] bool applyOverrides = false
     )
     {
         Pgy4RotationSchedule? foundSchedule = await context
-            .Pgy4RotationSchedules.Include(s => s.Rotations)
-                .ThenInclude((r) => r.RotationType)
-            .Include((s) => s.Rotations)
-                .ThenInclude((r) => r.Resident)
-            .FirstOrDefaultAsync((s) => s.Pgy4RotationScheduleId == id);
+            .Pgy4RotationSchedules.IncludeRotationTypeAndResidentProperties()
+            .FirstOrDefaultAsync((s) => s.Pgy4RotationScheduleId == scheduleId);
 
         if (foundSchedule == null)
         {
             return NotFound();
+        }
+
+        List<Pgy4RotationScheduleOverride>? overrides = null;
+
+        if (applyOverrides)
+        {
+            overrides = await context
+                .Pgy4RotationScheduleOverrides.Include(o => o.RotationType)
+                .Where((o) => o.Pgy4RotationScheduleId == scheduleId)
+                .ToListAsync();
+
+            pgy4RotationScheduleOverrideConverter.UpdateScheduleWithOverrides(
+                foundSchedule,
+                overrides
+            );
         }
 
         Pgy4RotationScheduleResponse response =
@@ -52,10 +70,7 @@ public class Pgy4RotationScheduleController(
     public async Task<ActionResult<Pgy4RotationSchedulesListResponse[]>> GetAllSchedules()
     {
         List<Pgy4RotationSchedule> foundSchedule = await context
-            .Pgy4RotationSchedules.Include((s) => s.Rotations)
-                .ThenInclude((r) => r.RotationType)
-            .Include((s) => s.Rotations)
-                .ThenInclude((r) => r.Resident)
+            .Pgy4RotationSchedules.IncludeRotationTypeAndResidentProperties()
             .ToListAsync();
 
         Pgy4RotationSchedulesListResponse response =
@@ -92,7 +107,8 @@ public class Pgy4RotationScheduleController(
             return BadRequest(ModelState);
         }
 
-        List<Resident> unsubmittedResidents = await pgy4RotationScheduleService.ValidateAllPrefRequestSubmitted();
+        List<Resident> unsubmittedResidents =
+            await pgy4RotationScheduleService.ValidateAllPrefRequestSubmitted();
         if (unsubmittedResidents.Count != 0)
         {
             UnsubmittedResidentsResponse errorResponse = new()
@@ -215,7 +231,9 @@ public class Pgy4RotationScheduleController(
         await context.SaveChangesAsync();
 
         Pgy4RotationScheduleResponse response =
-            pgy4RotationScheduleConverter.CreateRotationScheduleResponseFromModel(scheduleToBePublished);
+            pgy4RotationScheduleConverter.CreateRotationScheduleResponseFromModel(
+                scheduleToBePublished
+            );
 
         return Ok(response);
     }
@@ -244,7 +262,8 @@ public class Pgy4RotationScheduleController(
 
     [HttpGet("resident/{id}")]
     public async Task<ActionResult<Pgy4ResidentRotationScheduleResponse>> GetScheduleByResident(
-        [FromRoute] string id
+        [FromRoute] string id,
+        [FromQuery] bool applyOverrides = false
     )
     {
         Resident? foundResident = await context.Residents.FirstOrDefaultAsync(
@@ -290,6 +309,26 @@ public class Pgy4RotationScheduleController(
             ),
         ];
 
+        // Apply overrides if needed
+        List<Pgy4RotationScheduleOverride>? overrides = null;
+
+        if (applyOverrides)
+        {
+            overrides = await context
+                .Pgy4RotationScheduleOverrides.Include(o => o.RotationType)
+                .Where(
+                    (o) =>
+                        o.Pgy4RotationScheduleId == foundSchedule.Pgy4RotationScheduleId
+                        && o.ResidentOverrideId == foundResident.ResidentId
+                )
+                .ToListAsync();
+
+            pgy4RotationScheduleOverrideConverter.UpdateResidentScheduleWithOverrides(
+                residentRotations,
+                overrides
+            );
+        }
+
         if (residentRotations.Count == 0)
         {
             return NotFound("No schedule for this resident is found");
@@ -301,6 +340,278 @@ public class Pgy4RotationScheduleController(
                 foundResident,
                 residentRotations
             );
+        return Ok(response);
+    }
+
+    [HttpPost("override/{scheduleId}")]
+    public async Task<ActionResult<Pgy4RotationScheduleOverrideResponse>> AddScheduleOverride(
+        [FromRoute] Guid scheduleId,
+        [FromBody] Pgy4RotationScheduleOverrideRequest request
+    )
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        // Check schedule existence
+        Pgy4RotationSchedule? foundSchedule = await context
+            .Pgy4RotationSchedules.IncludeRotationTypeAndResidentProperties()
+            .FirstOrDefaultAsync((s) => s.Pgy4RotationScheduleId == scheduleId);
+
+        if (foundSchedule == null)
+        {
+            return NotFound("Schedule not found!");
+        }
+
+        // Check request ResidentId existence
+        Resident? foundResident = await context.Residents.FirstOrDefaultAsync(
+            (r) => r.ResidentId == request.ResidentId
+        );
+
+        if (foundResident == null)
+        {
+            return NotFound("Resident not found!");
+        }
+
+        if (foundResident.GraduateYr != 3)
+        {
+            ModelState.AddModelError(
+                "Non-PGY3 Resident",
+                "The resident ID passed in is not a PGY3 resident"
+            );
+            return BadRequest(ModelState);
+        }
+
+        // Check request rotationType existence
+        RotationType? foundRotationType = await context.RotationTypes.FirstOrDefaultAsync(
+            (r) => r.RotationTypeId == request.newRotationTypeId
+        );
+
+        if (foundRotationType == null)
+        {
+            return NotFound("Rotation Type not found!");
+        }
+
+        // Check if another override already exists, delete it if it does
+        Pgy4RotationScheduleOverride? existingOverride =
+            await context.Pgy4RotationScheduleOverrides.FirstOrDefaultAsync(
+                (
+                    o =>
+                        o.ResidentOverrideId == request.ResidentId
+                        && o.Pgy4RotationScheduleId == scheduleId
+                        && o.AcademicMonthIndexOverride == (MonthOfYear)request.AcademicMonthIndex
+                )
+            );
+
+        if (existingOverride != null)
+        {
+            context.Pgy4RotationScheduleOverrides.Remove(existingOverride);
+            await context.SaveChangesAsync();
+        }
+
+        // Add to DB
+        Pgy4RotationScheduleOverride newOverride =
+            pgy4RotationScheduleOverrideConverter.CreateModelFromRequest(scheduleId, request);
+
+        await context.Pgy4RotationScheduleOverrides.AddAsync(newOverride);
+        await context.SaveChangesAsync();
+
+        // Get Response
+        newOverride = await context
+            .Pgy4RotationScheduleOverrides.Include(o => o.RotationType)
+            .Include(o => o.Resident)
+            .FirstAsync(o =>
+                o.Pgy4RotationScheduleOverrideId == newOverride.Pgy4RotationScheduleOverrideId
+            );
+
+        Pgy4RotationScheduleOverrideResponse response =
+            pgy4RotationScheduleOverrideConverter.CreateResponseFromModel(newOverride);
+
+        return Ok(response);
+    }
+
+    [HttpGet("override/{scheduleId}")]
+    public async Task<
+        ActionResult<Pgy4RotationScheduleOverrideListResponse>
+    > GetAllOverridesByScheduleId([FromRoute] Guid scheduleId)
+    {
+        // Check schedule existence
+        Pgy4RotationSchedule? foundSchedule = await context
+            .Pgy4RotationSchedules.IncludeRotationTypeAndResidentProperties()
+            .AsSplitQuery()
+            .IncludeOverrides()
+            .FirstOrDefaultAsync((s) => s.Pgy4RotationScheduleId == scheduleId);
+
+        if (foundSchedule == null)
+        {
+            return NotFound("Schedule not found!");
+        }
+
+        Pgy4RotationScheduleOverrideListResponse response =
+            pgy4RotationScheduleOverrideConverter.CreateListResponseFromModels(foundSchedule);
+
+        return Ok(response);
+    }
+
+    [HttpDelete("override/{scheduleId}")]
+    public async Task<ActionResult> DeleteOverrideByScheduleId(
+        [FromRoute] Guid scheduleId,
+        [FromBody] Pgy4RotationScheduleOverrideDeleteRequest deleteRequest
+    )
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        // Check schedule existence
+        Pgy4RotationSchedule? foundSchedule =
+            await context.Pgy4RotationSchedules.FirstOrDefaultAsync(
+                (s) => s.Pgy4RotationScheduleId == scheduleId
+            );
+
+        if (foundSchedule == null)
+        {
+            return NotFound("Schedule not found!");
+        }
+
+        // Check Resident existence
+        Resident? foundResident = await context.Residents.FirstOrDefaultAsync(
+            (r) => r.ResidentId == deleteRequest.ResidentId
+        );
+
+        if (foundResident == null)
+        {
+            return NotFound("Resident not found!");
+        }
+
+        if (foundResident.GraduateYr != 3)
+        {
+            ModelState.AddModelError(
+                "Non-PGY3 Resident",
+                "The resident ID passed in is not a PGY3 resident"
+            );
+            return BadRequest(ModelState);
+        }
+
+        // Delete from DB
+        Pgy4RotationScheduleOverride? existingOverride =
+            await context.Pgy4RotationScheduleOverrides.FirstOrDefaultAsync(
+                (
+                    o =>
+                        o.ResidentOverrideId == deleteRequest.ResidentId
+                        && o.Pgy4RotationScheduleId == scheduleId
+                        && o.AcademicMonthIndexOverride
+                            == (MonthOfYear)deleteRequest.AcademicMonthIndex
+                )
+            );
+
+        if (existingOverride == null)
+        {
+            return NotFound("Cannot find the corresponding override.");
+        }
+
+        context.Pgy4RotationScheduleOverrides.Remove(existingOverride);
+        await context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    [HttpDelete("override/{scheduleId}/all")]
+    public async Task<ActionResult> DeleteAllOverridesByScheduleId([FromRoute] Guid scheduleId)
+    {
+        // Check schedule existence
+        Pgy4RotationSchedule? foundSchedule =
+            await context.Pgy4RotationSchedules.FirstOrDefaultAsync(
+                (s) => s.Pgy4RotationScheduleId == scheduleId
+            );
+
+        if (foundSchedule == null)
+        {
+            return NotFound("Schedule not found!");
+        }
+
+        // Delete overrides from DB
+        List<Pgy4RotationScheduleOverride> overrides = await context
+            .Pgy4RotationScheduleOverrides.Where((o) => o.Pgy4RotationScheduleId == scheduleId)
+            .ToListAsync();
+
+        context.Pgy4RotationScheduleOverrides.RemoveRange(overrides);
+        await context.SaveChangesAsync();
+
+        return NoContent();
+    }
+
+    [HttpGet("{scheduleId}/constraint-errors")]
+    public async Task<
+        ActionResult<Pgy4ScheduleConstraintViolationsListResponse>
+    > GetScheduleConstraintErrorsById([FromRoute] Guid scheduleId)
+    {
+        // Get schedule from DB
+        Pgy4RotationSchedule? foundSchedule = await context
+            .Pgy4RotationSchedules.IncludeRotationTypeAndResidentProperties()
+            .FirstOrDefaultAsync((s) => s.Pgy4RotationScheduleId == scheduleId);
+
+        if (foundSchedule == null)
+        {
+            return NotFound();
+        }
+
+        List<Pgy4RotationScheduleOverride>? overrides = null;
+
+        // Apply overrides to schedule
+        overrides = await context
+            .Pgy4RotationScheduleOverrides.Include(o => o.RotationType)
+            .Where((o) => o.Pgy4RotationScheduleId == scheduleId)
+            .ToListAsync();
+
+        pgy4RotationScheduleOverrideConverter.UpdateScheduleWithOverrides(foundSchedule, overrides);
+
+        Pgy4ScheduleData scheduleData =
+            pgy4RotationScheduleConverter.CreateAlgorithmScheduleDataFromModel(foundSchedule);
+
+        // Get violations
+        List<Pgy4ConstraintViolation> violations =
+            pgy4RotationScheduleService.GetConstraintViolations(scheduleData);
+
+        // Convert to response
+        Pgy4ScheduleConstraintViolationsListResponse violationResponse =
+            pgy4RotationScheduleConverter.CreateViolationsListResponse(foundSchedule, violations);
+
+        return Ok(violationResponse);
+    }
+
+    [HttpPut("{scheduleId}/apply-overrides")]
+    public async Task<ActionResult<Pgy4RotationScheduleResponse>> ApplyScheduleOverridesById(
+        [FromRoute] Guid scheduleId
+    )
+    {
+        Pgy4RotationSchedule? foundSchedule = await context
+            .Pgy4RotationSchedules.IncludeRotationTypeAndResidentProperties()
+            .FirstOrDefaultAsync((s) => s.Pgy4RotationScheduleId == scheduleId);
+
+        if (foundSchedule == null)
+        {
+            return NotFound();
+        }
+
+        List<Pgy4RotationScheduleOverride>? overrides = null;
+
+        overrides = await context
+            .Pgy4RotationScheduleOverrides.Include(o => o.RotationType)
+            .Where((o) => o.Pgy4RotationScheduleId == scheduleId)
+            .ToListAsync();
+
+        // Update schedule rotations with appropriate overrides
+        pgy4RotationScheduleOverrideConverter.UpdateScheduleWithOverrides(foundSchedule, overrides);
+        // Delete overrides from DB
+        context.Pgy4RotationScheduleOverrides.RemoveRange(overrides);
+        await context.SaveChangesAsync();
+
+        Pgy4RotationScheduleResponse response =
+            pgy4RotationScheduleConverter.CreateRotationScheduleResponseFromModel(foundSchedule);
+
         return Ok(response);
     }
 }

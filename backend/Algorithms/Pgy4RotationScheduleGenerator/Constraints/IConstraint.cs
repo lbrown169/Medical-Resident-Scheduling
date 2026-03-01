@@ -5,6 +5,8 @@ namespace MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator.Constraints;
 
 public interface IConstraint
 {
+    Pgy4ConstraintType ConstraintType { get; }
+
     int Weight { get; }
 
     bool IsValidAssignment(
@@ -38,5 +40,9 @@ public interface IConstraint
         out int newRequestIndex,
         out int newMonth,
         int totalMonths = 12
+    );
+
+    Pgy4ConstraintViolation GetRotationScheduleConstraintViolations(
+        Dictionary<AlgorithmResident, Pgy4RotationTypeEnum[]> schedule
     );
 }

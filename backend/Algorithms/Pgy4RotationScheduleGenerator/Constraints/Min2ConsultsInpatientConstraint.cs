@@ -1,4 +1,3 @@
-
 using MedicalDemo.Enums;
 using MedicalDemo.Models.DTO.Pgy4Scheduling;
 
@@ -7,6 +6,8 @@ namespace MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator.Constraints;
 public class Min2ConsultsInpatientConstraint : IConstraint
 {
     public int Weight => 3;
+
+    public Pgy4ConstraintType ConstraintType => Pgy4ConstraintType.Min2ConsultsInpatients;
 
     public bool IsValidAssignment(
         Dictionary<AlgorithmResident, Pgy4RotationTypeEnum?[]> schedule,
@@ -154,10 +155,84 @@ public class Min2ConsultsInpatientConstraint : IConstraint
                 return;
             }
 
-            if (rotation != Pgy4RotationTypeEnum.InpatientPsy && rotation != Pgy4RotationTypeEnum.PsyConsults)
+            if (
+                rotation != Pgy4RotationTypeEnum.InpatientPsy
+                && rotation != Pgy4RotationTypeEnum.PsyConsults
+            )
             {
                 newMonth = i;
             }
         }
+    }
+
+    public Pgy4ConstraintViolation GetRotationScheduleConstraintViolations(
+        Dictionary<AlgorithmResident, Pgy4RotationTypeEnum[]> schedule
+    )
+    {
+        List<Pgy4ConstraintError> errors = [];
+
+        const string missingRotationOnResidentErrorTemplate =
+            "Resident {0} is missing {1} {2} rotation(s)";
+
+        foreach (KeyValuePair<AlgorithmResident, Pgy4RotationTypeEnum[]> kvp in schedule)
+        {
+            AlgorithmResident resident = kvp.Key;
+            Pgy4RotationTypeEnum[] rotations = kvp.Value;
+
+            int numInpatientsEncountered = 0;
+            int numConsultsEncountered = 0;
+
+            for (int monthIndex = 0; monthIndex < rotations.Length; monthIndex++)
+            {
+                if (rotations[monthIndex] == Pgy4RotationTypeEnum.InpatientPsy)
+                {
+                    numInpatientsEncountered++;
+                }
+                else if (rotations[monthIndex] == Pgy4RotationTypeEnum.PsyConsults)
+                {
+                    numConsultsEncountered++;
+                }
+            }
+
+            if (numInpatientsEncountered < 2)
+            {
+                string errorMessage = string.Format(
+                    missingRotationOnResidentErrorTemplate,
+                    $"{resident.FirstName} {resident.LastName}",
+                    2 - numInpatientsEncountered,
+                    Pgy4RotationTypeEnum.InpatientPsy
+                );
+
+                errors.Add(
+                    new()
+                    {
+                        Message = errorMessage,
+                        CalendarMonthIndex = null,
+                        Resident = resident,
+                    }
+                );
+            }
+
+            if (numConsultsEncountered < 2)
+            {
+                string errorMessage = string.Format(
+                    missingRotationOnResidentErrorTemplate,
+                    $"{resident.FirstName} {resident.LastName}",
+                    2 - numConsultsEncountered,
+                    Pgy4RotationTypeEnum.PsyConsults
+                );
+
+                errors.Add(
+                    new()
+                    {
+                        Message = errorMessage,
+                        CalendarMonthIndex = null,
+                        Resident = resident,
+                    }
+                );
+            }
+        }
+
+        return new() { ConstraintViolated = ConstraintType, Errors = errors };
     }
 }

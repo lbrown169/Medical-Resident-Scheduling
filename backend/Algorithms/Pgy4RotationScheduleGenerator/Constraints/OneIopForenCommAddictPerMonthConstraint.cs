@@ -1,4 +1,3 @@
-
 using MedicalDemo.Enums;
 using MedicalDemo.Models.DTO.Pgy4Scheduling;
 
@@ -7,6 +6,8 @@ namespace MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator.Constraints;
 public class OneIopForenCommAddictPerMonthConstraint : IConstraint
 {
     public int Weight => 0;
+
+    public Pgy4ConstraintType ConstraintType => Pgy4ConstraintType.OneIopForenCommAddictPerMonth;
 
     public bool IsValidAssignment(
         Dictionary<AlgorithmResident, Pgy4RotationTypeEnum?[]> schedule,
@@ -120,6 +121,127 @@ public class OneIopForenCommAddictPerMonthConstraint : IConstraint
             )
             {
                 newRequestIndex = i;
+            }
+        }
+    }
+
+    public Pgy4ConstraintViolation GetRotationScheduleConstraintViolations(
+        Dictionary<AlgorithmResident, Pgy4RotationTypeEnum[]> schedule
+    )
+    {
+        Dictionary<int, HashSet<Pgy4RotationTypeEnum>> encounteredErrorRotations = [];
+        List<Pgy4ConstraintError> errors = [];
+
+        const string rotationsCountOverflowErrorTemplate = "{0} can have at most 1 {1} rotation";
+
+        for (int monthIndex = 0; monthIndex < 12; monthIndex++)
+        {
+            bool iopEncountered = false;
+            bool forensicEncountered = false;
+            bool communityEncountered = false;
+            bool addictionEncountered = false;
+
+            foreach (AlgorithmResident resident in schedule.Keys)
+            {
+                Pgy4RotationTypeEnum? rotation = schedule[resident][monthIndex];
+
+                GetErrorsByRotationTypeEncountered(
+                    rotation,
+                    Pgy4RotationTypeEnum.IOP,
+                    errors,
+                    ref iopEncountered,
+                    monthIndex,
+                    rotationsCountOverflowErrorTemplate,
+                    encounteredErrorRotations
+                );
+
+                GetErrorsByRotationTypeEncountered(
+                    rotation,
+                    Pgy4RotationTypeEnum.Forensic,
+                    errors,
+                    ref forensicEncountered,
+                    monthIndex,
+                    rotationsCountOverflowErrorTemplate,
+                    encounteredErrorRotations
+                );
+
+                GetErrorsByRotationTypeEncountered(
+                    rotation,
+                    Pgy4RotationTypeEnum.CommunityPsy,
+                    errors,
+                    ref communityEncountered,
+                    monthIndex,
+                    rotationsCountOverflowErrorTemplate,
+                    encounteredErrorRotations
+                );
+
+                GetErrorsByRotationTypeEncountered(
+                    rotation,
+                    Pgy4RotationTypeEnum.Addiction,
+                    errors,
+                    ref addictionEncountered,
+                    monthIndex,
+                    rotationsCountOverflowErrorTemplate,
+                    encounteredErrorRotations
+                );
+            }
+        }
+
+        return new() { ConstraintViolated = ConstraintType, Errors = errors };
+    }
+
+    private static void GetErrorsByRotationTypeEncountered(
+        Pgy4RotationTypeEnum? currentMonthRotationType,
+        Pgy4RotationTypeEnum constraintRotationType,
+        List<Pgy4ConstraintError> errors,
+        ref bool encountered,
+        int monthIndex,
+        string errorTemplate,
+        Dictionary<int, HashSet<Pgy4RotationTypeEnum>> encounteredErrorRotations
+    )
+    {
+        if (currentMonthRotationType == constraintRotationType)
+        {
+            if (!encountered)
+            {
+                encountered = true;
+                return;
+            }
+            else
+            {
+                encounteredErrorRotations.TryGetValue(
+                    monthIndex,
+                    out HashSet<Pgy4RotationTypeEnum>? encounteredRotations
+                );
+
+                if (
+                    encounteredRotations == null
+                    || (
+                        encounteredRotations != null
+                        && encounteredRotations.Add(constraintRotationType)
+                    )
+                )
+                {
+                    if (encounteredRotations == null)
+                    {
+                        encounteredErrorRotations.Add(monthIndex, [constraintRotationType]);
+                    }
+
+                    string errorMessage = string.Format(
+                        errorTemplate,
+                        (MonthOfYear)monthIndex,
+                        constraintRotationType
+                    );
+
+                    errors.Add(
+                        new()
+                        {
+                            Message = errorMessage,
+                            CalendarMonthIndex = (MonthOfYear)monthIndex,
+                            Resident = null,
+                        }
+                    );
+                }
             }
         }
     }

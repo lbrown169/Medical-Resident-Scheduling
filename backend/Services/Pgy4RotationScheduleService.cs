@@ -45,7 +45,7 @@ public class Pgy4RotationScheduleService(
 
         List<Rotation> rotationsToAdd = [];
 
-        foreach (KeyValuePair<string, Pgy4RotationTypeEnum[]> kvp in generatedSchedule.Schedule)
+        foreach (KeyValuePair<AlgorithmResident, Pgy4RotationTypeEnum[]> kvp in generatedSchedule.Schedule)
         {
             for (
                 int calenderMonthIndex = 0;
@@ -58,7 +58,7 @@ public class Pgy4RotationScheduleService(
                 RotationType currentRotationType = allRotationTypesDictionary[rotationName];
 
                 Rotation newRotation = rotationConverter.CreateRotationFromResidentAndType(
-                    kvp.Key,
+                    kvp.Key.ResidentId,
                     currentRotationType,
                     newScheduleId,
                     (MonthOfYear)calenderMonthIndex
@@ -72,7 +72,8 @@ public class Pgy4RotationScheduleService(
 
     public async Task<List<RotationPrefRequest>> GetAllPgy3RotationPrefRequests()
     {
-        return await context.RotationPrefRequests.IncludeAllRotationPrefRequestProperties()
+        return await context
+            .RotationPrefRequests.IncludeAllRotationPrefRequestProperties()
             .Include(request => request.Resident)
             .Where(request => request.Resident.GraduateYr == 3)
             .ToListAsync();
@@ -187,5 +188,25 @@ public class Pgy4RotationScheduleService(
         }
 
         return scheduleYear;
+    }
+
+    public List<Pgy4ConstraintViolation> GetConstraintViolations(Pgy4ScheduleData scheduleData)
+    {
+        // Populate constraints
+        IConstraint[] constraints =
+        [
+            new HasChiefRotationConstraint(),
+            new InpatientConsultInJulyAndJanConstraint(),
+            new Min2ConsultsInpatientConstraint(),
+            new OneIopForenCommAddictPerMonthConstraint(),
+        ];
+
+        List<Pgy4ConstraintViolation> violations = [];
+        foreach (IConstraint constraint in constraints)
+        {
+            violations.Add(constraint.GetRotationScheduleConstraintViolations(scheduleData.Schedule));
+        }
+
+        return violations;
     }
 }

@@ -52,7 +52,7 @@ public class Pgy4RotationScheduleGenerator
             return new()
             {
                 Schedule = rotationSchedule.ToDictionary(
-                    kvp => kvp.Key.ResidentId,
+                    kvp => kvp.Key,
                     kvp => kvp.Value.Cast<Pgy4RotationTypeEnum>().ToArray()
                 ),
             };

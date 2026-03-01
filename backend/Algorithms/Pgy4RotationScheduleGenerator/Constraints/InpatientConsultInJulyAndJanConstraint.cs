@@ -1,4 +1,3 @@
-
 using MedicalDemo.Enums;
 using MedicalDemo.Models.DTO.Pgy4Scheduling;
 
@@ -7,6 +6,8 @@ namespace MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator.Constraints;
 public class InpatientConsultInJulyAndJanConstraint : IConstraint
 {
     public int Weight => 2;
+
+    public Pgy4ConstraintType ConstraintType => Pgy4ConstraintType.InpatientConsultInJanAndJuly;
 
     public bool IsValidAssignment(
         Dictionary<AlgorithmResident, Pgy4RotationTypeEnum?[]> schedule,
@@ -166,10 +167,81 @@ public class InpatientConsultInJulyAndJanConstraint : IConstraint
                 return;
             }
 
-            if (rotation != Pgy4RotationTypeEnum.InpatientPsy && rotation != Pgy4RotationTypeEnum.PsyConsults)
+            if (
+                rotation != Pgy4RotationTypeEnum.InpatientPsy
+                && rotation != Pgy4RotationTypeEnum.PsyConsults
+            )
             {
                 newRequestIndex = i;
             }
         }
+    }
+
+    public Pgy4ConstraintViolation GetRotationScheduleConstraintViolations(
+        Dictionary<AlgorithmResident, Pgy4RotationTypeEnum[]> schedule
+    )
+    {
+        List<Pgy4ConstraintError> errors = [];
+
+        const string missingRotationOnMonthErrorTemplate = "{0} rotation is missing on {1}";
+
+        int[] janAndJulyMonths = [0, 6];
+
+        foreach (int monthIndex in janAndJulyMonths)
+        {
+            bool hasInpatient = false;
+            bool hasConsult = false;
+
+            foreach (AlgorithmResident resident in schedule.Keys)
+            {
+                if (schedule[resident][monthIndex] == Pgy4RotationTypeEnum.InpatientPsy)
+                {
+                    hasInpatient = true;
+                    continue;
+                }
+                else if (schedule[resident][monthIndex] == Pgy4RotationTypeEnum.PsyConsults)
+                {
+                    hasConsult = true;
+                }
+            }
+
+            if (!hasInpatient)
+            {
+                string errorMessage = string.Format(
+                    missingRotationOnMonthErrorTemplate,
+                    Pgy4RotationTypeEnum.InpatientPsy,
+                    (MonthOfYear)monthIndex
+                );
+
+                errors.Add(
+                    new()
+                    {
+                        Message = errorMessage,
+                        CalendarMonthIndex = (MonthOfYear)monthIndex,
+                        Resident = null,
+                    }
+                );
+            }
+
+            if (!hasConsult)
+            {
+                string errorMessage = string.Format(
+                    missingRotationOnMonthErrorTemplate,
+                    Pgy4RotationTypeEnum.PsyConsults,
+                    (MonthOfYear)monthIndex
+                );
+
+                errors.Add(
+                    new()
+                    {
+                        Message = errorMessage,
+                        CalendarMonthIndex = (MonthOfYear)monthIndex,
+                        Resident = null,
+                    }
+                );
+            }
+        }
+
+        return new() { ConstraintViolated = ConstraintType, Errors = errors };
     }
 }
