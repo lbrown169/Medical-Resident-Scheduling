@@ -29,42 +29,47 @@ public class SchedulesController : ControllerBase
         _scheduleConverter = scheduleConverter;
     }
 
-    // GET: api/schedules?status=&generatedYear=
+    // GET: api/schedules/
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<ScheduleResponse>>> GetAllSchedules(
-        [FromQuery] ScheduleStatus? status,
-        [FromQuery] int? generatedYear)
+    public async Task<ActionResult<IEnumerable<ScheduleResponse>>> GetSchedules(
+        [FromQuery] Guid? scheduleId = null,
+        [FromQuery] int? year = null,
+        [FromQuery] Semester? semester = null,
+        [FromQuery] ScheduleStatus? status = null)
     {
-        IQueryable<Schedule> query = _context.Schedules.AsQueryable();
+        IQueryable<Schedule> query = _context.Schedules
+            .Include(s => s.Dates)
+            .AsQueryable();
 
-        if (status != null)
+        // filters
+        if (scheduleId.HasValue)
         {
-            query = query.Where(s => s.Status == status);
+            query = query.Where(s => s.ScheduleId == scheduleId.Value);
         }
 
-        if (generatedYear != null)
+        if (year.HasValue)
         {
-            query = query.Where(s => s.GeneratedYear == generatedYear);
+            query = query.Where(s => s.Year == year.Value);
         }
 
-        List<ScheduleResponse> results = await query.Select(s => _scheduleConverter.CreateScheduleResponseFromSchedule(s)).ToListAsync();
-
-        return Ok(results);
-    }
-
-    // GET: api/schedules/published/{year}
-    [HttpGet("published/{year}")]
-    public async Task<ActionResult<ScheduleResponse>>
-        GetPublishedSchedule(int year)
-    {
-        Schedule? schedule = await _context.Schedules.FirstOrDefaultAsync(s => s.Status == ScheduleStatus.Published && s.GeneratedYear == year);
-
-        if (schedule == null)
+        if (semester.HasValue)
         {
-            return NotFound();
+            query = query.Where(s => s.Semester == semester.Value);
         }
 
-        return Ok(_scheduleConverter.CreateScheduleResponseFromSchedule(schedule));
+        if (status.HasValue)
+        {
+            query = query.Where(s => s.Status == status.Value);
+        }
+
+        List<Schedule> schedules = await query.ToListAsync();
+
+        // dictionary of resident ID to hours for the Schedule
+        List<ScheduleResponse> scheduleResponses = schedules
+            .Select(schedule => _scheduleConverter.CreateScheduleResponseFromSchedule(schedule))
+            .ToList();
+
+        return Ok(scheduleResponses);
     }
 
     // PUT: api/schedules/{id}
@@ -80,29 +85,36 @@ public class SchedulesController : ControllerBase
             return NotFound();
         }
 
-        if (existingSchedule.Status == updateSchedule.Status)
+        bool updated = false;
+
+        if (updateSchedule.Status != null)
+        {
+            // Only one schedule per year/semester can be published
+            if (updateSchedule.Status == ScheduleStatus.Published)
+            {
+                bool isSchedulePublished = await _context.Schedules.AnyAsync(s =>
+                    s.Year == existingSchedule.Year
+                    && s.Semester == existingSchedule.Semester
+                    && s.Status == ScheduleStatus.Published
+                );
+                if (isSchedulePublished)
+                {
+                    return Conflict(new GenericResponse
+                    {
+                        Success = false,
+                        Message = $"A schedule for {existingSchedule.Semester.GetDisplayName()} {existingSchedule.Year} is already published"
+                    });
+                }
+            }
+
+            updated = existingSchedule.Status != updateSchedule.Status;
+            existingSchedule.Status = (ScheduleStatus)updateSchedule.Status;
+        }
+
+        if (!updated)
         {
             return NoContent();
         }
-
-        // Only one schedule per year can be published
-        if (updateSchedule.Status == ScheduleStatus.Published)
-        {
-            bool isSchedulePublished = await _context.Schedules.AnyAsync(s =>
-                s.GeneratedYear == existingSchedule.GeneratedYear
-                && s.Status == ScheduleStatus.Published
-            );
-            if (isSchedulePublished)
-            {
-                return Conflict(new GenericResponse
-                {
-                    Success = false,
-                    Message = $"A schedule for {existingSchedule.GeneratedYear} is already published"
-                });
-            }
-        }
-
-        existingSchedule.Status = updateSchedule.Status;
 
         try
         {
