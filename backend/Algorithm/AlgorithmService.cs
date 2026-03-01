@@ -565,8 +565,8 @@ public class AlgorithmService
             }
         }
 
-        DateOnly startDay = new(year + 1, 1, 1);
-        DateOnly endDay = new(year + 1, 6, 30);
+        DateOnly startDay = new(year, 1, 1);
+        DateOnly endDay = new(year, 6, 30);
 
         // compute how many days of each shift type there are
         Dictionary<CallShiftType, int> shiftTypeCount = new();

@@ -14,7 +14,7 @@ import {
   SidebarTrigger,
 } from "../../components/ui/sidebar";
 import { SidebarUserCard } from "./components/SidebarUserCard";
-import { Repeat, CalendarDays, CalendarX, UserCheck, Shield, Settings, Home, LogOut, User as UserIcon, ChevronDown, Moon, Sun } from "lucide-react";
+import { Repeat, CalendarDays, CalendarX, UserCheck, Shield, Settings, Home, LogOut, User as UserIcon, ChevronDown, Moon, Sun, LayoutList } from "lucide-react";
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { useRouter } from "next/navigation";
 import { toast } from '../../lib/use-toast';
@@ -35,6 +35,7 @@ import SwapCallsPage from "./components/SwapCallsPage";
 import RequestOffPage from "./components/RequestOffPage";
 import CheckSchedulePage from "./components/CheckSchedulePage";
 import AdminPage from "./components/AdminPage";
+import SchedulesPage from "./components/SchedulesPage";
 
 import MobileHeader from "./components/MobileHeader";
 import MobileUserMenu from "./components/MobileUserMenu";
@@ -98,6 +99,7 @@ interface ScheduleItem {
 const menuItems: MenuItem[] = [
   { title: "Home", icon: <Home className="w-6 h-6 mr-3" /> },
   { title: "Calendar", icon: <CalendarDays className="w-6 h-6 mr-3" /> },
+  { title: "Schedules", icon: <LayoutList className="w-6 h-6 mr-3" /> },
   { title: "Swap Calls", icon: <Repeat className="w-6 h-6 mr-3" /> },
   { title: "Request Off", icon: <CalendarX className="w-6 h-6 mr-3" /> },
   { title: "Check My Schedule", icon: <UserCheck className="w-6 h-6 mr-3" /> },
@@ -1011,10 +1013,6 @@ case "Home":
         handleDeleteUser={handleDeleteUser}
         inviteRole={inviteRole}
         setInviteRole={setInviteRole}
-        onNavigateToCalendar={() => {
-          setSelected("Calendar");
-          fetchCalendarEvents();
-        }}
         userId={user?.id || ""}
       />
     );
@@ -1049,6 +1047,7 @@ case "Home":
             onNavigateToCheckSchedule={() => setSelected("Check My Schedule")}
             onNavigateToSettings={() => setSelected("Settings")}
             onNavigateToHome={() => setSelected("Home")}
+            onNavigateToSchedules={() => setSelected("Schedules")}
             isAdmin={isAdmin}
           />
         );
@@ -1148,11 +1147,27 @@ case "Home":
             handleDeleteUser={handleDeleteUser}
             inviteRole={inviteRole}
             setInviteRole={setInviteRole}
+            userId={user?.id || ""}
+          />
+        );
+
+      case "Schedules":
+        if (!isAdmin) {
+          return (
+            <div className="w-full pt-4 flex flex-col items-center">
+              <h1 className="text-2xl font-bold mb-6">Access Denied</h1>
+              <p className="text-center text-gray-600 dark:text-gray-400">
+                You do not have permission to access the schedules page.
+              </p>
+            </div>
+          );
+        }
+        return (
+          <SchedulesPage
             onNavigateToCalendar={() => {
               setSelected("Calendar");
               fetchCalendarEvents();
             }}
-            userId={user?.id || ""}
           />
         );
 
@@ -1230,8 +1245,10 @@ case "Home":
   const displayEmail = user?.email || "john.doe@email.com";
   const filteredMenuItems = menuItems.filter(item => {
     if (item.title === "Admin") return false; //hide admin option
-    if (item.title === "Request Off") return !isAdmin;
-    if (item.title === "Check My Schedule") return !isAdmin;
+    if (item.title === "Request Off") return !isAdmin; // residents only
+    if (item.title === "Check My Schedule") return !isAdmin; // residents only
+    if (item.title === "Swap Calls") return !isAdmin; // residents only
+    if (item.title === "Schedules") return isAdmin; // admin only
     return true;
   });
 
