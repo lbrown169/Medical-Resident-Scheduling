@@ -34,7 +34,7 @@ public class TrainingCalendar : PsyCallCalendar
                 dayOfWeek ==
                 DayOfWeek
                     .Thursday) // if it is tues, wed, or thurs TODODODODODODO
-                // TO DO, DO NOT HARD CODE THIS^ IN CASE WE WANT MONDAY AND FRIDAY TO BE OPTIONAL
+                               // TO DO, DO NOT HARD CODE THIS^ IN CASE WE WANT MONDAY AND FRIDAY TO BE OPTIONAL
             {
                 shortCallDaysList.Add(DateOnly.FromDateTime(currentDay));
             }
