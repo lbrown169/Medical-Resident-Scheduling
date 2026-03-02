@@ -3,6 +3,7 @@ using System;
 using MedicalDemo.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MedicalDemo.Migrations
 {
     [DbContext(typeof(MedicalContext))]
-    partial class MedicalContextModelSnapshot : ModelSnapshot
+    [Migration("20260223031958_UpdatePgy4RotationScheduleTableColumnKeyName")]
+    partial class UpdatePgy4RotationScheduleTableColumnKeyName
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -304,14 +306,14 @@ namespace MedicalDemo.Migrations
                         .HasColumnType("binary(16)")
                         .HasColumnName("rotation_id");
 
-                    b.Property<int>("AcademicMonthIndex")
-                        .HasColumnType("int");
-
                     b.Property<string>("Month")
                         .IsRequired()
                         .HasMaxLength(45)
                         .HasColumnType("varchar(45)")
                         .HasColumnName("month");
+
+                    b.Property<int>("MonthIndex")
+                        .HasColumnType("int");
 
                     b.Property<byte[]>("Pgy4RotationScheduleId")
                         .HasColumnType("binary(16)");
@@ -742,16 +744,15 @@ namespace MedicalDemo.Migrations
                         .HasColumnType("binary(16)")
                         .HasColumnName("schedule_id");
 
+                    b.Property<int>("GeneratedYear")
+                        .HasColumnType("int");
+
                     b.Property<int>("Semester")
                         .HasColumnType("int");
 
                     b.Property<int>("Status")
                         .HasColumnType("int")
                         .HasColumnName("status");
-
-                    b.Property<int>("Year")
-                        .HasColumnType("int")
-                        .HasColumnName("GeneratedYear");
 
                     b.HasKey("ScheduleId");
 

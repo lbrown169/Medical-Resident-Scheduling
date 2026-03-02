@@ -12,39 +12,15 @@ import {
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { config } from "../../../config";
 import { DateResponse } from "../../../lib/models/DateResponse";
-
-interface CalendarEvent {
-  id: string;
-  title: string;
-  start: Date;
-  end: Date;
-  backgroundColor: string;
-  extendedProps?: {
-    scheduleId?: string;
-    residentId?: string;
-    firstName?: string;
-    lastName?: string;
-    callType?: string;
-    dateId?: string;
-    pgyLevel?: number | string;
-  };
-}
-
-interface Resident {
-  resident_id: string;
-  first_name: string;
-  last_name: string;
-  graduate_yr: number;
-  email: string;
-  phone_number?: string;
-  total_hours: number;
-}
+import { CalendarEvent } from "../../../lib/models/CalendarEvent";
+import { Resident } from "../../../lib/models/Resident";
 
 interface ScheduleEditModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   scheduleId: string | null;
   scheduleYear?: number;
+  scheduleSemester?: string;
 }
 
 const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
@@ -52,6 +28,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
   onOpenChange,
   scheduleId,
   scheduleYear,
+  scheduleSemester,
 }) => {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(false);
@@ -202,9 +179,19 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
     return date.toDateString() === today.toDateString();
   };
 
-  // Schedule range: July of scheduleYear to June of scheduleYear + 1
-  const minYM = scheduleYear ? scheduleYear * 12 + 6 : null;  // July (month index 6)
-  const maxYM = scheduleYear ? (scheduleYear + 1) * 12 + 5 : null;  // June (month index 5)
+  // Month range based on semester:
+  // Fall: July (index 6) to December (index 11) of scheduleYear
+  // Spring: January (index 0) to June (index 5) of scheduleYear
+  const minYM = scheduleYear != null
+    ? scheduleSemester === "Spring"
+      ? scheduleYear * 12 + 0   // January
+      : scheduleYear * 12 + 6   // July
+    : null;
+  const maxYM = scheduleYear != null
+    ? scheduleSemester === "Spring"
+      ? scheduleYear * 12 + 5   // June
+      : scheduleYear * 12 + 11  // December
+    : null;
 
   const navigateMonth = (direction: 'prev' | 'next') => {
     const newDate = new Date(currentDate);
@@ -241,7 +228,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
       <AlertDialogContent className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
         <AlertDialogHeader>
           <AlertDialogTitle>
-            Schedule Preview {scheduleYear ? `(${scheduleYear})` : ''}
+            Schedule Preview {scheduleSemester && scheduleYear ? `(${scheduleSemester} ${scheduleYear})` : ''}
           </AlertDialogTitle>
         </AlertDialogHeader>
 

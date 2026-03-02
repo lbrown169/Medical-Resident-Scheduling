@@ -1,3 +1,5 @@
+using MedicalDemo.Enums;
+
 namespace MedicalDemo.Models.Entities
 {
     public partial class Resident
@@ -22,6 +24,8 @@ namespace MedicalDemo.Models.Entities
         public int TotalHours { get; set; }
         public int BiYearlyHours { get; set; }
         public int? HospitalRoleProfile { get; set; }
+
+        public ChiefType ChiefType { get; set; }
 
         public virtual ICollection<Blackout> Blackouts { get; set; }
         public virtual ICollection<Date> Dates { get; set; }
