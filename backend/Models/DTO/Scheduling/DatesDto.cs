@@ -1,8 +1,8 @@
-using MedicalDemo.Algorithm;
+using MedicalDemo.Enums;
 
 namespace MedicalDemo.Models.DTO.Scheduling;
 
-public class DatesDTO
+public class DatesDto
 {
     public Guid DateId { get; set; }
     public Guid ScheduleId { get; set; }

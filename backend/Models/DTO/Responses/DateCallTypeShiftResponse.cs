@@ -1,4 +1,4 @@
-using MedicalDemo.Algorithm;
+using MedicalDemo.Enums;
 using MedicalDemo.Extensions;
 using MedicalDemo.Models.DTO.Scheduling;
 

@@ -1,6 +1,8 @@
+using MedicalDemo.Enums;
+
 namespace MedicalDemo.Models.DTO.Scheduling;
 
-public abstract class ResidentDTO
+public abstract class ResidentDto
 {
     public string ResidentId { get; set; }
     public string Name { get; set; }
@@ -13,7 +15,7 @@ public abstract class ResidentDTO
 
     public HospitalRole?[] RolePerMonth { get; set; } = new HospitalRole?[12];
 
-    public abstract bool CanWork(DateOnly date);
+    public abstract bool CanWork(DateOnly date, CallLengthType lengthType);
     public abstract void AddWorkDay(DateOnly date);
     public abstract void RemoveWorkDay(DateOnly date);
 
@@ -57,9 +59,9 @@ public abstract class ResidentDTO
         return WorkDays.Contains(curDay);
     }
 
-    public bool CanAddWorkDay(DateOnly curDay)
+    public bool CanAddWorkDay(DateOnly curDay, CallLengthType lengthType)
     {
-        return CanWork(curDay) && !IsWorking(curDay);
+        return CanWork(curDay, lengthType) && !IsWorking(curDay);
     }
 
     /// <summary>
@@ -67,12 +69,17 @@ public abstract class ResidentDTO
     /// </summary>
     /// <param name="index">Academic year indexed, July is 0.</param>
     /// <returns></returns>
-    public HospitalRole GetHospitalRoleForMonth(int index)
+    public HospitalRole GetHospitalRoleForAcademicMonth(int index)
     {
         if (RolePerMonth is null || RolePerMonth.Length < index + 1)
         {
             return HospitalRole.Unassigned;
         }
         return RolePerMonth[index] ?? HospitalRole.Unassigned;
+    }
+
+    public HospitalRole GetHospitalRoleForCalendarMonth(int index)
+    {
+        return GetHospitalRoleForAcademicMonth((index + 5) % 12);
     }
 }

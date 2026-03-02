@@ -1,4 +1,3 @@
-using MedicalDemo.Algorithm;
 using MedicalDemo.Models.DTO.Requests;
 using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.Entities;

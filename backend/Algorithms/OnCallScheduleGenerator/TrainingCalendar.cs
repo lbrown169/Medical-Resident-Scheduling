@@ -1,30 +1,9 @@
 using System.Collections;
 using System.Globalization;
 
-namespace MedicalDemo.Algorithm;
+namespace MedicalDemo.Algorithms.OnCallScheduleGenerator;
 
-public class PSYCallCalendar
-{
-    // default constructor
-    public PSYCallCalendar()
-    {
-    }
-
-    // constructor that takes in a year
-#pragma warning disable IDE0060
-    public PSYCallCalendar(int year) //constructor
-    {
-    }
-#pragma warning restore IDE0060
-
-    //determine year
-    //determine what the first day of the first month is
-    //if july1 then training schedule
-    //store what type each day is
-    //what days are saturday, sunday, or weekdays
-}
-
-public class TrainingCalendar : PSYCallCalendar
+public class TrainingCalendar : PsyCallCalendar
 {
     public int[] dayOfWeekAmt;
     public ArrayList saturdayCallDaysList;
@@ -116,45 +95,3 @@ public class TrainingCalendar : PSYCallCalendar
     }
     //*/
 }
-
-/* public class CalendarExample
-    {
-        public static void Main(string[] args)
-        {
-            // Get the current date and time
-            DateTime currentDate = DateTime.Now;
-
-            // Display the date and time
-            Console.WriteLine("Current Date and Time: " + currentDate);
-
-            // Get the current year
-            int currentYear = currentDate.Year;
-            Console.WriteLine("Current Year: " + currentYear);
-
-            // Get the current month
-            int currentMonth = currentDate.Month;
-            Console.WriteLine("Current Month: " + currentMonth);
-
-            // Get the current day of the week
-            DayOfWeek currentDayOfWeek = currentDate.DayOfWeek;
-            Console.WriteLine("Current Day of the Week: " + currentDayOfWeek);
-
-            // Create a DateTime object for a specific date
-            DateTime specificDate = new DateTime(2025, 3, 22);
-
-            // Display the specific date
-            Console.WriteLine("Specific Date: " + specificDate);
-
-            // Get the day of the week for the specific date
-            DayOfWeek specificDayOfWeek = specificDate.DayOfWeek;
-            Console.WriteLine("Day of the Week for Specific Date: " + specificDayOfWeek);
-
-            // Get the calendar instance for the Gregorian calendar
-            Calendar gregorianCalendar = CultureInfo.InvariantCulture.Calendar;
-
-            // Get the era for the specific date
-            int era = gregorianCalendar.GetEra(specificDate);
-            Console.WriteLine("Era for Specific Date: " + era);
-        }
-    }
-*/

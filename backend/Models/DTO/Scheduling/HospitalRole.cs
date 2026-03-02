@@ -19,6 +19,11 @@ public class HospitalRole
     public bool DoesTrainingShort { get; }
     public bool DoesTrainingLong { get; }
 
+    public override string ToString()
+    {
+        return $"{name}: S: {DoesShort}, L: {DoesLong}, TS: {DoesTrainingShort}, TL: {DoesTrainingLong}";
+    }
+
     public static HospitalRole Unassigned =>
         new("Unassigned", true, true, true, true);
 
