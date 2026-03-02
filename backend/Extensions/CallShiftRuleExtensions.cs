@@ -1,4 +1,5 @@
-using MedicalDemo.Algorithm;
+using MedicalDemo.Algorithms.OnCallScheduleGenerator;
+using MedicalDemo.Enums;
 
 namespace MedicalDemo.Extensions;
 

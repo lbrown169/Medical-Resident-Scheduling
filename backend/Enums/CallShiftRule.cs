@@ -1,4 +1,4 @@
-namespace MedicalDemo.Algorithm;
+namespace MedicalDemo.Enums;
 
 public enum CallShiftRule
 {

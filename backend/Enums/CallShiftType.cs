@@ -1,9 +1,7 @@
 using System.ComponentModel.DataAnnotations;
-using MedicalDemo.Algorithm;
 using MedicalDemo.Attributes;
-using MedicalDemo.Enums;
 
-namespace MedicalDemo.Models.DTO.Scheduling;
+namespace MedicalDemo.Enums;
 
 public enum CallShiftType
 {

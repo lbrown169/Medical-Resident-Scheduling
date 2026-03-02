@@ -2,7 +2,7 @@ using MedicalDemo.Enums;
 
 namespace MedicalDemo.Models.DTO.Scheduling;
 
-public class PGY2DTO : ResidentDTO
+public class Pgy2Dto : ResidentDto
 {
     public override bool CanWork(DateOnly curDay, CallLengthType lengthType)
     {

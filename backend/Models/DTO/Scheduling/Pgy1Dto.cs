@@ -2,7 +2,7 @@ using MedicalDemo.Enums;
 
 namespace MedicalDemo.Models.DTO.Scheduling;
 
-public class PGY1DTO : ResidentDTO
+public class Pgy1Dto : ResidentDto
 {
     public DateOnly LastTrainingDate { get; set; }
 

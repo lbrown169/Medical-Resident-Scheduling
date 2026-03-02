@@ -1,4 +1,3 @@
-using MedicalDemo.Algorithm;
 using MedicalDemo.Converters;
 using MedicalDemo.Enums;
 using MedicalDemo.Extensions;

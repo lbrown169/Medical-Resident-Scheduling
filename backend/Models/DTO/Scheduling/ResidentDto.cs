@@ -2,7 +2,7 @@ using MedicalDemo.Enums;
 
 namespace MedicalDemo.Models.DTO.Scheduling;
 
-public abstract class ResidentDTO
+public abstract class ResidentDto
 {
     public string ResidentId { get; set; }
     public string Name { get; set; }

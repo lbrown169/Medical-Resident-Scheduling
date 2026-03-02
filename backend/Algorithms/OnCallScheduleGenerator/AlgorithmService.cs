@@ -1,11 +1,12 @@
 using System.Collections;
 using System.Text;
+using MedicalDemo.Enums;
 using MedicalDemo.Extensions;
 using MedicalDemo.Models.DTO.Scheduling;
 
 //for array min/max
 
-namespace MedicalDemo.Algorithm;
+namespace MedicalDemo.Algorithms.OnCallScheduleGenerator;
 
 public class AlgorithmService
 {
@@ -17,8 +18,8 @@ public class AlgorithmService
     }
 
     // === NEW OVERLOAD METHODS FOR BACKEND INTEGRATION ===
-    public bool Training(int year, List<PGY1DTO> pgy1s, List<PGY2DTO> pgy2s,
-        List<PGY3DTO> pgy3s)
+    public bool Training(int year, List<Pgy1Dto> pgy1s, List<Pgy2Dto> pgy2s,
+        List<Pgy3Dto> pgy3s)
     {
         int pgy1 = pgy1s.Count;
         int pgy2 = pgy2s.Count;
@@ -467,27 +468,27 @@ public class AlgorithmService
         return true;
     }
 
-    public void SaveWorkDays(List<PGY1DTO> pgy1s, List<PGY2DTO> pgy2s, List<PGY3DTO> pgy3s)
+    public void SaveWorkDays(List<Pgy1Dto> pgy1s, List<Pgy2Dto> pgy2s, List<Pgy3Dto> pgy3s)
     {
-        foreach (PGY1DTO pgy1 in pgy1s)
+        foreach (Pgy1Dto pgy1 in pgy1s)
         {
             pgy1.SaveWorkDays();
         }
 
-        foreach (PGY2DTO pgy2 in pgy2s)
+        foreach (Pgy2Dto pgy2 in pgy2s)
         {
             pgy2.SaveWorkDays();
         }
 
-        foreach (PGY3DTO pgy3 in pgy3s)
+        foreach (Pgy3Dto pgy3 in pgy3s)
         {
             pgy3.SaveWorkDays();
         }
     }
 
-    public void Print(List<PGY1DTO> pgy1s, List<PGY2DTO> pgy2s, List<PGY3DTO> pgy3s)
+    public void Print(List<Pgy1Dto> pgy1s, List<Pgy2Dto> pgy2s, List<Pgy3Dto> pgy3s)
     {
-        foreach (PGY1DTO res in pgy1s)
+        foreach (Pgy1Dto res in pgy1s)
         {
             _logger.LogTrace("PGY1 {ResName} works:", res.Name);
             // print all their work days in sorted order
@@ -506,7 +507,7 @@ public class AlgorithmService
             }
         }
 
-        foreach (PGY2DTO res in pgy2s)
+        foreach (Pgy2Dto res in pgy2s)
         {
             _logger.LogTrace("PGY2 {ResName} works:", res.Name);
             // print all their work days in sorted order
@@ -525,7 +526,7 @@ public class AlgorithmService
             }
         }
 
-        foreach (PGY3DTO res in pgy3s)
+        foreach (Pgy3Dto res in pgy3s)
         {
             _logger.LogTrace("PGY3 {ResName} works:", res.Name);
             // print all their work days in sorted order
@@ -545,12 +546,12 @@ public class AlgorithmService
         }
     }
 
-    public bool Part2(int year, List<PGY1DTO> pgy1s, List<PGY2DTO> pgy2s, int looseFactor)
+    public bool Part2(int year, List<Pgy1Dto> pgy1s, List<Pgy2Dto> pgy2s, int looseFactor)
     {
         _logger.LogInformation("Generating part 2: normal schedule (january through june)");
         // store days currently worked by anyone
         HashSet<DateOnly> workedDays = [];
-        foreach (PGY1DTO res in pgy1s)
+        foreach (Pgy1Dto res in pgy1s)
         {
             foreach (DateOnly curDay in res.WorkDays)
             {
@@ -558,7 +559,7 @@ public class AlgorithmService
             }
         }
 
-        foreach (PGY2DTO res in pgy2s)
+        foreach (Pgy2Dto res in pgy2s)
         {
             foreach (DateOnly curDay in res.WorkDays)
             {
@@ -619,7 +620,7 @@ public class AlgorithmService
         return true;
     }
 
-    public bool Part1(int year, List<PGY1DTO> pgy1s, List<PGY2DTO> pgy2s, int looseFactor)
+    public bool Part1(int year, List<Pgy1Dto> pgy1s, List<Pgy2Dto> pgy2s, int looseFactor)
     {
         _logger.LogInformation("part 1: normal schedule (july through december)");
         int pgy1 = pgy1s.Count;
@@ -633,7 +634,7 @@ public class AlgorithmService
 
         // store days currently worked by anyone
         HashSet<DateOnly> workedDays = new();
-        foreach (PGY1DTO res in pgy1s)
+        foreach (Pgy1Dto res in pgy1s)
         {
             foreach (DateOnly curDay in res.PendingSaveWorkDays)
             {
@@ -641,7 +642,7 @@ public class AlgorithmService
             }
         }
 
-        foreach (PGY2DTO res in pgy2s)
+        foreach (Pgy2Dto res in pgy2s)
         {
             foreach (DateOnly curDay in res.PendingSaveWorkDays)
             {
@@ -702,7 +703,7 @@ public class AlgorithmService
     }
 
 
-    public void ComputeWorkTime(List<PGY1DTO> pgy1s, List<PGY2DTO> pgy2s,
+    public void ComputeWorkTime(List<Pgy1Dto> pgy1s, List<Pgy2Dto> pgy2s,
         int[] pgy1WorkTime, int[] pgy2WorkTime,
         Dictionary<CallShiftType, int>[] pgy1ShiftCount,
         Dictionary<CallShiftType, int>[] pgy2ShiftCount)
@@ -711,7 +712,7 @@ public class AlgorithmService
         {
             pgy1WorkTime[i] = 0;
 
-            PGY1DTO res = pgy1s[i];
+            Pgy1Dto res = pgy1s[i];
             foreach (DateOnly workDay in res.WorkDays)
             {
                 CallShiftType? shiftType
@@ -735,7 +736,7 @@ public class AlgorithmService
         for (int i = 0; i < pgy2s.Count; i++)
         {
             pgy2WorkTime[i] = 0;
-            PGY2DTO res = pgy2s[i];
+            Pgy2Dto res = pgy2s[i];
             foreach (DateOnly workDay in res.WorkDays)
             {
                 CallShiftType? shiftType
@@ -758,7 +759,7 @@ public class AlgorithmService
     }
 
 #pragma warning disable IDE0060
-    public void InitialShiftAssignment(List<PGY1DTO> pgy1s, List<PGY2DTO> pgy2s,
+    public void InitialShiftAssignment(List<Pgy1Dto> pgy1s, List<Pgy2Dto> pgy2s,
         Dictionary<CallShiftType, int> shiftTypeCount,
         Dictionary<CallShiftType, int>[] pgy1ShiftCount,
         Dictionary<CallShiftType, int>[] pgy2ShiftCount, Random rand,
@@ -835,7 +836,7 @@ public class AlgorithmService
 
 #pragma warning restore IDE0060
 
-    public void SwapSomeShiftCount(List<PGY1DTO> pgy1s, List<PGY2DTO> pgy2s,
+    public void SwapSomeShiftCount(List<Pgy1Dto> pgy1s, List<Pgy2Dto> pgy2s,
         Dictionary<CallShiftType, int>[] pgy1ShiftCount,
         Dictionary<CallShiftType, int>[] pgy2ShiftCount, Random rand, int[] pgy1WorkTime,
         int[] pgy2WorkTime,
@@ -859,7 +860,7 @@ public class AlgorithmService
         }
     }
 
-    public bool SwapWithGiverRooted(List<PGY1DTO> pgy1s, List<PGY2DTO> pgy2s,
+    public bool SwapWithGiverRooted(List<Pgy1Dto> pgy1s, List<Pgy2Dto> pgy2s,
         Dictionary<CallShiftType, int>[] pgy1ShiftCount,
         Dictionary<CallShiftType, int>[] pgy2ShiftCount, Random rand,
         int[] pgy1WorkTime,
@@ -895,8 +896,6 @@ public class AlgorithmService
                 ? pgy1ShiftCount[normalizedGiverIndex]
                 : pgy2ShiftCount[normalizedGiverIndex];
         List<CallShiftType> giverShiftTypes = giverShiftCount.Where(kvp => kvp.Value > 0).Select(kvp => kvp.Key).ToList();
-
-        _logger.LogDebug("Giver {index} has {hour} hours. Can give: {shifts}", giverIndex, giveHour, string.Join(", ", giverShiftTypes));
 
         // Build weighted list of eligible receivers
         List<(int index, int weight)> eligibleReceivers = [];
@@ -963,9 +962,6 @@ public class AlgorithmService
 
         int finalReceiverYear = selectedReceiverIndex < pgy1s.Count ? 1 : 2;
         int normalizedReceiverIndex = finalReceiverYear == 1 ? selectedReceiverIndex : selectedReceiverIndex - pgy1s.Count;
-        int finalReceiverHour = finalReceiverYear == 1
-            ? pgy1WorkTime[normalizedReceiverIndex]
-            : pgy2WorkTime[normalizedReceiverIndex];
         Dictionary<CallShiftType, int> receiverShiftCount = finalReceiverYear == 1
             ? pgy1ShiftCount[normalizedReceiverIndex]
             : pgy2ShiftCount[normalizedReceiverIndex];
@@ -975,8 +971,6 @@ public class AlgorithmService
         int shiftIndex = rand.Next(0, swappableShiftTypes.Count);
         CallShiftType shift = swappableShiftTypes[shiftIndex];
 
-        _logger.LogDebug("Receiver {index} has {hour} hours. Receiving {shift}", selectedReceiverIndex, finalReceiverHour, shift.GetDisplayName());
-
         giverShiftCount[shift]--;
         receiverShiftCount.TryAdd(shift, 0);
         receiverShiftCount[shift]++;
@@ -984,7 +978,7 @@ public class AlgorithmService
         return true;
     }
 
-    public bool SwapWithReceiverRooted(List<PGY1DTO> pgy1s, List<PGY2DTO> pgy2s,
+    public bool SwapWithReceiverRooted(List<Pgy1Dto> pgy1s, List<Pgy2Dto> pgy2s,
         Dictionary<CallShiftType, int>[] pgy1ShiftCount,
         Dictionary<CallShiftType, int>[] pgy2ShiftCount, Random rand,
         int[] pgy1WorkTime,
@@ -1025,8 +1019,6 @@ public class AlgorithmService
             )
             .Select(kvp => kvp.Key)
             .ToList();
-
-        _logger.LogDebug("Receiver {index} has {hour} hours. Can accept: {shifts}", receiverIndex, receiverHour, string.Join(", ", receiverShiftTypes));
 
         // Build weighted list of eligible givers
         List<(int index, int weight)> eligibleGivers = [];
@@ -1091,9 +1083,6 @@ public class AlgorithmService
 
         int finalGiverYear = selectedGiverIndex < pgy1s.Count ? 1 : 2;
         int normalizedGiverIndex = finalGiverYear == 1 ? selectedGiverIndex : selectedGiverIndex - pgy1s.Count;
-        int finalGiverHour = finalGiverYear == 1
-            ? pgy1WorkTime[normalizedGiverIndex]
-            : pgy2WorkTime[normalizedGiverIndex];
         Dictionary<CallShiftType, int> giverShiftCount = finalGiverYear == 1
             ? pgy1ShiftCount[normalizedGiverIndex]
             : pgy2ShiftCount[normalizedGiverIndex];
@@ -1104,8 +1093,6 @@ public class AlgorithmService
         int shiftIndex = rand.Next(0, swappableShiftTypes.Count);
         CallShiftType shift = swappableShiftTypes[shiftIndex];
 
-        _logger.LogDebug("Giver {index} has {hour} hours. Giving {shift}", selectedGiverIndex, finalGiverHour, shift.GetDisplayName());
-
         giverShiftCount[shift]--;
         receiverShiftCount.TryAdd(shift, 0);
         receiverShiftCount[shift]++;
@@ -1113,7 +1100,7 @@ public class AlgorithmService
         return true;
     }
 
-    public bool RandomAssignment(List<PGY1DTO> pgy1s, List<PGY2DTO> pgy2s,
+    public bool RandomAssignment(List<Pgy1Dto> pgy1s, List<Pgy2Dto> pgy2s,
         DateOnly startDay, DateOnly endDay,
         Dictionary<CallShiftType, int> shiftTypeCount, HashSet<DateOnly> workedDays, int looseFactor)
     {
@@ -1173,7 +1160,7 @@ public class AlgorithmService
             {
                 for (int i = 0; i < pgy1s.Count; i++)
                 {
-                    PGY1DTO res = pgy1s[i];
+                    Pgy1Dto res = pgy1s[i];
                     if (res.CanWork(curDay, pgy1ShiftType.Value.GetLengthType()) && !workedDays.Contains(curDay))
                     {
                         allowedCallTypes[i][pgy1ShiftType.Value]++;
@@ -1188,7 +1175,7 @@ public class AlgorithmService
             {
                 for (int i = 0; i < pgy2s.Count; i++)
                 {
-                    PGY2DTO res = pgy2s[i];
+                    Pgy2Dto res = pgy2s[i];
                     if (res.CanWork(curDay, pgy2ShiftType.Value.GetLengthType()) && !workedDays.Contains(curDay))
                     {
                         allowedCallTypes[i + pgy1s.Count][pgy2ShiftType.Value]++;
@@ -1205,13 +1192,17 @@ public class AlgorithmService
         // only test this assignment a few times adjust if it does not work
         for (int tryCount = 0; tryCount < 10; tryCount++)
         {
-            _logger.LogDebug("trying");
             // try a flow if some assignment does not work reduce the allowed call types for the residents based on missing flow
             // compute work time for each resident
             int[] pgy1WorkTime = new int[pgy1s.Count];
             int[] pgy2WorkTime = new int[pgy2s.Count];
             ComputeWorkTime(pgy1s, pgy2s, pgy1WorkTime, pgy2WorkTime,
                 pgy1ShiftCount, pgy2ShiftCount);
+
+            int max = Math.Max(pgy1WorkTime.Max(), pgy2WorkTime.Max());
+            int min = Math.Min(pgy1WorkTime.Min(), pgy2WorkTime.Min());
+
+            _logger.LogDebug("Starting with: Max: {max}, Min: {min}", max, min);
 
             // loop until within 24-hour window
             bool inWindow = false;
@@ -1222,10 +1213,8 @@ public class AlgorithmService
             {
                 // exit the method if we cannot swap shifts to reach a valid assignment (within 24-hour window)
                 // determine maximum and minimum work time for pgy1 and pgy2
-                int max = Math.Max(pgy1WorkTime.Max(), pgy2WorkTime.Max());
-                int min = Math.Min(pgy1WorkTime.Min(), pgy2WorkTime.Min());
-
-                _logger.LogDebug("Max: {max}, Min: {min}, About to root giver? {swapGiver}", max, min, rootGiver);
+                max = Math.Max(pgy1WorkTime.Max(), pgy2WorkTime.Max());
+                min = Math.Min(pgy1WorkTime.Min(), pgy2WorkTime.Min());
 
                 ct2++;
                 if (ct2 > 100) // prevent infinite loop
@@ -1264,6 +1253,8 @@ public class AlgorithmService
                         pgy1ShiftCount, pgy2ShiftCount);
                 }
             }
+
+            _logger.LogDebug("Ended with: Max: {max}, Min: {min}", max, min);
 
             // use flow to see if the assignment is possible
 
@@ -1516,12 +1507,12 @@ public class AlgorithmService
                 return true; // all shifts were assigned correctly
             }
 
-            foreach (PGY1DTO pgy1 in pgy1s)
+            foreach (Pgy1Dto pgy1 in pgy1s)
             {
                 pgy1.WorkDays.Clear();
             }
 
-            foreach (PGY2DTO pgy2 in pgy2s)
+            foreach (Pgy2Dto pgy2 in pgy2s)
             {
                 pgy2.WorkDays.Clear();
             }
@@ -1533,7 +1524,7 @@ public class AlgorithmService
 
 
     // swap 2 residents work days (avoid back to back long calls)
-    public static void SwapWorkDays1(PGY1DTO res1, PGY1DTO res2, DateOnly day1,
+    public static void SwapWorkDays1(Pgy1Dto res1, Pgy1Dto res2, DateOnly day1,
         DateOnly day2)
     {
         res1.RemoveWorkDay(day1);
@@ -1543,7 +1534,7 @@ public class AlgorithmService
         res2.AddWorkDay(day1);
     }
 
-    public static void SwapWorkDays12(PGY1DTO res1, PGY2DTO res2, DateOnly day1,
+    public static void SwapWorkDays12(Pgy1Dto res1, Pgy2Dto res2, DateOnly day1,
         DateOnly day2)
     {
         res1.RemoveWorkDay(day1);
@@ -1555,7 +1546,7 @@ public class AlgorithmService
 
 
     // swap 2 residents work days (avoid back to back long calls)
-    public static void SwapWorkDays2(PGY2DTO res1, PGY2DTO res2, DateOnly day1,
+    public static void SwapWorkDays2(Pgy2Dto res1, Pgy2Dto res2, DateOnly day1,
         DateOnly day2)
     {
         res1.RemoveWorkDay(day1);
@@ -1566,10 +1557,10 @@ public class AlgorithmService
     }
 
     public bool
-        FixWeekends1(List<PGY1DTO> pgy1s) // function to fix pgy1 weekends
+        FixWeekends1(List<Pgy1Dto> pgy1s) // function to fix pgy1 weekends
     {
         bool successful = true;
-        foreach (PGY1DTO res in pgy1s)
+        foreach (Pgy1Dto res in pgy1s)
         {
             // get the first and last day the resident works
             DateOnly firstDay = res.FirstWorkDay();
@@ -1593,7 +1584,7 @@ public class AlgorithmService
                 if (res.IsWorking(curDay) && !res.CanWork(curDay, curShiftType.Value.GetLengthType()))
                 {
                     bool found = false;
-                    foreach (PGY1DTO res2 in pgy1s)
+                    foreach (Pgy1Dto res2 in pgy1s)
                     {
                         if (res == res2)
                         {
@@ -1651,11 +1642,11 @@ public class AlgorithmService
 
 
     public bool
-        FixWeekends1and2(List<PGY1DTO> pgy1s,
-            List<PGY2DTO> pgy2s) // function to fix resident weekends
+        FixWeekends1and2(List<Pgy1Dto> pgy1s,
+            List<Pgy2Dto> pgy2s) // function to fix resident weekends
     {
         bool successful = true;
-        foreach (PGY1DTO res in pgy1s)
+        foreach (Pgy1Dto res in pgy1s)
         {
             // get the first and last day the resident works
             DateOnly firstDay = res.FirstWorkDay();
@@ -1683,7 +1674,7 @@ public class AlgorithmService
 
                     bool found = false;
 
-                    foreach (PGY1DTO res2 in pgy1s)
+                    foreach (Pgy1Dto res2 in pgy1s)
                     {
                         if (res == res2)
                         {
@@ -1736,7 +1727,7 @@ public class AlgorithmService
 
                         if (curShiftType == curShiftTypeForPgy2)
                         {
-                            foreach (PGY2DTO res2 in pgy2s)
+                            foreach (Pgy2Dto res2 in pgy2s)
                             {
                                 if (!res2.CanAddWorkDay(curDay, curShiftTypeForPgy2.Value.GetLengthType()))
                                 {
@@ -1791,7 +1782,7 @@ public class AlgorithmService
             }
         }
 
-        foreach (PGY2DTO res in pgy2s)
+        foreach (Pgy2Dto res in pgy2s)
         {
             // get the first and last day the resident works
             DateOnly firstDay = res.FirstWorkDay();
@@ -1817,7 +1808,7 @@ public class AlgorithmService
                 {
 
                     bool found = false;
-                    foreach (PGY2DTO res2 in pgy2s)
+                    foreach (Pgy2Dto res2 in pgy2s)
                     {
                         if (res == res2)
                         {
@@ -1870,7 +1861,7 @@ public class AlgorithmService
 
                         if (curShiftType == curShiftTypeForPgy1)
                         {
-                            foreach (PGY1DTO res2 in pgy1s)
+                            foreach (Pgy1Dto res2 in pgy1s)
                             {
                                 if (!res2.CanAddWorkDay(curDay, curShiftTypeForPgy1.Value.GetLengthType()))
                                 {
@@ -1925,10 +1916,10 @@ public class AlgorithmService
     }
 
     public bool
-        FixWeekends2(List<PGY2DTO> pgy2s) // function to fix pgy2 weekens
+        FixWeekends2(List<Pgy2Dto> pgy2s) // function to fix pgy2 weekens
     {
         bool didFail = false;
-        foreach (PGY2DTO res in pgy2s)
+        foreach (Pgy2Dto res in pgy2s)
         {
             // get the first and last day the resident works
             DateOnly firstDay = res.FirstWorkDay();
@@ -1952,7 +1943,7 @@ public class AlgorithmService
                 if (res.IsWorking(curDay) && !res.CanWork(curDay, curShiftType.Value.GetLengthType()))
                 {
                     bool found = false;
-                    foreach (PGY2DTO res2 in pgy2s)
+                    foreach (Pgy2Dto res2 in pgy2s)
                     {
                         if (res == res2)
                         {
@@ -2004,20 +1995,20 @@ public class AlgorithmService
         return !didFail;
     }
 
-    public static List<DatesDTO> GenerateDateRecords(Guid scheduleId,
-        List<PGY1DTO> pgy1s, List<PGY2DTO> pgy2s,
-        List<PGY3DTO> pgy3s)
+    public static List<DatesDto> GenerateDateRecords(Guid scheduleId,
+        List<Pgy1Dto> pgy1s, List<Pgy2Dto> pgy2s,
+        List<Pgy3Dto> pgy3s)
     {
-        List<DatesDTO> dateRecords = [];
+        List<DatesDto> dateRecords = [];
 
-        foreach (PGY1DTO res in pgy1s)
+        foreach (Pgy1Dto res in pgy1s)
         {
             foreach (DateOnly day in res.PendingSaveWorkDays)
             {
                 // They have this shift, it must be valid for their year
                 CallShiftType shiftType
                     = CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(day, 1)!.Value;
-                dateRecords.Add(new DatesDTO
+                dateRecords.Add(new DatesDto
                 {
                     DateId = Guid.NewGuid(),
                     ScheduleId = scheduleId,
@@ -2031,14 +2022,14 @@ public class AlgorithmService
             }
         }
 
-        foreach (PGY2DTO res in pgy2s)
+        foreach (Pgy2Dto res in pgy2s)
         {
             foreach (DateOnly day in res.PendingSaveWorkDays)
             {
                 // They have this shift, it must be valid for their year
                 CallShiftType shiftType
                     = CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(day, 2)!.Value;
-                dateRecords.Add(new DatesDTO
+                dateRecords.Add(new DatesDto
                 {
                     DateId = Guid.NewGuid(),
                     ScheduleId = scheduleId,
@@ -2051,14 +2042,14 @@ public class AlgorithmService
             }
         }
 
-        foreach (PGY3DTO res in pgy3s)
+        foreach (Pgy3Dto res in pgy3s)
         {
             foreach (DateOnly day in res.PendingSaveWorkDays)
             {
                 // They have this shift, it must be valid for their year
                 CallShiftType shiftType
                     = CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(day, 3)!.Value;
-                dateRecords.Add(new DatesDTO
+                dateRecords.Add(new DatesDto
                 {
                     DateId = Guid.NewGuid(),
                     ScheduleId = scheduleId,

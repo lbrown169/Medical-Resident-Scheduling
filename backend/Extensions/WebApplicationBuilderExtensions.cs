@@ -2,7 +2,7 @@ using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using MedicalDemo.Algorithm;
+using MedicalDemo.Algorithms.OnCallScheduleGenerator;
 using MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator;
 using MedicalDemo.Converters;
 using MedicalDemo.Interfaces;
