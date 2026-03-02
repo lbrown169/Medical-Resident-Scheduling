@@ -1,17 +1,21 @@
+using MedicalDemo.Enums;
+using MedicalDemo.Models.DTO.Pgy4Scheduling;
 using MedicalDemo.Models.DTO.Requests;
 using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.Entities;
 
 namespace MedicalDemo.Converters;
 
-public static class RotationPrefRequestConverter
+public class RotationPrefRequestConverter(RotationTypeConverter rotationTypeConverter, ResidentConverter residentConverter)
 {
-    public static RotationPrefResponse CreateRotationPrefResponseFromModel(
+    private readonly RotationTypeConverter rotationTypeConverter = rotationTypeConverter;
+    private readonly ResidentConverter residentConverter = residentConverter;
+
+    public RotationPrefResponse CreateRotationPrefResponseFromModel(
         RotationPrefRequest request
     )
     {
-        List<RotationType?> Priorities =
-        [
+        List<RotationTypeResponse> PrioritiesResponse = FilterNullAndConvertToResponse([
             request.FirstPriority,
             request.SecondPriority,
             request.ThirdPriority,
@@ -20,45 +24,24 @@ public static class RotationPrefRequestConverter
             request.SixthPriority,
             request.SeventhPriority,
             request.EighthPriority,
-        ];
+        ]);
 
-        List<RotationType?> Alternatives =
-        [
+        List<RotationTypeResponse> AlternativesResponse = FilterNullAndConvertToResponse([
             request.FirstAlternative,
             request.SecondAlternative,
             request.ThirdAlternative,
-        ];
+        ]);
 
-        List<RotationType?> Avoids = [request.FirstAvoid, request.SecondAvoid, request.ThirdAvoid];
-
-        List<RotationTypeResponse> PrioritiesResponse =
-        [
-            .. Priorities
-                .Where((priority) => priority != null)
-                .Cast<RotationType>()
-                .Select(RotationTypeConverter.CreateRotationTypeResponse),
-        ];
-
-        List<RotationTypeResponse> AlternativesResponse =
-        [
-            .. Alternatives
-                .Where((alternative) => alternative != null)
-                .Cast<RotationType>()
-                .Select(RotationTypeConverter.CreateRotationTypeResponse),
-        ];
-
-        List<RotationTypeResponse> AvoidsResponse =
-        [
-            .. Avoids
-                .Where((avoid) => avoid != null)
-                .Cast<RotationType>()
-                .Select(RotationTypeConverter.CreateRotationTypeResponse),
-        ];
+        List<RotationTypeResponse> AvoidsResponse = FilterNullAndConvertToResponse([
+            request.FirstAvoid,
+            request.SecondAvoid,
+            request.ThirdAvoid,
+        ]);
 
         return new RotationPrefResponse
         {
             RotationPrefRequestId = request.RotationPrefRequestId,
-            Resident = new ResidentConverter().CreateResidentResponseFromResident(request.Resident),
+            Resident = residentConverter.CreateResidentResponseFromResident(request.Resident),
             Priorities = PrioritiesResponse,
             Alternatives = AlternativesResponse,
             Avoids = AvoidsResponse,
@@ -66,7 +49,7 @@ public static class RotationPrefRequestConverter
         };
     }
 
-    public static RotationPrefRequest CreateModelFromRequestDto(
+    public RotationPrefRequest CreateModelFromRequestDto(
         RotationPrefRequestDto addRequestDto
     )
     {
@@ -87,7 +70,7 @@ public static class RotationPrefRequestConverter
         return requestModel;
     }
 
-    public static void UpdateModelFromUpdateRequest(
+    public void UpdateModelFromUpdateRequest(
         RotationPrefRequest prefRequestModel,
         UpdateRotationPrefRequest updateRequest
     )
@@ -99,6 +82,48 @@ public static class RotationPrefRequestConverter
             updateRequest.Avoids,
             updateRequest.AdditionalNotes
         );
+    }
+
+    public AlgorithmRotationPrefRequest CreateAlgorithmSchedulePrefRequestFromModel(
+        RotationPrefRequest requestModel
+    )
+    {
+        Pgy4RotationTypeEnum[] AlgorithmPriorities = [.. FilterNullAndConvertToAlgorithmType([
+            requestModel.FirstPriority,
+            requestModel.SecondPriority,
+            requestModel.ThirdPriority,
+            requestModel.FourthPriority,
+            requestModel.FifthPriority,
+            requestModel.SixthPriority,
+            requestModel.SeventhPriority,
+            requestModel.EighthPriority,
+        ])];
+
+        Pgy4RotationTypeEnum[] AlgorithmAlternatives = [.. FilterNullAndConvertToAlgorithmType([
+            requestModel.FirstAlternative,
+            requestModel.SecondAlternative,
+            requestModel.ThirdAlternative,
+        ])];
+
+        Pgy4RotationTypeEnum[] AlgorithmAvoids = [.. FilterNullAndConvertToAlgorithmType([
+            requestModel.FirstAvoid,
+            requestModel.SecondAvoid,
+            requestModel.ThirdAvoid,
+        ])];
+
+
+        return new()
+        {
+            RotationPrefRequestId = requestModel.RotationPrefRequestId,
+            Requester = new()
+            {
+                ResidentId = requestModel.Resident.ResidentId,
+                ChiefType = requestModel.Resident.ChiefType
+            },
+            Priorities = AlgorithmPriorities,
+            Alternatives = AlgorithmAlternatives,
+            Avoids = AlgorithmAvoids
+        };
     }
 
     private static void UpdateModelFromRotationTypes(
@@ -131,5 +156,29 @@ public static class RotationPrefRequestConverter
         requestModel.ThirdAvoidId = avoidsCount > 2 ? avoids[2] : null;
 
         requestModel.AdditionalNotes = additionalNotes;
+    }
+
+    private List<RotationTypeResponse> FilterNullAndConvertToResponse(
+        List<RotationType?> rotationTypes
+    )
+    {
+        return
+        [
+            .. rotationTypes
+                .Where((avoid) => avoid != null)
+                .Cast<RotationType>()
+                .Select(rotationTypeConverter.CreateRotationTypeResponse),
+        ];
+    }
+
+    private List<Pgy4RotationTypeEnum> FilterNullAndConvertToAlgorithmType(List<RotationType?> rotationTypes)
+    {
+        return
+        [
+            .. rotationTypes
+                .Where((avoid) => avoid != null)
+                .Cast<RotationType>()
+                .Select(rotationTypeConverter.ConvertRotationTypeModelToEnum),
+        ];
     }
 }

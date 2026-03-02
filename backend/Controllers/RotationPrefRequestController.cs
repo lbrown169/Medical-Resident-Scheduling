@@ -1,8 +1,10 @@
 using MedicalDemo.Converters;
 using MedicalDemo.Enums;
+using MedicalDemo.Extensions;
 using MedicalDemo.Models.DTO.Requests;
 using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.Entities;
+using MedicalDemo.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,17 +12,24 @@ namespace MedicalDemo.Controllers;
 
 [ApiController]
 [Route("api/rotation-pref-request")]
-public class RotationPrefRequestController(MedicalContext context) : ControllerBase
+public class RotationPrefRequestController(
+    MedicalContext context,
+    RotationPrefRequestConverter rotationPrefRequestConverter,
+    Pgy4RotationScheduleService pgy4RotationScheduleService
+) : ControllerBase
 {
     private readonly MedicalContext context = context;
+    private readonly RotationPrefRequestConverter rotationPrefRequestConverter =
+        rotationPrefRequestConverter;
+    private readonly Pgy4RotationScheduleService pgy4RotationScheduleService =
+        pgy4RotationScheduleService;
 
     // GET: api/rotation-pref-requests/{id}
     [HttpGet("{id}")]
     public async Task<ActionResult<RotationPrefResponse>> GetById([FromRoute] Guid id)
     {
-        RotationPrefRequest? request = await IncludeAllRotationPrefRequestProperties(
-                context.RotationPrefRequests
-            )
+        RotationPrefRequest? request = await context
+            .RotationPrefRequests.IncludeAllRotationPrefRequestProperties()
             .FirstOrDefaultAsync(r => r.RotationPrefRequestId == id);
 
         if (request == null)
@@ -29,7 +38,7 @@ public class RotationPrefRequestController(MedicalContext context) : ControllerB
         }
 
         RotationPrefResponse response =
-            RotationPrefRequestConverter.CreateRotationPrefResponseFromModel(request);
+            rotationPrefRequestConverter.CreateRotationPrefResponseFromModel(request);
 
         return Ok(response);
     }
@@ -38,14 +47,13 @@ public class RotationPrefRequestController(MedicalContext context) : ControllerB
     [HttpGet()]
     public async Task<ActionResult<RotationPrefRequestsListResponse>> GetAll()
     {
-        List<RotationPrefRequest> allRequests = await IncludeAllRotationPrefRequestProperties(
-                context.RotationPrefRequests
-            )
+        List<RotationPrefRequest> allRequests = await context
+            .RotationPrefRequests.IncludeAllRotationPrefRequestProperties()
             .ToListAsync();
 
         List<RotationPrefResponse> prefsResponse =
         [
-            .. allRequests.Select(RotationPrefRequestConverter.CreateRotationPrefResponseFromModel),
+            .. allRequests.Select(rotationPrefRequestConverter.CreateRotationPrefResponseFromModel),
         ];
         RotationPrefRequestsListResponse finalResponse = new()
         {
@@ -62,9 +70,8 @@ public class RotationPrefRequestController(MedicalContext context) : ControllerB
         [FromRoute] string residentId
     )
     {
-        RotationPrefRequest? request = await IncludeAllRotationPrefRequestProperties(
-                context.RotationPrefRequests
-            )
+        RotationPrefRequest? request = await context
+            .RotationPrefRequests.IncludeAllRotationPrefRequestProperties()
             .FirstOrDefaultAsync(r => r.ResidentId == residentId);
 
         if (request == null)
@@ -73,7 +80,7 @@ public class RotationPrefRequestController(MedicalContext context) : ControllerB
         }
 
         RotationPrefResponse response =
-            RotationPrefRequestConverter.CreateRotationPrefResponseFromModel(request);
+            rotationPrefRequestConverter.CreateRotationPrefResponseFromModel(request);
 
         return Ok(response);
     }
@@ -139,20 +146,19 @@ public class RotationPrefRequestController(MedicalContext context) : ControllerB
             return BadRequest(ModelState);
         }
 
-        RotationPrefRequest requestModel = RotationPrefRequestConverter.CreateModelFromRequestDto(
+        RotationPrefRequest requestModel = rotationPrefRequestConverter.CreateModelFromRequestDto(
             addRequestDto
         );
 
         await context.RotationPrefRequests.AddAsync(requestModel);
         await context.SaveChangesAsync();
 
-        RotationPrefRequest resultModel = await IncludeAllRotationPrefRequestProperties(
-                context.RotationPrefRequests
-            )
+        RotationPrefRequest resultModel = await context
+            .RotationPrefRequests.IncludeAllRotationPrefRequestProperties()
             .FirstAsync(r => r.RotationPrefRequestId == requestModel.RotationPrefRequestId);
 
         RotationPrefResponse response =
-            RotationPrefRequestConverter.CreateRotationPrefResponseFromModel(resultModel);
+            rotationPrefRequestConverter.CreateRotationPrefResponseFromModel(resultModel);
 
         return CreatedAtAction(
             nameof(GetById),
@@ -196,18 +202,17 @@ public class RotationPrefRequestController(MedicalContext context) : ControllerB
         }
 
         // Update request
-        RotationPrefRequestConverter.UpdateModelFromUpdateRequest(foundPrefRequest, updateRequest);
+        rotationPrefRequestConverter.UpdateModelFromUpdateRequest(foundPrefRequest, updateRequest);
 
         // Save changes
         await context.SaveChangesAsync();
 
-        RotationPrefRequest foundUpdatedPrefRequest = await IncludeAllRotationPrefRequestProperties(
-                context.RotationPrefRequests
-            )
+        RotationPrefRequest foundUpdatedPrefRequest = await context
+            .RotationPrefRequests.IncludeAllRotationPrefRequestProperties()
             .FirstAsync(r => r.RotationPrefRequestId == id);
 
         RotationPrefResponse response =
-            RotationPrefRequestConverter.CreateRotationPrefResponseFromModel(
+            rotationPrefRequestConverter.CreateRotationPrefResponseFromModel(
                 foundUpdatedPrefRequest
             );
         return Ok(response);
@@ -262,7 +267,7 @@ public class RotationPrefRequestController(MedicalContext context) : ControllerB
     }
 
     // Only PGY year 4 rotations can be in the preference
-    private static List<Guid> ValidateToOnlyPGY4RotationTypes(List<RotationType> rotationTypes)
+    private static List<Guid> ValidateToOnlyPgy4RotationTypes(List<RotationType> rotationTypes)
     {
         List<Guid> invalidGuids =
         [
@@ -285,28 +290,6 @@ public class RotationPrefRequestController(MedicalContext context) : ControllerB
         ];
 
         return invalidGuids;
-    }
-
-    private static IQueryable<RotationPrefRequest> IncludeAllRotationPrefRequestProperties(
-        DbSet<RotationPrefRequest> rotationPrefRequestDbSet
-    )
-    {
-        return rotationPrefRequestDbSet
-            .Include(r => r.Resident)
-            .Include(r => r.FirstPriority)
-            .Include(r => r.SecondPriority)
-            .Include(r => r.ThirdPriority)
-            .Include(r => r.FourthPriority)
-            .Include(r => r.FifthPriority)
-            .Include(r => r.SixthPriority)
-            .Include(r => r.SeventhPriority)
-            .Include(r => r.EighthPriority)
-            .Include(r => r.FirstAlternative)
-            .Include(r => r.SecondAlternative)
-            .Include(r => r.ThirdAlternative)
-            .Include(r => r.FirstAvoid)
-            .Include(r => r.SecondAvoid)
-            .Include(r => r.ThirdAvoid);
     }
 
     // Return false if encountered validation error, true other wise
@@ -339,7 +322,7 @@ public class RotationPrefRequestController(MedicalContext context) : ControllerB
             .ToListAsync();
 
         // Only allow PGY4 rotation types
-        List<Guid> nonPgy4RotationTypes = ValidateToOnlyPGY4RotationTypes(prefRotationTypes);
+        List<Guid> nonPgy4RotationTypes = ValidateToOnlyPgy4RotationTypes(prefRotationTypes);
         if (nonPgy4RotationTypes.Count != 0)
         {
             ModelState.AddModelError(

@@ -3,6 +3,7 @@ using System;
 using MedicalDemo.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MedicalDemo.Migrations
 {
     [DbContext(typeof(MedicalContext))]
-    partial class MedicalContextModelSnapshot : ModelSnapshot
+    [Migration("20260218002105_ChangePGY4RotationScheduleSeedTypeToInt")]
+    partial class ChangePGY4RotationScheduleSeedTypeToInt
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -198,22 +200,16 @@ namespace MedicalDemo.Migrations
                     b.ToTable("invitations", (string)null);
                 });
 
-            modelBuilder.Entity("MedicalDemo.Models.Entities.Pgy4RotationSchedule", b =>
+            modelBuilder.Entity("MedicalDemo.Models.Entities.PGY4RotationSchedule", b =>
                 {
-                    b.Property<byte[]>("Pgy4RotationScheduleId")
+                    b.Property<byte[]>("PGY4RotationScheduleId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("binary(16)");
-
-                    b.Property<bool>("IsPublished")
-                        .HasColumnType("tinyint(1)");
 
                     b.Property<int>("Seed")
                         .HasColumnType("int");
 
-                    b.Property<int>("Year")
-                        .HasColumnType("int");
-
-                    b.HasKey("Pgy4RotationScheduleId");
+                    b.HasKey("PGY4RotationScheduleId");
 
                     b.ToTable("pgy4_rotation_schedule");
                 });
@@ -304,16 +300,16 @@ namespace MedicalDemo.Migrations
                         .HasColumnType("binary(16)")
                         .HasColumnName("rotation_id");
 
-                    b.Property<int>("AcademicMonthIndex")
-                        .HasColumnType("int");
-
                     b.Property<string>("Month")
                         .IsRequired()
                         .HasMaxLength(45)
                         .HasColumnType("varchar(45)")
                         .HasColumnName("month");
 
-                    b.Property<byte[]>("Pgy4RotationScheduleId")
+                    b.Property<int>("MonthIndex")
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("PGY4RotationScheduleId")
                         .HasColumnType("binary(16)");
 
                     b.Property<int>("PgyYear")
@@ -337,7 +333,7 @@ namespace MedicalDemo.Migrations
 
                     b.HasKey("RotationId");
 
-                    b.HasIndex("Pgy4RotationScheduleId");
+                    b.HasIndex("PGY4RotationScheduleId");
 
                     b.HasIndex("RotationTypeId");
 
@@ -742,16 +738,12 @@ namespace MedicalDemo.Migrations
                         .HasColumnType("binary(16)")
                         .HasColumnName("schedule_id");
 
-                    b.Property<int>("Semester")
+                    b.Property<int>("GeneratedYear")
                         .HasColumnType("int");
 
                     b.Property<int>("Status")
                         .HasColumnType("int")
                         .HasColumnName("status");
-
-                    b.Property<int>("Year")
-                        .HasColumnType("int")
-                        .HasColumnName("GeneratedYear");
 
                     b.HasKey("ScheduleId");
 
@@ -930,10 +922,9 @@ namespace MedicalDemo.Migrations
 
             modelBuilder.Entity("MedicalDemo.Models.Entities.Rotation", b =>
                 {
-                    b.HasOne("MedicalDemo.Models.Entities.Pgy4RotationSchedule", null)
+                    b.HasOne("MedicalDemo.Models.Entities.PGY4RotationSchedule", null)
                         .WithMany("Rotations")
-                        .HasForeignKey("Pgy4RotationScheduleId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .HasForeignKey("PGY4RotationScheduleId");
 
                     b.HasOne("MedicalDemo.Models.Entities.Resident", "Resident")
                         .WithMany("Rotations")
@@ -1103,7 +1094,7 @@ namespace MedicalDemo.Migrations
                     b.Navigation("Announcements");
                 });
 
-            modelBuilder.Entity("MedicalDemo.Models.Entities.Pgy4RotationSchedule", b =>
+            modelBuilder.Entity("MedicalDemo.Models.Entities.PGY4RotationSchedule", b =>
                 {
                     b.Navigation("Rotations");
                 });
