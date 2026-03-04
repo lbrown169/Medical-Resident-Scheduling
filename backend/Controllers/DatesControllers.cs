@@ -114,6 +114,18 @@ public class DatesController : ControllerBase
         return Ok(results);
     }
 
+    // GET: api/dates/call-types
+    [HttpGet("call-types")]
+    public async Task<ActionResult<IEnumerable<DateCallTypeShiftResponse>>>
+        GetCallShiftType(
+            [FromBody] DateOnly date, [FromQuery] int graduateYr)
+    {
+        // returns valid call type given year and date, if null returns custom shift
+        CallShiftType resultCallType = CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(date, graduateYr) ?? CallShiftType.Custom;
+
+        return Ok(new DateCallTypeShiftResponse(resultCallType));
+    }
+
     // GET: api/dates/published
     [HttpGet("published")]
     public async Task<ActionResult<IEnumerable<DateResponse>>>
