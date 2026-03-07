@@ -65,6 +65,11 @@ namespace MedicalDemo.Models.Entities
                 entity.Property(e => e.PhoneNum)
                     .HasMaxLength(15)
                     .HasColumnName("phone_num");
+                entity.Property(e => e.Role)
+                    .HasConversion<string>()
+                    .HasColumnName("role")
+                    .HasMaxLength(20)
+                    .HasDefaultValue(AdminRole.Admin);
             });
 
             modelBuilder.Entity<Announcement>(entity =>
