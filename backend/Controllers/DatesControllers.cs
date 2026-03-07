@@ -7,6 +7,7 @@ using MedicalDemo.Models.DTO.Requests;
 using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.DTO.Scheduling;
 using MedicalDemo.Models.Entities;
+using MedicalDemo.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +21,7 @@ public class DatesController : ControllerBase
     private readonly ILogger<DatesController> _logger;
     private readonly MedicalContext _context;
     private readonly DateConverter _dateConverter;
+    private readonly RuleViolationService _ruleViolationService;
 
     public DatesController(MedicalContext context, DateConverter dateConverter, ILogger<DatesController> logger)
     {
@@ -112,6 +114,62 @@ public class DatesController : ControllerBase
             .ToListAsync();
 
         return Ok(results);
+    }
+
+    // GET: api/dates/call-types
+    [HttpGet("call-types")]
+    public async Task<ActionResult<DateCallTypeShiftListResponse>>
+        GetCallShiftType(
+            [FromQuery] Guid schedule_id,
+            [FromQuery] string resident_id,
+            [FromQuery] DateOnly date)
+    {
+        (bool checkPassed, string? checkError) = await _ruleViolationService.CheckResidentScheduledOnDate(schedule_id, resident_id, date);
+        if (!checkPassed)
+        {
+            return BadRequest(new GenericResponse()
+            {
+                Success = false,
+                Message = checkError
+            });
+        }
+
+        // calc PGYear offset, if any
+        (bool Success, string? offsetError, int offset)
+            = await _ruleViolationService.CalcPGYearOffset(schedule_id, resident_id, date);
+        if (!Success)
+        {
+            return NotFound(new GenericResponse()
+            {
+                Success = false,
+                Message = offsetError
+            });
+        }
+
+        // calc gradYr accounting for PGYear offset, if any
+        (bool success, string? calcGradYearError, int graduateYr)
+            = await _ruleViolationService.CalcGradYearWOffset(resident_id, offset);
+        if (!success)
+        {
+            return NotFound(new GenericResponse()
+            {
+                Success = false,
+                Message = calcGradYearError
+            });
+        }
+
+        // returns valid call type given year and date, if null returns custom shift
+        CallShiftType resultCallType =
+            CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(date, graduateYr) ?? CallShiftType.Custom;
+
+        List<DateCallTypeShiftResponse> resultCallTypes = new() { new DateCallTypeShiftResponse(resultCallType) };
+
+        if (resultCallType != CallShiftType.Custom)
+        {
+            resultCallTypes.Add(new DateCallTypeShiftResponse(CallShiftType.Custom));
+        }
+
+        return Ok(resultCallTypes);
     }
 
     // GET: api/dates/published
