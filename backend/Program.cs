@@ -22,14 +22,35 @@ app.ConfigureControllers();
 
 using (IServiceScope scope = app.Services.CreateScope())
 {
-    MedicalContext db
-        = scope.ServiceProvider.GetRequiredService<MedicalContext>();
+    MedicalContext db =
+        scope.ServiceProvider.GetRequiredService<MedicalContext>();
 
-    if (app.Environment.IsDevelopment())
+    int retries = 10;
+    while (retries > 0)
     {
-        db.Database.Migrate();
-        DatabaseSeeder seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
-        await seeder.Seed(db);
+        try
+        {
+            if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
+            {
+                db.Database.Migrate();
+                DatabaseSeeder seeder =
+                    scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
+                await seeder.Seed(db);
+            }
+            break;
+        }
+        catch (Exception ex)
+        {
+            retries--;
+            Console.WriteLine($"Database connection failed. Retrying... ({retries} retries left)");
+
+            if (retries == 0)
+            {
+                throw;
+            }
+
+            await Task.Delay(5000);
+        }
     }
 }
 
