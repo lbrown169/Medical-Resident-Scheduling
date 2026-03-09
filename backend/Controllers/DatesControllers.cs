@@ -23,11 +23,17 @@ public class DatesController : ControllerBase
     private readonly DateConverter _dateConverter;
     private readonly RuleViolationService _ruleViolationService;
 
-    public DatesController(MedicalContext context, DateConverter dateConverter, ILogger<DatesController> logger)
+    public DatesController(
+        MedicalContext context,
+        DateConverter dateConverter,
+        ILogger<DatesController> logger,
+        RuleViolationService ruleViolationService
+    )
     {
         _context = context;
         _dateConverter = dateConverter;
         _logger = logger;
+        _ruleViolationService = ruleViolationService;
     }
 
     // POST: api/dates
@@ -130,18 +136,18 @@ public class DatesController : ControllerBase
             return BadRequest(new GenericResponse()
             {
                 Success = false,
-                Message = checkError
+                Message = checkError ?? "Failed to check if resident was scheduled on date"
             });
         }
 
         // calc gradYr accounting for PGYear offset, if any
-        int graduateYr = ResidentExtensions.GetGraduateYrForDate(resident, date);
+        int graduateYr = resident.GetGraduateYrForDate(date);
 
         // returns valid call type given year and date, if null returns custom shift
         CallShiftType resultCallType =
             CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(date, graduateYr) ?? CallShiftType.Custom;
 
-        List<DateCallTypeShiftResponse> resultCallTypes = new() { new DateCallTypeShiftResponse(resultCallType) };
+        List<DateCallTypeShiftResponse> resultCallTypes = [new(resultCallType)];
 
         if (resultCallType != CallShiftType.Custom)
         {
