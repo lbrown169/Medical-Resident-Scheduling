@@ -6,7 +6,7 @@ import React, { useState, useEffect } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { ConfirmDialog } from "../../../components/ui/confirm-dialog";
-import { SubmissionViewDialog } from "./SubmissionViewDialog"; // adjust path
+import { SubmissionViewDialog } from "./SubmissionViewDialog";
 
 import { CalendarRange, Users, UserX, CalendarClock, Trash2, Save, Download, X, Calendar } from "lucide-react";
 
@@ -79,6 +79,76 @@ const rotationOptions: { value: string; label: string; color: string }[] = [
 ];
 
 
+// schedule api types
+interface RotationTypeResponse {
+	rotationTypeId: string;
+	rotationName: string;
+}
+
+interface RotationResponse {
+	rotationId: string;
+	scheduleId?: string;
+	month: string;
+	academicMonthIndex: number; // july is 0, so on and so forth
+	pgyYear: number;
+	rotationType: RotationTypeResponse;
+}
+
+interface ResidentScheduleResponse {
+	resident: {
+		resident_id: string;
+		first_name: string;
+		last_name: string;
+	};
+	rotations: RotationResponse[];
+}
+
+interface Pgy4RotationScheduleResponse {
+	pgy4RotationScheduleId: string;
+	residentCount: number;
+	seed: number;
+	year: number;
+	isPublished: boolean;
+	schedule: ResidentScheduleResponse[];
+}
+
+interface Pgy4RotationSchedulesListResponse {
+	count: number;
+	schedules: Pgy4RotationScheduleResponse[];
+}
+
+interface UnsubmittedResidentsResponse {
+	message: string;
+	unsubmittedResidents: { first_name: string; last_name: string }[];
+}
+
+// Academic calendar with july first
+const ACADEMIC_MONTHS = ["JUL", "AUG", "SEP", "OCT", "NOV", "DEC", "JAN", "FEB", "MAR", "APR", "MAY", "JUN"];
+
+// This will need to change if we add rotation name changing, the color map would need to be based on something else
+const rotationColorMap: Record<string, string> = {
+	"Inpatient Psy":  "#8b5cf6",
+	"Consult":   "#f97316",
+	"VA":        "#60a5fa",
+	"TMS":       "#84cc16",
+	"NFETC":     "#eab308",
+	"IOP":       "#22c55e",
+	"Comm":      "#3b82f6",
+	"HPC":       "#92400e",
+	"Addiction": "#14b8a6",
+	"Forensic":  "#ef4444",
+	"CLC":       "#ec4899",
+};
+
+
+function getRotationColor(name: string): string {
+	if (rotationColorMap[name]) return rotationColorMap[name];
+	const key = Object.keys(rotationColorMap).find(k =>
+		name.toLowerCase().includes(k.toLowerCase())
+	);
+	return key ? rotationColorMap[key] : "#6b7280"; // resort to chief color if needed
+}
+
 interface PGY4RotationScheduleProps {
 	residents: { id: string; name: string; email: string; pgyLevel: number | string }[];
 
@@ -105,11 +175,18 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 
 }) => {
 	const [activeTab, setActiveTab] = useState<'schedule' | 'submissions' | 'configure'>('schedule');
-	const [generating] = useState(false);
 	const currentYear = new Date().getFullYear();
 	const [selectedYear] = useState<number>(currentYear);
 	const deadline = new Date("2026-03-15T23:59:00-05:00");
 
+	// Schedule state
+	const [schedules, setSchedules] = useState<Pgy4RotationScheduleResponse[]>([]);
+	const [selectedScheduleId, setSelectedScheduleId] = useState<string>("");
+	const [loadingSchedules, setLoadingSchedules] = useState(false);
+	const [generating, setGenerating] = useState(false);
+	const [scheduleError, setScheduleError] = useState<string | null>(null);
+
+	const selectedSchedule = schedules.find(s => s.pgy4RotationScheduleId === selectedScheduleId) ?? null;
 
 	// State for viewing a resident's rotation
 	const [showRotationChangeModal, setShowRotationChangeModal] = useState(false);
@@ -156,6 +233,75 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 	// Submission tracking
 	const submittedCount = submissions.length;
 	const missingCount = PGY3Residents.length - submittedCount;
+
+	// Load schedules
+	useEffect(() => {
+		const loadSchedules = async () => {
+			try {
+				setLoadingSchedules(true);
+				setScheduleError(null);
+				const res = await fetch(`${config.apiUrl}/api/pgy4-rotation-schedule`);
+				if (!res.ok) throw new Error("Failed to fetch schedules");
+				const data: Pgy4RotationSchedulesListResponse = await res.json();
+				const list = data.schedules ?? [];
+				setSchedules(list);
+				// If a schedule is published we show that one, if not its the first schedule
+				// Currently there is no way to publish though, that comes next
+				const published = list.find(s => s.isPublished);
+				setSelectedScheduleId(published?.pgy4RotationScheduleId ?? list[0]?.pgy4RotationScheduleId ?? "");
+			} catch (err) {
+				console.error(err);
+				setScheduleError("Failed to load schedules.");
+			} finally {
+				setLoadingSchedules(false);
+			}
+		};
+		loadSchedules();
+	}, []);
+
+	const handleGenerate = async () => {
+		try {
+			setGenerating(true);
+			setScheduleError(null);
+			const res = await fetch(`${config.apiUrl}/api/pgy4-rotation-schedule/generate?count=1`); // !! one each is fine right? we can do 5 if wanted but i feel like 1 is best?
+			if (!res.ok) {
+				const err: UnsubmittedResidentsResponse = await res.json();
+				if (err.unsubmittedResidents?.length > 0) {
+					const names = err.unsubmittedResidents.map(r => `${r.first_name} ${r.last_name}`).join(", ");
+					setScheduleError(`Missing submissions from: ${names}`);
+				} else {
+					setScheduleError(err.message ?? "Failed to generate schedule.");
+				}
+				return;
+			}
+			const data: Pgy4RotationSchedulesListResponse = await res.json();
+			const newSchedules = data.schedules ?? [];
+			setSchedules(prev => [...prev, ...newSchedules]);
+			if (newSchedules[0]) setSelectedScheduleId(newSchedules[0].pgy4RotationScheduleId);
+		} catch (err) {
+			console.error(err);
+			setScheduleError("An unexpected error occurred.");
+		} finally {
+			setGenerating(false);
+		}
+	};
+
+	const handleDelete = async () => {
+		if (!selectedScheduleId) return;
+		try {
+			const res = await fetch(
+				`${config.apiUrl}/api/pgy4-rotation-schedule/${selectedScheduleId}`,
+				{ method: "DELETE" }
+			);
+			if (!res.ok) throw new Error("Failed to delete schedule");
+			const remaining = schedules.filter(s => s.pgy4RotationScheduleId !== selectedScheduleId);
+			setSchedules(remaining);
+			setSelectedScheduleId(remaining[0]?.pgy4RotationScheduleId ?? "");
+		} catch (err) {
+			console.error(err);
+			setScheduleError("Failed to delete schedule.");
+		}
+	};
 
 	useEffect(() => {
 		const loadSubmissions = async () => {
@@ -220,26 +366,12 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 						<div className="h-6 sm:h-10 border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-700 mx-0 sm:mx-4 lg:mx-6 hidden sm:block" />
 						<div className="flex items-center">
 							<Button
-								onClick={() => {}}
-								disabled={generating}
+								onClick={handleGenerate}
+								disabled={generating || schedules.length >= 5}
 								className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl shadow"
 							>
 								{generating ? "Generating..." : `Generate ${selectedYear} - ${selectedYear + 1} Schedule`}
 							</Button>
-
-							{/*
-              <ConfirmDialog
-                open={confirmOpen}
-                onOpenChange={setConfirmOpen}
-                title="Generate new schedule?"
-                message={`This will overwrite the current schedule for ${selectedYear}. Continue?`}
-                confirmText="Generate"
-                cancelText="Cancel"
-                onConfirm={() => {}}
-                loading={generating}
-                variant="default"
-              />
-              */}
 						</div>
 
 						{/* Delete Schedule */}
@@ -256,13 +388,18 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 							message="This action cannot be undone."
 							confirmText="Delete"
 							cancelText="Cancel"
-							onConfirm={() => {}}
+							onConfirm={handleDelete}
 							loading={false}
 							variant="danger"
 						/>
 					</div>
 				</div>
 			</Card>
+			{scheduleError && (
+				<div className="w-full max-w-6xl mb-4 px-4 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
+					{scheduleError}
+				</div>
+			)}
 			{/*message && <div className="mb-4 text-center text-sm font-medium text-green-600 dark:text-green-400">{message}</div>*/}
 
 			{/* Tab Navigation */}
@@ -304,7 +441,20 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 				<Card className="p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-4 mb-6 sm:mb-8 border border-gray-200 dark:border-gray-800">
 					<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
 						<h2 className="text-lg sm:text-xl font-bold">Current Schedule</h2>
-						<div className="flex gap-2">
+						<div className="flex gap-2 items-center">
+							{schedules.length > 0 && (
+								<select
+									className="px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+									value={selectedScheduleId}
+									onChange={e => setSelectedScheduleId(e.target.value)}
+								>
+									{schedules.map((s, i) => (
+										<option key={s.pgy4RotationScheduleId} value={s.pgy4RotationScheduleId}>
+											Schedule {i + 1} (Seed: {s.seed}){s.isPublished ? " ✓ Published" : ""}
+										</option>
+									))}
+								</select>
+							)}
 							<Button onClick={() => {}} variant="outline" className="flex items-center gap-2 px-1 sm:px-6 py-1 sm:py-3 text-xs sm:text-sm lg:text-base">
 								<Save className="h-4 w-4" />
 								<span>Save</span>
@@ -320,35 +470,45 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 							<thead className="bg-gray-100 dark:bg-neutral-800 ">
 								<tr>
 									<th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ">Residents</th>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">JUL &apos;{selectedYear % 100}</th>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">AUG &apos;{selectedYear % 100}</th>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">SEP &apos;{selectedYear % 100}</th>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">OCT &apos;{selectedYear % 100}</th>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">NOV &apos;{selectedYear % 100}</th>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">DEC &apos;{selectedYear % 100}</th>
-								<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">JAN &apos;{(selectedYear + 1) % 100}</th>
-								<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">FEB &apos;{(selectedYear + 1) % 100}</th>
-								<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">MAR &apos;{(selectedYear + 1) % 100}</th>
-								<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">APR &apos;{(selectedYear + 1) % 100}</th>
-								<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">MAY &apos;{(selectedYear + 1) % 100}</th>
-								<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">JUN &apos;{(selectedYear + 1) % 100}</th>
+									{ACADEMIC_MONTHS.map((month, i) => (
+										<th key={month} className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+											{month} &apos;{(i < 6 ? selectedYear : selectedYear + 1) % 100}
+										</th>
+									))}
 								</tr>
 							</thead>
 							<tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
-								{/* Check if schedule exists ! ADD SCHEDULE CHECKING HERE*/}
-								{1 > 0 ? (
-									PGY3Residents.map((PGY3Resident) =>(
-										<tr key={PGY3Resident.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800 divide-x divide-gray-200 dark:divide-gray-700">
-											<td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100 ">{PGY3Resident.name}</td>
-
-											<td className="px-3 py-2 whitespace-nowrap text-center text-sm font-medium">
-											<div className="w-full">
-												<Button variant="outline" size="sm" className=" w-full bg-purple-500 text-white hover:bg-purple-700 cursor-pointer"
-													onClick={() => setShowRotationChangeModal(true)}>
-													Addiction
-												</Button>
-											</div>
-										</td>
+								{/* Schedule rendering */}
+								{loadingSchedules ? (
+									<tr>
+										<td colSpan={13} className="px-6 py-4 text-center text-gray-500">Loading schedules...</td>
+									</tr>
+								) : selectedSchedule ? (
+									selectedSchedule.schedule.map((residentSchedule) => (
+										<tr key={residentSchedule.resident.resident_id} className="hover:bg-gray-50 dark:hover:bg-neutral-800 divide-x divide-gray-200 dark:divide-gray-700">
+											<td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+												{residentSchedule.resident.first_name} {residentSchedule.resident.last_name}
+											</td>
+											{ACADEMIC_MONTHS.map((_, monthIndex) => {
+												const rotation = residentSchedule.rotations.find(r => r.academicMonthIndex === monthIndex);
+												const color = rotation ? getRotationColor(rotation.rotationType.rotationName) : undefined;
+												return (
+													<td key={monthIndex} className="px-3 py-2 whitespace-nowrap text-center text-sm font-medium">
+														{rotation ? (
+															<div className="w-full">
+																<Button variant="outline" size="sm"
+																	className="w-full text-white hover:opacity-80 cursor-pointer"
+																	style={{ backgroundColor: color, borderColor: color }}
+																	onClick={() => setShowRotationChangeModal(true)}>
+																	{rotation.rotationType.rotationName}
+																</Button>
+															</div>
+														) : (
+															<span className="text-gray-300 dark:text-gray-600">—</span>
+														)}
+													</td>
+												);
+											})}
 										</tr>
 									))
 								) : (
@@ -553,7 +713,6 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 
 			</Modal>
 
-			{/* ! template modal, honestly might be good enough, we'll call it a stretch */}
 			{viewResident && (
 				<SubmissionViewDialog
 					open={viewDialogOpen}
