@@ -22,11 +22,17 @@ public class RotationConverter(RotationTypeConverter rotationTypeConverter)
         };
     }
 
-    public Rotation CreateRotationFromResidentAndType(string residentId, RotationType rotationType, Guid scheduleId, MonthOfYear calendarMonthIndex)
+    public Rotation CreateRotationFromResidentAndType(
+        string residentId,
+        RotationType rotationType,
+        Guid scheduleId,
+        Guid rotationId,
+        MonthOfYear calendarMonthIndex
+    )
     {
         return new()
         {
-            RotationId = Guid.NewGuid(),
+            RotationId = rotationId,
             Pgy4RotationScheduleId = scheduleId,
             ResidentId = residentId,
             AcademicMonthIndex = (MonthOfYear)calendarMonthIndex.ToAcademicIndex(),
