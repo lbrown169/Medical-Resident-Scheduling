@@ -127,26 +127,35 @@ const ACADEMIC_MONTHS = ["JUL", "AUG", "SEP", "OCT", "NOV", "DEC", "JAN", "FEB",
 
 // This will need to change if we add rotation name changing, the color map would need to be based on something else
 const rotationColorMap: Record<string, string> = {
-	"Inpatient Psy":  "#8b5cf6",
-	"Consult":   "#f97316",
-	"VA":        "#60a5fa",
-	"TMS":       "#84cc16",
-	"NFETC":     "#eab308",
-	"IOP":       "#22c55e",
-	"Comm":      "#3b82f6",
-	"HPC":       "#92400e",
-	"Addiction": "#14b8a6",
-	"Forensic":  "#ef4444",
-	"CLC":       "#ec4899",
+	"Inpatient Psy": "#8b5cf6",
+	"Psy Consults":  "#f97316",
+	"VA":            "#60a5fa",
+	"TMS":           "#84cc16",
+	"NFETC":         "#eab308",
+	"IOP":           "#22c55e",
+	"Community Psy": "#3b82f6",
+	"HPC":           "#92400e",
+	"Addiction":     "#14b8a6",
+	"Forensic":      "#ef4444",
+	"CLC":           "#ec4899",
+	"Chief":         "#4b5563",
+	"Sum":           "#6b7280",
 };
 
+// Short display names for the schedule table as opposed to direct names
+// Again when rotation name changing is added, this needs to go.
+const rotationDisplayNames: Record<string, string> = {
+	"Inpatient Psy": "Inpt Psy",
+	"Psy Consults":  "Consult",
+	"Community Psy": "Comm",
+};
+
+function getRotationDisplayName(name: string): string {
+	return rotationDisplayNames[name] ?? name;
+}
 
 function getRotationColor(name: string): string {
-	if (rotationColorMap[name]) return rotationColorMap[name];
-	const key = Object.keys(rotationColorMap).find(k =>
-		name.toLowerCase().includes(k.toLowerCase())
-	);
-	return key ? rotationColorMap[key] : "#6b7280"; // resort to chief color if needed
+	return rotationColorMap[name] ?? "#6b7280";
 }
 
 interface PGY4RotationScheduleProps {
@@ -177,7 +186,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 	const [activeTab, setActiveTab] = useState<'schedule' | 'submissions' | 'configure'>('schedule');
 	const currentYear = new Date().getFullYear();
 	const [selectedYear] = useState<number>(currentYear);
-	const deadline = new Date("2026-03-15T23:59:00-05:00");
+	const deadline = new Date("2026-03-15T23:59:00-05:00"); // !! change to configured version obviously
 
 	// Schedule state
 	const [schedules, setSchedules] = useState<Pgy4RotationScheduleResponse[]>([]);
@@ -300,6 +309,26 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 		} catch (err) {
 			console.error(err);
 			setScheduleError("Failed to delete schedule.");
+		}
+	};
+
+	const handlePublish = async () => {
+		if (!selectedScheduleId) return;
+		try {
+			setScheduleError(null);
+			const res = await fetch(
+				`${config.apiUrl}/api/pgy4-rotation-schedule/publish/${selectedScheduleId}`,
+				{ method: "POST" }
+			);
+			if (!res.ok) throw new Error("Failed to publish schedule");
+			// Update local state so the published marker reflects immediately
+			setSchedules(prev => prev.map(s => ({
+				...s,
+				isPublished: s.pgy4RotationScheduleId === selectedScheduleId,
+			})));
+		} catch (err) {
+			console.error(err);
+			setScheduleError("Failed to publish schedule.");
 		}
 	};
 
@@ -443,17 +472,26 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 						<h2 className="text-lg sm:text-xl font-bold">Current Schedule</h2>
 						<div className="flex gap-2 items-center">
 							{schedules.length > 0 && (
-								<select
-									className="px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-									value={selectedScheduleId}
-									onChange={e => setSelectedScheduleId(e.target.value)}
-								>
-									{schedules.map((s, i) => (
-										<option key={s.pgy4RotationScheduleId} value={s.pgy4RotationScheduleId}>
-											Schedule {i + 1} (Seed: {s.seed}){s.isPublished ? " ✓ Published" : ""}
-										</option>
-									))}
-								</select>
+								<>
+									<select
+										className="px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+										value={selectedScheduleId}
+										onChange={e => setSelectedScheduleId(e.target.value)}
+									>
+										{schedules.map((s, i) => (
+											<option key={s.pgy4RotationScheduleId} value={s.pgy4RotationScheduleId}>
+												Schedule {i + 1} (Seed: {s.seed}){s.isPublished ? " ✓ Published" : ""}
+											</option>
+										))}
+									</select>
+									<Button
+										onClick={handlePublish}
+										disabled={selectedSchedule?.isPublished}
+										className="bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm px-3 py-2"
+									>
+										{selectedSchedule?.isPublished ? "Published" : "Publish"}
+									</Button>
+								</>
 							)}
 							<Button onClick={() => {}} variant="outline" className="flex items-center gap-2 px-1 sm:px-6 py-1 sm:py-3 text-xs sm:text-sm lg:text-base">
 								<Save className="h-4 w-4" />
@@ -465,14 +503,14 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 							</Button>
 						</div>
 					</div>
-					<div className="overflow-x-auto max-h-96 overflow-y-auto w-full">
+					<div className="overflow-x-auto max-h-[32rem] overflow-y-auto w-full">
 						<table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
 							<thead className="bg-gray-100 dark:bg-neutral-800 ">
 								<tr>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ">Residents</th>
-									{ACADEMIC_MONTHS.map((month, i) => (
-										<th key={month} className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-											{month} &apos;{(i < 6 ? selectedYear : selectedYear + 1) % 100}
+									<th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-100 dark:bg-neutral-800">Residents</th>
+									{ACADEMIC_MONTHS.map((month) => (
+										<th key={month} className="px-2 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+											{month}
 										</th>
 									))}
 								</tr>
@@ -486,23 +524,21 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 								) : selectedSchedule ? (
 									selectedSchedule.schedule.map((residentSchedule) => (
 										<tr key={residentSchedule.resident.resident_id} className="hover:bg-gray-50 dark:hover:bg-neutral-800 divide-x divide-gray-200 dark:divide-gray-700">
-											<td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-												{residentSchedule.resident.first_name} {residentSchedule.resident.last_name}
+											<td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100 sticky left-0 bg-white dark:bg-neutral-900">
+												{residentSchedule.resident.first_name} {residentSchedule.resident.last_name.charAt(0)}.
 											</td>
 											{ACADEMIC_MONTHS.map((_, monthIndex) => {
 												const rotation = residentSchedule.rotations.find(r => r.academicMonthIndex === monthIndex);
 												const color = rotation ? getRotationColor(rotation.rotationType.rotationName) : undefined;
 												return (
-													<td key={monthIndex} className="px-3 py-2 whitespace-nowrap text-center text-sm font-medium">
+													<td key={monthIndex} className="px-1 py-1.5 whitespace-nowrap text-center">
 														{rotation ? (
-															<div className="w-full">
-																<Button variant="outline" size="sm"
-																	className="w-full text-white hover:opacity-80 cursor-pointer"
-																	style={{ backgroundColor: color, borderColor: color }}
-																	onClick={() => setShowRotationChangeModal(true)}>
-																	{rotation.rotationType.rotationName}
-																</Button>
-															</div>
+															<Button variant="outline" size="sm"
+																className="text-white hover:opacity-80 cursor-pointer text-xs font-semibold px-3 py-1 h-auto rounded-full"
+																style={{ backgroundColor: color, borderColor: color }}
+																onClick={() => setShowRotationChangeModal(true)}>
+																{getRotationDisplayName(rotation.rotationType.rotationName)}
+															</Button>
 														) : (
 															<span className="text-gray-300 dark:text-gray-600">—</span>
 														)}
@@ -548,7 +584,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 							/>
 						</div>
 					</div>
-					<div className="overflow-x-auto max-h-96 overflow-y-auto w-full">
+					<div className="overflow-x-auto max-h-[32rem] overflow-y-auto w-full">
 						<table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
 							<thead className="bg-gray-100 dark:bg-neutral-800">
 								<tr>
@@ -663,7 +699,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 						</div>
 					</div>
 					<h2 className="text-lg sm:text-xl font-bold mb-4">Chief Selection</h2>
-					<div className="overflow-x-auto max-h-96 overflow-y-auto w-full">
+					<div className="overflow-x-auto max-h-[32rem] overflow-y-auto w-full">
 
 					</div>
 

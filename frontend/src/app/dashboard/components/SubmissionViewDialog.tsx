@@ -30,20 +30,10 @@ interface SubmissionViewDialogProps {
   prefetchedData?: ResidentPreference;
 }
 
-// Available rotation options for dropdowns
+// Rotation options for dropdown
 const ROTATION_OPTIONS = [
-  "Admin",
-  "Inpatient Psychiatry",
-  "Consult",
-  "IOP",
-  "Forensic",
-  "Community",
-  "Addiction",
-  "TMS",
-  "NFETC",
-  "HPC",
-  "VA",
-  "CLC",
+  "Inpatient Psy", "Forensic", "Community Psy", "Addiction",
+  "Psy Consults", "TMS", "CLC", "NFETC", "HPC", "Chief", "IOP", "VA"
 ];
 
 export const SubmissionViewDialog: React.FC<SubmissionViewDialogProps> = ({
