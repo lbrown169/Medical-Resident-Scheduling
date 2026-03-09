@@ -99,16 +99,16 @@ interface ScheduleItem {
 
 // menu items
 const menuItems: MenuItem[] = [
-  { title: "Home", icon: <Home className="w-5 h-5 mr-2" /> }, // ! main has a different className, i kept them how they were. do whatever is best.
-  { title: "Calendar", icon: <CalendarDays className="w-5 h-5 mr-2" /> },
-  { title: "Swap Calls", icon: <Repeat className="w-5 h-5 mr-2" /> },
-  { title: "Request Off", icon: <CalendarX className="w-5 h-5 mr-2" /> },
-  { title: "Check My Schedule", icon: <UserCheck className="w-5 h-5 mr-2" /> },
-  { title: "Admin", icon: <Shield className="w-5 h-5 mr-2" /> },
-  { title: "PGY-4 Rotation Forms", icon: <ClipboardList className="w-5 h-5 mr-2" /> },
-  { title: "PGY-4 Schedule", icon: <Calendar1 className="w-5 h-5 mr-2" /> },
-  { title: "PGY-4 Rotations", icon: <CalendarRange className="w-5 h-5 mr-2" /> },
-  { title: "Settings", icon: <Settings className="w-5 h-5 mr-2" /> }
+  { title: "Home", icon: <Home className="w-6 h-6 mr-3" /> }, // ! main has a different className, i kept them how they were. do whatever is best.
+  { title: "Calendar", icon: <CalendarDays className="w-6 h-6 mr-3" /> },
+  { title: "Swap Calls", icon: <Repeat className="w-6 h-6 mr-3" /> },
+  { title: "Request Off", icon: <CalendarX className="w-6 h-6 mr-3" /> },
+  { title: "Check My Schedule", icon: <UserCheck className="w-6 h-6 mr-3" /> },
+  { title: "Admin", icon: <Shield className="w-6 h-6 mr-3" /> },
+  { title: "PGY-4 Rotation Forms", icon: <ClipboardList className="w-6 h-6 mr-3" /> },
+  { title: "PGY-4 Schedule", icon: <Calendar1 className="w-6 h-6 mr-3" /> },
+  { title: "PGY-4 Rotations", icon: <CalendarRange className="w-6 h-6 mr-3" /> },
+  { title: "Settings", icon: <Settings className="w-6 h-6 mr-3" /> }
 ];
 
 const leaveReasons = [
@@ -1283,15 +1283,13 @@ case "Home":
   
   const filteredMenuItems = menuItems.filter(item => {
     if (item.title === "Admin") return false; //hide admin option
-    if (item.title === "Request Off") return !isAdmin;
-    if (item.title === "Check My Schedule") return !isAdmin;
-    // Only show PGY-4 Rotation Forms to PGY-3 residents
-    if (item.title === "PGY-4 Rotation Forms") return currentUserPGY === 3;
-    // Only show PGY-4 Schedule to PGY-4 residents (calculated as: current year - graduate year + 1 = 4)
-    // For example: 2026 - 2022 + 1 = 5 (graduated), 2026 - 2023 + 1 = 4 (PGY-4)
-    if (item.title === "PGY-4 Schedule") return currentUserPGY === 4;
-    //Only show PGY-4 Rotaion Schedule to admins
-    if (item.title === "PGY-4 Rotations") return isAdmin;
+    if (item.title === "Request Off") return !isAdmin; // residents only
+    if (item.title === "Check My Schedule") return !isAdmin; // residents only
+    if (item.title === "Swap Calls") return !isAdmin; // residents only
+    if (item.title === "Schedules") return isAdmin; // admin only
+    if (item.title === "PGY-4 Rotation Forms") return currentUserPGY === 3; // pgy3 resident only
+    if (item.title === "PGY-4 Schedule") return currentUserPGY === 4; // pgy4 resident only
+    if (item.title === "PGY-4 Rotations") return isAdmin; // admin only
     return true;
   });
 
