@@ -27,6 +27,7 @@ interface SubmissionViewDialogProps {
   onOpenChange: (open: boolean) => void;
   residentId: string;
   residentName: string;
+  prefetchedData?: ResidentPreference;
 }
 
 // Available rotation options for dropdowns
@@ -50,6 +51,7 @@ export const SubmissionViewDialog: React.FC<SubmissionViewDialogProps> = ({
   onOpenChange,
   residentId,
   residentName,
+  prefetchedData,
 }) => {
   const [preferences, setPreferences] = useState<ResidentPreference>({
     residentId: residentId,
@@ -64,10 +66,13 @@ export const SubmissionViewDialog: React.FC<SubmissionViewDialogProps> = ({
   // Fetch preferences when dialog opens
   useEffect(() => {
     if (open && residentId) {
-      fetchPreferences();
+      if (prefetchedData) {
+        setPreferences(prefetchedData); // skip fetch
+      } else {
+        fetchPreferences();
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, residentId]);
+  }, [open, residentId, prefetchedData]);
 
   const fetchPreferences = async () => {
     setIsLoading(true);

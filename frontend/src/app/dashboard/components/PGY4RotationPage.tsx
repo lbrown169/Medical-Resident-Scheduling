@@ -5,8 +5,10 @@ import React, { useState, useEffect } from "react";
 
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
+import { ConfirmDialog } from "../../../components/ui/confirm-dialog";
+import { SubmissionViewDialog } from "./SubmissionViewDialog"; // adjust path
+
 import { CalendarRange, Users, UserX, CalendarClock, Trash2, Save, Download, X, Calendar } from "lucide-react";
-import { ConfirmDialog } from "./ConfirmDialog";
 
 // individual responses
 interface RotationPrefResponse {
@@ -125,6 +127,26 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 		setViewDialogOpen(true);
 	};
 
+	// Helper to map RotationPrefResponse to ResidentPreference
+	// Use spread to unpack elements
+	const toPreference = (s: RotationPrefResponse) => ({
+	residentId: s.resident.resident_id,
+	residentName: `${s.resident.first_name} ${s.resident.last_name}`,
+	priorities: [
+		...s.priorities.map(p => p.rotationName),
+		...Array(Math.max(0, 8 - s.priorities.length)).fill(""),
+	],
+	alternatives: [
+		...s.alternatives.map(a => a.rotationName),
+		...Array(Math.max(0, 3 - s.alternatives.length)).fill(""),
+	],
+	avoids: [
+		...s.avoids.map(a => a.rotationName),
+		...Array(Math.max(0, 3 - s.avoids.length)).fill(""),
+	],
+	additionalNotes: s.additionalNotes ?? "",
+	});
+
 
 	// Extract only PGY-3 residents
 	const PGY3Residents = residents.filter (resident =>
@@ -234,7 +256,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 							message="This action cannot be undone."
 							confirmText="Delete"
 							cancelText="Cancel"
-							onConfirm={() => { }}
+							onConfirm={() => {}}
 							loading={false}
 							variant="danger"
 						/>
@@ -283,11 +305,11 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 					<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
 						<h2 className="text-lg sm:text-xl font-bold">Current Schedule</h2>
 						<div className="flex gap-2">
-							<Button onClick={null} variant="outline" className="flex items-center gap-2 px-1 sm:px-6 py-1 sm:py-3 text-xs sm:text-sm lg:text-base">
+							<Button onClick={() => {}} variant="outline" className="flex items-center gap-2 px-1 sm:px-6 py-1 sm:py-3 text-xs sm:text-sm lg:text-base">
 								<Save className="h-4 w-4" />
 								<span>Save</span>
 							</Button>
-							<Button onClick={null} className="py-2 flex items-center justify-center gap-2 bg-green-500 text-white hover:bg-green-600">
+							<Button onClick={() => {}} className="py-2 flex items-center justify-center gap-2 bg-green-500 text-white hover:bg-green-600">
 								<Download className="h-4 w-4" />
 								<span>Export</span>
 							</Button>
@@ -357,11 +379,11 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 										<span>Clear</span>
 									</>
 								}
-								title="Clear all vacation requests?"
+								title="Clear all submissions?"
 								message="This action cannot be undone."
 								confirmText="Clear"
 								cancelText="Cancel"
-								onConfirm={null}
+								onConfirm={() => {}}
 								variant="danger"
 							/>
 						</div>
@@ -533,44 +555,13 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 
 			{/* ! template modal, honestly might be good enough, we'll call it a stretch */}
 			{viewResident && (
-				<Modal
+				<SubmissionViewDialog
 					open={viewDialogOpen}
-					onClose={() => setViewDialogOpen(false)}
-					title={`${viewResident.resident.first_name} ${viewResident.resident.last_name} Submissions`}
-				>
-					<div className="space-y-4">
-						<div>
-							<strong>Priorities Ranked:</strong>
-							<ul className="list-disc ml-6">
-								{viewResident.priorities.map(p => (
-									<li key={p.rotationTypeId}>{p.rotationName}</li>
-								))}
-							</ul>
-						</div>
-						<div>
-							<strong>Alternatives:</strong>
-							<ul className="list-disc ml-6">
-								{viewResident.alternatives.map(a => (
-									<li key={a.rotationTypeId}>{a.rotationName}</li>
-								))}
-							</ul>
-						</div>
-						<div>
-							<strong>Avoids:</strong>
-							<ul className="list-disc ml-6">
-								{viewResident.avoids.map(a => (
-									<li key={a.rotationTypeId}>{a.rotationName}</li>
-								))}
-							</ul>
-						</div>
-						{viewResident.additionalNotes && (
-							<div>
-								<strong>Additional Notes:</strong>
-								<p>{viewResident.additionalNotes}</p>
-							</div>
-						)}
-					</div>
-				</Modal>
+					onOpenChange={setViewDialogOpen}
+					residentId={viewResident.resident.resident_id}
+					residentName={`${viewResident.resident.first_name} ${viewResident.resident.last_name}`}
+					prefetchedData={toPreference(viewResident)}
+				/>
 			)}
 		</div>
 	);
