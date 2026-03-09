@@ -131,7 +131,6 @@ export default function Page() {
       handleDeleteUser={handleDeleteUser}
       inviteRole={inviteRole}
       setInviteRole={handleSetInviteRole}
-      onNavigateToCalendar={() => window.location.href = '/dashboard?view=Calendar'}
       userId="admin" // Since this is the admin page, we'll use a default admin ID
     />
   );

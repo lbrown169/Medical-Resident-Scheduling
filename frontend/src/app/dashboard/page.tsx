@@ -38,7 +38,7 @@ import AdminPage from "./components/AdminPage";
 import PGY3RotationForm from "./components/PGY3RotationForm";
 import PGY4RotationPage from "./components/PGY4RotationPage";
 import PGY4SchedulePage from "../dashboard/pgy4-schedule/page";
-
+import SchedulesPage from "./components/SchedulesPage";
 import MobileHeader from "./components/MobileHeader";
 import MobileUserMenu from "./components/MobileUserMenu";
 import { VacationResponse } from "@/lib/models/VacationResponse";
@@ -1008,10 +1008,6 @@ case "Home":
         handleDeleteUser={handleDeleteUser}
         inviteRole={inviteRole}
         setInviteRole={setInviteRole}
-        onNavigateToCalendar={() => {
-          setSelected("Calendar");
-          fetchCalendarEvents();
-        }}
         userId={user?.id || ""}
       />
     );
@@ -1046,6 +1042,7 @@ case "Home":
             onNavigateToCheckSchedule={() => setSelected("Check My Schedule")}
             onNavigateToSettings={() => setSelected("Settings")}
             onNavigateToHome={() => setSelected("Home")}
+            onNavigateToSchedules={() => setSelected("Schedules")}
             isAdmin={isAdmin}
           />
         );
@@ -1145,11 +1142,27 @@ case "Home":
             handleDeleteUser={handleDeleteUser}
             inviteRole={inviteRole}
             setInviteRole={setInviteRole}
+            userId={user?.id || ""}
+          />
+        );
+
+      case "Schedules":
+        if (!isAdmin) {
+          return (
+            <div className="w-full pt-4 flex flex-col items-center">
+              <h1 className="text-2xl font-bold mb-6">Access Denied</h1>
+              <p className="text-center text-gray-600 dark:text-gray-400">
+                You do not have permission to access the schedules page.
+              </p>
+            </div>
+          );
+        }
+        return (
+          <SchedulesPage
             onNavigateToCalendar={() => {
               setSelected("Calendar");
               fetchCalendarEvents();
             }}
-            userId={user?.id || ""}
           />
         );
 

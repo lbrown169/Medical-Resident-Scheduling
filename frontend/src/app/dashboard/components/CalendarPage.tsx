@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { ChevronLeft, ChevronRight, CalendarDays, Home, Repeat2, UserCheck, CalendarX, Settings as SettingsIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarDays, Home, Repeat2, UserCheck, CalendarX, Settings as SettingsIcon, LayoutList } from "lucide-react";
 
 interface CalendarEvent {
   id: string;
@@ -27,11 +27,12 @@ interface CalendarPageProps {
   onNavigateToCheckSchedule?: () => void;
   onNavigateToSettings?: () => void;
   onNavigateToHome?: () => void;
+  onNavigateToSchedules?: () => void;
   onDateChange?: (month: number, year: number) => void;
   isAdmin?: boolean;
 }
 
-const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCalls, onNavigateToRequestOff, onNavigateToCheckSchedule, onNavigateToSettings, onNavigateToHome, onDateChange, isAdmin }) => {
+const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCalls, onNavigateToRequestOff, onNavigateToCheckSchedule, onNavigateToSettings, onNavigateToHome, onNavigateToSchedules, onDateChange, isAdmin }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month' | 'year'>('month');
@@ -62,9 +63,39 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
     return event.backgroundColor || '#6b7280'; // Fallback to gray if no color set
   };
 
+  // Finds amount of days in the month to avoid date rollover behavior
+  const daysInMonth = (year: number, monthIndex0: number) =>
+    new Date(year, monthIndex0 + 1, 0).getDate();
+  
+
+  // Month navigation date setting to avoid date rollover behavior
+  const addMonthsClamped = (date: Date, deltaMonths: number) => {
+    const y = date.getFullYear();
+    const m = date.getMonth();
+
+    // Target year/month
+    const target = new Date(y, m + deltaMonths, 1);
+    const targetY = target.getFullYear();
+    const targetM = target.getMonth();
+
+    const d = date.getDate();
+    const maxD = daysInMonth(targetY, targetM);
+
+    // Build final date in target month with clamped day
+    return new Date(
+      targetY,
+      targetM,
+      Math.min(d, maxD),
+      date.getHours(),
+      date.getMinutes(),
+      date.getSeconds(),
+      date.getMilliseconds()
+    );
+  };
+
   // Navigation functions for different views
   const navigatePeriod = (direction: 'prev' | 'next') => {
-    const newDate = new Date(currentDate);
+    let newDate = new Date(currentDate);
     switch (viewMode) {
       case 'day':
         newDate.setDate(newDate.getDate() + (direction === 'next' ? 1 : -1));
@@ -73,7 +104,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
         newDate.setDate(newDate.getDate() + (direction === 'next' ? 7 : -7));
         break;
       case 'month':
-        newDate.setMonth(newDate.getMonth() + (direction === 'next' ? 1 : -1));
+        newDate = addMonthsClamped(currentDate, direction === 'next' ? 1 : -1);
         break;
       case 'year':
         newDate.setFullYear(newDate.getFullYear() + (direction === 'next' ? 1 : -1));
@@ -370,9 +401,12 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
             <button onClick={onNavigateToHome} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground">
               <Home className="w-5 h-5" /> Home
             </button>
+            {/* Swap Calls button: only show if not admin */}
+            {!isAdmin && (
             <button onClick={onNavigateToSwapCalls} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground">
               <Repeat2 className="w-5 h-5" /> Swap Calls
             </button>
+            )}
             {/* Request Off button: only show if not admin */}
             {!isAdmin && (
               <button onClick={onNavigateToRequestOff} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground">
@@ -385,8 +419,11 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                 <UserCheck className="w-5 h-5" /> Check My Schedule
               </button>
             )}
+            {/* Schedules button: only show for admin */}
             {isAdmin && (
-              null
+              <button onClick={onNavigateToSchedules} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground">
+                <LayoutList className="w-5 h-5" /> Schedules
+              </button>
             )}
             <button onClick={onNavigateToSettings} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground">
               <SettingsIcon className="w-5 h-5" /> Settings

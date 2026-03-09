@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "../../../components/ui/button";
 import { Moon, Sun, BookOpen, ExternalLink } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -28,7 +28,12 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
   handleUpdatePhoneNumber,
   isAdmin = false,
 }) => {
-  const { setTheme, theme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Format phone number as user types
   const formatPhoneNumber = (value: string) => {
@@ -49,6 +54,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
     const formatted = formatPhoneNumber(e.target.value);
     setPhoneNumber(formatted);
   };
+
+  const isDark = resolvedTheme === "dark";
 
   return (
     <div className="w-full bg-background overflow-x-hidden">
@@ -144,20 +151,26 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
             </label>
             <Button
               variant="outline"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              onClick={() => setTheme(isDark ? "light" : "dark")}
+              disabled={!mounted}
               className="flex items-center gap-3 px-4 py-3 border border-border rounded-lg bg-background hover:bg-muted text-foreground transition-colors"
             >
-              {theme === "dark" ? (
-                <>
-                  <Sun className="h-5 w-5" />
-                  <span>Switch to Light Mode</span>
-                </>
-              ) : (
-                <>
-                  <Moon className="h-5 w-5" />
-                  <span>Switch to Dark Mode</span>
-                </>
-              )}
+            {!mounted ? (
+              <>
+                <Moon className="h-5 w-5" />
+                <span>Theme</span>
+              </>
+            ) : isDark ? (
+              <>
+                <Sun className="h-5 w-5" />
+                <span>Switch to Light Mode</span>
+              </>
+            ) : (
+              <>
+                <Moon className="h-5 w-5" />
+                <span>Switch to Dark Mode</span>
+              </>
+            )}
             </Button>
           </div>
         </div>

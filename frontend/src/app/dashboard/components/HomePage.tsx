@@ -293,7 +293,7 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
             <div className="space-y-3 flex-1">
               {filteredRecentActivity.length > 0 ? (
                 filteredRecentActivity.map((activity) => (
-                  <div key={activity.id} className={`flex items-start gap-3 p-3 rounded-lg ${activity.type === 'swap_approved' ? 'bg-green-100' : activity.type === 'swap_denied' ? 'bg-red-100' : 'bg-muted/50'}`}>
+                  <div key={activity.id} className={`flex items-start gap-3 p-3 rounded-lg ${activity.type === 'swap_approved' ? 'bg-green-100 dark:bg-green-950/40' : activity.type === 'swap_denied' ? 'bg-red-100 dark:bg-red-950/40' : 'bg-muted/50'}`}>
                     <div className="p-2 bg-primary/10 rounded-full">
                       {activity.type.startsWith('swap') ? (
                         <RotateCcw className="h-4 w-4 text-primary" />
@@ -347,11 +347,11 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
       {/* Deny Reason Modal */}
       <Dialog open={denyModalOpen} onOpenChange={setDenyModalOpen}>
         <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+          <div className="bg-card text-foreground rounded-lg shadow-lg p-6 w-full max-w-md border border-border">
             <h3 className="text-lg font-semibold mb-4">Deny Swap Request</h3>
             <label className="block mb-2 text-sm font-medium">Reason for denial:</label>
             <textarea
-              className="w-full border rounded p-2 mb-4"
+              className="w-full border border-border rounded p-2 mb-4 bg-background text-foreground"
               rows={3}
               value={denyReason}
               onChange={e => setDenyReason(e.target.value)}
