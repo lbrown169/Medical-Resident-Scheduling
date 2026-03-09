@@ -124,8 +124,8 @@ public class DatesController : ControllerBase
             [FromQuery] string resident_id,
             [FromQuery] DateOnly date)
     {
-        (bool checkPassed, string? checkError) = await _ruleViolationService.CheckResidentScheduledOnDate(schedule_id, resident_id, date);
-        if (!checkPassed)
+        (bool checkPassed, string? checkError, Resident? resident) = await _ruleViolationService.CheckResidentScheduledOnDate(schedule_id, resident_id, date);
+        if (!checkPassed || resident == null)
         {
             return BadRequest(new GenericResponse()
             {
@@ -134,29 +134,8 @@ public class DatesController : ControllerBase
             });
         }
 
-        // calc PGYear offset, if any
-        (bool Success, string? offsetError, int offset)
-            = await _ruleViolationService.CalcPGYearOffset(schedule_id, resident_id, date);
-        if (!Success)
-        {
-            return NotFound(new GenericResponse()
-            {
-                Success = false,
-                Message = offsetError
-            });
-        }
-
         // calc gradYr accounting for PGYear offset, if any
-        (bool success, string? calcGradYearError, int graduateYr)
-            = await _ruleViolationService.CalcGradYearWOffset(resident_id, offset);
-        if (!success)
-        {
-            return NotFound(new GenericResponse()
-            {
-                Success = false,
-                Message = calcGradYearError
-            });
-        }
+        int graduateYr = ResidentExtensions.GetGraduateYrForDate(resident, date);
 
         // returns valid call type given year and date, if null returns custom shift
         CallShiftType resultCallType =

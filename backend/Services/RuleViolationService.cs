@@ -32,7 +32,7 @@ public class RuleViolationService
     }
 
 
-    public async Task<(bool Success, string? Error)> CheckResidentScheduledOnDate(
+    public async Task<(bool Success, string? Error, Resident? resident)> CheckResidentScheduledOnDate(
         Guid schedule_id,
         string resident_id,
         DateOnly date
@@ -42,69 +42,27 @@ public class RuleViolationService
         Schedule? schedule = await _context.Schedules.FindAsync(schedule_id);
         if (schedule == null)
         {
-            return (false, "Invalid ScheduleID.");
+            return (false, "Invalid ScheduleID.", null);
         }
 
         Resident? resident = await _context.Residents.FindAsync(resident_id);
         if (resident == null)
         {
-            return (false, "Invalid ResidentID.");
+            return (false, "Invalid ResidentID.", null);
         }
 
         // check if shift exists for this resident on this day
         bool residentScheduled = await _context.Dates
             .AnyAsync(d =>
+                d.ScheduleId == schedule_id &&
                 d.ResidentId == resident_id &&
                 d.ShiftDate == date);
 
         if (residentScheduled)
         {
-            return (false, "Resident is already scheduled on this date.");
+            return (false, $"Resident is already scheduled on this date. Resident: {resident_id}, Schedule:{schedule_id},Date:{date}", resident);
         }
 
-        return (true, null);
-    }
-
-    public async Task<(bool Success, string? Error, int offset)> CalcPGYearOffset(
-        Guid schedule_id, string resident_id, DateOnly date)
-    {
-        //validate schedule and resident
-        Schedule? schedule = await _context.Schedules.FindAsync(schedule_id);
-        if (schedule == null)
-        {
-            return (false, "Invalid ScheduleID.", -1);
-        }
-
-        Resident? resident = await _context.Residents.FindAsync(resident_id);
-        if (resident == null)
-        {
-            return (false, "Invalid ResidentID.", -1);
-        }
-
-        // calc how many academic years ahead of today the manual date is
-        int offset = 0;
-        if (date.AcademicYear > DateTime.Now.AcademicYear)
-        {
-            offset = date.AcademicYear - DateTime.Now.AcademicYear;
-        }
-
-        return (true, null, offset);
-
-    }
-
-    public async Task<(bool Success, string? Error, int graduateYr)> CalcGradYearWOffset(string resident_id, int offset)
-    {
-        Resident? resident = await _context.Residents.FindAsync(resident_id);
-        if (resident == null)
-        {
-            return (false, "Invalid ResidentID.", -1);
-        }
-
-        int graduateYr = resident.GraduateYr;
-
-        graduateYr += offset;
-
-        return (true, null, graduateYr);
-
+        return (true, null, resident);
     }
 }
