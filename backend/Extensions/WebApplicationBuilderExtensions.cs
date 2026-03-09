@@ -40,6 +40,7 @@ public static class WebApplicationBuilderExtensions
         builder.Services.AddScoped<SchedulerService>();
         builder.Services.AddScoped<AlgorithmService>();
         builder.Services.AddScoped<DatabaseSeeder>();
+        builder.Services.AddScoped<RuleViolationService>();
         builder.Services.AddScoped<Pgy4RotationScheduleService>();
         builder.Services.AddTransient<Pgy4RotationScheduleGenerator>();
 
