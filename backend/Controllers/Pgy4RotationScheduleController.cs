@@ -581,37 +581,4 @@ public class Pgy4RotationScheduleController(
 
         return Ok(violationResponse);
     }
-
-    [HttpPut("{scheduleId}/apply-overrides")]
-    public async Task<ActionResult<Pgy4RotationScheduleResponse>> ApplyScheduleOverridesById(
-        [FromRoute] Guid scheduleId
-    )
-    {
-        Pgy4RotationSchedule? foundSchedule = await context
-            .Pgy4RotationSchedules.IncludeRotationTypeAndResidentProperties()
-            .FirstOrDefaultAsync((s) => s.Pgy4RotationScheduleId == scheduleId);
-
-        if (foundSchedule == null)
-        {
-            return NotFound();
-        }
-
-        List<Pgy4RotationScheduleOverride>? overrides = null;
-
-        overrides = await context
-            .Pgy4RotationScheduleOverrides.Include(o => o.RotationType)
-            .Where((o) => o.Pgy4RotationScheduleId == scheduleId)
-            .ToListAsync();
-
-        // Update schedule rotations with appropriate overrides
-        pgy4RotationScheduleOverrideConverter.UpdateScheduleWithOverrides(foundSchedule, overrides);
-        // Delete overrides from DB
-        context.Pgy4RotationScheduleOverrides.RemoveRange(overrides);
-        await context.SaveChangesAsync();
-
-        Pgy4RotationScheduleResponse response =
-            pgy4RotationScheduleConverter.CreateRotationScheduleResponseFromModel(foundSchedule);
-
-        return Ok(response);
-    }
 }
