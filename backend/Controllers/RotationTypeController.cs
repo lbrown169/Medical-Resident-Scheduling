@@ -10,9 +10,13 @@ namespace MedicalDemo.Controllers;
 
 [ApiController]
 [Route("api/rotation-types")]
-public class RotationTypeController(MedicalContext context) : ControllerBase
+public class RotationTypeController(
+    MedicalContext context,
+    RotationTypeConverter rotationTypeConverter
+) : ControllerBase
 {
     private readonly MedicalContext context = context;
+    private readonly RotationTypeConverter rotationTypeConverter = rotationTypeConverter;
 
     // GET: api/rotation-types/{id}
     [HttpGet("{id}")]
@@ -25,7 +29,7 @@ public class RotationTypeController(MedicalContext context) : ControllerBase
             return NotFound();
         }
 
-        RotationTypeResponse response = RotationTypeConverter.CreateRotationTypeResponse(foundRotationType);
+        RotationTypeResponse response = rotationTypeConverter.CreateRotationTypeResponse(foundRotationType);
         return Ok(response);
     }
 
@@ -59,7 +63,7 @@ public class RotationTypeController(MedicalContext context) : ControllerBase
             rotationTypes = await context.RotationTypes.Where(rt => (rt.PgyYearFlags & searchFlags) != 0).ToListAsync();
         }
 
-        List<RotationTypeResponse> rotationTypeResponses = [.. rotationTypes.Select(RotationTypeConverter.CreateRotationTypeResponse)];
+        List<RotationTypeResponse> rotationTypeResponses = [.. rotationTypes.Select(rotationTypeConverter.CreateRotationTypeResponse)];
         RotationTypesListResponse finalResponse = new()
         {
             Count = rotationTypeResponses.Count,

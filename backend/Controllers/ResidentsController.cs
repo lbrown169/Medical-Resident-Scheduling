@@ -1,4 +1,6 @@
 using MedicalDemo.Converters;
+using MedicalDemo.Enums;
+using MedicalDemo.Extensions;
 using MedicalDemo.Models;
 using MedicalDemo.Models.DTO.Requests;
 using MedicalDemo.Models.DTO.Responses;
@@ -51,7 +53,14 @@ public class ResidentsController : ControllerBase
         [FromQuery] int? total_hours,
         [FromQuery] int? bi_yearly_hours)
     {
-        List<Date> dates = await _context.Dates.ToListAsync();
+        int academicYear = DateTime.Now.AcademicYear;
+        List<Date> dates = await _context.Dates
+            .Where(d =>
+                d.Schedule.Status == ScheduleStatus.Published
+                && (d.Schedule.Semester == Semester.Fall && d.Schedule.Year == academicYear
+                || d.Schedule.Semester == Semester.Spring && d.Schedule.Year == academicYear + 1)
+            )
+            .ToListAsync();
 
         Dictionary<string, int> totalHoursMapping = dates
             .GroupBy(d => d.ResidentId)
