@@ -26,14 +26,6 @@ interface ScheduleEditModalProps {
   scheduleSemester?: string;
 }
 
-// Hardcoded until a GET /api/dates/call-types endpoint is added
-const callTypeOptions: CallType[] = [
-  { id: 0, description: "Short" },
-  { id: 1, description: "Saturday (24h)" },
-  { id: 2, description: "Saturday (12h)" },
-  { id: 3, description: "Sunday (12h)" },
-];
-
 const toDateInputValue = (date: Date): string => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -72,7 +64,8 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
   // Edit/Add state
   const [editMode, setEditMode] = useState<"view" | "edit">("view");
   const [addDay, setAddDay] = useState<Date | null>(null);
-  const [formData, setFormData] = useState({ residentId: "", shiftDate: "", callType: 0 });
+  const [formData, setFormData] = useState({ residentId: "", shiftDate: "", callType: -1, hours: "" });
+  const [callTypeOptions, setCallTypeOptions] = useState<CallType[]>([]);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   // Single state drives all three confirm dialogs
@@ -173,6 +166,29 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
     }
   }, [open]);
 
+  // Fetch eligible call types when resident + date are both set
+  useEffect(() => {
+    if (!scheduleId || !formData.residentId || !formData.shiftDate) {
+      setCallTypeOptions([]);
+      return;
+    }
+    const controller = new AbortController();
+    fetch(
+      `${config.apiUrl}/api/dates/call-types?schedule_id=${scheduleId}&resident_id=${encodeURIComponent(formData.residentId)}&date=${formData.shiftDate}`,
+      { signal: controller.signal }
+    )
+      .then(res => res.ok ? res.json() : Promise.reject())
+      .then((data: CallType[]) => {
+        setCallTypeOptions(data);
+        setFormData(f => ({
+          ...f,
+          callType: data.some(ct => ct.id === f.callType) ? f.callType : -1,
+        }));
+      })
+      .catch(() => {});
+    return () => controller.abort();
+  }, [scheduleId, formData.residentId, formData.shiftDate]);
+
   // --- Derived data ---
 
   // O(1) date lookup: timestamp → events on that day
@@ -254,16 +270,18 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
     if (!isCurrentMonth) return;
     setSelectedEvent(null);
     setEditMode("view");
-    setFormData({ residentId: "", shiftDate: toDateInputValue(date), callType: 0 });
+    setFormData({ residentId: "", shiftDate: toDateInputValue(date), callType: -1, hours: "" });
     setAddDay(date);
   };
 
   const openEditMode = () => {
     if (!selectedEvent) return;
+    const callTypeId = selectedEvent.extendedProps?.callTypeId ?? 0;
     setFormData({
       residentId: selectedEvent.extendedProps?.residentId || "",
       shiftDate: toDateInputValue(selectedEvent.start),
-      callType: selectedEvent.extendedProps?.callTypeId ?? 0,
+      callType: callTypeId,
+      hours: callTypeId === 99 ? String(selectedEvent.extendedProps?.hours ?? "") : "",
     });
     setEditMode("edit");
   };
@@ -295,7 +313,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
       const response = await fetch(`${config.apiUrl}/api/dates`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scheduleId, residentId: formData.residentId, shiftDate: formData.shiftDate, callType: formData.callType }),
+        body: JSON.stringify({ scheduleId, residentId: formData.residentId, shiftDate: formData.shiftDate, callType: formData.callType, ...(formData.callType === 99 && { hours: Number(formData.hours) }) }),
       });
       if (response.ok || response.status === 201) {
         toast({ variant: "success", title: "Date Added", description: "The date has been added to the schedule." });
@@ -320,7 +338,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
       const response = await fetch(`${config.apiUrl}/api/dates/${dateId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ residentId: formData.residentId, shiftDate: formData.shiftDate, callType: formData.callType }),
+        body: JSON.stringify({ residentId: formData.residentId, shiftDate: formData.shiftDate, callType: formData.callType, ...(formData.callType === 99 && { hours: Number(formData.hours) }) }),
       });
       if (response.ok) {
         toast({ variant: "success", title: "Date Updated", description: "The date has been updated." });
@@ -411,7 +429,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
             value={formData.residentId}
             onChange={e => setFormData(f => ({ ...f, residentId: e.target.value }))}
           >
-            <option value="">Select a resident...</option>
+            <option value="">Select a Resident</option>
             {sortedResidents.map(r => (
               <option key={r.resident_id} value={r.resident_id}>
                 {r.first_name} {r.last_name} (PGY{r.graduate_yr})
@@ -433,19 +451,37 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
         <div>
           <label className="text-xs font-medium text-muted-foreground block mb-1">Call Type</label>
           <select
-            className="w-full border rounded px-2 py-1.5 text-sm bg-background"
+            className="w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-50"
             value={formData.callType}
+            disabled={callTypeOptions.length === 0}
             onChange={e => setFormData(f => ({ ...f, callType: Number(e.target.value) }))}
           >
+            <option value={-1} disabled>
+              {callTypeOptions.length === 0 ? "Select a Resident and Date" : "Select a Call Type"}
+            </option>
             {callTypeOptions.map(ct => (
               <option key={ct.id} value={ct.id}>{ct.description}</option>
             ))}
           </select>
         </div>
+        {formData.callType === 99 && (
+          <div>
+            <label className="text-xs font-medium text-muted-foreground block mb-1">Hours</label>
+            <input
+              type="number"
+              min={1}
+              max={24}
+              className="w-full border rounded px-2 py-1.5 text-sm bg-background"
+              placeholder="Enter hours"
+              value={formData.hours}
+              onChange={e => setFormData(f => ({ ...f, hours: e.target.value }))}
+            />
+          </div>
+        )}
         <div className="flex gap-2 pt-1">
           <button
             onClick={onSave}
-            disabled={saving || !formData.residentId || !formData.shiftDate}
+            disabled={saving || !formData.residentId || !formData.shiftDate || formData.callType === -1 || (formData.callType === 99 && !formData.hours)}
             className="flex-1 px-3 py-1.5 text-sm font-medium bg-primary text-primary-foreground rounded hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {saving ? "Saving..." : "Save"}
@@ -622,6 +658,9 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                             </p>
                             <p className="text-sm mt-2">
                               <span className="font-medium">Call Type:</span> {selectedEvent.extendedProps?.callType}
+                              {selectedEvent.extendedProps?.callTypeId === 99 && (
+                                <span> ({selectedEvent.extendedProps.hours}h)</span>
+                              )}
                             </p>
                             {selectedEvent.extendedProps?.pgyLevel && (
                               <p className="text-sm">
