@@ -1,5 +1,4 @@
 using System.Globalization;
-using MedicalDemo.Algorithm;
 using MedicalDemo.Models;
 using MedicalDemo.Models.DTO.Scheduling;
 using MedicalDemo.Models.Entities;
@@ -15,7 +14,7 @@ public class SchedulingMapperService
         _context = context;
     }
 
-    public PGY1DTO MapToPGY1DTO(Resident resident, IList<HospitalRole> rotations,
+    public Pgy1Dto MapToPGY1DTO(Resident resident, IList<HospitalRole> rotations,
         List<Vacation> vacations,
         List<Date> dates)
     {
@@ -24,7 +23,7 @@ public class SchedulingMapperService
             .Select(d => d.ShiftDate)
             .ToList();
 
-        PGY1DTO dto = new PGY1DTO
+        Pgy1Dto dto = new Pgy1Dto
         {
             ResidentId = resident.ResidentId,
             Name = resident.FirstName + " " + resident.LastName,
@@ -42,7 +41,7 @@ public class SchedulingMapperService
         return dto;
     }
 
-    public PGY2DTO MapToPGY2DTO(Resident resident, IList<HospitalRole> rotations,
+    public Pgy2Dto MapToPGY2DTO(Resident resident, IList<HospitalRole> rotations,
         List<Vacation> vacations,
         List<Date> dates)
     {
@@ -51,7 +50,7 @@ public class SchedulingMapperService
             .Select(d => d.ShiftDate)
             .ToList();
 
-        PGY2DTO dto = new()
+        Pgy2Dto dto = new()
         {
             ResidentId = resident.ResidentId,
             Name = resident.FirstName + " " + resident.LastName,
@@ -69,7 +68,7 @@ public class SchedulingMapperService
         return dto;
     }
 
-    public PGY3DTO MapToPGY3DTO(Resident resident, List<Vacation> vacations,
+    public Pgy3Dto MapToPGY3DTO(Resident resident, List<Vacation> vacations,
         List<Date> dates)
     {
         List<DateOnly> committedDates = dates
@@ -77,7 +76,7 @@ public class SchedulingMapperService
             .Select(d => d.ShiftDate)
             .ToList();
 
-        return new PGY3DTO
+        return new Pgy3Dto
         {
             ResidentId = resident.ResidentId,
             Name = resident.FirstName + " " + resident.LastName,

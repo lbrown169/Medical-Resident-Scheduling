@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator;
 using MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator.Constraints;
 using MedicalDemo.Converters;
@@ -47,6 +48,8 @@ public class Pgy4RotationScheduleService(
 
         foreach (KeyValuePair<AlgorithmResident, Pgy4RotationTypeEnum[]> kvp in generatedSchedule.Schedule)
         {
+            Guid newRotationId = Guid.NewGuid();
+
             for (
                 int calenderMonthIndex = 0;
                 calenderMonthIndex < kvp.Value.Length;
@@ -61,6 +64,7 @@ public class Pgy4RotationScheduleService(
                     kvp.Key.ResidentId,
                     currentRotationType,
                     newScheduleId,
+                    newRotationId,
                     (MonthOfYear)calenderMonthIndex
                 );
                 rotationsToAdd.Add(newRotation);

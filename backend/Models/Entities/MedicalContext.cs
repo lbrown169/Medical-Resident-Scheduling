@@ -247,9 +247,11 @@ namespace MedicalDemo.Models.Entities
             {
                 entity.ToTable("rotations");
 
+                entity.HasKey((e) => new { e.RotationId, e.AcademicMonthIndex });
+
                 entity.HasIndex(e => e.ResidentId, "resident_id_rotation_idx");
 
-                entity.HasIndex(e => e.RotationId, "rotation_id_UNIQUE")
+                entity.HasIndex(e => new { e.RotationId, e.AcademicMonthIndex }, "rotation_id_month_Unique")
                     .IsUnique();
 
                 entity.Property(e => e.RotationId)
@@ -291,6 +293,9 @@ namespace MedicalDemo.Models.Entities
 
                 entity.HasIndex(e => e.ScheduleId, "schedule_id_UNIQUE")
                     .IsUnique();
+
+                entity.Property(e => e.Year)
+                    .HasColumnName("GeneratedYear");
 
                 entity.Property(e => e.ScheduleId)
                     .HasColumnType("binary(16)")

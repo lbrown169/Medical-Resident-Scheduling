@@ -1,4 +1,4 @@
-namespace MedicalDemo;
+namespace MedicalDemo.Extensions;
 
 public static class WebApplicationExtensions
 {
