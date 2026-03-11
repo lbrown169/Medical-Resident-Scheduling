@@ -1,10 +1,10 @@
+using MedicalDemo.Enums;
+
 namespace MedicalDemo.Models.DTO.Scheduling;
 
-public class PGY1DTO : ResidentDTO
+public class Pgy2Dto : ResidentDto
 {
-    public DateOnly LastTrainingDate { get; set; }
-
-    public override bool CanWork(DateOnly curDay)
+    public override bool CanWork(DateOnly curDay, CallLengthType lengthType)
     {
         if (IsVacation(curDay) || CommitedWorkDay(curDay))
         {
@@ -14,24 +14,28 @@ public class PGY1DTO : ResidentDTO
         int monthIndex = (curDay.Month + 5) % 12;
         HospitalRole? role = RolePerMonth[monthIndex];
 
-        if (curDay.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
+        if (lengthType == CallLengthType.Long)
         {
-            if (role is { DoesLong: false } && (!InTraining || !role.DoesTrainingLong))
+            if (curDay.Month is 7 or 8 && role is { DoesTrainingLong: false } ||
+                curDay.Month is not 7 and not 8 && role is { DoesLong: false })
             {
                 return false;
             }
 
             DateOnly prevDay = curDay.AddDays(-1);
             DateOnly nextDay = curDay.AddDays(1);
-            if (WorkDays.Contains(prevDay) ||
-                WorkDays.Contains(nextDay))
+            if (IsWorking(prevDay)
+                || CommitedWorkDay(nextDay)
+                || IsWorking(nextDay)
+                || CommitedWorkDay(prevDay))
             {
                 return false;
             }
         }
         else // Weekday
         {
-            if (role is { DoesShort: false } && (!InTraining || !role.DoesTrainingShort))
+            if (curDay.Month is 7 or 8 && role is { DoesTrainingShort: false } ||
+                curDay.Month is not 7 and not 8 && role is { DoesShort: false })
             {
                 return false;
             }
@@ -39,22 +43,17 @@ public class PGY1DTO : ResidentDTO
             DateOnly nextDay = curDay.AddDays(1);
             DateOnly prevDay = curDay.AddDays(-1);
 
-            if (WorkDays.Contains(nextDay) &&
+            if ((IsWorking(nextDay) || CommitedWorkDay(nextDay)) &&
                 nextDay.DayOfWeek == DayOfWeek.Saturday)
             {
                 return false;
             }
 
-            if (WorkDays.Contains(prevDay) &&
+            if ((IsWorking(prevDay) || CommitedWorkDay(prevDay)) &&
                 prevDay.DayOfWeek == DayOfWeek.Sunday)
             {
                 return false;
             }
-        }
-
-        if (curDay <= LastTrainingDate)
-        {
-            return false;
         }
 
         return true;
@@ -65,7 +64,7 @@ public class PGY1DTO : ResidentDTO
         if (WorkDays.Contains(curDay))
         {
             throw new InvalidOperationException(
-                $"Resident already scheduled for {curDay}");
+                "Resident already scheduled this day");
         }
 
         WorkDays.Add(curDay);
@@ -76,7 +75,7 @@ public class PGY1DTO : ResidentDTO
         if (!WorkDays.Contains(curDay))
         {
             throw new InvalidOperationException(
-                $"Resident not scheduled for {curDay}");
+                "Resident not scheduled this day");
         }
 
         WorkDays.Remove(curDay);

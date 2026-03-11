@@ -2,7 +2,8 @@ using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
-using MedicalDemo.Algorithm;
+using MedicalDemo.Algorithms.OnCallScheduleGenerator;
+using MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator;
 using MedicalDemo.Converters;
 using MedicalDemo.Interfaces;
 using MedicalDemo.Models;
@@ -39,6 +40,9 @@ public static class WebApplicationBuilderExtensions
         builder.Services.AddScoped<SchedulerService>();
         builder.Services.AddScoped<AlgorithmService>();
         builder.Services.AddScoped<DatabaseSeeder>();
+        builder.Services.AddScoped<RuleViolationService>();
+        builder.Services.AddScoped<Pgy4RotationScheduleService>();
+        builder.Services.AddTransient<Pgy4RotationScheduleGenerator>();
 
         // Converters
         builder.Services.AddScoped<AdminConverter>();
@@ -49,6 +53,10 @@ public static class WebApplicationBuilderExtensions
         builder.Services.AddScoped<ScheduleConverter>();
         builder.Services.AddScoped<SwapRequestConverter>();
         builder.Services.AddScoped<VacationConverter>();
+        builder.Services.AddScoped<Pgy4RotationScheduleConverter>();
+        builder.Services.AddScoped<RotationPrefRequestConverter>();
+        builder.Services.AddScoped<RotationTypeConverter>();
+        builder.Services.AddScoped<RotationConverter>();
 
         // Email
         if (builder.Environment.IsDevelopment())

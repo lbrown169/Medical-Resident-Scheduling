@@ -1,5 +1,3 @@
-using MedicalDemo.Algorithm;
-
 namespace MedicalDemo.Models.DTO.Responses;
 
 public class DateResponse
