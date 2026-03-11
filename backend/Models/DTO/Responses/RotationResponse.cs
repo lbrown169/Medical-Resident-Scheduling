@@ -10,6 +10,8 @@ public class RotationResponse
 
     public string Month { get; set; } = null!;
 
+    public int AcademicYear { get; set; }
+
     public MonthOfYear AcademicMonthIndex { get; set; }
 
     public int PgyYear { get; set; }
