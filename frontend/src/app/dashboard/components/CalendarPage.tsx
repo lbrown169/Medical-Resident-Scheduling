@@ -295,8 +295,8 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
   return (
     <div className="flex flex-col w-full min-h-screen bg-background text-foreground relative">
       {/* Header - Hidden on mobile */}
-      <div className="bg-card border pt-6 pb-8 fixed left-0 right-0 top-0 z-10 px-8 hidden md:block">
-        <div className="flex items-center justify-between">
+      <div className="bg-card border pt-4 pb-8 fixed left-0 right-0 top-0 z-10 px-8 hidden md:block">
+        <div className="flex items-center justify-between h-full">
           <div className="flex items-center space-x-2">
             <h1 className="pl-7 text-5xl font-bold text-foreground">
               {getPeriodTitle()}
