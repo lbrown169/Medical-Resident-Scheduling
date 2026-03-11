@@ -485,7 +485,38 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                               // Fallback to center if no specific position
                             }}
                           >
-                            <h4 className="font-semibold text-gray-900 dark:text-gray-100">{event.title}</h4>
+                            <div className="flex flex-col gap-2">
+                              <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-base">
+                                {event.title}
+                              </h4>
+
+                              <div className="text-sm text-gray-600 dark:text-gray-300">
+                                <span className="font-semibold">Date: </span>
+                                {ensureDate(event.start).toLocaleDateString('en-US', {
+                                  weekday: 'long',
+                                  month: 'long',
+                                  day: 'numeric',
+                                  year: 'numeric',
+                                })}
+                              </div>
+
+                              <div className="text-sm text-gray-600 dark:text-gray-300">
+                                <span className="font-semibold">Call Type: </span>
+                                {event.extendedProps?.callType}
+                              </div>
+
+                              <div className="text-sm text-gray-600 dark:text-gray-300">
+                                <span className="font-semibold">Resident: </span>
+                                {event.extendedProps?.firstName} {event.extendedProps?.lastName}
+                              </div>
+
+                              {event.extendedProps?.pgyLevel && (
+                                <div className="text-sm text-gray-600 dark:text-gray-300">
+                                  <span className="font-semibold">PGY: </span>
+                                  {event.extendedProps.pgyLevel}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -494,7 +525,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                 </div>
               ) : viewMode === 'week' ? (
                 // Week View
-                <div className="h-full flex flex-col">
+                <div className="h-full flex flex-col min-h-[60vh]">
                   <div className="grid grid-cols-7 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-600">
                     {generateWeekDays().map((date, index) => (
                       <div key={index} className="px-4 py-3 text-center">
@@ -532,7 +563,35 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                                 }}
                                 title={event.title}
                               >
-                                {event.title}
+                                <div className="flex flex-col gap-3">
+                                  <div className="text-sm font-semibold leading-tight">
+                                    {event.title}
+                                  </div>
+
+                                  <div className="text-xs opacity-90">
+                                    <span className="font-semibold">Resident: </span>
+                                    {event.extendedProps?.firstName} {event.extendedProps?.lastName}
+                                  </div>
+
+                                  <div className="text-xs opacity-90">
+                                    <span className="font-semibold">Call Type: </span>
+                                    {event.extendedProps?.callType}
+                                  </div>
+
+                                  {event.extendedProps?.pgyLevel && (
+                                    <div className="text-xs opacity-90">
+                                      <span className="font-semibold">PGY: </span>
+                                      {event.extendedProps?.pgyLevel}
+                                    </div>
+                                  )}
+
+                                  <div className="text-xs opacity-80">
+                                    {ensureDate(event.start).toLocaleDateString('en-US', {
+                                      month: 'short',
+                                      day: 'numeric',
+                                    })}
+                                  </div>
+                                </div>
                               </div>
                             ))}
                             {dayEvents.length > 6 && (
@@ -689,7 +748,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
         </div>
         {/* Upcoming Section to the right (animated slide in/out) - Hidden on mobile */}
         <div
-          className={`max-w-xs w-[24rem] h-[50rem] fixed right-0 z-10 border-l border-border bg-card p-6 flex flex-col transition-transform duration-300 ease-in-out ${isUpcomingOpen ? 'translate-x-0' : 'translate-x-full'} pointer-events-auto hidden md:flex`}
+          className={`max-w-xs w-[24rem] fixed right-0 bottom-0 z-10 border-l border-border bg-card p-6 flex flex-col transition-transform duration-300 ease-in-out ${isUpcomingOpen ? 'translate-x-0' : 'translate-x-full'} pointer-events-auto hidden md:flex`}
           style={{ top: 'calc(4.5rem + 4.5rem + 0.7rem)', boxShadow: isUpcomingOpen ? '0 0 24px 0 rgba(0,0,0,0.08)' : 'none' }}
         >
           <div id="upcoming-panel-content" className="flex-1 overflow-y-auto pb-32">
