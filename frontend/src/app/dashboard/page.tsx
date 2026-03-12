@@ -823,6 +823,7 @@ function Dashboard() {
     setYourShiftDate("");
     setPartnerShiftDate("");
     setPartnerShift("");
+    setSwapDescription("");
   };
 
   const handleSubmitRequestOff = async () => {
