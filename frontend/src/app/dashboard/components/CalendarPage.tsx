@@ -525,7 +525,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                 </div>
               ) : viewMode === 'week' ? (
                 // Week View
-                <div className="h-full flex flex-col min-h-[60vh]">
+                <div className="h-full flex flex-col min-h-[70vh]">
                   <div className="grid grid-cols-7 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-600 border-b border-gray-200 dark:border-gray-600">
                     {generateWeekDays().map((date, index) => (
                       <div key={index} className="px-4 py-3 text-center">
@@ -563,29 +563,38 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                                 }}
                                 title={event.title}
                               >
-                                <div className="flex flex-col gap-3">
-                                  <div className="text-sm font-semibold leading-tight">
+                                <div className="flex flex-col">
+                                  <div className="text-sm font-semibold leading-tight mb-3">
                                     {event.title}
                                   </div>
 
-                                  <div className="text-xs opacity-90">
+                                  {/*<div className="text-xs mb-1 truncate">
                                     <span className="font-semibold">Resident: </span>
-                                    {event.extendedProps?.firstName} {event.extendedProps?.lastName}
                                   </div>
 
-                                  <div className="text-xs opacity-90">
+                                  <div className="text-xs opacity-90 mb-3 truncate">
+                                    {event.extendedProps?.firstName} {event.extendedProps?.lastName}
+                                  </div>*/}
+
+                                  <div className="text-xs mb-1 truncate">
                                     <span className="font-semibold">Call Type: </span>
+                                  </div>
+
+                                  <div className="text-xs opacity-90 mb-3 truncate">
                                     {event.extendedProps?.callType}
                                   </div>
 
+                                  <div className="text-xs mb-1 truncate">
+                                    <span className="font-semibold">PGY: </span>
+                                  </div>
+
                                   {event.extendedProps?.pgyLevel && (
-                                    <div className="text-xs opacity-90">
-                                      <span className="font-semibold">PGY: </span>
+                                    <div className="text-xs opacity-90 mb-3 truncate">
                                       {event.extendedProps?.pgyLevel}
                                     </div>
                                   )}
 
-                                  <div className="text-xs opacity-80">
+                                  <div className="text-xs opacity-80 mb-1 truncate">
                                     {ensureDate(event.start).toLocaleDateString('en-US', {
                                       month: 'short',
                                       day: 'numeric',
