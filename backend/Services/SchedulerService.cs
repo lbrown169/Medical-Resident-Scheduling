@@ -1,4 +1,4 @@
-using MedicalDemo.Algorithm;
+using MedicalDemo.Algorithms.OnCallScheduleGenerator;
 using MedicalDemo.Enums;
 using MedicalDemo.Extensions;
 using MedicalDemo.Models;
@@ -171,7 +171,7 @@ public class SchedulerService
                 await _context.SaveChangesAsync();
 
                 // Generate DatesDTOs from PGY models
-                List<DatesDTO> dateDTOs =
+                List<DatesDto> dateDTOs =
                     AlgorithmService.GenerateDateRecords(schedule.ScheduleId, residentData.PGY1s,
                         residentData.PGY2s,
                         residentData.PGY3s);
@@ -236,7 +236,7 @@ public class SchedulerService
             .Where(v => v.Status == "Approved").ToListAsync();
         List<Date> dates = await _context.Dates.Where(d => d.Schedule.Status == ScheduleStatus.Published && d.Schedule.Year == year).ToListAsync();
 
-        List<PGY1DTO> pgy1s = residents
+        List<Pgy1Dto> pgy1s = residents
             .Where(r => r.GraduateYr == 1)
             .Select(r => _mapper.MapToPGY1DTO(
                 r,
@@ -244,14 +244,14 @@ public class SchedulerService
                 vacations.Where(v => v.ResidentId == r.ResidentId).ToList(),
                 dates)).ToList();
 
-        List<PGY2DTO> pgy2s = residents
+        List<Pgy2Dto> pgy2s = residents
             .Where(r => r.GraduateYr == 2)
             .Select(r => _mapper.MapToPGY2DTO(r,
                 r.HospitalRoleProfile is { } role ? HospitalRole.Pgy2Profiles[role - 8] : [],
                 vacations.Where(v => v.ResidentId == r.ResidentId).ToList(),
                 dates)).ToList();
 
-        List<PGY3DTO> pgy3s = residents
+        List<Pgy3Dto> pgy3s = residents
             .Where(r => r.GraduateYr == 3)
             .Select(r => _mapper.MapToPGY3DTO(r,
                 vacations.Where(v => v.ResidentId == r.ResidentId).ToList(),

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using MedicalDemo.Enums;
 
 namespace MedicalDemo.Models.Entities
 {
@@ -6,11 +7,16 @@ namespace MedicalDemo.Models.Entities
     {
         public Guid RotationId { get; set; }
 
+        public int AcademicYear { get; set; }
+
+        public MonthOfYear AcademicMonthIndex { get; set; }
+
+        [ForeignKey(nameof(Pgy4RotationSchedule))]
+        public Guid? Pgy4RotationScheduleId { get; set; }
+
         public string ResidentId { get; set; } = null!;
 
         public string Month { get; set; } = null!;
-
-        public int MonthIndex { get; set; }
 
         // Keeping this here for now, we can remove it later if we want
         public string Rotation1 { get; set; } = null!;
