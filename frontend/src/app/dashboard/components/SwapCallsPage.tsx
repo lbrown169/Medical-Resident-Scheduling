@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
-import { Calendar, Users, Clock, Repeat, Send, ArrowRightLeft, AlertTriangle } from "lucide-react";
+import { Calendar, Users, Clock, FileText, Repeat, Send, ArrowRightLeft, AlertTriangle } from "lucide-react";
 
 interface SwapCallsPageProps {
   yourShiftDate: string;
@@ -19,6 +19,8 @@ interface SwapCallsPageProps {
   setPartnerShift: (value: string) => void;
   shifts: { id: string; name: string }[];
   handleSubmitSwap: () => void;
+  description: string;
+  setDescription: (value: string) => void;
 }
 
 // Add this utility function for shift mapping
@@ -41,6 +43,8 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
   partnerShift,
   setPartnerShift,
   shifts,
+  description,
+  setDescription,
   handleSubmitSwap,
 }) => {
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -180,6 +184,29 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                   </option>
                 ))}
               </select>
+            </div>
+            {/* Additional Details */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-primary" />
+                <label htmlFor="description-box" className="text-sm font-semibold text-foreground">
+                  Additional Details <span className="text-muted-foreground font-normal">(Optional)</span>
+                </label>
+              </div>
+              <textarea
+                id="description-box"
+                rows={4}
+                maxLength={255}
+                className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors resize-none"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="e.g., specific duties, contact info, special considerations..."
+              />
+              <div className="flex justify-end">
+                <span className={`text-xs ${description.length >= 255 ? 'text-red-500 font-semibold' : 'text-muted-foreground'}`}>
+                  {description.length}/255
+                </span>
+              </div>
             </div>
             {/* Form Summary */}
             {isFormValid && (

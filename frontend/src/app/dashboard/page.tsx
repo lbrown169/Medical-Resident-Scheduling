@@ -158,6 +158,7 @@ function Dashboard() {
   const [yourShiftDate, setYourShiftDate] = useState<string>("");
   const [partnerShiftDate, setPartnerShiftDate] = useState<string>("");
   const [partnerShift, setPartnerShift] = useState<string>("");
+  const [swapDescription, setSwapDescription] = useState<string>("");
 
   // Request off form state
   const [startDate, setStartDate] = useState<string>("");
@@ -787,7 +788,7 @@ function Dashboard() {
         RequesteeId: selectedResident,
         RequesterDate: yourShiftDate,
         RequesteeDate: partnerShiftDate,
-        Details: ""
+        Details: swapDescription.trim()
       };
       console.log('Submitting swapRequest:', swapRequest);
       const response = await fetch(`${config.apiUrl}/api/swaprequests`, {
@@ -1093,6 +1094,8 @@ case "Home":
             partnerShift={partnerShift}
             setPartnerShift={setPartnerShift}
             shifts={availableShifts}
+            description={swapDescription}
+            setDescription={setSwapDescription}
             handleSubmitSwap={handleSubmitSwap}
           />
         );
