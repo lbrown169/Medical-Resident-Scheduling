@@ -408,8 +408,16 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
 
   const isToday = (date: Date) => date.toDateString() === new Date().toDateString();
 
-  const dateMin = scheduleYear ? `${scheduleYear}-07-01` : undefined;
-  const dateMax = scheduleYear ? `${scheduleYear + 1}-06-30` : undefined;
+  const dateMin = scheduleYear
+    ? scheduleSemester === "Spring"
+      ? `${scheduleYear}-01-01`
+      : `${scheduleYear}-07-01`
+    : undefined;
+  const dateMax = scheduleYear
+    ? scheduleSemester === "Spring"
+      ? `${scheduleYear}-06-30`
+      : `${scheduleYear}-12-31`
+    : undefined;
 
   // --- Form ---
 
