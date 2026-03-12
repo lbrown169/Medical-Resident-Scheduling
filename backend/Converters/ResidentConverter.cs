@@ -1,3 +1,4 @@
+using MedicalDemo.Extensions;
 using MedicalDemo.Models.DTO.Requests;
 using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.Entities;
@@ -20,7 +21,8 @@ public class ResidentConverter
             weekly_hours = resident.WeeklyHours,
             total_hours = resident.TotalHours,
             bi_yearly_hours = resident.BiYearlyHours,
-            hospital_role_profile = resident.HospitalRoleProfile
+            hospital_role_profile = resident.HospitalRoleProfile,
+            chief_type = resident.ChiefType.GetDisplayNameOrDefault()
         };
     }
 
