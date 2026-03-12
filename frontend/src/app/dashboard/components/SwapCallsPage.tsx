@@ -261,7 +261,7 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                 </Button>
                 {!isFormValid && (
                   <p className="text-xs text-muted-foreground mt-2 text-center">
-                    Complete all fields to submit
+                    Complete all required fields to submit
                   </p>
                 )}
               </>
