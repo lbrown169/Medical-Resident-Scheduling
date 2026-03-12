@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
+import { config } from '../../../config';
 import { Calendar, Users, Clock, FileText, Repeat, Send, ArrowRightLeft, AlertTriangle } from "lucide-react";
 
 interface SwapCallsPageProps {
+  userId: string;
   yourShiftDate: string;
   setYourShiftDate: (value: string) => void;
   partnerShiftDate: string;
@@ -23,7 +25,24 @@ interface SwapCallsPageProps {
   setDescription: (value: string) => void;
 }
 
-// Add this utility function for shift mapping
+type SwapRequestStatus = {
+  id: number;
+  description: string;
+};
+
+type ApiSwaps = {
+  swapRequestId: string;
+  scheduleId: string;
+  requesterId: string;
+  requesteeId: string;
+  requesterDate: string;
+  requesteeDate: string;
+  status: SwapRequestStatus;
+  createdAt: string;
+  updatedAt: string;
+  details?: string | null;
+};
+
 function mapShiftType(shift: string) {
   if (shift === "Saturday") return ["Saturday (24h)", "Saturday (12h)"];
   if (shift === "Sunday") return ["Sunday (12h)"];
@@ -31,6 +50,7 @@ function mapShiftType(shift: string) {
 }
 
 const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
+  userId,
   yourShiftDate,
   setYourShiftDate,
   partnerShiftDate,
@@ -50,6 +70,60 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
   const [showConfirmation, setShowConfirmation] = useState(false);
   const isFormValid = yourShiftDate && partnerShiftDate && selectedResident && selectedShift && partnerShift;
 
+  const [loadingSwaps, setLoadingSwaps] = useState(false);
+  const [swapRequests, setSwapRequests] = useState<ApiSwaps[]>([]);
+  const [errorSwaps, setErrorSwaps] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    if (!userId) {
+      setSwapRequests([]);
+      setErrorSwaps("Missing userId.");
+      return;
+    }
+
+    let abort = false;
+
+    (async () => {
+      setLoadingSwaps(true);
+      setErrorSwaps(null);
+
+      try {
+        const url = `${config.apiUrl}/api/swaprequests?requester_id=${encodeURIComponent(userId)}`;
+        const res = await fetch(url, { cache: "no-store" });
+
+        if (res.status === 404) {
+          if (!abort) setSwapRequests([]);
+          return;
+        }
+
+        if (!res.ok) {
+          const txt = await res.text();
+          throw new Error(txt || `HTTP ${res.status}`);
+        }
+
+        const data: ApiSwaps[] = await res.json();
+        if (!abort) {
+          const arr = Array.isArray(data) ? data : [data];
+          arr.sort(
+            (a, b) =>
+              +new Date(b.createdAt || b.updatedAt) - +new Date(a.createdAt || a.updatedAt)
+          );
+          setSwapRequests(arr);
+        }
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : "Failed to load swap requests.";
+        if (!abort) setErrorSwaps(msg);
+      } finally {
+        if (!abort) setLoadingSwaps(false);
+      }
+    })();
+
+    return () => {
+      abort = true;
+    };
+  }, [userId, refreshKey]);
+
   const handleInitialSubmit = () => {
     if (isFormValid) {
       setShowConfirmation(true);
@@ -59,11 +133,57 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
   const handleConfirmSubmit = () => {
     handleSubmitSwap();
     setShowConfirmation(false);
+    setRefreshKey((k) => k + 1);
   };
 
   const handleCancelSubmit = () => {
     setShowConfirmation(false);
   };
+
+  const StatusPill: React.FC<{ status: string }> = ({ status }) => {
+    const base = "px-2 py-0.5 text-xs font-semibold rounded-full border";
+
+    if (status === "Approved") {
+      return (
+        <span
+          className={`${base} bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300`}
+        >
+          Approved
+        </span>
+      );
+    }
+
+    if (status === "Denied") {
+      return (
+        <span
+          className={`${base} bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300`}
+        >
+          Denied
+        </span>
+      );
+    }
+
+    return (
+      <span
+        className={`${base} bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300`}
+      >
+        Pending
+      </span>
+    );
+  };
+
+  const fmt = (d: string) => {
+    const [year, month, day] = d.split("-");
+    const localDate = new Date(Number(year), Number(month) - 1, Number(day));
+    return localDate.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const getResidentName = (residentId: string) =>
+    residents.find((r) => r.id === residentId)?.name || residentId;
 
   return (
     <div className="w-full h-full bg-background p-4 overflow-hidden">
@@ -283,7 +403,7 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                       const localDate = new Date(Number(year), Number(month) - 1, Number(day));
                       return localDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                     })() : ''} - {selectedShift ? mapShiftType(shifts.find(s => s.id === selectedShift)?.name || '').join(' / ') : 'N/A'}<br/>
-                    <strong>Partner&apos;s Shift:</strong> {partnerShiftDate ? (() => {
+                      <strong>Partner&apos;s Shift:</strong> {partnerShiftDate ? (() => {
                       const [year, month, day] = partnerShiftDate.split('-');
                       const localDate = new Date(Number(year), Number(month) - 1, Number(day));
                       return localDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -309,6 +429,67 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Resident Submitted Swap Requests */}
+          <div className="mt-2">
+            <div className="flex items-center mb-2">
+              <h2 className="text-lg font-semibold">Your Submitted Swap Requests</h2>
+            </div>
+
+            <Card className="p-3 shadow-lg border border-border">
+              {loadingSwaps ? (
+                <div className="text-sm text-muted-foreground p-3">Loading your swap requests...</div>
+              ) : errorSwaps ? (
+                <div className="text-sm text-rose-600 p-3">Error: {errorSwaps}</div>
+              ) : swapRequests.length === 0 ? (
+                <div className="text-sm text-muted-foreground p-3">
+                  No swap requests yet. Your submissions will appear here.
+                </div>
+              ) : (
+                <ul className="space-y-2">
+                  {swapRequests.map((swap) => (
+                    <li
+                      key={swap.swapRequestId}
+                      className="border border-border rounded-lg p-3 hover:bg-muted/40 transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="space-y-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <ArrowRightLeft className="h-4 w-4 text-primary shrink-0" />
+                            <span className="font-medium break-words">
+                              {getResidentName(swap.requesteeId)}
+                            </span>
+                          </div>
+
+                          <div className="text-sm">
+                            <span className="text-muted-foreground">Your Shift: </span>
+                            <span className="font-medium break-words">
+                              {fmt(swap.requesterDate)}
+                            </span>
+                          </div>
+
+                          <div className="text-sm">
+                            <span className="text-muted-foreground">Partner&apos;s Shift: </span>
+                            <span className="font-medium break-words">
+                              {fmt(swap.requesteeDate)}
+                            </span>
+                          </div>
+
+                          {swap.details ? (
+                            <div className="text-xs text-muted-foreground break-all">
+                              {swap.details}
+                            </div>
+                          ) : null}
+                        </div>
+
+                        <StatusPill status={swap.status.description} />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
           </div>
         </Card>
       </div>

@@ -1083,6 +1083,7 @@ case "Home":
         
         return (
           <SwapCallsPage
+            userId={user?.id || ""}
             yourShiftDate={yourShiftDate}
             setYourShiftDate={setYourShiftDate}
             partnerShiftDate={partnerShiftDate}
