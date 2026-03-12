@@ -564,7 +564,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                                 title={event.title}
                               >
                                 <div className="flex flex-col">
-                                  <div className="text-sm font-semibold leading-tight mb-3">
+                                  <div className="text-sm font-semibold leading-tight mb-3 truncate">
                                     {event.title}
                                   </div>
 
