@@ -59,6 +59,11 @@ public enum CallShiftType
     [Display(Name = "Memorial Day (12h)")]
     MemorialDay = 12,
 
+    // PGY1s in training need to do a Sunday shift, but they aren't allowed Sunday shifts outside...
+    [CallShift(Hours = 12, CallLengthType = CallLengthType.Long, ApplicableDays = [DayOfWeek.Sunday], DateRule = CallShiftRule.SundayInTraining, Priority = 5)]
+    [Display(Name = "Sunday (12h)")]
+    SundayTrainingCall = 13,
+
     [Display(Name = "Custom Shift")]
     Custom = 99
 }
