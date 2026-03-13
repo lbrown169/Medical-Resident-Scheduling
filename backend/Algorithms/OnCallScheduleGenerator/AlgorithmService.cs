@@ -767,56 +767,66 @@ public class AlgorithmService
     {
         foreach (CallShiftType shift in shiftTypeCount.Keys)
         {
-            // Create a random ratio for each shift type
             for (int i = 0; i < shiftTypeCount[shift]; i++)
-            // randomly select a pgy1 or pgy2 to assign the shift to
             {
                 int? requiredYear = shift.GetRequiredYear();
-                int usingYear
-                    = requiredYear ?? (rand.NextDouble() < 0.50 ? 1 : 2); // 50% chance to assign to pgy1
+                int usingYear;
+
+                if (requiredYear.HasValue)
+                {
+                    usingYear = requiredYear.Value;
+                }
+                else
+                {
+                    // Sum total hours assigned so far across each group
+                    double pgy1Hours = pgy1ShiftCount
+                        .SelectMany(d => d)
+                        .Sum(kvp => kvp.Value * kvp.Key.GetHours());
+
+                    double pgy2Hours = pgy2ShiftCount
+                        .SelectMany(d => d)
+                        .Sum(kvp => kvp.Value * kvp.Key.GetHours());
+
+                    double totalHours = pgy1Hours + pgy2Hours;
+
+                    // If no hours yet, 50/50. Otherwise weight toward the group with fewer hours.
+                    double pgy1Probability = totalHours == 0 ? 0.5 : 1.0 - (pgy1Hours / totalHours);
+
+                    usingYear = rand.NextDouble() < pgy1Probability ? 1 : 2;
+                }
+
                 if (usingYear == 1)
                 {
-                    int pgy1Index = rand.Next(pgy1s.Count);
-                    if (!allowedCallTypes[pgy1Index]
-                            .ContainsKey(
-                                shift)) // check if the pgy1 cannot take this shift
+                    int pgy1Index = SelectWeightedIndex(pgy1ShiftCount, 0, pgy1s.Count, rand);
+                    if (!allowedCallTypes[pgy1Index].ContainsKey(shift))
                     {
                         i--;
                         continue;
                     }
 
-                    if (allowedCallTypes[pgy1Index][shift] ==
-                        pgy1ShiftCount[pgy1Index]
-                            [shift]) // if the pgy1 cannot take any shifts, skip this iteration
+                    if (allowedCallTypes[pgy1Index][shift] == pgy1ShiftCount[pgy1Index].GetValueOrDefault(shift))
                     {
                         i--;
                         continue;
                     }
-
 
                     if (!pgy1ShiftCount[pgy1Index].ContainsKey(shift))
                     {
                         pgy1ShiftCount[pgy1Index][shift] = 0;
                     }
 
-                    // initialize the count for this shift type
-                    pgy1ShiftCount[pgy1Index][shift]
-                        += 1; // increment the count for this shift type
+                    pgy1ShiftCount[pgy1Index][shift] += 1;
                 }
-                else // assign to pgy2
+                else
                 {
-                    int pgy2Index = rand.Next(pgy2s.Count);
-                    if (!allowedCallTypes[pgy2Index + pgy1s.Count]
-                            .ContainsKey(
-                                shift)) // check if the pgy2 cannot take this shift
+                    int pgy2Index = SelectWeightedIndex(pgy2ShiftCount, 0, pgy2s.Count, rand);
+                    if (!allowedCallTypes[pgy2Index + pgy1s.Count].ContainsKey(shift))
                     {
                         i--;
                         continue;
                     }
 
-                    if (allowedCallTypes[pgy2Index + pgy1s.Count][shift] ==
-                        pgy2ShiftCount[pgy2Index]
-                            [shift]) // if the pgy2 cannot take any shifts, skip this iteration
+                    if (allowedCallTypes[pgy2Index + pgy1s.Count][shift] == pgy2ShiftCount[pgy2Index].GetValueOrDefault(shift))
                     {
                         i--;
                         continue;
@@ -827,11 +837,53 @@ public class AlgorithmService
                         pgy2ShiftCount[pgy2Index][shift] = 0;
                     }
 
-                    // initialize the count for this shift type
                     pgy2ShiftCount[pgy2Index][shift] += 1;
                 }
             }
         }
+    }
+
+    private int SelectWeightedIndex(
+        Dictionary<CallShiftType, int>[] shiftCounts,
+        int startIndex, int count,
+        Random rand)
+    {
+        // Build weights: residents with fewer hours get higher weight
+        double[] weights = new double[count];
+        double maxHours = 0;
+
+        for (int i = 0; i < count; i++)
+        {
+            double hours = shiftCounts[startIndex + i]
+                .Sum(kvp => kvp.Value * kvp.Key.GetHours());
+            weights[i] = hours;
+            if (hours > maxHours)
+            {
+                maxHours = hours;
+            }
+        }
+
+        // Invert so fewer hours = higher weight, +1 to avoid zero weights
+        double totalWeight = 0;
+        for (int i = 0; i < count; i++)
+        {
+            weights[i] = (maxHours - weights[i]) + 1;
+            totalWeight += weights[i];
+        }
+
+        // Weighted random selection
+        double roll = rand.NextDouble() * totalWeight;
+        double cumulative = 0;
+        for (int i = 0; i < count; i++)
+        {
+            cumulative += weights[i];
+            if (roll < cumulative)
+            {
+                return i;
+            }
+        }
+
+        return count - 1;
     }
 
 #pragma warning restore IDE0060
@@ -1218,6 +1270,7 @@ public class AlgorithmService
                 if (ct2 > 100) // prevent infinite loop
                                //Console.WriteLine("Failed to find a valid assignment within 24-hour window after 100 attempts.");
                 {
+                    _logger.LogDebug("Failed with: Max: {max}, Min: {min}", max, min);
                     return false;
                 }
 
