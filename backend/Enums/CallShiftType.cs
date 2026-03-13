@@ -18,7 +18,7 @@ public enum CallShiftType
     [Display(Name = "Saturday (12h)")]
     SaturdayHalfCall = 2,
 
-    [CallShift(Hours = 12, CallLengthType = CallLengthType.Long, ApplicableDays = [DayOfWeek.Sunday])]
+    [CallShift(Hours = 12, CallLengthType = CallLengthType.Long, RequiredPgy = 2, ApplicableDays = [DayOfWeek.Sunday])]
     [Display(Name = "Sunday (12h)")]
     SundayHalfCall = 3,
 
