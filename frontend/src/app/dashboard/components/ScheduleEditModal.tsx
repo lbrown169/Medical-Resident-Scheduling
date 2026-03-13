@@ -521,7 +521,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
             <p className="text-muted-foreground">Loading schedule...</p>
           </div>
         ) : (
-          <div className="flex-1 overflow-auto">
+          <div className="flex-1 overflow-auto flex flex-col min-h-0">
             {/* Calendar Navigation */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex flex-col gap-1">
@@ -537,28 +537,12 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                     <ChevronLeft className="w-5 h-5" />
                   </button>
                   {isTodayInScheduleYear && (
-                  <button
-                    onClick={() => navigateMonth("prev")}
-                    disabled={!canNavigatePrev}
-                    className="p-2 hover:bg-muted rounded-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                  {isTodayInScheduleYear && (
                     <button
                       onClick={goToToday}
                       className="px-3 py-1 text-sm font-medium text-primary hover:bg-primary/10 rounded-lg transition-colors"
                     >
                       Today
                     </button>
-                  )}
-                  <button
-                    onClick={() => navigateMonth("next")}
-                    disabled={!canNavigateNext}
-                    className="p-2 hover:bg-muted rounded-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-                  >
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
                   )}
                   <button
                     onClick={() => navigateMonth('next')}
@@ -571,31 +555,27 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
               </div>
               {/* Legend */}
               <div className="flex items-center gap-4 text-xs">
-                <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded" style={{ backgroundColor: '#ef4444' }}></div>
-                  <span>PGY1</span>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-3 text-xs">
-                    <div className="flex items-center gap-1">
-                      <div className="w-3 h-3 rounded" style={{ backgroundColor: "#ef4444" }} />
-                      <span>PGY1</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-3 h-3 rounded" style={{ backgroundColor: "#f97316" }} />
-                      <span>PGY2</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <div className="w-3 h-3 rounded" style={{ backgroundColor: "#8b5cf6" }} />
-                      <span>PGY3</span>
-                    </div>
+                <div className="flex items-center gap-3 text-xs">
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded" style={{ backgroundColor: "#ef4444" }} />
+                    <span>PGY1</span>
                   </div>
-                  <span className="text-xs text-muted-foreground">Click a date to add new shift</span>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded" style={{ backgroundColor: "#f97316" }} />
+                    <span>PGY2</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 rounded" style={{ backgroundColor: "#8b5cf6" }} />
+                    <span>PGY3</span>
+                  </div>
                 </div>
+                <span className="text-xs text-muted-foreground">Click a date to add new shift</span>
               </div>
+            </div>
 
+            <div className="flex flex-1 gap-4 min-h-0">
               {/* Calendar Grid */}
-              <div className="border rounded-lg overflow-hidden">
+              <div className="flex-1 min-w-0 border rounded-lg overflow-y-auto">
                 <div className="grid grid-cols-7 bg-muted/50 border-b">
                   {dayNames.map((day) => (
                     <div key={day} className="px-2 py-2 text-xs font-semibold text-muted-foreground text-center uppercase">
@@ -740,27 +720,26 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                   </div>
                 </div>
               )}
-            </div>
-
-            {/* Resident Hours Sidebar */}
-            <div className="w-52 flex-shrink-0 overflow-auto border-l pl-4">
-              <h3 className="text-sm font-semibold mb-3">Residents ({residentHours.length})</h3>
-              <div className="space-y-2">
-                {residentHours.map((r) => (
-                  <div key={r.id} className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: r.color }} />
-                      <span className="text-xs truncate">{r.firstName} {r.lastName}</span>
+              {/* Resident Hours Sidebar */}
+              <div className="w-52 flex-shrink-0 overflow-auto border-l pl-4">
+                <h3 className="text-sm font-semibold mb-3">Residents ({residentHours.length})</h3>
+                <div className="space-y-2">
+                  {residentHours.map((r) => (
+                    <div key={r.id} className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: r.color }} />
+                        <span className="text-xs truncate">{r.firstName} {r.lastName}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-shrink-0 text-xs text-muted-foreground">
+                        <span>PGY{r.pgyLevel}</span>
+                        <span className="font-medium text-foreground">{r.hours}h</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1.5 flex-shrink-0 text-xs text-muted-foreground">
-                      <span>PGY{r.pgyLevel}</span>
-                      <span className="font-medium text-foreground">{r.hours}h</span>
-                    </div>
-                  </div>
-                ))}
-                {residentHours.length === 0 && (
-                  <p className="text-xs text-muted-foreground">No shifts scheduled.</p>
-                )}
+                  ))}
+                  {residentHours.length === 0 && (
+                    <p className="text-xs text-muted-foreground">No shifts scheduled.</p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
