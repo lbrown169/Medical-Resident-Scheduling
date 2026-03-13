@@ -887,31 +887,6 @@ public class AlgorithmService
     }
 
 #pragma warning restore IDE0060
-
-    public void SwapSomeShiftCount(List<Pgy1Dto> pgy1s, List<Pgy2Dto> pgy2s,
-        Dictionary<CallShiftType, int>[] pgy1ShiftCount,
-        Dictionary<CallShiftType, int>[] pgy2ShiftCount, Random rand, int[] pgy1WorkTime,
-        int[] pgy2WorkTime,
-        Dictionary<CallShiftType, int>[] allowedCallTypes)
-    {
-        // First root the person who worked the most
-        bool success = SwapWithGiverRooted(pgy1s, pgy2s, pgy1ShiftCount,
-            pgy2ShiftCount, rand, pgy1WorkTime, pgy2WorkTime, allowedCallTypes);
-
-        if (success)
-        {
-            return;
-        }
-
-        success = SwapWithReceiverRooted(pgy1s, pgy2s, pgy1ShiftCount,
-            pgy2ShiftCount, rand, pgy1WorkTime, pgy2WorkTime, allowedCallTypes);
-
-        if (!success)
-        {
-            _logger.LogWarning("Failed");
-        }
-    }
-
     public bool SwapWithGiverRooted(List<Pgy1Dto> pgy1s, List<Pgy2Dto> pgy2s,
         Dictionary<CallShiftType, int>[] pgy1ShiftCount,
         Dictionary<CallShiftType, int>[] pgy2ShiftCount, Random rand,
@@ -973,13 +948,16 @@ public class AlgorithmService
             int normalizedIndex = receiverYear == 1 ? i : i - pgy1s.Count;
             Dictionary<CallShiftType, int> shiftCount = receiverYear == 1 ? pgy1ShiftCount[normalizedIndex] : pgy2ShiftCount[normalizedIndex];
 
+            // Note on the Where/OrderBy: The swapping can lock up if it requires that the giver
+            // still stay on more. Instead, we require that the gap between them be smaller instead, and
+            // prioritize the shifts that decrease the gap the most
             List<CallShiftType> swappable = allowedCallTypes[i]
                 .Where(kvp => kvp.Value > shiftCount[kvp.Key])
                 .Select(kvp => kvp.Key)
                 .Intersect(giverShiftTypes)
-                .Where(s =>
-                    giveHour - s.GetHours() > receiverHour
-                )
+                .Where(s => Math.Abs(giveHour - s.GetHours() - (receiverHour + s.GetHours()))
+                            < Math.Abs(giveHour - receiverHour))
+                .OrderBy(s => Math.Abs(giveHour - s.GetHours() - (receiverHour + s.GetHours())))
                 .ToList();
 
             if (swappable.Count == 0)
@@ -1018,9 +996,13 @@ public class AlgorithmService
             : pgy2ShiftCount[normalizedReceiverIndex];
         IEnumerable<CallShiftType> receiverShiftTypes = allowedCallTypes[selectedReceiverIndex].Select(kvp => kvp.Key);
         List<CallShiftType> swappableShiftTypes = giverShiftTypes.Intersect(receiverShiftTypes).ToList();
+        int finalReceiverHour = finalReceiverYear == 1
+            ? pgy1WorkTime[normalizedReceiverIndex]
+            : pgy2WorkTime[normalizedReceiverIndex];
 
-        int shiftIndex = rand.Next(0, swappableShiftTypes.Count);
-        CallShiftType shift = swappableShiftTypes[shiftIndex];
+        CallShiftType shift = swappableShiftTypes
+            .OrderBy(s => Math.Abs(giveHour - s.GetHours() - (finalReceiverHour + s.GetHours())))
+            .First();
 
         giverShiftCount[shift]--;
         receiverShiftCount.TryAdd(shift, 0);
@@ -1095,11 +1077,16 @@ public class AlgorithmService
             int normalizedIndex = giverYear == 1 ? i : i - pgy1s.Count;
             Dictionary<CallShiftType, int> shiftCount = giverYear == 1 ? pgy1ShiftCount[normalizedIndex] : pgy2ShiftCount[normalizedIndex];
 
+            // Note on the Where/OrderBy: The swapping can lock up if it requires that the giver
+            // still stay on more. Instead, we require that the gap between them be smaller instead, and
+            // prioritize the shifts that decrease the gap the most
             List<CallShiftType> swappable = shiftCount
                 .Where(kvp => kvp.Value > 0)
                 .Select(kvp => kvp.Key)
                 .Intersect(receiverShiftTypes)
-                .Where(s => giverHour - s.GetHours() > receiverHour)
+                .Where(s => Math.Abs(giverHour - s.GetHours() - (receiverHour + s.GetHours()))
+                            < Math.Abs(giverHour - receiverHour))
+                .OrderBy(s => Math.Abs(giverHour - s.GetHours() - (receiverHour + s.GetHours())))
                 .ToList();
 
             if (swappable.Count == 0)
@@ -1139,9 +1126,13 @@ public class AlgorithmService
         IEnumerable<CallShiftType> giverShiftTypes = giverShiftCount
             .Where(kvp => kvp.Value > 0).Select(kvp => kvp.Key);
         List<CallShiftType> swappableShiftTypes = giverShiftTypes.Intersect(receiverShiftTypes).ToList();
+        int finalGiverHour = finalGiverYear == 1
+            ? pgy1WorkTime[normalizedGiverIndex]
+            : pgy2WorkTime[normalizedGiverIndex];
 
-        int shiftIndex = rand.Next(0, swappableShiftTypes.Count);
-        CallShiftType shift = swappableShiftTypes[shiftIndex];
+        CallShiftType shift = swappableShiftTypes
+            .OrderBy(s => Math.Abs(finalGiverHour - s.GetHours() - (receiverHour + s.GetHours())))
+            .First();
 
         giverShiftCount[shift]--;
         receiverShiftCount.TryAdd(shift, 0);
@@ -1473,7 +1464,8 @@ public class AlgorithmService
                     _logger.LogDebug(sb.ToString());
                 }
 
-                /*Console.WriteLine("[ERROR] Not able to make valid assignment based on parameters");*/
+                _logger.LogDebug("Flow failed at tryCount {tryCount}: Max: {max}, Min: {min}, Flow: {flow}/{total}",
+                   tryCount, max, min, flow, dayList.Count);
                 continue;
             }
 
