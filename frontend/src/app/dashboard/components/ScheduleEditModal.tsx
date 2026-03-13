@@ -276,12 +276,11 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
 
   const openEditMode = () => {
     if (!selectedEvent) return;
-    const callTypeId = selectedEvent.extendedProps?.callTypeId ?? 0;
     setFormData({
-      residentId: selectedEvent.extendedProps?.residentId || "",
+      residentId: "",
       shiftDate: toDateInputValue(selectedEvent.start),
-      callType: callTypeId,
-      hours: callTypeId === 99 ? String(selectedEvent.extendedProps?.hours ?? "") : "",
+      callType: -1,
+      hours: "",
     });
     setEditMode("edit");
   };
@@ -421,7 +420,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
 
   // --- Form ---
 
-  const renderForm = (onSave: () => void, onCancel: () => void, title: string) => (
+  const renderForm = (onSave: () => void, onCancel: () => void, title: string, excludeResidentId?: string) => (
     <div>
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-semibold text-lg">{title}</h3>
@@ -438,7 +437,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
             onChange={e => setFormData(f => ({ ...f, residentId: e.target.value }))}
           >
             <option value="">Select a Resident</option>
-            {sortedResidents.map(r => (
+            {sortedResidents.filter(r => r.resident_id !== excludeResidentId).map(r => (
               <option key={r.resident_id} value={r.resident_id}>
                 {r.first_name} {r.last_name} (PGY{r.graduate_yr})
               </option>
@@ -449,10 +448,11 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
           <label className="text-xs font-medium text-muted-foreground block mb-1">Date</label>
           <input
             type="date"
-            className="w-full border rounded px-2 py-1.5 text-sm bg-background"
+            className="w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-50 disabled:cursor-not-allowed"
             value={formData.shiftDate}
             min={dateMin}
             max={dateMax}
+            disabled={!!excludeResidentId}
             onChange={e => setFormData(f => ({ ...f, shiftDate: e.target.value }))}
           />
         </div>
@@ -465,7 +465,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
             onChange={e => setFormData(f => ({ ...f, callType: Number(e.target.value) }))}
           >
             <option value={-1} disabled>
-              {callTypeOptions.length === 0 ? "Select a Resident and Date" : "Select a Call Type"}
+              {callTypeOptions.length === 0 ? (excludeResidentId ? "Select a New Resident" : "Select a Resident and Date") : "Select a Call Type"}
             </option>
             {callTypeOptions.map(ct => (
               <option key={ct.id} value={ct.id}>{ct.description}</option>
@@ -702,7 +702,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                         </button>
                       </>
                     ) : (
-                      renderForm(() => setConfirmDialog("update"), () => setEditMode("view"), "Edit Date")
+                      renderForm(() => setConfirmDialog("update"), () => setEditMode("view"), "Edit Date", selectedEvent.extendedProps?.residentId)
                     )}
                   </div>
                 </div>
@@ -756,7 +756,12 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
       open={confirmDialog === "add"}
       onOpenChange={(open) => { if (!open) setConfirmDialog(null); }}
       title="Add Date?"
-      message={`Add a shift for ${residents.find(r => r.resident_id === formData.residentId)?.first_name ?? "this resident"} on ${formData.shiftDate}?`}
+      message={(() => {
+        const resident = residents.find(r => r.resident_id === formData.residentId);
+        const name = resident ? `${resident.first_name} ${resident.last_name}` : "this resident";
+        const callType = callTypeOptions.find(ct => ct.id === formData.callType)?.description ?? "Unknown";
+        return `Add ${name}'s ${callType} on ${formData.shiftDate}?`;
+      })()}
       confirmText="Add"
       cancelText="Cancel"
       onConfirm={createDate}
@@ -767,7 +772,15 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
       open={confirmDialog === "update"}
       onOpenChange={(open) => { if (!open) setConfirmDialog(null); }}
       title="Save Changes?"
-      message={`Save changes to ${selectedEvent?.title}'s shift?`}
+      message={(() => {
+        const newResident = residents.find(r => r.resident_id === formData.residentId);
+        const newCallType = callTypeOptions.find(ct => ct.id === formData.callType);
+        const origName = selectedEvent?.title ?? "Unknown";
+        const origCallType = selectedEvent?.extendedProps?.callType ?? "Unknown";
+        const newName = newResident ? `${newResident.first_name} ${newResident.last_name}` : "Unknown";
+        const newCallTypeDesc = newCallType?.description ?? "Unknown";
+        return `Change ${origName}'s ${origCallType} to ${newName}'s ${newCallTypeDesc} on ${formData.shiftDate}?`;
+      })()}
       confirmText="Save"
       cancelText="Cancel"
       onConfirm={updateDate}
@@ -778,7 +791,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
       open={confirmDialog === "delete"}
       onOpenChange={(open) => { if (!open) setConfirmDialog(null); }}
       title="Delete Date?"
-      message={`Are you sure you want to remove ${selectedEvent?.title}'s shift on ${selectedEvent?.start.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}? This cannot be undone.`}
+      message={`Remove ${selectedEvent?.title}'s ${selectedEvent?.extendedProps?.callType} on ${selectedEvent ? toDateInputValue(selectedEvent.start) : ""}? This cannot be undone.`}
       confirmText="Delete"
       cancelText="Cancel"
       onConfirm={deleteDate}
