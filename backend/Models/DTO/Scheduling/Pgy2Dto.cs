@@ -19,9 +19,6 @@ public class Pgy2Dto : ResidentDto
             return false;
         }
 
-        int monthIndex = (curDay.Month + 5) % 12;
-        HospitalRole? role = RolePerMonth[monthIndex];
-
         // Back to back check
         if (IsBackToBackShift(curDay) || IsInARowShift(curDay, shiftType))
         {
