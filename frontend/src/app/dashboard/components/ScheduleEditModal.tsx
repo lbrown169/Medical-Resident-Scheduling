@@ -222,6 +222,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
     });
     return Array.from(map.values()).sort((a, b) => {
       if (a.pgyLevel !== b.pgyLevel) return (Number(a.pgyLevel) || 0) - (Number(b.pgyLevel) || 0);
+      if (b.hours !== a.hours) return b.hours - a.hours;
       return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`);
     });
   }, [events]);
