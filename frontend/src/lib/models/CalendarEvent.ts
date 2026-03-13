@@ -10,7 +10,9 @@ export interface CalendarEvent {
     firstName?: string;
     lastName?: string;
     callType?: string;
+    callTypeId?: number;
     dateId?: string;
     pgyLevel?: number | string;
+    hours?: number;
   };
 }

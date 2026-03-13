@@ -79,8 +79,7 @@ public class DatesController : ControllerBase
         _context.Dates.Add(date);
         await _context.SaveChangesAsync();
 
-        return CreatedAtAction(nameof(GetDates),
-            new { id = date.DateId }, date);
+        return Created();
     }
 
     // GET: api/dates
