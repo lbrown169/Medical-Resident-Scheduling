@@ -42,31 +42,12 @@ import MobileUserMenu from "./components/MobileUserMenu";
 import { VacationResponse } from "@/lib/models/VacationResponse";
 import { CallType } from "@/lib/models/CallType";
 import { DateResponse } from "@/lib/models/DateResponse";
+import { CalendarEvent } from "@/lib/models/CalendarEvent";
 
 type MenuItem = {
   title: string;
   icon: ReactElement;
 };
-
-// Define types for API responses
-
-interface CalendarEvent {
-  id: string;
-  title: string;
-  start: Date;
-  end: Date;
-  backgroundColor: string;
-  borderColor: string;
-  extendedProps: {
-    scheduleId: string;
-    residentId?: string;
-    firstName?: string;
-    lastName?: string;
-    callType: string;
-    dateId: string;
-    pgyLevel?: number;
-  };
-}
 
 interface Resident {
   resident_id: string;
@@ -284,7 +265,7 @@ function Dashboard() {
             id: date.dateId,
             date: date.shiftDate,
             time: "All Day",
-            shift: `${date.callType.description} Call`,
+            shift: `${date.callType.description}${date.callType.id === 99 ? ` (${date.hours}h)` : ''} Call`,
             location: "Hospital"
           }));
 
@@ -326,15 +307,16 @@ function Dashboard() {
             start: d,
             end: d,
             backgroundColor: eventColor,
-            borderColor: eventColor,
             extendedProps: {
               scheduleId: date.scheduleId,
               residentId: date.residentId,
               firstName: date.firstName,
               lastName: date.lastName,
               callType: date.callType.description,
+              callTypeId: date.callType.id,
               dateId: date.dateId,
-              pgyLevel: graduateYear
+              pgyLevel: graduateYear,
+              hours: date.hours,
             }
           };
         });
