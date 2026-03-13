@@ -9,7 +9,8 @@ public abstract class ResidentDto
     public string Name { get; set; }
     public abstract int Pgy { get; protected set; }
     public bool InTraining { get; set; }
-    public HashSet<DateOnly> VacationRequests { get; set; } = new();
+    public HashSet<DateOnly> MorningVacationRequests { get; set; } = new();
+    public HashSet<DateOnly> AfternoonVacationRequests { get; set; } = new();
     public HashSet<DateOnly> WorkDays { get; set; } = new();
     public HashSet<DateOnly> CommitedWorkDays { get; set; } = new();
     public HashSet<DateOnly> PendingSaveWorkDays { get; set; } = new();
@@ -51,9 +52,29 @@ public abstract class ResidentDto
             : new DateOnly(9999, 12, 31);
     }
 
-    public bool IsVacation(DateOnly curDay)
+    public bool IsMorningVacation(DateOnly curDay)
     {
-        return VacationRequests.Contains(curDay);
+        return MorningVacationRequests.Contains(curDay);
+    }
+
+    public bool IsAfternoonVacation(DateOnly curDay)
+    {
+        return AfternoonVacationRequests.Contains(curDay);
+    }
+
+    public bool IsVacation(DateOnly date, PartOfDay partOfDay)
+    {
+        if (partOfDay.HasFlag(PartOfDay.Morning) && IsMorningVacation(date))
+        {
+            return true;
+        }
+
+        if (partOfDay.HasFlag(PartOfDay.Afternoon) && IsAfternoonVacation(date))
+        {
+            return true;
+        }
+
+        return false;
     }
 
     public bool IsWorking(DateOnly curDay)

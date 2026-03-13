@@ -1814,7 +1814,8 @@ public class AlgorithmService
                     if (!found)
                     {
                         _logger.LogWarning("Unable to fix {curDay} for PGY{pgy} {name} ({id})", curDay, "1", res.Name, res.ResidentId);
-                        _logger.LogDebug("vacations: {vacations}", string.Join(", ", res.VacationRequests.Order()));
+                        _logger.LogDebug("morning vacations: {vacations}", string.Join(", ", res.MorningVacationRequests.Order()));
+                        _logger.LogDebug("afternoon vacations: {vacations}", string.Join(", ", res.AfternoonVacationRequests.Order()));
                         _logger.LogDebug("committed work days: {workdays}", string.Join(", ", res.CommitedWorkDays.Order()));
                         _logger.LogDebug("work days: {workdays}", string.Join(", ", res.WorkDays.Order()));
                         _logger.LogDebug("role: {role}", res.GetHospitalRoleForCalendarMonth(curDay.Month).ToString());
@@ -1944,7 +1945,8 @@ public class AlgorithmService
                     if (!found)
                     {
                         _logger.LogWarning("Unable to fix {curDay} for PGY{pgy} {name} ({id})", curDay, "2", res.Name, res.ResidentId);
-                        _logger.LogDebug("vacations: {vacations}", string.Join(", ", res.VacationRequests.Order()));
+                        _logger.LogDebug("morning vacations: {vacations}", string.Join(", ", res.MorningVacationRequests.Order()));
+                        _logger.LogDebug("afternoon vacations: {vacations}", string.Join(", ", res.AfternoonVacationRequests.Order()));
                         _logger.LogDebug("committed work days: {workdays}", string.Join(", ", res.CommitedWorkDays.Order()));
                         _logger.LogDebug("work days: {workdays}", string.Join(", ", res.WorkDays.Order()));
                         _logger.LogDebug("role: {role}", res.GetHospitalRoleForCalendarMonth(curDay.Month).ToString());

@@ -10,18 +10,18 @@ public class Pgy1Dto : ResidentDto
 
     public override bool CanWork(DateOnly curDay)
     {
-        if (IsVacation(curDay) || CommitedWorkDay(curDay))
-        {
-            return false;
-        }
-
-        // Back to back check
         if (CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(curDay, Pgy) is not
             { } shiftType)
         {
             return false;
         }
 
+        if (IsVacation(curDay, shiftType.GetPartsOfDay()) || CommitedWorkDay(curDay))
+        {
+            return false;
+        }
+
+        // Back to back check
         if (IsBackToBackShift(curDay) || IsInARowShift(curDay, shiftType))
         {
             return false;

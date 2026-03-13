@@ -6,7 +6,7 @@ namespace MedicalDemo.Enums;
 public enum CallShiftType
 {
     // Standard call shift types
-    [CallShift(Hours = 3, CallLengthType = CallLengthType.Short, DateRule = CallShiftRule.Weekday)]
+    [CallShift(Hours = 3, PartsOfDay = PartOfDay.Afternoon, CallLengthType = CallLengthType.Short, DateRule = CallShiftRule.Weekday)]
     [Display(Name = "Short (3h)")]
     WeekdayShortCall = 0,
 

@@ -8,7 +8,13 @@ public class Pgy2Dto : ResidentDto
     public override int Pgy { get; protected set; } = 2;
     public override bool CanWork(DateOnly curDay)
     {
-        if (IsVacation(curDay) || CommitedWorkDay(curDay))
+        if (CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(curDay, Pgy) is not
+            { } shiftType)
+        {
+            return false;
+        }
+
+        if (IsVacation(curDay, shiftType.GetPartsOfDay()) || CommitedWorkDay(curDay))
         {
             return false;
         }
@@ -17,11 +23,6 @@ public class Pgy2Dto : ResidentDto
         HospitalRole? role = RolePerMonth[monthIndex];
 
         // Back to back check
-        if (CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(curDay, Pgy) is not
-            { } shiftType)
-        {
-            return false;
-        }
         if (IsBackToBackShift(curDay) || IsInARowShift(curDay, shiftType))
         {
             return false;
