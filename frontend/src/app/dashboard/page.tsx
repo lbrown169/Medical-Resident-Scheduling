@@ -1142,6 +1142,9 @@ case "Home":
     if (selected === "Check My Schedule") {
       fetchMySchedule();
     }
+    if (selected === "Calendar") {
+      fetchCalendarEvents();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected]);
 
