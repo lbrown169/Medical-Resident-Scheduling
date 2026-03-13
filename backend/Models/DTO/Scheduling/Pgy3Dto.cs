@@ -1,44 +1,29 @@
 using MedicalDemo.Enums;
+using MedicalDemo.Extensions;
 
 namespace MedicalDemo.Models.DTO.Scheduling;
 
 public class Pgy3Dto : ResidentDto
 {
-    public override bool CanWork(DateOnly curDay, CallLengthType lengthType)
+    public override int Pgy { get; protected set; } = 3;
+
+    public override bool CanWork(DateOnly curDay)
     {
         if (IsVacation(curDay) || CommitedWorkDay(curDay))
         {
             return false;
         }
 
-        if (lengthType == CallLengthType.Long)
+        // Back to back check
+        if (CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(curDay, Pgy) is not
+            { } shiftType)
         {
-            DateOnly prevDay = curDay.AddDays(-1);
-            DateOnly nextDay = curDay.AddDays(1);
-            if (IsWorking(prevDay)
-                || CommitedWorkDay(nextDay)
-                || IsWorking(nextDay)
-                || CommitedWorkDay(prevDay))
-            {
-                return false;
-            }
+            return false;
         }
-        else // Weekday
+
+        if (IsBackToBackShift(curDay) || IsInARowShift(curDay, shiftType))
         {
-            DateOnly nextDay = curDay.AddDays(1);
-            DateOnly prevDay = curDay.AddDays(-1);
-
-            if ((IsWorking(nextDay) || CommitedWorkDay(nextDay)) &&
-                nextDay.DayOfWeek == DayOfWeek.Saturday)
-            {
-                return false;
-            }
-
-            if ((IsWorking(prevDay) || CommitedWorkDay(prevDay)) &&
-                prevDay.DayOfWeek == DayOfWeek.Sunday)
-            {
-                return false;
-            }
+            return false;
         }
 
         return true;

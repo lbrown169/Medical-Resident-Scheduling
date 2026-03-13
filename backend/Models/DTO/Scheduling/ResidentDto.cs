@@ -1,4 +1,5 @@
 using MedicalDemo.Enums;
+using MedicalDemo.Extensions;
 
 namespace MedicalDemo.Models.DTO.Scheduling;
 
@@ -6,6 +7,7 @@ public abstract class ResidentDto
 {
     public string ResidentId { get; set; }
     public string Name { get; set; }
+    public abstract int Pgy { get; protected set; }
     public bool InTraining { get; set; }
     public HashSet<DateOnly> VacationRequests { get; set; } = new();
     public HashSet<DateOnly> WorkDays { get; set; } = new();
@@ -15,7 +17,7 @@ public abstract class ResidentDto
 
     public HospitalRole?[] RolePerMonth { get; set; } = new HospitalRole?[12];
 
-    public abstract bool CanWork(DateOnly date, CallLengthType lengthType);
+    public abstract bool CanWork(DateOnly date);
     public abstract void AddWorkDay(DateOnly date);
     public abstract void RemoveWorkDay(DateOnly date);
 
@@ -59,9 +61,76 @@ public abstract class ResidentDto
         return WorkDays.Contains(curDay);
     }
 
-    public bool CanAddWorkDay(DateOnly curDay, CallLengthType lengthType)
+    public bool CanAddWorkDay(DateOnly curDay)
     {
-        return CanWork(curDay, lengthType) && !IsWorking(curDay);
+        return CanWork(curDay) && !IsWorking(curDay);
+    }
+
+    protected bool IsBackToBackShift(DateOnly date)
+    {
+        DateOnly prevDay = date.AddDays(-1);
+        DateOnly nextDay = date.AddDays(1);
+
+        return IsWorking(prevDay) || CommitedWorkDay(nextDay) || IsWorking(nextDay) || CommitedWorkDay(prevDay);
+    }
+
+    protected bool IsInARowShift(DateOnly date, CallShiftType type)
+    {
+        // Walk backwards at most a week
+        DateOnly until = date.AddDays(-7);
+        for (DateOnly processing = date.AddDays(-1); processing >= until; processing = processing.AddDays(-1))
+        {
+            CallShiftType? processingType = CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(processing, Pgy);
+            if (processingType == type)
+            {
+                if (IsWorking(processing) || CommitedWorkDay(processing))
+                {
+                    return true;
+                }
+
+                break;
+            }
+        }
+
+        until = date.AddDays(7);
+        for (DateOnly processing = date.AddDays(1); processing <= until; processing = processing.AddDays(1))
+        {
+            CallShiftType? processingType = CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(processing, Pgy);
+            if (processingType == type)
+            {
+                if (IsWorking(processing) || CommitedWorkDay(processing))
+                {
+                    return true;
+                }
+
+                break;
+            }
+        }
+
+        return false;
+    }
+
+    protected bool DoesRotationAllow(DateOnly date, CallLengthType lengthType)
+    {
+        HospitalRole role = GetHospitalRoleForCalendarMonth(date.Month);
+        if (lengthType == CallLengthType.Long)
+        {
+            if (date.Month is 7 or 8 && role is { DoesTrainingLong: false } ||
+                date.Month is not 7 and not 8 && role is { DoesLong: false })
+            {
+                return false;
+            }
+        }
+        else // Weekday
+        {
+            if (date.Month is 7 or 8 && role is { DoesTrainingShort: false } ||
+                date.Month is not 7 and not 8 && role is { DoesShort: false })
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /// <summary>

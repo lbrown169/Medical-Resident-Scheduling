@@ -940,7 +940,6 @@ public class AlgorithmService
 
         if (eligibleReceivers.Count == 0)
         {
-            _logger.LogWarning("No eligible receivers found.");
             return false;
         }
 
@@ -1061,7 +1060,6 @@ public class AlgorithmService
 
         if (eligibleGivers.Count == 0)
         {
-            _logger.LogWarning("No eligible givers found.");
             return false;
         }
 
@@ -1161,7 +1159,7 @@ public class AlgorithmService
                 for (int i = 0; i < pgy1s.Count; i++)
                 {
                     Pgy1Dto res = pgy1s[i];
-                    if (res.CanWork(curDay, pgy1ShiftType.Value.GetLengthType()) && !workedDays.Contains(curDay))
+                    if (res.CanWork(curDay) && !workedDays.Contains(curDay))
                     {
                         allowedCallTypes[i][pgy1ShiftType.Value]++;
                     }
@@ -1176,7 +1174,7 @@ public class AlgorithmService
                 for (int i = 0; i < pgy2s.Count; i++)
                 {
                     Pgy2Dto res = pgy2s[i];
-                    if (res.CanWork(curDay, pgy2ShiftType.Value.GetLengthType()) && !workedDays.Contains(curDay))
+                    if (res.CanWork(curDay) && !workedDays.Contains(curDay))
                     {
                         allowedCallTypes[i + pgy1s.Count][pgy2ShiftType.Value]++;
                     }
@@ -1326,7 +1324,7 @@ public class AlgorithmService
                     {
                         for (int i = 0; i < pgy1s.Count; i++)
                         {
-                            if (pgy1s[i].CanWork(curDay, shift.GetLengthType()))
+                            if (pgy1s[i].CanWork(curDay))
                             {
                                 g.addEdge(i * numShiftTypes + shiftOffset,
                                     shiftStart + dayList.Count - 1,
@@ -1339,7 +1337,7 @@ public class AlgorithmService
                     {
                         for (int i = 0; i < pgy2s.Count; i++)
                         {
-                            if (pgy2s[i].CanWork(curDay, shift.GetLengthType()))
+                            if (pgy2s[i].CanWork(curDay))
                             {
                                 g.addEdge(pgy2Start + i * numShiftTypes + shiftOffset,
                                     shiftStart + dayList.Count - 1,
@@ -1502,7 +1500,7 @@ public class AlgorithmService
             /*Console.WriteLine($"[DEBUG] fixing weekends");*/
 
             // fix weekends
-            if (FixWeekends1and2(pgy1s, pgy2s))
+            if (FixBackToBackShifts(pgy1s, pgy2s))
             {
                 return true; // all shifts were assigned correctly
             }
@@ -1581,7 +1579,7 @@ public class AlgorithmService
                     continue;
                 }
 
-                if (res.IsWorking(curDay) && !res.CanWork(curDay, curShiftType.Value.GetLengthType()))
+                if (res.IsWorking(curDay) && !res.CanWork(curDay))
                 {
                     bool found = false;
                     foreach (Pgy1Dto res2 in pgy1s)
@@ -1591,7 +1589,7 @@ public class AlgorithmService
                             continue;
                         }
 
-                        if (!res2.CanAddWorkDay(curDay, curShiftType.Value.GetLengthType()))
+                        if (!res2.CanAddWorkDay(curDay))
                         {
                             continue;
                         }
@@ -1614,7 +1612,7 @@ public class AlgorithmService
 
                             if (res2.IsWorking(otherDay)
                                 && curShiftType == otherShiftType
-                                && res.CanAddWorkDay(otherDay, otherShiftType.Value.GetLengthType()))
+                                && res.CanAddWorkDay(otherDay))
                             {
                                 found = true;
                                 SwapWorkDays1(res, res2, curDay, otherDay);
@@ -1642,8 +1640,7 @@ public class AlgorithmService
 
 
     public bool
-        FixWeekends1and2(List<Pgy1Dto> pgy1s,
-            List<Pgy2Dto> pgy2s) // function to fix resident weekends
+        FixBackToBackShifts(List<Pgy1Dto> pgy1s, List<Pgy2Dto> pgy2s) // function to fix resident weekends
     {
         bool successful = true;
         foreach (Pgy1Dto res in pgy1s)
@@ -1668,7 +1665,7 @@ public class AlgorithmService
                     continue;
                 }
 
-                if (res.IsWorking(curDay) && !res.CanWork(curDay, curShiftType.Value.GetLengthType()))
+                if (res.IsWorking(curDay) && !res.CanWork(curDay))
                 {
                     // They have this shift, it must be valid for their year
 
@@ -1681,7 +1678,7 @@ public class AlgorithmService
                             continue;
                         }
 
-                        if (!res2.CanAddWorkDay(curDay, curShiftType.Value.GetLengthType()))
+                        if (!res2.CanAddWorkDay(curDay))
                         {
                             continue;
                         }
@@ -1705,7 +1702,7 @@ public class AlgorithmService
 
                             if (res2.IsWorking(otherDay)
                                 && curShiftType == otherShiftType
-                                && res.CanAddWorkDay(otherDay, otherShiftType.Value.GetLengthType()))
+                                && res.CanAddWorkDay(otherDay))
                             {
                                 found = true;
                                 SwapWorkDays1(res, res2, curDay, otherDay);
@@ -1729,7 +1726,7 @@ public class AlgorithmService
                         {
                             foreach (Pgy2Dto res2 in pgy2s)
                             {
-                                if (!res2.CanAddWorkDay(curDay, curShiftTypeForPgy2.Value.GetLengthType()))
+                                if (!res2.CanAddWorkDay(curDay))
                                 {
                                     continue;
                                 }
@@ -1753,7 +1750,7 @@ public class AlgorithmService
 
                                     if (res2.IsWorking(otherDay)
                                         && curShiftType == otherShiftType
-                                        && res.CanAddWorkDay(otherDay, otherShiftType.Value.GetLengthType()))
+                                        && res.CanAddWorkDay(otherDay))
                                     {
                                         found = true;
                                         SwapWorkDays12(res, res2, curDay, otherDay);
@@ -1804,7 +1801,7 @@ public class AlgorithmService
                     continue;
                 }
 
-                if (res.IsWorking(curDay) && !res.CanWork(curDay, curShiftType.Value.GetLengthType()))
+                if (res.IsWorking(curDay) && !res.CanWork(curDay))
                 {
 
                     bool found = false;
@@ -1815,7 +1812,7 @@ public class AlgorithmService
                             continue;
                         }
 
-                        if (!res2.CanAddWorkDay(curDay, curShiftType.Value.GetLengthType()))
+                        if (!res2.CanAddWorkDay(curDay))
                         {
                             continue;
                         }
@@ -1839,7 +1836,7 @@ public class AlgorithmService
 
                             if (res2.IsWorking(otherDay)
                                 && curShiftType == otherShiftType
-                                && res.CanAddWorkDay(otherDay, otherShiftType.Value.GetLengthType()))
+                                && res.CanAddWorkDay(otherDay))
                             {
                                 found = true;
                                 SwapWorkDays2(res, res2, curDay, otherDay);
@@ -1863,7 +1860,7 @@ public class AlgorithmService
                         {
                             foreach (Pgy1Dto res2 in pgy1s)
                             {
-                                if (!res2.CanAddWorkDay(curDay, curShiftTypeForPgy1.Value.GetLengthType()))
+                                if (!res2.CanAddWorkDay(curDay))
                                 {
                                     continue;
                                 }
@@ -1883,7 +1880,7 @@ public class AlgorithmService
 
                                     if (res2.IsWorking(otherDay)
                                         && curShiftType == otherShiftType
-                                        && res.CanAddWorkDay(otherDay, otherShiftType.GetLengthType()))
+                                        && res.CanAddWorkDay(otherDay))
                                     {
                                         found = true;
                                         SwapWorkDays12(res2, res, otherDay, curDay);
@@ -1940,7 +1937,7 @@ public class AlgorithmService
                     continue;
                 }
 
-                if (res.IsWorking(curDay) && !res.CanWork(curDay, curShiftType.Value.GetLengthType()))
+                if (res.IsWorking(curDay) && !res.CanWork(curDay))
                 {
                     bool found = false;
                     foreach (Pgy2Dto res2 in pgy2s)
@@ -1950,7 +1947,7 @@ public class AlgorithmService
                             continue;
                         }
 
-                        if (!res2.CanAddWorkDay(curDay, curShiftType.Value.GetLengthType()))
+                        if (!res2.CanAddWorkDay(curDay))
                         {
                             continue;
                         }
@@ -1969,7 +1966,7 @@ public class AlgorithmService
                                     2)!.Value;
                             if (res2.IsWorking(otherDay)
                                 && curShiftType == otherShiftType
-                                && res.CanAddWorkDay(otherDay, otherShiftType.GetLengthType()))
+                                && res.CanAddWorkDay(otherDay))
                             {
                                 found = true;
                                 SwapWorkDays2(res, res2, curDay, otherDay);
