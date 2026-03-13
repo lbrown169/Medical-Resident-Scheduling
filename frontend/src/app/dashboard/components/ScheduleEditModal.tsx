@@ -521,17 +521,22 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
             <p className="text-muted-foreground">Loading schedule...</p>
           </div>
         ) : (
-          <div className="flex-1 overflow-hidden flex gap-4">
-
-            {/* Calendar area */}
-            <div className="flex-1 overflow-auto min-w-0">
-
-              {/* Navigation */}
-              <div className="flex items-center justify-between mb-4">
+          <div className="flex-1 overflow-auto">
+            {/* Calendar Navigation */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-col gap-1">
+                <h2 className="pl-2 text-xl font-semibold">
+                  {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+                </h2>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-semibold">
-                    {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
-                  </h2>
+                  <button
+                    onClick={() => navigateMonth('prev')}
+                    disabled={!canNavigatePrev}
+                    className="p-2 hover:bg-muted rounded-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  {isTodayInScheduleYear && (
                   <button
                     onClick={() => navigateMonth("prev")}
                     disabled={!canNavigatePrev}
@@ -554,6 +559,21 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                   >
                     <ChevronRight className="w-5 h-5" />
                   </button>
+                  )}
+                  <button
+                    onClick={() => navigateMonth('next')}
+                    disabled={!canNavigateNext}
+                    className="p-2 hover:bg-muted rounded-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+              {/* Legend */}
+              <div className="flex items-center gap-4 text-xs">
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 rounded" style={{ backgroundColor: '#ef4444' }}></div>
+                  <span>PGY1</span>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-3 text-xs">
