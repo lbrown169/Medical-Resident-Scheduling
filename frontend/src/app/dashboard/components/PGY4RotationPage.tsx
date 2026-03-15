@@ -3,10 +3,12 @@
 import { config } from "../../../config";
 import React, { useState, useEffect } from "react";
 
+
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { ConfirmDialog } from "../../../components/ui/confirm-dialog";
 import { SubmissionViewDialog } from "./SubmissionViewDialog";
+import { RotationScheduleTable } from "./RotationScheduleTable";
 
 import { CalendarRange, Users, UserX, CalendarClock, Trash2, Save, Download, X, Calendar } from "lucide-react";
 
@@ -47,37 +49,6 @@ interface RotationPrefRequestsListResponse {
   count: number;
   rotationPrefRequests: RotationPrefResponse[];
 }
-
-/**
- * Color scheme for rotation options based on the prototype:
- * - Intp Psy: Purple (#8b5cf6)
- * - Consult: Orange (#f97316)
- * - Addiction: Teal (#14b8a6)
- * - VA: Light Blue (#60a5fa)
- * - TMS: Lime (#84cc16)
- * - NFETC: Yellow (#eab308)
- * - IOP: Green (#22c55e)
- * - Comm: Blue (#3b82f6)
- * - HPC: Brown (#92400e)
- * - Forensic: Red (#ef4444)
- * - CLC: Pink (#ec4899)
- */
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const rotationOptions: { value: string; label: string; color: string }[] = [
-  { value: "Intp Psy", label: "Intp Psy", color: "#8b5cf6" },
-  { value: "Consult", label: "Consult", color: "#f97316" },
-  { value: "VA", label: "VA", color: "#60a5fa" },
-  { value: "TMS", label: "TMS", color: "#84cc16" },
-  { value: "NFETC", label: "NFETC", color: "#eab308" },
-  { value: "IOP", label: "IOP", color: "#22c55e" },
-  { value: "Comm", label: "Comm", color: "#3b82f6" },
-  { value: "HPC", label: "HPC", color: "#92400e" },
-  { value: "Addiction", label: "Addiction", color: "#14b8a6" },
-  { value: "Forensic", label: "Forensic", color: "#ef4444" },
-  { value: "CLC", label: "CLC", color: "#ec4899" },
-];
-
 
 // schedule api types
 interface RotationTypeResponse {
@@ -122,10 +93,24 @@ interface UnsubmittedResidentsResponse {
 	unsubmittedResidents: { first_name: string; last_name: string }[];
 }
 
-// Academic calendar with july first
-const ACADEMIC_MONTHS = ["JUL", "AUG", "SEP", "OCT", "NOV", "DEC", "JAN", "FEB", "MAR", "APR", "MAY", "JUN"];
+interface RotationTypeApiResponse {
+	rotationTypeId: string;
+	rotationName: string;
+	doesLongCall: boolean;
+	doesShortCall: boolean;
+	doesTrainingLongCall: boolean;
+	doesTrainingShortCall: boolean;
+	isChiefRotation: boolean;
+	pgyYears: number[];
+}
 
-// This will need to change if we add rotation name changing, the color map would need to be based on something else
+interface RotationTypesListResponse {
+	count: number;
+	rotationTypes: RotationTypeApiResponse[];
+}
+
+
+// Passed into RotationScheduleTable as colorMap
 const rotationColorMap: Record<string, string> = {
 	"Inpatient Psy": "#8b5cf6",
 	"Psy Consults":  "#f97316",
@@ -142,40 +127,15 @@ const rotationColorMap: Record<string, string> = {
 	"Sum":           "#6b7280",
 };
 
-// Short display names for the schedule table as opposed to direct names
-// Again when rotation name changing is added, this needs to go.
+// Passed into RotationScheduleTable as displayNames
 const rotationDisplayNames: Record<string, string> = {
 	"Inpatient Psy": "Inpt Psy",
 	"Psy Consults":  "Consult",
 	"Community Psy": "Comm",
 };
 
-function getRotationDisplayName(name: string): string {
-	return rotationDisplayNames[name] ?? name;
-}
-
-function getRotationColor(name: string): string {
-	return rotationColorMap[name] ?? "#6b7280";
-}
-
 interface PGY4RotationScheduleProps {
 	residents: { id: string; name: string; email: string; pgyLevel: number | string }[];
-
-}
-
-
-
-function Modal({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: React.ReactNode }) {
-	if (!open) return null;
-	return (
-		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-			<div className="bg-card p-8 rounded-xl shadow-lg max-w-2xl w-full relative">
-				<button onClick={onClose} className="absolute top-4 right-4 text-xl font-bold">&times;</button>
-				<h2 className="text-2xl font-bold mb-4">{title}</h2>
-				<div className="overflow-y-auto max-h-[60vh]">{children}</div>
-			</div>
-		</div>
-	);
 }
 
 
@@ -194,11 +154,12 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 	const [loadingSchedules, setLoadingSchedules] = useState(false);
 	const [generating, setGenerating] = useState(false);
 	const [scheduleError, setScheduleError] = useState<string | null>(null);
+	const [rotationTypeNames, setRotationTypeNames] = useState<string[]>([]);
 
 	const selectedSchedule = schedules.find(s => s.pgy4RotationScheduleId === selectedScheduleId) ?? null;
 
 	// State for viewing a resident's rotation
-	const [showRotationChangeModal, setShowRotationChangeModal] = useState(false);
+	// State for viewing a resident's rotation — handled inside RotationScheduleTable
 
 	// Submission
 	const [submissions, setSubmissions] = useState<RotationPrefResponse[]>([]);
@@ -243,7 +204,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 	const submittedCount = submissions.length;
 	const missingCount = PGY3Residents.length - submittedCount;
 
-	// Load schedules
+	// Load schedules and rotation types on mount
 	useEffect(() => {
 		const loadSchedules = async () => {
 			try {
@@ -254,8 +215,6 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 				const data: Pgy4RotationSchedulesListResponse = await res.json();
 				const list = data.schedules ?? [];
 				setSchedules(list);
-				// If a schedule is published we show that one, if not its the first schedule
-				// Currently there is no way to publish though, that comes next
 				const published = list.find(s => s.isPublished);
 				setSelectedScheduleId(published?.pgy4RotationScheduleId ?? list[0]?.pgy4RotationScheduleId ?? "");
 			} catch (err) {
@@ -265,7 +224,22 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 				setLoadingSchedules(false);
 			}
 		};
+
+		const loadRotationTypes = async () => {
+			try {
+				const res = await fetch(`${config.apiUrl}/api/rotation-types?pgyYear=4`);
+				if (!res.ok) throw new Error("Failed to fetch rotation types");
+				const data: RotationTypesListResponse = await res.json();
+				setRotationTypeNames(data.rotationTypes.map(rt => rt.rotationName));
+			} catch (err) {
+				console.error("Failed to load rotation types", err);
+				// Fall back to color map keys if API fails
+				setRotationTypeNames(Object.keys(rotationColorMap));
+			}
+		};
+
 		loadSchedules();
+		loadRotationTypes();
 	}, []);
 
 	const handleGenerate = async () => {
@@ -503,59 +477,21 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 							</Button>
 						</div>
 					</div>
-					<div className="overflow-x-auto max-h-[32rem] overflow-y-auto w-full">
-						<table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
-							<thead className="bg-gray-100 dark:bg-neutral-800 ">
-								<tr>
-									<th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-100 dark:bg-neutral-800">Residents</th>
-									{ACADEMIC_MONTHS.map((month) => (
-										<th key={month} className="px-2 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-											{month}
-										</th>
-									))}
-								</tr>
-							</thead>
-							<tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
-								{/* Schedule rendering */}
-								{loadingSchedules ? (
-									<tr>
-										<td colSpan={13} className="px-6 py-4 text-center text-gray-500">Loading schedules...</td>
-									</tr>
-								) : selectedSchedule ? (
-									selectedSchedule.schedule.map((residentSchedule) => (
-										<tr key={residentSchedule.resident.resident_id} className="hover:bg-gray-50 dark:hover:bg-neutral-800 divide-x divide-gray-200 dark:divide-gray-700">
-											<td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100 sticky left-0 bg-white dark:bg-neutral-900">
-												{residentSchedule.resident.first_name} {residentSchedule.resident.last_name.charAt(0)}.
-											</td>
-											{ACADEMIC_MONTHS.map((_, monthIndex) => {
-												const rotation = residentSchedule.rotations.find(r => r.academicMonthIndex === monthIndex);
-												const color = rotation ? getRotationColor(rotation.rotationType.rotationName) : undefined;
-												return (
-													<td key={monthIndex} className="px-1 py-1.5 whitespace-nowrap text-center">
-														{rotation ? (
-															<Button variant="outline" size="sm"
-																className="text-white hover:opacity-80 cursor-pointer text-xs font-semibold px-3 py-1 h-auto rounded-full"
-																style={{ backgroundColor: color, borderColor: color }}
-																onClick={() => setShowRotationChangeModal(true)}>
-																{getRotationDisplayName(rotation.rotationType.rotationName)}
-															</Button>
-														) : (
-															<span className="text-gray-300 dark:text-gray-600">—</span>
-														)}
-													</td>
-												);
-											})}
-										</tr>
-									))
-								) : (
-									<tr>
-										<td colSpan={13} className="px-6 py-4 text-center text-gray-500 italic">No schedule generated yet.</td>
-									</tr>
-								)}
-							</tbody>
-							
-						</table>
-					</div>
+					{loadingSchedules ? (
+						<div className="py-8 text-center text-gray-500">Loading schedules...</div>
+					) : (
+						<RotationScheduleTable
+							schedule={selectedSchedule?.schedule ?? []}
+							colorMap={rotationColorMap}
+							displayNames={rotationDisplayNames}
+							rotationTypes={rotationTypeNames}
+							allowResidentReassignment={false}
+							onRotationChange={(residentId, monthIndex, newRotation) => {
+								// !!! I think the endpoint for this isnt done currently
+								console.log("Rotation change:", residentId, monthIndex, newRotation);
+							}}
+						/>
+					)}
 				</Card>
 			)}
 
@@ -706,48 +642,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 				</Card>
 			)}
 
-			{/* Modals*/}
-			<Modal
-				open={showRotationChangeModal}
-				onClose={() => setShowRotationChangeModal(false)}
-				title="Change Rotation"
-			>
-				<div className="p-6 space-y-6">
-					<div className="grid grid-cols-4 gap-2">
-						<label className="block font-semibold text-forground mb-2">Resident:</label>
-						<p>Lawrence C.</p>
-						<div></div>
-						<div></div>
-						<label className="block font-semibold text-forground mb-2">Month:</label>
-						<p>June</p>
-					</div>
-
-					<div>
-						<label className="block font-semibold text-forground mb-2"> Current Rotation</label>
-						<div className="w-full px-4 py-3 border border-border rounded-lg bg-background text-foreground">
-							<p>Addiction</p>
-						</div>
-					</div>
-					<div>
-						<label className="block font-semibold text-forground mb-2">Select New Rotation</label>
-						<div className="relative">
-							<select className="w-full px-4 py-3 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors appearance-none cursor-pointer">
-								<option value="inpatient">Inpatient</option>
-								<option value="emergency">Emergency Medicine</option>
-								<option value="surgery">Surgery</option>
-								<option value="pediatrics">Pediatrics</option>
-								<option value="icu">ICU</option>
-							</select>
-							<div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
-								<svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-								</svg>
-							</div>
-						</div>
-					</div>
-				</div>
-
-			</Modal>
+			{/* Rotation change modal is now inside RotationScheduleTable */}
 
 			{viewResident && (
 				<SubmissionViewDialog
