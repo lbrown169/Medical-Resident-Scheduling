@@ -42,8 +42,7 @@ public class RotationConverter(RotationTypeConverter rotationTypeConverter)
             Month = calendarMonthIndex.GetDisplayName(),
             PgyYear = 4,
             RotationType = rotationType,
-            RotationTypeId = rotationType.RotationTypeId,
-            Rotation1 = "",
+            RotationTypeId = rotationType.RotationTypeId
         };
     }
 }

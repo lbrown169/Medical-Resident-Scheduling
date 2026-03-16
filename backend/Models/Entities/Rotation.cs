@@ -14,12 +14,9 @@ namespace MedicalDemo.Models.Entities
         [ForeignKey(nameof(Pgy4RotationSchedule))]
         public Guid? Pgy4RotationScheduleId { get; set; }
 
-        public string ResidentId { get; set; } = null!;
+        public string? ResidentId { get; set; }
 
         public string Month { get; set; } = null!;
-
-        // Keeping this here for now, we can remove it later if we want
-        public string Rotation1 { get; set; } = null!;
 
         public int PgyYear { get; set; }
 
