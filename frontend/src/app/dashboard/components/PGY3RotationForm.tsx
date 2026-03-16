@@ -1,5 +1,7 @@
 "use client";
 
+// !!! i dont think the other group needs this? if they do it it will need to change as it is intended for pgy3s only
+
 import { config } from "../../../config";
 import React, { useState, useEffect } from "react";
 

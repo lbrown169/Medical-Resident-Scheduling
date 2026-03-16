@@ -409,7 +409,6 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 					{scheduleError}
 				</div>
 			)}
-			{/*message && <div className="mb-4 text-center text-sm font-medium text-green-600 dark:text-green-400">{message}</div>*/}
 
 			{/* Tab Navigation */}
 			<div className="w-full max-w-6xl flex flex-col sm:flex-row gap-1 sm:gap-2 mb-4 sm:mb-6">
@@ -435,13 +434,6 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 					Configure
 				</Button>
 			</div>
-
-
-
-
-
-
-
 
 
 
@@ -500,8 +492,6 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 					)}
 				</Card>
 			)}
-
-
 
 
 
@@ -592,13 +582,6 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 					</div>
 				</Card>
 			)}
-
-
-
-
-
-
-
 
 
 
