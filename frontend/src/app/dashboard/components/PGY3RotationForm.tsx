@@ -324,6 +324,8 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) 
     return rotationOptions;
   };
 
+  {/*
+
   // Check if user is not PGY-3
   if (userPGY !== 3) {
     return (
@@ -353,7 +355,8 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) 
         </div>
       </div>
     );
-  }
+    
+    */}
 
   // Show form
   return (
@@ -389,7 +392,8 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) 
 
       <div className="max-w-4xl mx-auto">
         <div className="bg-card rounded-xl shadow-lg border border-border p-8">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-1">
+          {/*
           <div className="flex items-center gap-3">
             <ClipboardList className="h-8 w-8 text-primary" />
             <h1 className="text-3xl font-bold text-foreground">Rotation Request Form</h1>
@@ -406,7 +410,9 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) 
           <p className="text-red-600 dark:text-red-400 font-semibold">
             Due: {deadline.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })} at {deadline.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZoneName: 'short' })}
           </p>
+          */}
         </div>
+        
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Rotation Preferences */}

@@ -7,10 +7,13 @@ import React, { useState, useEffect } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { ConfirmDialog } from "../../../components/ui/confirm-dialog";
+import { toast } from "../../../lib/use-toast";
 import { SubmissionViewDialog } from "./SubmissionViewDialog";
 import { RotationScheduleTable } from "./RotationScheduleTable";
 
-import { CalendarRange, Users, UserX, CalendarClock, Trash2, Save, Download, X, Calendar } from "lucide-react";
+import { CalendarRange, Users, UserX, CalendarClock, Trash2, Save, Download, X, Calendar, ClipboardList, ChevronDown } from "lucide-react";
+import PGY3RotationForm from "./PGY3RotationForm";
+import { describe } from "node:test";
 
 // individual responses
 interface RotationPrefResponse {
@@ -135,9 +138,22 @@ const rotationDisplayNames: Record<string, string> = {
 };
 
 interface PGY4RotationScheduleProps {
-	residents: { id: string; name: string; email: string; pgyLevel: number | string }[];
+	residents: { id: string; name: string; email: string; pgyLevel: number | string ; chiefType: string}[];
+
 }
 
+function Modal({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: React.ReactNode }) {
+	if (!open) return null;
+	return (
+		<div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+			<div className="bg-card p-8 rounded-xl shadow-lg max-w-2xl w-full relative">
+				<button onClick={onClose} className="absolute top-4 right-4 text-xl font-bold">&times;</button>
+				<h2 className="text-2xl font-bold mb-4">{title}</h2>
+				<div className="overflow-y-auto max-h-[60vh]">{children}</div>
+			</div>
+		</div>
+	);
+}
 
 const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 	residents
@@ -161,6 +177,9 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 	// State for viewing a resident's rotation
 	// State for viewing a resident's rotation — handled inside RotationScheduleTable
 
+	// State for viewing form creation
+	const [showRotationFormModal, setShowRotationFormModal] = useState(false);
+
 	// Submission
 	const [submissions, setSubmissions] = useState<RotationPrefResponse[]>([]);
 	const [loadingSubmissions, setLoadingSubmissions] = useState(false);
@@ -173,6 +192,10 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 		setViewResident(submission);
 		setViewDialogOpen(true);
 	};
+
+		// Config Tab
+	const [switchingChiefType, setSwitchingChiefType] = useState<string | null>(null);
+	const [formOverrideResidentId, setFormOverrideResidentId] = useState<string | null>(null);
 
 	// Helper to map RotationPrefResponse to ResidentPreference
 	// Use spread to unpack elements
@@ -311,7 +334,46 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 			setScheduleError("Failed to publish schedule.");
 		}
 	};
+/*
+	const handleSwitchChiefType = async (user: {}, newChiefType: string) => {
+		//Don't do anything if the role hasn't actually changed
+		if(user.chief_type === newChiefType) return;
 
+		setSwitchingChiefType(user.id);
+		try {
+			const response = await fetch(`${config.apiUrl}/api/${endpoint}/${user.id}`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' }
+			});
+
+			if (response.ok) {
+				toast({
+					title: "Chief Type Updated",
+					description: `${user.first_name} ${user.last_name} has been switched to ${newChiefType}.`,
+					variant: "success"
+				});
+				//Refresh the page to update the user list
+				window.location.reload();
+			} else {
+				const error = await response.text();
+				toast({
+					title: "Error",
+					description: error || "Failed to switch user chief type.",
+					variant: "destructive"
+				});
+			}
+		} catch (error) {
+			console.error('Error switching user chief role:', error);
+			toast({
+				title: "Error",
+				description: "Failed to switch user chief type. Please try again.",
+				variant: "destructive"
+			});
+		} finally {
+			setSwitchingChiefType(null);
+		}
+	};
+*/
 	useEffect(() => {
 		const loadSubmissions = async () => {
 			try {
@@ -587,51 +649,136 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 
 			{activeTab === 'configure' && (
 				<Card className="p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-4 mb-6 sm:mb-8 border border-gray-200 dark:border-gray-800">
-					<h2 className="text-lg sm:text-xl font-bold mb-4">Settings</h2>
-					<div className="flex flex-col  gap-2 mb-4">
-						{/*Form Availabity Selection */}
-						<div className="space-y-2">
-							<div className="flex items-center gap-2">
-								<Calendar className="h-4 w-4 text-primary" />
-								<label htmlFor="your-shift-date" className="text-sm font-semibold text-foreground">
-									Rotation Form Available Start Date
-								</label>
-							</div>
+					<h2 className="text-lg sm:text-xl font-bold">Settings</h2>
+					{/*Form Availabity Selection */}
+					<div className="grid grid-cols-2 items-start sm:items-end gap-6">
+						<div>
+							<label className="flex items-center text-sm font-semibold gap-2 mb-2">
+								Available Date
+							</label>
 							<input
-								id="rotation-form-available-start-date"
+								id=""
 								type="date"
 								className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
-								value={null}
+								value={undefined}
 								onChange={() => null}
 								min={new Date().toISOString().split('T')[0]}
 							/>
 						</div>
-						<div className="space-y-2">
-							<div className="flex items-center gap-2">
-								<Calendar className="h-4 w-4 text-primary" />
-								<label htmlFor="your-shift-date" className="text-sm font-semibold text-foreground">
-									Rotation Form Due Date
-								</label>
-							</div>
+						<div>
+							<label className="flex items-center text-sm font-semibold gap-2 mb-2">
+								Due Date
+							</label>
 							<input
-								id="rotation-form-due-date"
+								id=""
 								type="date"
 								className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
-								value={null}
+								value={undefined}
 								onChange={() => null}
 								min={new Date().toISOString().split('T')[0]}
 							/>
 						</div>
+						<div className="flex flex-row gap-2">
+							<Button
+								onClick={() => setShowRotationFormModal(true)}
+								disabled={showRotationFormModal == true}
+								className="py-2 flex items-center justify-center gap-2 bg-blue-500 text-white hover:bg-blue-600"
+							>
+								<ClipboardList className="h-4 w-4" />
+								Create Rotation Form
+							</Button>
+						</div>
+						
 					</div>
-					<h2 className="text-lg sm:text-xl font-bold mb-4">Chief Selection</h2>
-					<div className="overflow-x-auto max-h-[32rem] overflow-y-auto w-full">
 
-					</div>
+					<h2 className="text-lg sm:text-xl font-bold mb-4">Chief Selection</h2>
+						
+					<div className="overflow-x-auto max-h-96 overflow-y-auto">
+						<table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+								<thead className="sticky top-0 bg-gray-100 dark:bg-neutral-800">
+										<tr>
+												<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+												<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chief Type</th>
+										</tr>
+								</thead>
+								<tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
+										{PGY3Residents.length > 0 ? (
+												PGY3Residents.map((r) => (
+														<tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
+																<td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{r.name}</td>
+																<td className="px-6 py-4 whitespace-nowrap text-sm">
+																		<select
+																				value={r.chiefType ?? ""}
+																				onChange={/*(e) => handleSwitchChiefType(r, e.target.value)*/ undefined}
+																				disabled={switchingChiefType === r.id}
+																				className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+																		>
+																				<option value="" >{switchingChiefType === r.id ? 'Switching...' : 'None'}</option>
+																				<option value="Admin">{switchingChiefType === r.id ? 'Switching...' : 'Admin'}</option>
+																				<option value="Clinic">{switchingChiefType === r.id ? 'Switching...' : 'Clinic'}</option>
+																				<option value="Education">{switchingChiefType === r.id ? 'Switching...' : 'Education'}</option>
+																				
+																		</select>
+																</td>
+					
+														</tr>
+												))
+										) : (
+												<tr>
+														<td colSpan={4} className="px-6 py-4 text-center text-gray-500 italic">No PGY-3 residents found.</td>
+												</tr>
+										)}
+								</tbody>
+						</table>
+				</div>
 
 				</Card>
 			)}
 
-			{/* Rotation change modal is now inside RotationScheduleTable */}
+			{/* Modals*/}
+			<Modal
+				open={showRotationFormModal}
+				onClose={() => setShowRotationFormModal(false)}
+				title="Create Rotation Form"
+			>
+				<div className="grid grid-cols-2 items-start sm:items-end gap-6">
+						<div className="mb-2">
+								<label className="flex items-center text-sm font-semibold gap-2 mb-2">
+										Resident Selection
+								</label>
+								<div className="relative">
+										<select
+												value={formOverrideResidentId ?? ""}
+												onChange={(e) => setFormOverrideResidentId(e.target.value || null)}
+												required={true}
+												className="w-full px-4 py-3 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none cursor-pointer"
+										>
+												<option value="">Select</option>
+												{PGY3Residents.map((r) => (
+														<option key={r.id} value={r.id}>
+																{r.name}
+														</option>
+												))}
+										</select>
+										<div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+												<ChevronDown className="h-4 w-4" />
+										</div>
+								</div>
+						</div>
+				</div>
+
+				{/* Form with disabled overlay */}
+				<div className="relative">
+						{!formOverrideResidentId && (
+								<div className="absolute inset-0 z-10 bg-background/60 backdrop-blur-[1px] rounded-lg flex items-center justify-center">
+								</div>
+						)}
+						<PGY3RotationForm
+								userId={formOverrideResidentId ?? ""}
+								userPGY={3}
+						/>
+				</div>
+		</Modal>
 
 			{viewResident && (
 				<SubmissionViewDialog

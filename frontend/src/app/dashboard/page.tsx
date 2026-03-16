@@ -12,6 +12,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarTrigger,
+  SidebarGroupLabel,
+  SidebarSeparator,
 } from "../../components/ui/sidebar";
 import { SidebarUserCard } from "./components/SidebarUserCard";
 import { Repeat, CalendarDays, CalendarX, UserCheck, Shield, Settings, Home, LogOut, User as UserIcon, ChevronDown, Moon, Sun, ClipboardList, CalendarRange, Calendar1 } from "lucide-react"; // kept CalendarX from main
@@ -36,6 +38,7 @@ import RequestOffPage from "./components/RequestOffPage";
 import CheckSchedulePage from "./components/CheckSchedulePage";
 import AdminPage from "./components/AdminPage";
 import PGY3RotationForm from "./components/PGY3RotationForm";
+import PGY3RotationFormPage from "./components/PGY3RotationFormPage";
 import PGY4RotationPage from "./components/PGY4RotationPage";
 import PGY4SchedulePage from "../dashboard/pgy4-schedule/page";
 import SchedulesPage from "./components/SchedulesPage";
@@ -81,6 +84,7 @@ interface Resident {
   phone_number?: string;
   hospital_role_profile?: number;
   total_hours: number;
+  chief_type: string;
 }
 
 interface Admin {
@@ -107,7 +111,7 @@ const menuItems: MenuItem[] = [
   { title: "Request Off", icon: <CalendarX className="w-6 h-6 mr-3" /> },
   { title: "Check My Schedule", icon: <UserCheck className="w-6 h-6 mr-3" /> },
   { title: "Admin", icon: <Shield className="w-6 h-6 mr-3" /> },
-  { title: "PGY-4 Rotation Forms", icon: <ClipboardList className="w-6 h-6 mr-3" /> },
+  { title: "PGY-4 Rotation Form", icon: <ClipboardList className="w-6 h-6 mr-3" /> },
   { title: "PGY-4 Schedule", icon: <Calendar1 className="w-6 h-6 mr-3" /> },
   { title: "PGY-4 Rotations", icon: <CalendarRange className="w-6 h-6 mr-3" /> },
   { title: "Settings", icon: <Settings className="w-6 h-6 mr-3" /> }
@@ -1177,9 +1181,9 @@ case "Home":
           />
         );
 
-      case "PGY-4 Rotation Forms":
+      case "PGY-4 Rotation Form":
         return (
-          <PGY3RotationForm 
+          <PGY3RotationFormPage
             userId={user?.id || ""}
             userPGY={currentUserPGY || 0}
           />
@@ -1212,7 +1216,7 @@ case "Home":
         }
         return (
           <PGY4RotationPage
-          residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr }))}
+          residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr, chiefType: r.chief_type }))}
           />
         );
 
@@ -1298,11 +1302,36 @@ case "Home":
     if (item.title === "Check My Schedule") return !isAdmin; // residents only
     if (item.title === "Swap Calls") return !isAdmin; // residents only
     if (item.title === "Schedules") return isAdmin; // admin only
-    if (item.title === "PGY-4 Rotation Forms") return currentUserPGY === 3; // pgy3 resident only
+    if (item.title === "PGY-4 Rotation Form") return currentUserPGY === 3; // pgy3 resident only
     if (item.title === "PGY-4 Schedule") return currentUserPGY === 4; // pgy4 resident only
     if (item.title === "PGY-4 Rotations") return isAdmin; // admin only
     return true;
   });
+
+  const sidebarGroups = [
+    {
+      label: null,      // title for sidebar group header
+      showLabel: false, // only shows if true, menu items will show regardless
+      items: ["Home"],  // all menu items must be in a group 
+    },
+    {
+      label: "PGY 1-3 Residents",
+      showLabel: isAdmin,
+      items: ["Calendar", "Request Off", "Check My Schedule", "Swap Calls", "Schedules"],
+    },
+    {
+      label: "PGY 4 Residents",
+      showLabel: isAdmin,
+      items: ["PGY-4 Rotation Form", "PGY-4 Schedule", "PGY-4 Rotations"],
+    },
+    {
+      label: null,
+      showLabel: false,
+      items: ["Settings"],
+    },
+  ];
+
+  
 
   const [inviteRole, setInviteRole] = useState<string>("resident");
 
@@ -1329,36 +1358,56 @@ case "Home":
           {/* Sidebar Navigation - Desktop only */}
           <div className="hidden md:block">
             {selected !== "Calendar" && (
-              <Sidebar>
+              <Sidebar className="z-50">
                 <SidebarHeader>
                   <div className="flex items-center justify-center py-2">
                     <span className="text-3xl font-bold tracking-wide">PSYCALL</span>
                   </div>
                 </SidebarHeader>
                 <SidebarContent>
-                  <SidebarGroup>
-                    <SidebarGroupContent>
-                      <SidebarMenu>
-                        {filteredMenuItems.map((item) => (
-                          <SidebarMenuItem key={item.title}>
-                            <SidebarMenuButton asChild>
-                              <span
-                                className={`flex items-center text-base cursor-pointer rounded-lg px-2 py-1 transition-colors ${
-                                  selected === item.title
-                                    ? "font-bold text-gray-800 dark:text-gray-200 bg-gray-300 dark:bg-gray-700"
-                                    : "hover:bg-gray-900 dark:hover:bg-gray-700"
-                                }`}
-                                onClick={() => setSelected(item.title)}
-                              >
-                                {item.icon}
-                                {item.title}
-                              </span>
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        ))}
-                      </SidebarMenu>
-                    </SidebarGroupContent>
-                  </SidebarGroup>
+                  {sidebarGroups.map((group, i) => {
+                    const visibleItems = filteredMenuItems.filter(item =>
+                      group.items.includes(item.title)
+                    );
+
+                    const showGroup = visibleItems.length > 0 || (group.showLabel && group.label);
+                    if (!showGroup) return null;
+
+                    return (
+                      <SidebarGroup key={i}>
+                        {group.label && group.showLabel && (
+                          <>
+                            <SidebarSeparator />
+                            <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+                          </>
+                        )}
+                        {!group.showLabel && i > 0 && visibleItems.length > 0 && (
+                          <SidebarSeparator />
+                        )}
+                        <SidebarGroupContent>
+                          <SidebarMenu>
+                            {visibleItems.map((item) => (
+                              <SidebarMenuItem key={item.title}>
+                                <SidebarMenuButton asChild>
+                                  <span
+                                    className={`flex items-center text-base cursor-pointer rounded-lg px-2 py-1 transition-colors ${
+                                      selected === item.title
+                                        ? "font-bold text-gray-800 dark:text-gray-200 bg-gray-300 dark:bg-gray-700"
+                                        : "hover:bg-gray-900 dark:hover:bg-gray-700"
+                                    }`}
+                                    onClick={() => setSelected(item.title)}
+                                  >
+                                    {item.icon}
+                                    {item.title}
+                                  </span>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            ))}
+                          </SidebarMenu>
+                        </SidebarGroupContent>
+                      </SidebarGroup>
+                    );
+                  })}
                 </SidebarContent>
                 <SidebarFooter>
                   <DropdownMenu>
@@ -1387,7 +1436,7 @@ case "Home":
                         <Moon className="h-4 w-4" />
                         <span>Dark</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem 
+                      <DropdownMenuItem
                         className="flex items-center gap-2 text-red-600 focus:text-red-600"
                         onClick={handleLogout}
                       >
