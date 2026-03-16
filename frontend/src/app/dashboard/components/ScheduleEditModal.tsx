@@ -86,7 +86,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
     return [];
   }, []);
 
-  const fetchScheduleEvents = useCallback(async (scheduleId: string, residentList: Resident[]) => {
+  const fetchScheduleEvents = useCallback(async (scheduleId: string, residentList: Resident[], navigateToFirst = true) => {
     setLoading(true);
     try {
       const response = await fetch(`${config.apiUrl}/api/dates?schedule_id=${scheduleId}`);
@@ -126,7 +126,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
 
         setEvents(calendarEvents);
 
-        if (calendarEvents.length > 0) {
+        if (navigateToFirst && calendarEvents.length > 0) {
           const firstEventDate = calendarEvents
             .map(e => e.start)
             .sort((a, b) => a.getTime() - b.getTime())[0];
@@ -143,7 +143,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
   const refreshEvents = useCallback(async () => {
     if (!scheduleId) return;
     const residentList = residents.length > 0 ? residents : await fetchResidents();
-    await fetchScheduleEvents(scheduleId, residentList);
+    await fetchScheduleEvents(scheduleId, residentList, false);
   }, [scheduleId, residents, fetchResidents, fetchScheduleEvents]);
 
   useEffect(() => {
