@@ -1,3 +1,4 @@
+using MedicalDemo.Enums;
 using MedicalDemo.Models;
 using MedicalDemo.Models.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -460,9 +461,9 @@ public class DatabaseSeeder
                         GroupId = Guid.NewGuid().ToString(),
                         HalfDay = Random.Shared.Next(0, 3) switch
                         {
-                            0 => null,
-                            1 => "A",
-                            2 => "P",
+                            0 => (PartOfDay.Morning | PartOfDay.Afternoon).DbChar,
+                            1 => PartOfDay.Morning.DbChar,
+                            2 => PartOfDay.Afternoon.DbChar,
                         },
                         ResidentId = residents[Random.Shared.Next(0, residents.Count)].ResidentId,
                         Status = "Approved",
