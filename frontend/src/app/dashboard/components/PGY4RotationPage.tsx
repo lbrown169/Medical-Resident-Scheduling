@@ -124,7 +124,7 @@ const rotationColorMap: Record<string, string> = {
 	"Forensic":      "#ef4444",
 	"CLC":           "#ec4899",
 	"Chief":         "#4b5563",
-	"Sum":           "#6b7280",
+	"Unassigned":    "#6b7280",
 };
 
 // Passed into RotationScheduleTable as displayNames
@@ -230,10 +230,16 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 				const res = await fetch(`${config.apiUrl}/api/rotation-types?pgyYear=4`);
 				if (!res.ok) throw new Error("Failed to fetch rotation types");
 				const data: RotationTypesListResponse = await res.json();
-				setRotationTypeNames(data.rotationTypes.map(rt => rt.rotationName));
+				// Filter out no colors.
+				// !! This will need to change if we add rotation name swapping. Colors may need to be stored.
+				const known = Object.keys(rotationColorMap);
+				setRotationTypeNames(
+					data.rotationTypes
+						.map(rt => rt.rotationName)
+						.filter(name => known.includes(name))
+				);
 			} catch (err) {
 				console.error("Failed to load rotation types", err);
-				// Fall back to color map keys if API fails
 				setRotationTypeNames(Object.keys(rotationColorMap));
 			}
 		};
