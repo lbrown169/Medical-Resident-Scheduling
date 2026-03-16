@@ -41,6 +41,7 @@ interface RotationOption {
 interface PGY3RotationFormProps {
   userId: string;
   userPGY: number;
+  onSuccess?: () => void;
 }
 
 interface RotationTypeDto {
@@ -75,7 +76,7 @@ const ROTATION_COLORS: Record<string, string> = {
  * - Additional notes field
  * - Validation to prevent duplicate selections in priority fields
  */
-const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) => {
+const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY, onSuccess }) => {
 
   // Rotation options from backend
   const [rotationOptions, setRotationOptions] = useState<RotationOption[]>([]);
@@ -156,50 +157,51 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) 
 }, []);
 
 
+  // Define at component level, not inside useEffect
+const loadExistingRequest = async () => {
+  if (!userId) return;
+  try {
+    const res = await fetch(
+      `${config.apiUrl}/api/rotation-pref-request/resident/${userId}`
+    );
+    if (!res.ok) return;
+    const data = await res.json();
+
+    setExistingRequestId(data.rotationPrefRequestId);
+
+    const priorities = data.priorities ?? [];
+    const alternatives = data.alternatives ?? [];
+    const avoids = data.avoids ?? [];
+
+    setFirstPriority(priorities[0]?.rotationTypeId ?? null);
+    setSecondPriority(priorities[1]?.rotationTypeId ?? null);
+    setThirdPriority(priorities[2]?.rotationTypeId ?? null);
+    setFourthPriority(priorities[3]?.rotationTypeId ?? null);
+    setFifthPriority(priorities[4]?.rotationTypeId ?? null);
+    setSixthPriority(priorities[5]?.rotationTypeId ?? null);
+    setSeventhPriority(priorities[6]?.rotationTypeId ?? null);
+    setEighthPriority(priorities[7]?.rotationTypeId ?? null);
+
+    setAlternative1(alternatives[0]?.rotationTypeId ?? null);
+    setAlternative2(alternatives[1]?.rotationTypeId ?? null);
+    setAlternative3(alternatives[2]?.rotationTypeId ?? null);
+
+    setAvoid1(avoids[0]?.rotationTypeId ?? null);
+    setAvoid2(avoids[1]?.rotationTypeId ?? null);
+    setAvoid3(avoids[2]?.rotationTypeId ?? null);
+
+    setAdditionalNotes(data.additionalNotes ?? "");
+  } catch {
+    toast({
+      variant: "destructive",
+      title: "Error",
+      description: "Could not load existing rotation request.",
+    });
+  }
+};
+
+  // Then just call it in useEffect
   useEffect(() => {
-    const loadExistingRequest = async () => {
-      try {
-        const res = await fetch(
-          `${config.apiUrl}/api/rotation-pref-request/resident/${userId}`
-        );
-
-        if (!res.ok) return;
-
-        const data = await res.json();
-
-        setExistingRequestId(data.rotationPrefRequestId);
-
-        const priorities = data.priorities ?? [];
-        const alternatives = data.alternatives ?? [];
-        const avoids = data.avoids ?? [];
-
-        setFirstPriority(priorities[0]?.rotationTypeId ?? null);
-        setSecondPriority(priorities[1]?.rotationTypeId ?? null);
-        setThirdPriority(priorities[2]?.rotationTypeId ?? null);
-        setFourthPriority(priorities[3]?.rotationTypeId ?? null);
-        setFifthPriority(priorities[4]?.rotationTypeId ?? null);
-        setSixthPriority(priorities[5]?.rotationTypeId ?? null);
-        setSeventhPriority(priorities[6]?.rotationTypeId ?? null);
-        setEighthPriority(priorities[7]?.rotationTypeId ?? null);
-
-        setAlternative1(alternatives[0]?.rotationTypeId ?? null);
-        setAlternative2(alternatives[1]?.rotationTypeId ?? null);
-        setAlternative3(alternatives[2]?.rotationTypeId ?? null);
-
-        setAvoid1(avoids[0]?.rotationTypeId ?? null);
-        setAvoid2(avoids[1]?.rotationTypeId ?? null);
-        setAvoid3(avoids[2]?.rotationTypeId ?? null);
-
-        setAdditionalNotes(data.additionalNotes ?? "");
-      } catch {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Could not load existing rotation request.",
-        });
-      }
-    };
-
     loadExistingRequest();
   }, [userId]);
 
@@ -296,6 +298,7 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) 
 
       // Show if successful
       setShowSuccessDialog(true);
+      onSuccess?.();
     } catch {
       toast({
         variant: "destructive",
@@ -380,11 +383,11 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY }) 
             <Button
               onClick={() => {
                 setShowSuccessDialog(false);
-                window.location.href = "/dashboard"; // ! this fixes update not working immediately after submit. its kinda harsh. maybe find alternative, but it also feels super submitted to the user. y'know?
+                loadExistingRequest(); // ! this fixes update not working immediately after submit. its kinda harsh. maybe find alternative, but it also feels super submitted to the user. y'know?
               }}
               className="w-full sm:w-auto"
             >
-              🏠 Home
+              Close
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
