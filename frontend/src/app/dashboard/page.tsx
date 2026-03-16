@@ -39,8 +39,10 @@ import PGY3RotationForm from "./components/PGY3RotationForm";
 import PGY4RotationPage from "./components/PGY4RotationPage";
 import PGY4SchedulePage from "../dashboard/pgy4-schedule/page";
 import SchedulesPage from "./components/SchedulesPage";
+
 import MobileHeader from "./components/MobileHeader";
 import MobileUserMenu from "./components/MobileUserMenu";
+
 import { VacationResponse } from "@/lib/models/VacationResponse";
 import { CallType } from "@/lib/models/CallType";
 import { DateResponse } from "@/lib/models/DateResponse";
@@ -99,7 +101,7 @@ interface ScheduleItem {
 
 // menu items
 const menuItems: MenuItem[] = [
-  { title: "Home", icon: <Home className="w-6 h-6 mr-3" /> }, // ! main has a different className, i kept them how they were. do whatever is best.
+  { title: "Home", icon: <Home className="w-6 h-6 mr-3" /> },
   { title: "Calendar", icon: <CalendarDays className="w-6 h-6 mr-3" /> },
   { title: "Swap Calls", icon: <Repeat className="w-6 h-6 mr-3" /> },
   { title: "Request Off", icon: <CalendarX className="w-6 h-6 mr-3" /> },
