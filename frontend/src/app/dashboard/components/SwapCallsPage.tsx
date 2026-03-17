@@ -3,61 +3,73 @@
 import React, { useState } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
-import { Calendar, Users, Clock, Repeat, Send, ArrowRightLeft, AlertTriangle } from "lucide-react";
+import { Calendar, Users, Repeat, Send, ArrowRightLeft, AlertTriangle } from "lucide-react";
+import { CalendarEvent } from "@/lib/models/CalendarEvent";
 
 interface SwapCallsPageProps {
   yourShiftDate: string;
-  setYourShiftDate: (value: string) => void;
   partnerShiftDate: string;
-  setPartnerShiftDate: (value: string) => void;
   selectedResident: string;
   setSelectedResident: (value: string) => void;
   residents: { id: string; name: string }[];
   selectedShift: string;
-  setSelectedShift: (value: string) => void;
   partnerShift: string;
-  setPartnerShift: (value: string) => void;
-  shifts: { id: string; name: string }[];
+  userShiftEvents: CalendarEvent[];
+  partnerShiftEvents: CalendarEvent[];
+  onSelectUserShift: (date: string, callType: string) => void;
+  onSelectPartnerShift: (date: string, callType: string) => void;
   handleSubmitSwap: () => void;
 }
 
-// Add this utility function for shift mapping
-function mapShiftType(shift: string) {
-  if (shift === "Saturday") return ["Saturday (24h)", "Saturday (12h)"];
-  if (shift === "Sunday") return ["Sunday (12h)"];
-  return [shift]; // "Short" stays "Short"
+function formatDate(dateStr: string, opts: Intl.DateTimeFormatOptions) {
+  if (!dateStr) return '';
+  const [year, month, day] = dateStr.split('-');
+  return new Date(Number(year), Number(month) - 1, Number(day)).toLocaleDateString('en-US', opts);
+}
+
+function eventToOption(e: CalendarEvent): { value: string; label: string } {
+  const dateStr = e.start instanceof Date
+    ? e.start.toISOString().split('T')[0]
+    : String(e.start).split('T')[0];
+  const callType = e.extendedProps?.callType ?? '';
+  const hours = e.extendedProps?.callTypeId === 99 ? ` (${e.extendedProps?.hours}h)` : '';
+  const fullCallType = callType + hours;
+  const label = formatDate(dateStr, { weekday: 'short', month: 'short', day: 'numeric' });
+  return { value: `${dateStr}|${fullCallType}`, label: `${label} — ${fullCallType}` };
 }
 
 const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
   yourShiftDate,
-  setYourShiftDate,
   partnerShiftDate,
-  setPartnerShiftDate,
   selectedResident,
   setSelectedResident,
   residents,
   selectedShift,
-  setSelectedShift,
   partnerShift,
-  setPartnerShift,
-  shifts,
+  userShiftEvents,
+  partnerShiftEvents,
+  onSelectUserShift,
+  onSelectPartnerShift,
   handleSubmitSwap,
 }) => {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const isFormValid = yourShiftDate && partnerShiftDate && selectedResident && selectedShift && partnerShift;
 
+  const userShiftValue = yourShiftDate && selectedShift ? `${yourShiftDate}|${selectedShift}` : "";
+  const partnerShiftValue = partnerShiftDate && partnerShift ? `${partnerShiftDate}|${partnerShift}` : "";
+
+  const handleSelect = (value: string, setter: (date: string, callType: string) => void) => {
+    const idx = value.indexOf('|');
+    if (idx === -1) return;
+    setter(value.slice(0, idx), value.slice(idx + 1));
+  };
+
   const handleInitialSubmit = () => {
-    if (isFormValid) {
-      setShowConfirmation(true);
-    }
+    if (isFormValid) setShowConfirmation(true);
   };
 
   const handleConfirmSubmit = () => {
     handleSubmitSwap();
-    setShowConfirmation(false);
-  };
-
-  const handleCancelSubmit = () => {
     setShowConfirmation(false);
   };
 
@@ -77,50 +89,36 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
           </p>
         </div>
 
-        {/* Main Form Card */}
         <Card className="p-5 shadow-lg border border-border flex-1 flex flex-col">
           <div className="space-y-5 flex-1">
-            {/* Your Shift Date Selection */}
+            {/* Your Shift */}
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-primary" />
-                <label htmlFor="your-shift-date" className="text-sm font-semibold text-foreground">
-                  Your Shift Date
-                </label>
+                <label htmlFor="your-shift" className="text-sm font-semibold text-foreground">Your Shift</label>
               </div>
-              <input
-                id="your-shift-date"
-                type="date"
-                className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
-                value={yourShiftDate}
-                onChange={(e) => setYourShiftDate(e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
-              />
+              <select
+                id="your-shift"
+                className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors appearance-none cursor-pointer disabled:opacity-50"
+                value={userShiftValue}
+                onChange={(e) => handleSelect(e.target.value, onSelectUserShift)}
+                disabled={userShiftEvents.length === 0}
+              >
+                <option value="" disabled>
+                  {userShiftEvents.length === 0 ? 'No upcoming shifts found' : 'Select your shift'}
+                </option>
+                {userShiftEvents.map((e, i) => {
+                  const opt = eventToOption(e);
+                  return <option key={i} value={opt.value}>{opt.label}</option>;
+                })}
+              </select>
             </div>
-            {/* Partner&apos;s Shift Date Selection */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-primary" />
-                <label htmlFor="partner-shift-date" className="text-sm font-semibold text-foreground">
-                  Partner&apos;s Shift Date
-                </label>
-              </div>
-              <input
-                id="partner-shift-date"
-                type="date"
-                className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
-                value={partnerShiftDate}
-                onChange={(e) => setPartnerShiftDate(e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
-              />
-            </div>
-            {/* Resident Selection */}
+
+            {/* Swap Partner */}
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4 text-primary" />
-                <label htmlFor="resident-select" className="text-sm font-semibold text-foreground">
-                  Swap Partner
-                </label>
+                <label htmlFor="resident-select" className="text-sm font-semibold text-foreground">Swap Partner</label>
               </div>
               <select
                 id="resident-select"
@@ -130,58 +128,39 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
               >
                 <option value="" disabled>Choose a resident to swap with</option>
                 {residents.map((resident) => (
-                  <option key={resident.id} value={resident.id}>
-                    {resident.name}
-                  </option>
+                  <option key={resident.id} value={resident.id}>{resident.name}</option>
                 ))}
               </select>
             </div>
 
-            {/* Your Shift Type Selection */}
+            {/* Partner's Shift */}
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-primary" />
-                <label htmlFor="shift-select" className="text-sm font-semibold text-foreground">
-                  Your Shift Type
-                </label>
+                <Calendar className="h-4 w-4 text-primary" />
+                <label htmlFor="partner-shift" className="text-sm font-semibold text-foreground">Partner&apos;s Shift</label>
               </div>
               <select
-                id="shift-select"
-                className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors appearance-none cursor-pointer"
-                value={selectedShift}
-                onChange={(e) => setSelectedShift(e.target.value)}
+                id="partner-shift"
+                className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors appearance-none cursor-pointer disabled:opacity-50"
+                value={partnerShiftValue}
+                onChange={(e) => handleSelect(e.target.value, onSelectPartnerShift)}
+                disabled={!selectedResident || partnerShiftEvents.length === 0}
               >
-                <option value="" disabled>Select shift type</option>
-                {shifts.map((shift) => (
-                  <option key={shift.id} value={shift.id}>
-                    {shift.name}
-                  </option>
-                ))}
+                <option value="" disabled>
+                  {!selectedResident
+                    ? 'Select a partner first'
+                    : partnerShiftEvents.length === 0
+                    ? 'No upcoming shifts found'
+                    : "Select partner's shift"}
+                </option>
+                {partnerShiftEvents.map((e, i) => {
+                  const opt = eventToOption(e);
+                  return <option key={i} value={opt.value}>{opt.label}</option>;
+                })}
               </select>
             </div>
-            {/* Partner&apos;s Shift Type Selection */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-primary" />
-                <label htmlFor="partner-shift-select" className="text-sm font-semibold text-foreground">
-                  Partner&apos;s Shift Type
-                </label>
-              </div>
-              <select
-                id="partner-shift-select"
-                className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors appearance-none cursor-pointer"
-                value={partnerShift}
-                onChange={(e) => setPartnerShift(e.target.value)}
-              >
-                <option value="" disabled>Select shift type</option>
-                {shifts.map((shift) => (
-                  <option key={shift.id} value={shift.id}>
-                    {shift.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            {/* Form Summary */}
+
+            {/* Summary */}
             {isFormValid && (
               <div className="bg-muted/50 rounded-lg p-3 border border-border">
                 <h3 className="font-semibold text-foreground mb-2 flex items-center gap-2 text-sm">
@@ -192,21 +171,13 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Your Shift:</span>
                     <span className="font-medium text-foreground">
-                      {yourShiftDate ? (() => {
-                        const [year, month, day] = yourShiftDate.split('-');
-                        const localDate = new Date(Number(year), Number(month) - 1, Number(day));
-                        return localDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                      })() : ''} - {selectedShift ? mapShiftType(shifts.find(s => s.id === selectedShift)?.name || '').join(' / ') : 'N/A'}
+                      {formatDate(yourShiftDate, { month: 'short', day: 'numeric' })} — {selectedShift}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Partner&apos;s Shift:</span>
                     <span className="font-medium text-foreground">
-                      {partnerShiftDate ? (() => {
-                        const [year, month, day] = partnerShiftDate.split('-');
-                        const localDate = new Date(Number(year), Number(month) - 1, Number(day));
-                        return localDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                      })() : ''} - {partnerShift ? mapShiftType(shifts.find(s => s.id === partnerShift)?.name || '').join(' / ') : 'N/A'}
+                      {formatDate(partnerShiftDate, { month: 'short', day: 'numeric' })} — {partnerShift}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -220,12 +191,12 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
             )}
           </div>
 
-          {/* Submit Button / Confirmation */}
+          {/* Submit / Confirmation */}
           <div className="pt-4 mt-auto">
             {!showConfirmation ? (
               <>
-                <Button 
-                  onClick={handleInitialSubmit} 
+                <Button
+                  onClick={handleInitialSubmit}
                   className="w-full py-2.5 text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200"
                   disabled={!isFormValid}
                 >
@@ -233,9 +204,7 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                   <span>Submit Swap Request</span>
                 </Button>
                 {!isFormValid && (
-                  <p className="text-xs text-muted-foreground mt-2 text-center">
-                    Complete all fields to submit
-                  </p>
+                  <p className="text-xs text-muted-foreground mt-2 text-center">Complete all fields to submit</p>
                 )}
               </>
             ) : (
@@ -243,39 +212,22 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                 <div className="bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
                   <div className="flex items-center gap-2 mb-2">
                     <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
-                    <h3 className="text-sm font-semibold text-yellow-800 dark:text-yellow-200">
-                      Confirm Swap Request
-                    </h3>
+                    <h3 className="text-sm font-semibold text-yellow-800 dark:text-yellow-200">Confirm Swap Request</h3>
                   </div>
                   <p className="text-xs text-yellow-700 dark:text-yellow-300 mb-2">
                     Are you sure you want to submit this swap request? This action will notify your selected partner.
                   </p>
                   <div className="text-xs text-yellow-600 dark:text-yellow-400">
-                    <strong>Your Shift:</strong> {yourShiftDate ? (() => {
-                      const [year, month, day] = yourShiftDate.split('-');
-                      const localDate = new Date(Number(year), Number(month) - 1, Number(day));
-                      return localDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                    })() : ''} - {selectedShift ? mapShiftType(shifts.find(s => s.id === selectedShift)?.name || '').join(' / ') : 'N/A'}<br/>
-                    <strong>Partner&apos;s Shift:</strong> {partnerShiftDate ? (() => {
-                      const [year, month, day] = partnerShiftDate.split('-');
-                      const localDate = new Date(Number(year), Number(month) - 1, Number(day));
-                      return localDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                    })() : ''} - {partnerShift ? mapShiftType(shifts.find(s => s.id === partnerShift)?.name || '').join(' / ') : 'N/A'}<br/>
+                    <strong>Your Shift:</strong> {formatDate(yourShiftDate, { month: 'short', day: 'numeric', year: 'numeric' })} — {selectedShift}<br />
+                    <strong>Partner&apos;s Shift:</strong> {formatDate(partnerShiftDate, { month: 'short', day: 'numeric', year: 'numeric' })} — {partnerShift}<br />
                     <strong>Partner:</strong> {residents.find(r => r.id === selectedResident)?.name}
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button 
-                    onClick={handleCancelSubmit}
-                    variant="outline"
-                    className="flex-1 py-2.5 text-sm"
-                  >
+                  <Button onClick={() => setShowConfirmation(false)} variant="outline" className="flex-1 py-2.5 text-sm">
                     Cancel
                   </Button>
-                  <Button 
-                    onClick={handleConfirmSubmit}
-                    className="flex-1 py-2.5 text-sm font-semibold flex items-center justify-center gap-2"
-                  >
+                  <Button onClick={handleConfirmSubmit} className="flex-1 py-2.5 text-sm font-semibold flex items-center justify-center gap-2">
                     <Send className="h-4 w-4" />
                     Confirm & Send
                   </Button>
@@ -289,4 +241,4 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
   );
 };
 
-export default SwapCallsPage; 
+export default SwapCallsPage;
