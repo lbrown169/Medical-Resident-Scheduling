@@ -193,9 +193,9 @@ public class Pgy4RotationScheduleService(
         int scheduleYear = currentYear;
         if (currentMonth < 7)
         {
-            scheduleYear--;
+            return scheduleYear;
         }
 
-        return scheduleYear;
+        return scheduleYear + 1;
     }
 }
