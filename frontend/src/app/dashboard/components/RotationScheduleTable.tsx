@@ -32,9 +32,25 @@ export interface RotationScheduleTableProps {
 	schedule: ResidentScheduleEntry[];
 	colorMap: Record<string, string>;
 	displayNames?: Record<string, string>;
-	rotationTypes: string[];
-	allowResidentReassignment?: boolean; // !!! This currently just makes it look clickable. It doesn't show a dropdown yet.
-	onRotationChange?: (residentId: string, monthIndex: number, newRotationName: string) => void;
+	/** List of allowed rotation types with their IDs and names for the dropdown */
+	rotationTypes: { id: string; name: string }[];
+	allowResidentReassignment?: boolean;
+	/** Fires with the rotation type ID (not name) when a rotation is changed */
+	onRotationChange?: (residentId: string, monthIndex: number, newRotationTypeId: string) => void;
+
+	/**
+	 * List of all residents to populate the reassignment dropdown.
+	 * Only used when allowResidentReassignment is true.
+	 */
+	residentList?: { id: string; name: string }[];
+
+	/**
+	 * Called when a resident is reassigned to a rotation slot.
+	 * Only used when allowResidentReassignment is true.
+	 * !!! Since PGY4s don't need this. Algo revision will need to change this.
+	 * !!! This has zero effects on PGY4s, so do whatever you need.
+	 */
+	onResidentChange?: (rotationId: string, newResidentId: string) => void;
 }
 
 // Constants !!! if they use different months, add this as prop. I assume its the same between us, but very easy fix if not.
@@ -52,10 +68,10 @@ interface RotationDropdownProps {
 	residentId: string;
 	monthIndex: number;
 	currentRotation: string;
-	rotationTypes: string[];
+	rotationTypes: { id: string; name: string }[];
 	colorMap: Record<string, string>;
 	displayNames: Record<string, string>;
-	onSelect: (residentId: string, monthIndex: number, newRotation: string) => void;
+	onSelect: (residentId: string, monthIndex: number, newRotationTypeId: string) => void;
 }
 
 function RotationDropdown({
@@ -98,14 +114,14 @@ function RotationDropdown({
 			{open && (
 				<div className="absolute z-50 top-full mt-1 left-0 min-w-[140px] bg-white dark:bg-neutral-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden">
 					{rotationTypes.map(rotation => {
-						const optDisplay = displayNames[rotation] ?? rotation;
-						const isCurrent = rotation === currentRotation;
+						const optDisplay = displayNames[rotation.name] ?? rotation.name;
+						const isCurrent = rotation.name === currentRotation;
 						return (
 							<button
-								key={rotation}
+								key={rotation.id}
 								className={`w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-gray-50 dark:hover:bg-neutral-700 transition-colors ${isCurrent ? "font-bold bg-gray-50 dark:bg-neutral-700" : ""}`}
 								onClick={() => {
-									onSelect(residentId, monthIndex, rotation);
+									onSelect(residentId, monthIndex, rotation.id);
 									setOpen(false);
 								}}
 							>
@@ -128,6 +144,8 @@ export const RotationScheduleTable: React.FC<RotationScheduleTableProps> = ({
 	rotationTypes,
 	allowResidentReassignment = false,
 	onRotationChange,
+	residentList = [],
+	onResidentChange,
 }) => {
 	const handleSelect = (residentId: string, monthIndex: number, newRotation: string) => {
 		onRotationChange?.(residentId, monthIndex, newRotation);
@@ -166,10 +184,22 @@ export const RotationScheduleTable: React.FC<RotationScheduleTableProps> = ({
 									className="hover:bg-gray-50 dark:hover:bg-neutral-800 divide-x divide-gray-200 dark:divide-gray-700"
 								>
 									<td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100 sticky left-0 bg-white dark:bg-neutral-900">
-										{allowResidentReassignment ? ( // !!! This currently just makes it look clickable. It doesn't show a dropdown yet.
-											<button className="underline decoration-dotted cursor-pointer hover:text-blue-600">
-												{shortName}
-											</button>
+										{allowResidentReassignment && residentList.length > 0 ? (
+											<select
+												className="text-sm font-medium bg-transparent border-b border-dotted border-gray-400 focus:outline-none cursor-pointer"
+												value={resident.resident_id}
+												onChange={e => {
+													// !!! This needs to change for Algo Revision group.
+													// Currently passes the first rotationId in the row as a placeholder.
+													// You will likely need to change what data is passed here.
+													const rotation = rotations[0];
+													if (rotation) onResidentChange?.(rotation.rotationId, e.target.value);
+												}}
+											>
+												{residentList.map(r => (
+													<option key={r.id} value={r.id}>{r.name}</option>
+												))}
+											</select>
 										) : (
 											shortName
 										)}

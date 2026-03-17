@@ -169,7 +169,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 	const [loadingSchedules, setLoadingSchedules] = useState(false);
 	const [generating, setGenerating] = useState(false);
 	const [scheduleError, setScheduleError] = useState<string | null>(null);
-	const [rotationTypeNames, setRotationTypeNames] = useState<string[]>([]);
+	const [rotationTypeNames, setRotationTypeNames] = useState<{ id: string; name: string }[]>([]);
 
 	const selectedSchedule = schedules.find(s => s.pgy4RotationScheduleId === selectedScheduleId) ?? null;
 
@@ -263,12 +263,12 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 				const known = Object.keys(rotationColorMap);
 				setRotationTypeNames(
 					data.rotationTypes
-						.map(rt => rt.rotationName)
-						.filter(name => known.includes(name))
+						.filter(rt => known.includes(rt.rotationName))
+						.map(rt => ({ id: rt.rotationTypeId, name: rt.rotationName }))
 				);
 			} catch (err) {
 				console.error("Failed to load rotation types", err);
-				setRotationTypeNames(Object.keys(rotationColorMap));
+				setRotationTypeNames(Object.keys(rotationColorMap).map(name => ({ id: name, name })));
 			}
 		};
 
