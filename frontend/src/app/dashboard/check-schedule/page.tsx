@@ -58,7 +58,7 @@ export default function Page() {
             id: date.dateId,
             date: date.shiftDate,
             time: "All Day",
-            shift: `${date.callType.description} Call`,
+            shift: `${date.callType.description}${date.callType.id === 99 ? ` (${date.hours}h)` : ''} Call`,
             location: "Hospital"
           }));
 

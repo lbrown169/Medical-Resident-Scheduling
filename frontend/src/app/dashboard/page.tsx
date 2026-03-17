@@ -42,31 +42,12 @@ import MobileUserMenu from "./components/MobileUserMenu";
 import { VacationResponse } from "@/lib/models/VacationResponse";
 import { CallType } from "@/lib/models/CallType";
 import { DateResponse } from "@/lib/models/DateResponse";
+import { CalendarEvent } from "@/lib/models/CalendarEvent";
 
 type MenuItem = {
   title: string;
   icon: ReactElement;
 };
-
-// Define types for API responses
-
-interface CalendarEvent {
-  id: string;
-  title: string;
-  start: Date;
-  end: Date;
-  backgroundColor: string;
-  borderColor: string;
-  extendedProps: {
-    scheduleId: string;
-    residentId?: string;
-    firstName?: string;
-    lastName?: string;
-    callType: string;
-    dateId: string;
-    pgyLevel?: number;
-  };
-}
 
 interface Resident {
   resident_id: string;
@@ -107,9 +88,11 @@ const menuItems: MenuItem[] = [
   { title: "Settings", icon: <Settings className="w-6 h-6 mr-3" /> },
 ];
 
-const leaveReasons = [
+const leaveReasons: { id: string; name: string; halfDay?: string }[] = [
   { id: "vacation", name: "Vacation" },
   { id: "sick", name: "Sick Leave" },
+  { id: "sick-am", name: "Sick Leave (AM)", halfDay: "A" },
+  { id: "sick-pm", name: "Sick Leave (PM)", halfDay: "P" },
   { id: "cme", name: "ED (Education Days)" },
   { id: "personal", name: "Personal Leave" },
   { id: "other", name: "Other" },
@@ -126,11 +109,6 @@ function SidebarFloatingTrigger() {
   );
 }
 
-function mapShiftType(shift: string) {
-  if (shift === "Saturday") return ["Saturday (24h)", "Saturday (12h)"];
-  if (shift === "Sunday") return ["Sunday (12h)"];
-  return [shift]; // "Short" stays "Short"
-}
 
 function Dashboard() {
   const router = useRouter();
@@ -156,6 +134,7 @@ function Dashboard() {
   const [yourShiftDate, setYourShiftDate] = useState<string>("");
   const [partnerShiftDate, setPartnerShiftDate] = useState<string>("");
   const [partnerShift, setPartnerShift] = useState<string>("");
+
 
   // Request off form state
   const [startDate, setStartDate] = useState<string>("");
@@ -282,7 +261,7 @@ function Dashboard() {
             id: date.dateId,
             date: date.shiftDate,
             time: "All Day",
-            shift: `${date.callType.description} Call`,
+            shift: `${date.callType.description}${date.callType.id === 99 ? ` (${date.hours}h)` : ''} Call`,
             location: "Hospital"
           }));
 
@@ -324,15 +303,16 @@ function Dashboard() {
             start: d,
             end: d,
             backgroundColor: eventColor,
-            borderColor: eventColor,
             extendedProps: {
               scheduleId: date.scheduleId,
               residentId: date.residentId,
               firstName: date.firstName,
               lastName: date.lastName,
               callType: date.callType.description,
+              callTypeId: date.callType.id,
               dateId: date.dateId,
-              pgyLevel: graduateYear
+              pgyLevel: graduateYear,
+              hours: date.hours,
             }
           };
         });
@@ -708,69 +688,16 @@ function Dashboard() {
     }
 
     try {
-      // Filter for user's shift
-      const myCandidates = calendarEvents.filter((event) => {
-        const eventCallType = (event.extendedProps?.callType || "").trim();
-        const eventResidentId = (event.extendedProps?.residentId || "").trim();
-        const validCallTypes = mapShiftType(selectedShift);
-        if (
-          eventResidentId === (user?.id || "").trim() &&
-          validCallTypes.includes(eventCallType)
-        ) {
-          const eventDateLocal = new Date(event.start);
-          const yourShiftDateLocal = parseLocalDate(yourShiftDate);
-          const equal = isSameDay(eventDateLocal, yourShiftDateLocal);
-          console.log("Date compare (my):", {
-            eventDate: eventDateLocal.toString(),
-            yourShiftDate: yourShiftDateLocal?.toString(),
-            equal,
-          });
-          return equal;
-        }
-        return false;
-      });
-
-      console.log(
-        'All events for my user on yourShiftDate:',
-        calendarEvents.filter(
-          (event) =>
-            (event.extendedProps?.residentId || '').trim() === (user?.id || '').trim() &&
-            isSameDay(event.start, parseLocalDate(yourShiftDate))
-        )
+      const myShift = calendarEvents.find((event) =>
+        (event.extendedProps?.residentId || "").trim() === (user?.id || "").trim() &&
+        isSameDay(event.start, yourShiftDate)
       );
 
-      const myEventsOnDate = calendarEvents.filter(
-        (event) =>
-          (event.extendedProps?.residentId || '').trim() === (user?.id || '').trim() &&
-          isSameDay(event.start, parseLocalDate(yourShiftDate))
+      const partnerShiftEvent = calendarEvents.find((event) =>
+        (event.extendedProps?.residentId || "").trim() === (selectedResident || "").trim() &&
+        isSameDay(event.start, partnerShiftDate)
       );
-      console.log('All events for my user on yourShiftDate (full details):', JSON.stringify(myEventsOnDate, null, 2));
 
-      // Filter for partner's shift
-      const partnerCandidates = calendarEvents.filter((event) => {
-        const eventCallType = (event.extendedProps?.callType || "").trim();
-        const eventResidentId = (event.extendedProps?.residentId || "").trim();
-        const validCallTypes = mapShiftType(partnerShift);
-        if (
-          eventResidentId === (selectedResident || "").trim() &&
-          validCallTypes.includes(eventCallType)
-        ) {
-          const eventDateLocal = new Date(event.start);
-          const partnerShiftDateLocal = parseLocalDate(partnerShiftDate);
-          const equal = isSameDay(eventDateLocal, partnerShiftDateLocal);
-          console.log("Date compare (partner):", {
-            eventDate: eventDateLocal.toString(),
-            partnerShiftDate: partnerShiftDateLocal?.toString(),
-            equal,
-          });
-          return equal;
-        }
-        return false;
-      });
-      console.log('myCandidates:', myCandidates);
-      console.log('partnerCandidates:', partnerCandidates);
-      const myShift = myCandidates[0];
-      const partnerShiftEvent = partnerCandidates[0];
       if (!myShift || !partnerShiftEvent) {
         toast({
           variant: "destructive",
@@ -870,13 +797,20 @@ function Dashboard() {
         return `${year}-${month}-${day}`;
       };
 
+      const selectedReason = leaveReasons.find((r) => r.id === reason);
+      const apiReason = selectedReason?.id?.startsWith("sick")
+        ? "Sick Leave"
+        : (selectedReason?.name ?? reason);
+      const halfDay = selectedReason?.halfDay ?? null;
+
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
         requests.push({
           GroupId: groupId, //New request
           ResidentId: user.id,
           Date: formatLocalDate(d),
-          Reason: reason,
-          Details: description || ''
+          Reason: apiReason,
+          Details: description || '',
+          ...(halfDay ? { HalfDay: halfDay } : {}),
         });
       }
   
@@ -1058,35 +992,34 @@ case "Home":
           />
         );
 
-      case "Swap Calls":
-        // Compute PGY-matched residents for swap
+      case "Swap Calls": {
         const myPGY = residents.find(r => r.resident_id === user?.id)?.graduate_yr;
         const pgyMatchedResidents = residents.filter(r => r.graduate_yr === myPGY && r.resident_id !== user?.id)
           .map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}` }));
-        
-        const availableShifts = [
-          { id: "Short", name: "Short" },
-          { id: "Saturday", name: "Saturday" },
-          { id: "Sunday", name: "Sunday" }
-        ];
-        
+        const now = new Date(); now.setHours(0, 0, 0, 0);
+        const filterShiftEvents = (residentId: string) =>
+          calendarEvents
+            .filter(e => (e.extendedProps?.residentId || "").trim() === residentId.trim() && new Date(e.start) >= now)
+            .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+        const userShiftEvents = user?.id ? filterShiftEvents(user.id) : [];
+        const partnerShiftEvents = selectedResident ? filterShiftEvents(selectedResident) : [];
         return (
           <SwapCallsPage
             yourShiftDate={yourShiftDate}
-            setYourShiftDate={setYourShiftDate}
             partnerShiftDate={partnerShiftDate}
-            setPartnerShiftDate={setPartnerShiftDate}
             selectedResident={selectedResident}
-            setSelectedResident={setSelectedResident}
+            setSelectedResident={(v) => { setSelectedResident(v); setPartnerShiftDate(""); setPartnerShift(""); }}
             residents={pgyMatchedResidents}
             selectedShift={selectedShift}
-            setSelectedShift={setSelectedShift}
             partnerShift={partnerShift}
-            setPartnerShift={setPartnerShift}
-            shifts={availableShifts}
+            userShiftEvents={userShiftEvents}
+            partnerShiftEvents={partnerShiftEvents}
+            onSelectUserShift={(date, callType) => { setYourShiftDate(date); setSelectedShift(callType); }}
+            onSelectPartnerShift={(date, callType) => { setPartnerShiftDate(date); setPartnerShift(callType); }}
             handleSubmitSwap={handleSubmitSwap}
           />
         );
+      }
 
       case "Request Off":
         return (
@@ -1208,6 +1141,9 @@ case "Home":
   useEffect(() => {
     if (selected === "Check My Schedule") {
       fetchMySchedule();
+    }
+    if (selected === "Calendar") {
+      fetchCalendarEvents();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected]);

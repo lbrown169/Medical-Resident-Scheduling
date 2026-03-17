@@ -1,4 +1,5 @@
 using System.Globalization;
+using MedicalDemo.Enums;
 using MedicalDemo.Models;
 using MedicalDemo.Models.DTO.Scheduling;
 using MedicalDemo.Models.Entities;
@@ -23,12 +24,13 @@ public class SchedulingMapperService
             .Select(d => d.ShiftDate)
             .ToList();
 
-        Pgy1Dto dto = new Pgy1Dto
+        Dictionary<PartOfDay, List<DateOnly>> days = BuildVacations(vacations);
+        Pgy1Dto dto = new()
         {
             ResidentId = resident.ResidentId,
             Name = resident.FirstName + " " + resident.LastName,
-            VacationRequests
-                = [.. vacations.Select(v => v.Date)],
+            MorningVacationRequests = [.. days[PartOfDay.Morning]],
+            AfternoonVacationRequests = [.. days[PartOfDay.Afternoon]],
             CommitedWorkDays = [.. committedDates],
             InTraining = resident.GraduateYr == 1
         };
@@ -50,12 +52,13 @@ public class SchedulingMapperService
             .Select(d => d.ShiftDate)
             .ToList();
 
+        Dictionary<PartOfDay, List<DateOnly>> days = BuildVacations(vacations);
         Pgy2Dto dto = new()
         {
             ResidentId = resident.ResidentId,
             Name = resident.FirstName + " " + resident.LastName,
-            VacationRequests
-                = [.. vacations.Select(v => v.Date)],
+            MorningVacationRequests = [.. days[PartOfDay.Morning]],
+            AfternoonVacationRequests = [.. days[PartOfDay.Afternoon]],
             CommitedWorkDays = [.. committedDates],
             InTraining = resident.GraduateYr == 2
         };
@@ -76,13 +79,38 @@ public class SchedulingMapperService
             .Select(d => d.ShiftDate)
             .ToList();
 
+        Dictionary<PartOfDay, List<DateOnly>> days = BuildVacations(vacations);
         return new Pgy3Dto
         {
             ResidentId = resident.ResidentId,
             Name = resident.FirstName + " " + resident.LastName,
-            VacationRequests
-                = [.. vacations.Select(v => v.Date)],
+            MorningVacationRequests = [.. days[PartOfDay.Morning]],
+            AfternoonVacationRequests = [.. days[PartOfDay.Afternoon]],
             CommitedWorkDays = [.. committedDates]
         };
+    }
+
+    private Dictionary<PartOfDay, List<DateOnly>> BuildVacations(IEnumerable<Vacation> vacations)
+    {
+        Dictionary<PartOfDay, List<DateOnly>> days = new() {
+            { PartOfDay.Morning, []},
+            { PartOfDay.Afternoon, []},
+        };
+
+        foreach (Vacation vacation in vacations)
+        {
+            PartOfDay part = PartOfDay.FromDbChar(vacation.HalfDay);
+            if (part.HasFlag(PartOfDay.Morning))
+            {
+                days[PartOfDay.Morning].Add(vacation.Date);
+            }
+
+            if (part.HasFlag(PartOfDay.Afternoon))
+            {
+                days[PartOfDay.Afternoon].Add(vacation.Date);
+            }
+        }
+
+        return days;
     }
 }
