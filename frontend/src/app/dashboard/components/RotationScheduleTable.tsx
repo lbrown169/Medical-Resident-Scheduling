@@ -53,8 +53,7 @@ export interface RotationScheduleTableProps {
 	onResidentChange?: (rotationId: string, newResidentId: string) => void;
 }
 
-// Constants !!! if they use different months, add this as prop. I assume its the same between us, but very easy fix if not.
-
+// Constants !!! if algo uses different months, add this as prop. I assume its the same between us though?
 const ACADEMIC_MONTHS = [
 	"JUL", "AUG", "SEP", "OCT", "NOV", "DEC",
 	"JAN", "FEB", "MAR", "APR", "MAY", "JUN",
