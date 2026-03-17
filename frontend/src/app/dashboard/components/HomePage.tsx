@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { Calendar, CalendarX, Clock, UserCheck, RotateCcw, Repeat, CalendarCheck, Bell, Users } from "lucide-react";
 import { config } from "../../../config";
 import { Dialog } from "../../../components/ui/dialog";
 import { toast } from "../../../lib/use-toast";
+import { CalendarEvent } from "@/lib/models/CalendarEvent";
 
 interface HomeProps {
   displayName: string;
@@ -40,19 +41,13 @@ interface DashboardData {
   }>;
 }
 
-interface CalendarEvent {
-  start: Date | string;
-  extendedProps?: {
-    residentId?: string;
-  };
-}
-
 const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId: string; onRefreshCalendar?: () => void }> = ({
   displayName,
   onNavigateToSwapCalls,
   onNavigateToRequestOff,
   onNavigateToSchedule,
   userId,
+  calendarEvents,
   onRefreshCalendar,
   isAdmin,
 }) => {
@@ -67,6 +62,27 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
   const [denyReason, setDenyReason] = useState("");
   const [pendingDenyId, setPendingDenyId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+
+  const upcomingShifts = useMemo(() => {
+    if (!calendarEvents?.length) return dashboardData.upcomingShifts;
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return calendarEvents
+      .filter(e => {
+        const start = e.start instanceof Date ? e.start : new Date(e.start);
+        return e.extendedProps?.residentId === userId && start >= now;
+      })
+      .sort((a, b) => {
+        const aDate = a.start instanceof Date ? a.start : new Date(a.start);
+        const bDate = b.start instanceof Date ? b.start : new Date(b.start);
+        return aDate.getTime() - bDate.getTime();
+      })
+      .slice(0, 5)
+      .map(e => ({
+        date: (e.start instanceof Date ? e.start : new Date(e.start)).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        type: `${e.extendedProps?.callType ?? ''}${e.extendedProps?.callTypeId === 99 ? ` (${e.extendedProps.hours}h)` : ''}`,
+      }));
+  }, [calendarEvents, userId, dashboardData.upcomingShifts]);
 
   const refreshDashboard = async () => {
     setLoading(true);
@@ -182,9 +198,8 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
     );
   }
 
-  // Filter out the 'schedule' type recent activity
   const filteredRecentActivity = dashboardData.recentActivity.filter(
-    (activity) => activity.type !== 'schedule'
+    (activity) => activity.type.startsWith('swap')
   );
 
   return (
@@ -219,11 +234,11 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
                 Upcoming Shifts
               </h2>
               <div className="space-y-1">
-                {dashboardData.upcomingShifts.length > 0 ? (
-                  dashboardData.upcomingShifts.map((shift, index) => (
+                {upcomingShifts.length > 0 ? (
+                  upcomingShifts.map((shift, index) => (
                     <div key={index} className="text-sm">
                       <span className="font-medium">{shift.date}</span>
-                      <span className="text-muted-foreground ml-2">({shift.type})</span>
+                      <span className="text-muted-foreground ml-2">{shift.type}</span>
                     </div>
                   ))
                 ) : (
@@ -288,7 +303,7 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
           <Card className="p-6 bg-card shadow-lg rounded-2xl min-h-[300px] flex flex-col flex-1">
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
               <Bell className="h-5 w-5" />
-              Recent Activity
+              Swap Notifications
             </h2>
             <div className="space-y-3 flex-1">
               {filteredRecentActivity.length > 0 ? (
@@ -315,7 +330,7 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
                 ))
               ) : (
                 <div className="flex-1 flex items-center justify-center">
-                  <p className="text-muted-foreground text-center">No recent activity</p>
+                  <p className="text-muted-foreground text-center">No swap notifications</p>
                 </div>
               )}
             </div>
