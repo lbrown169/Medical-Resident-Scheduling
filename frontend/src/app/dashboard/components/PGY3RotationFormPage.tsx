@@ -1,7 +1,5 @@
 "use client";
-
-import { config } from "../../../config";
-import React, { useState, useEffect } from "react";
+import React from "react";
 import PGY3RotationForm from "./PGY3RotationForm";
 import { ClipboardList } from "lucide-react";
 
@@ -12,7 +10,7 @@ interface PGY3RotationFormPageProps {
 
 const PGY3RotationFormPage: React.FC<PGY3RotationFormPageProps> = ({ userId, userPGY }) => {
 
- // Deadline configuration (March 15, 2026 at 11:59 PM EST)
+ // Deadline configuration, just may for now (this is configurable later)
  const deadline = new Date("2026-05-15T23:59:00-05:00"); // ! later have this be adjustable by admin
  const isDeadlinePassed = new Date() > deadline;
 
@@ -41,7 +39,7 @@ const PGY3RotationFormPage: React.FC<PGY3RotationFormPageProps> = ({ userId, use
          <ClipboardList className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
          <h2 className="text-2xl font-bold text-foreground mb-2">Submission Deadline Passed</h2>
          <p className="text-muted-foreground">
-           The deadline for submitting PGY-4 rotation preferences was March 15, 2026 at 11:59 PM EST.
+           The deadline for submitting PGY-4 rotation preferences was {deadline.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })} at {deadline.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZoneName: 'short' })}.
            The form is now closed.
          </p>
        </div>
@@ -79,5 +77,4 @@ const PGY3RotationFormPage: React.FC<PGY3RotationFormPageProps> = ({ userId, use
 
  );
 };
-
 export default PGY3RotationFormPage;

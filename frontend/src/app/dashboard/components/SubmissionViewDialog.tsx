@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -53,21 +53,9 @@ export const SubmissionViewDialog: React.FC<SubmissionViewDialogProps> = ({
   });
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch preferences when dialog opens
-  useEffect(() => {
-    if (open && residentId) {
-      if (prefetchedData) {
-        setPreferences(prefetchedData); // skip fetch
-      } else {
-        fetchPreferences();
-      }
-    }
-  }, [open, residentId, prefetchedData]);
-
-  const fetchPreferences = async () => {
+  const fetchPreferences = useCallback(async () => {
     setIsLoading(true);
     try {
-      // TODO: Update this endpoint to match your actual API
       const response = await fetch(
         `${config.apiUrl}/api/residents/preferences/${residentId}`
       );
@@ -99,7 +87,18 @@ export const SubmissionViewDialog: React.FC<SubmissionViewDialogProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [residentId, residentName]);
+
+  // Fetch preferences when dialog opens
+  useEffect(() => {
+    if (open && residentId) {
+      if (prefetchedData) {
+        setPreferences(prefetchedData);
+      } else {
+        fetchPreferences();
+      }
+    }
+  }, [open, residentId, prefetchedData, fetchPreferences]);
 
   // Field card component matching Figma exactly
 const FieldCard = ({ value, label }: { value: string; label: string }) => (

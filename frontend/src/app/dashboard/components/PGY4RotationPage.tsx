@@ -11,9 +11,8 @@ import { toast } from "../../../lib/use-toast";
 import { SubmissionViewDialog } from "./SubmissionViewDialog";
 import { RotationScheduleTable } from "./RotationScheduleTable";
 
-import { CalendarRange, Users, UserX, CalendarClock, Trash2, Save, Download, X, Calendar, ClipboardList, ChevronDown } from "lucide-react";
+import { CalendarRange, Users, UserX, CalendarClock, Trash2, Save, Download, X, ClipboardList, ChevronDown } from "lucide-react";
 import PGY3RotationForm from "./PGY3RotationForm";
-import { describe } from "node:test";
 
 // individual responses
 interface RotationPrefResponse {
@@ -162,7 +161,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 	const [activeTab, setActiveTab] = useState<'schedule' | 'submissions' | 'configure'>('schedule');
 	const currentYear = new Date().getFullYear();
 	const [selectedYear] = useState<number>(currentYear);
-	const deadline = new Date("2026-03-15T23:59:00-05:00"); // !! change to configured version obviously
+	const deadline = new Date("2026-04-15T23:59:00-05:00"); // !! change to configured version obviously
 
 	// Schedule state
 	const [schedules, setSchedules] = useState<Pgy4RotationScheduleResponse[]>([]);
@@ -193,10 +192,13 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 		setViewDialogOpen(true);
 	};
 
-	// State for submission deletion
+	// State for submission deletion, used in handleDeleteSubmission for loading tracking
 	const [deletingSubmission, setDeletingSubmission] = useState<string | null>(null);
 
-		// Config Tab
+	// Config Tab, setSwitchingChiefType used in handleSwitchChiefType (pending endpoint)
+
+	// This isnt around yet so, hide for now !!! come back to this
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const [switchingChiefType, setSwitchingChiefType] = useState<string | null>(null);
 	const [formOverrideResidentId, setFormOverrideResidentId] = useState<string | null>(null);
 
@@ -704,8 +706,9 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 													size="sm"
 													className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white"
 													onClick={() => handleDeleteSubmission(submission.rotationPrefRequestId)}
+													disabled={deletingSubmission === submission.rotationPrefRequestId}
 												>
-												Delete
+												{deletingSubmission === submission.rotationPrefRequestId ? "Deleting..." : "Delete"}
 												</Button>
 											</td>
 											</tr>

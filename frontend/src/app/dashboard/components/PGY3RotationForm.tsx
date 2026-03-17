@@ -3,7 +3,7 @@
 // !!! i dont think the other group needs this? if they do it it will need to change as it is intended for pgy3s only
 
 import { config } from "../../../config";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 import { toast } from "../../../lib/use-toast";
 import { Button } from "../../../components/ui/button";
@@ -76,7 +76,7 @@ const ROTATION_COLORS: Record<string, string> = {
  * - Additional notes field
  * - Validation to prevent duplicate selections in priority fields
  */
-const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY, onSuccess }) => {
+const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, onSuccess }) => {
 
   // Rotation options from backend
   const [rotationOptions, setRotationOptions] = useState<RotationOption[]>([]);
@@ -113,10 +113,6 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY, on
   // UI state
   const [loading, setLoading] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-
-  // Deadline configuration (March 15, 2026 at 11:59 PM EST)
-  const deadline = new Date("2026-03-15T23:59:00-05:00"); // ! later have this be adjustable by admin
-  const isDeadlinePassed = new Date() > deadline;
 
   useEffect(() => {
   
@@ -159,51 +155,52 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, userPGY, on
 
   // Define at component level, not inside useEffect
 const loadExistingRequest = async () => {
-  if (!userId) return;
-  try {
-    const res = await fetch(
-      `${config.apiUrl}/api/rotation-pref-request/resident/${userId}`
-    );
-    if (!res.ok) return;
-    const data = await res.json();
+  const loadExistingRequest = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const res = await fetch(
+        `${config.apiUrl}/api/rotation-pref-request/resident/${userId}`
+      );
+      if (!res.ok) return;
+      const data = await res.json();
 
-    setExistingRequestId(data.rotationPrefRequestId);
+      setExistingRequestId(data.rotationPrefRequestId);
 
-    const priorities = data.priorities ?? [];
-    const alternatives = data.alternatives ?? [];
-    const avoids = data.avoids ?? [];
+      const priorities = data.priorities ?? [];
+      const alternatives = data.alternatives ?? [];
+      const avoids = data.avoids ?? [];
 
-    setFirstPriority(priorities[0]?.rotationTypeId ?? null);
-    setSecondPriority(priorities[1]?.rotationTypeId ?? null);
-    setThirdPriority(priorities[2]?.rotationTypeId ?? null);
-    setFourthPriority(priorities[3]?.rotationTypeId ?? null);
-    setFifthPriority(priorities[4]?.rotationTypeId ?? null);
-    setSixthPriority(priorities[5]?.rotationTypeId ?? null);
-    setSeventhPriority(priorities[6]?.rotationTypeId ?? null);
-    setEighthPriority(priorities[7]?.rotationTypeId ?? null);
+      setFirstPriority(priorities[0]?.rotationTypeId ?? null);
+      setSecondPriority(priorities[1]?.rotationTypeId ?? null);
+      setThirdPriority(priorities[2]?.rotationTypeId ?? null);
+      setFourthPriority(priorities[3]?.rotationTypeId ?? null);
+      setFifthPriority(priorities[4]?.rotationTypeId ?? null);
+      setSixthPriority(priorities[5]?.rotationTypeId ?? null);
+      setSeventhPriority(priorities[6]?.rotationTypeId ?? null);
+      setEighthPriority(priorities[7]?.rotationTypeId ?? null);
 
-    setAlternative1(alternatives[0]?.rotationTypeId ?? null);
-    setAlternative2(alternatives[1]?.rotationTypeId ?? null);
-    setAlternative3(alternatives[2]?.rotationTypeId ?? null);
+      setAlternative1(alternatives[0]?.rotationTypeId ?? null);
+      setAlternative2(alternatives[1]?.rotationTypeId ?? null);
+      setAlternative3(alternatives[2]?.rotationTypeId ?? null);
 
-    setAvoid1(avoids[0]?.rotationTypeId ?? null);
-    setAvoid2(avoids[1]?.rotationTypeId ?? null);
-    setAvoid3(avoids[2]?.rotationTypeId ?? null);
+      setAvoid1(avoids[0]?.rotationTypeId ?? null);
+      setAvoid2(avoids[1]?.rotationTypeId ?? null);
+      setAvoid3(avoids[2]?.rotationTypeId ?? null);
 
-    setAdditionalNotes(data.additionalNotes ?? "");
-  } catch {
-    toast({
-      variant: "destructive",
-      title: "Error",
-      description: "Could not load existing rotation request.",
-    });
-  }
-};
+      setAdditionalNotes(data.additionalNotes ?? "");
+    } catch {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not load existing rotation request.",
+      });
+    }
+  }, [userId]);
 
   // Then just call it in useEffect
   useEffect(() => {
     loadExistingRequest();
-  }, [userId]);
+  }, [loadExistingRequest]);
 
   /**
    * Validates that all priority selections are unique (alternatives and avoid can duplicate) ! we probably shouldnt have this in final version right. ill keep it for now.
