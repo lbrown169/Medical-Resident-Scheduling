@@ -72,6 +72,27 @@ public class RotationPrefRequestSubmissionWindowController(
         return Ok(response);
     }
 
+    [HttpGet]
+    public async Task<ActionResult<RotationPrefSubmissionWindowResponse>> GetCurrentRotationPrefSubmissionWindow()
+    {
+        int academicYear = pgy4RotationScheduleService.GetScheduleYear();
+
+        RotationPrefSubmissionWindow? submissionWindow =
+            await context.RotationPrefRequestSubmissionWindows.FirstOrDefaultAsync(
+                (w) => w.AcademicYear == academicYear
+            );
+
+        if (submissionWindow == null)
+        {
+            return NotFound();
+        }
+
+        // Parse to response
+        RotationPrefSubmissionWindowResponse response =
+            submissionWindowConverter.CreateResponseFromModel(submissionWindow);
+        return Ok(response);
+    }
+
     private bool ValidateAvailableDate(DateTime availableDate, int academicYear)
     {
         int availableDateYear = availableDate.Year;
