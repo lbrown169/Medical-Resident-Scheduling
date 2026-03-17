@@ -154,7 +154,6 @@ const PGY3RotationForm: React.FC<PGY3RotationFormProps> = ({ userId, onSuccess }
 
 
   // Define at component level, not inside useEffect
-const loadExistingRequest = async () => {
   const loadExistingRequest = useCallback(async () => {
     if (!userId) return;
     try {
