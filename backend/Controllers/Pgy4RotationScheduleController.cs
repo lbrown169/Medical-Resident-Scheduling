@@ -36,9 +36,9 @@ public class Pgy4RotationScheduleController(
         [FromQuery] bool applyOverrides = false
     )
     {
-        Pgy4RotationSchedule? foundSchedule = await context
-            .Pgy4RotationSchedules.IncludeRotationTypeAndResidentProperties()
-            .FirstOrDefaultAsync((s) => s.Pgy4RotationScheduleId == scheduleId);
+        Pgy4RotationSchedule? foundSchedule = await pgy4RotationScheduleService.GetScheduleById(
+            scheduleId
+        );
 
         if (foundSchedule == null)
         {
@@ -203,9 +203,9 @@ public class Pgy4RotationScheduleController(
     {
         int scheduleYear = pgy4RotationScheduleService.GetScheduleYear();
 
-        Pgy4RotationSchedule? scheduleToBePublished = await context
-            .Pgy4RotationSchedules.IncludeRotationTypeAndResidentProperties()
-            .FirstOrDefaultAsync((schedule) => schedule.Pgy4RotationScheduleId == id);
+        Pgy4RotationSchedule? scheduleToBePublished =
+            await pgy4RotationScheduleService.GetScheduleById(id);
+        ;
 
         if (scheduleToBePublished == null)
         {
@@ -287,8 +287,7 @@ public class Pgy4RotationScheduleController(
         }
 
         Pgy4RotationSchedule? foundSchedule = await context
-            .Pgy4RotationSchedules.Include((schedule) => schedule.Rotations)
-                .ThenInclude((r) => r.RotationType)
+            .Pgy4RotationSchedules.IncludeRotationTypeAndResidentProperties()
             .FirstOrDefaultAsync(
                 (schedule) =>
                     schedule.Year == pgy4RotationScheduleService.GetScheduleYear()
