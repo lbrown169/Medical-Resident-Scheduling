@@ -122,7 +122,7 @@ public class Pgy4RotationScheduleService(
         // Insert schedule
         Guid newScheduleId = Guid.NewGuid();
 
-        int scheduleYear = GetScheduleYear();
+        int scheduleYear = GetAcademicYear();
 
         Pgy4RotationSchedule schedule = new()
         {
@@ -185,17 +185,8 @@ public class Pgy4RotationScheduleService(
         return count;
     }
 
-    public int GetScheduleYear()
+    public int GetAcademicYear()
     {
-        int currentYear = DateTime.Today.Year;
-        int currentMonth = DateTime.Today.Month;
-
-        int scheduleYear = currentYear;
-        if (currentMonth < 7)
-        {
-            return scheduleYear;
-        }
-
-        return scheduleYear + 1;
+        return DateOnly.FromDateTime(DateTime.Now).AcademicYear;
     }
 }

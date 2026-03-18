@@ -1,4 +1,5 @@
 using MedicalDemo.Converters;
+using MedicalDemo.Extensions;
 using MedicalDemo.Models.DTO.Requests;
 using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.Entities;
@@ -24,18 +25,38 @@ public class RotationPrefRequestSubmissionWindowController(
 
     [HttpPost]
     public async Task<ActionResult<RotationPrefSubmissionWindowResponse>> SetSubmissionWindow(
-            [FromBody] RotationPrefSubmissionWindowRequest request
-        )
+        [FromBody] RotationPrefSubmissionWindowRequest request
+    )
     {
         if (!ModelState.IsValid)
         {
             return BadRequest(ModelState);
         }
 
-        int academicYear = pgy4RotationScheduleService.GetScheduleYear();
+        int academicYear = pgy4RotationScheduleService.GetAcademicYear();
 
-        bool validAvailableDate = ValidateAvailableDate(request.AvailableDate, academicYear);
-        bool validDueDate = ValidateDueDate(request.AvailableDate, request.DueDate, academicYear);
+        DateTime adjustedAvailableDate = new(
+            request.AvailableDate.Year,
+            request.AvailableDate.Month,
+            request.AvailableDate.Day,
+            0,
+            0,
+            0
+        );
+        DateTime adjustedDueDate = new(
+            request.DueDate.Year,
+            request.DueDate.Month,
+            request.DueDate.Day,
+            0,
+            0,
+            0
+        );
+
+        request.AvailableDate = adjustedAvailableDate;
+        request.DueDate = adjustedDueDate;
+
+        bool validAvailableDate = ValidateAvailableDate(adjustedAvailableDate, academicYear);
+        bool validDueDate = ValidateDueDate(adjustedAvailableDate, adjustedDueDate, academicYear);
         if (!validAvailableDate || !validDueDate)
         {
             return BadRequest(ModelState);
@@ -43,7 +64,7 @@ public class RotationPrefRequestSubmissionWindowController(
 
         RotationPrefSubmissionWindow? submissionWindow =
             await context.RotationPrefRequestSubmissionWindows.FirstOrDefaultAsync(
-                (w) => w.AcademicYear == academicYear
+                (w) => w.AcademicYear == academicYear + 1
             );
 
         if (submissionWindow == null)
@@ -51,7 +72,7 @@ public class RotationPrefRequestSubmissionWindowController(
             // Add new submission window to DB
             submissionWindow = submissionWindowConverter.CreateModelFromRequest(
                 request,
-                academicYear
+                academicYear + 1
             );
 
             await context.RotationPrefRequestSubmissionWindows.AddAsync(submissionWindow);
@@ -73,13 +94,15 @@ public class RotationPrefRequestSubmissionWindowController(
     }
 
     [HttpGet]
-    public async Task<ActionResult<RotationPrefSubmissionWindowResponse>> GetCurrentRotationPrefSubmissionWindow()
+    public async Task<
+        ActionResult<RotationPrefSubmissionWindowResponse>
+    > GetCurrentRotationPrefSubmissionWindow()
     {
-        int academicYear = pgy4RotationScheduleService.GetScheduleYear();
+        int academicYear = pgy4RotationScheduleService.GetAcademicYear();
 
         RotationPrefSubmissionWindow? submissionWindow =
             await context.RotationPrefRequestSubmissionWindows.FirstOrDefaultAsync(
-                (w) => w.AcademicYear == academicYear
+                (w) => w.AcademicYear == academicYear + 1
             );
 
         if (submissionWindow == null)
@@ -97,25 +120,32 @@ public class RotationPrefRequestSubmissionWindowController(
     {
         int availableDateYear = availableDate.Year;
         int availableDateMonth = availableDate.Month;
-        if (availableDateYear == academicYear && availableDateMonth <= 6)
+        if (availableDateYear == academicYear && availableDateMonth >= 7)
         {
             return true;
         }
-        else if (availableDateYear == academicYear - 1 && availableDateMonth >= 7)
+        else if (availableDateYear == academicYear + 1 && availableDateMonth < 7)
         {
             return true;
         }
 
         ModelState.AddModelError(
             "Invalid dates",
-            $"Available date must be between {7}/{academicYear - 1} and {6}/{academicYear}"
+            $"Available date must be between {7}/{academicYear} and {6}/{academicYear + 1}"
         );
         return false;
     }
 
     private bool ValidateDueDate(DateTime availableDate, DateTime dueDate, int academicYear)
     {
-        availableDate = new DateTime(availableDate.Year, availableDate.Month, availableDate.Day, 0, 0, 0);
+        availableDate = new DateTime(
+            availableDate.Year,
+            availableDate.Month,
+            availableDate.Day,
+            0,
+            0,
+            0
+        );
         dueDate = new DateTime(dueDate.Year, dueDate.Month, dueDate.Day, 0, 0, 0);
 
         int dueDateYear = dueDate.Year;
@@ -124,27 +154,32 @@ public class RotationPrefRequestSubmissionWindowController(
 
         if (availableDate >= dueDate)
         {
-            ModelState.AddModelError("Invalid Timespan", "Available date cannot be the same as or after due date");
+            ModelState.AddModelError(
+                "Invalid Timespan",
+                "Available date cannot be the same as or after due date"
+            );
             hasError = true;
         }
 
-        if (!hasError)
+        if (
+            !(
+                dueDateYear == academicYear && dueDateMonth >= 7
+                || dueDateYear == academicYear + 1 && dueDateMonth < 7
+            )
+        )
         {
-            if (dueDateYear == academicYear && dueDateMonth <= 6)
-            {
-                return true;
-            }
-            else if (dueDateYear == academicYear - 1 && dueDateMonth >= 7)
-            {
-                return true;
-            }
+            ModelState.AddModelError(
+                "Invalid dates",
+                $"Due date must be between {7}/{academicYear} and {6}/{academicYear + 1}"
+            );
+            hasError = true;
         }
 
-        ModelState.AddModelError(
-            "Invalid dates",
-            $"Due date must be between {7}/{academicYear - 1} and {6}/{academicYear}"
-        );
+        if (hasError)
+        {
+            return false;
+        }
 
-        return false;
+        return true;
     }
 }

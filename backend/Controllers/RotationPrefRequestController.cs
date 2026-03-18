@@ -362,15 +362,14 @@ public class RotationPrefRequestController(
 
     private async Task<bool> ValidateRotationPrefRequestDateTime()
     {
-        int academicYear = pgy4RotationScheduleService.GetScheduleYear();
+        int academicYear = pgy4RotationScheduleService.GetAcademicYear();
 
         RotationPrefSubmissionWindow? submissionWindow =
             await context.RotationPrefRequestSubmissionWindows.FirstOrDefaultAsync(
-                (w) => w.AcademicYear == academicYear
+                (w) => w.AcademicYear == academicYear + 1
             );
 
-        DateTime time = DateTime.UtcNow;
-
+        DateTime localTime = DateTime.Now;
         DateTime? availableDate = submissionWindow?.AvailableDate;
 
         DateTime? dueDate = submissionWindow?.DueDate;
@@ -386,7 +385,7 @@ public class RotationPrefRequestController(
         }
 
         // Check if time is in between start date and due date
-        if (time <= availableDate)
+        if (localTime <= availableDate)
         {
             ModelState.AddModelError(
                 "Before Available Date Time",
@@ -396,7 +395,7 @@ public class RotationPrefRequestController(
         }
 
         DateTime? adjustedDueDate = dueDate?.AddDays(1);
-        if (time >= adjustedDueDate)
+        if (localTime >= adjustedDueDate)
         {
             ModelState.AddModelError(
                 "Due Date Passed",
