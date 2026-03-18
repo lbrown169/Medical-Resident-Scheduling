@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 using MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator;
 using MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator.Constraints;
 using MedicalDemo.Converters;
@@ -197,5 +198,36 @@ public class Pgy4RotationScheduleService(
         }
 
         return scheduleYear;
+    }
+
+    public string ExportScheduleCSVString(Pgy4RotationSchedule schedule)
+    {
+        StringBuilder builder = new();
+        builder.AppendLine("Name,July,August,September,October,November,December,January,February,March,April,May,June");
+
+        Dictionary<string, List<Rotation>> residentIdToRotations = [];
+
+        foreach (Rotation rotation in schedule.Rotations)
+        {
+            if (residentIdToRotations.TryGetValue(rotation.ResidentId, out List<Rotation>? value))
+            {
+                value.Add(rotation);
+            }
+            else
+            {
+                residentIdToRotations.Add(rotation.ResidentId, []);
+                residentIdToRotations[rotation.ResidentId].Add(rotation);
+            }
+        }
+
+        foreach (KeyValuePair<string, List<Rotation>> kvp in residentIdToRotations)
+        {
+            List<string> orderedRotationsNames = [.. kvp.Value.OrderBy((r) => r.AcademicMonthIndex).Select((r) => r.RotationType.RotationName)];
+            Resident resident = kvp.Value[0].Resident;
+
+            builder.AppendLine($"{resident.FirstName} {resident.LastName}," + string.Join(",", orderedRotationsNames));
+        }
+
+        return builder.ToString();
     }
 }
