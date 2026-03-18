@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import PGY3RotationForm from "./PGY3RotationForm";
+import RotationForm from "./RotationForm";
 import { ClipboardList } from "lucide-react";
 
 interface PGY3RotationFormPageProps {
@@ -13,8 +13,6 @@ const PGY3RotationFormPage: React.FC<PGY3RotationFormPageProps> = ({ userId, use
  // Deadline configuration, just may for now (this is configurable later)
  const deadline = new Date("2026-05-15T23:59:00-05:00"); // ! later have this be adjustable by admin
  const isDeadlinePassed = new Date() > deadline;
-
-
 
  // Check if user is not PGY-3
  if (userPGY !== 3) {
@@ -68,13 +66,17 @@ const PGY3RotationFormPage: React.FC<PGY3RotationFormPageProps> = ({ userId, use
         Due: {deadline.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })} at {deadline.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZoneName: 'short' })}
       </p>
     </div>
-    <PGY3RotationForm
+    <RotationForm
      userId={userId}
      userPGY={userPGY}
+     requiredPGY={3}
+     rotationPgyYear={4}
+     deadline={deadline}
+     submitEndpoint="api/rotation-pref-request"
+     fetchEndpoint="api/rotation-pref-request/resident"
     />
    </div>
   </div>
-
  );
 };
 export default PGY3RotationFormPage;

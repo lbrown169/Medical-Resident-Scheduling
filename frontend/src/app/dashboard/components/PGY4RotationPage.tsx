@@ -12,7 +12,7 @@ import { SubmissionViewDialog } from "./SubmissionViewDialog";
 import { RotationScheduleTable } from "./RotationScheduleTable";
 
 import { CalendarRange, Users, UserX, CalendarClock, Trash2, Save, Download, X, ClipboardList, ChevronDown } from "lucide-react";
-import PGY3RotationForm from "./PGY3RotationForm";
+import RotationForm from "./RotationForm";
 
 // individual responses
 interface RotationPrefResponse {
@@ -855,10 +855,15 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 								<div className="absolute inset-0 z-10 bg-background/60 backdrop-blur-[1px] rounded-lg flex items-center justify-center">
 								</div>
 						)}
-					<PGY3RotationForm
+					<RotationForm
 						key={formOverrideResidentId ?? ""}
 						userId={formOverrideResidentId ?? ""}
 						userPGY={PGY3Residents.find(r => r.id === formOverrideResidentId)?.pgyLevel as number ?? 3}
+						requiredPGY={3}
+						rotationPgyYear={4}
+						deadline={deadline}
+						submitEndpoint="api/rotation-pref-request"
+						fetchEndpoint="api/rotation-pref-request/resident"
 						onSuccess={handleRotationFormSuccess}
 					/>
 				</div>
