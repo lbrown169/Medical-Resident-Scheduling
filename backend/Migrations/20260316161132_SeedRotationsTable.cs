@@ -14,9 +14,9 @@ namespace MedicalDemo.Migrations
 
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            // migrationBuilder.DropColumn(
-            //     name: "rotation",
-            //     table: "rotations");
+            migrationBuilder.DropColumn(
+                name: "rotation",
+                table: "rotations");
 
             migrationBuilder.AlterColumn<string>(
                 name: "resident_id",

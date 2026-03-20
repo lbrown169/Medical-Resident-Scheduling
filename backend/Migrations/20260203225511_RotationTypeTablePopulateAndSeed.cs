@@ -43,7 +43,7 @@ namespace MedicalDemo.Migrations
                     { SeedingData.Iop, true, true, true, true, false, 8, "IOP" },
                     { SeedingData.ImOutpatient, false, true, true, true, false, 7, "ImOutpatient" },
                     { SeedingData.Addiction, true, true, true, true, false, 15, "Addiction" },
-                    { SeedingData.Addiction, true, true, true, true, false, 8, "HPC" },
+                    { SeedingData.Hpc, true, true, true, true, false, 8, "HPC" },
                     { SeedingData.Clc, true, true, true, true, false, 8, "CLC" },
                     { SeedingData.CommunityPsy, true, true, true, true, false, 15, "Community Psy" },
                     { SeedingData.Cap, true, true, true, true, false, 7, "CAP" },

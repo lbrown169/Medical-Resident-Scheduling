@@ -14,6 +14,7 @@ public class RotationConverter(RotationTypeConverter rotationTypeConverter)
         return new()
         {
             RotationId = rotation.RotationId,
+            ResidentId = rotation.ResidentId,
             ScheduleId = rotation.Pgy4RotationScheduleId,
             Month = rotation.Month,
             AcademicYear = rotation.AcademicYear,

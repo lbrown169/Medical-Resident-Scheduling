@@ -25,6 +25,6 @@ namespace MedicalDemo.Models.Entities
 
         public RotationType RotationType { get; set; } = null!;
 
-        public virtual Resident Resident { get; set; } = null!;
+        public virtual Resident? Resident { get; set; } = null!;
     }
 }
