@@ -1,7 +1,12 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace MedicalDemo.Models.DTO.Requests;
 
 public class CopyRotationRequest
 {
-    public int FromAcademicYear { get; set; }
-    public int ToAcademicYear { get; set; }
+    [Required]
+    public required int FromAcademicYear { get; set; }
+
+    [Required]
+    public required int ToAcademicYear { get; set; }
 }
