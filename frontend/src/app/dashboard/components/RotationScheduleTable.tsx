@@ -34,6 +34,8 @@ export interface RotationScheduleTableProps {
 	displayNames?: Record<string, string>;
 	/** List of allowed rotation types with their IDs and names for the dropdown */
 	rotationTypes: { id: string; name: string }[];
+	/** If true, rotation pills are non-interactive colored labels instead of dropdowns */
+	readOnly?: boolean;
 	allowResidentReassignment?: boolean;
 	/** Fires with the rotation type ID (not name) when a rotation is changed */
 	onRotationChange?: (residentId: string, monthIndex: number, newRotationTypeId: string) => void;
@@ -41,6 +43,7 @@ export interface RotationScheduleTableProps {
 	/**
 	 * List of all residents to populate the reassignment dropdown.
 	 * Only used when allowResidentReassignment is true.
+	 * e.g. [{ id: "ABC123", name: "John D." }]
 	 */
 	residentList?: { id: string; name: string }[];
 
@@ -141,6 +144,7 @@ export const RotationScheduleTable: React.FC<RotationScheduleTableProps> = ({
 	colorMap,
 	displayNames = {},
 	rotationTypes,
+	readOnly = false,
 	allowResidentReassignment = false,
 	onRotationChange,
 	residentList = [],
@@ -210,15 +214,26 @@ export const RotationScheduleTable: React.FC<RotationScheduleTableProps> = ({
 										return (
 											<td key={monthIndex} className="px-1 py-1.5 whitespace-nowrap text-center">
 												{rotation ? (
-													<RotationDropdown
-														residentId={resident.resident_id}
-														monthIndex={monthIndex}
-														currentRotation={rotation.rotationType.rotationName}
-														rotationTypes={rotationTypes}
-														colorMap={colorMap}
-														displayNames={displayNames}
-														onSelect={handleSelect}
-													/>
+													readOnly ? (
+														<span
+															className="text-white text-xs font-semibold px-3 py-1 rounded-full"
+															style={{
+																backgroundColor: colorMap[rotation.rotationType.rotationName] ?? FALLBACK_COLOR,
+															}}
+														>
+															{displayNames[rotation.rotationType.rotationName] ?? rotation.rotationType.rotationName}
+														</span>
+													) : (
+														<RotationDropdown
+															residentId={resident.resident_id}
+															monthIndex={monthIndex}
+															currentRotation={rotation.rotationType.rotationName}
+															rotationTypes={rotationTypes}
+															colorMap={colorMap}
+															displayNames={displayNames}
+															onSelect={handleSelect}
+														/>
+													)
 												) : (
 													<span className="text-gray-300 dark:text-gray-600">—</span>
 												)}
