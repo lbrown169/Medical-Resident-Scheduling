@@ -195,11 +195,56 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 	// State for submission deletion, used in handleDeleteSubmission for loading tracking
 	const [deletingSubmission, setDeletingSubmission] = useState<string | null>(null);
 
-	// Config Tab, setSwitchingChiefType used in handleSwitchChiefType (pending endpoint)
-
-	// This isnt around yet so, hide for now !!! come back to this
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	// Config Tab, setSwitchingChiefType used in handleSwitchChiefType
 	const [switchingChiefType, setSwitchingChiefType] = useState<string | null>(null);
+
+	// Local overrides for chief types
+	// "residents" is a prop so it won't rerender on its own
+	const [chiefTypeOverrides, setChiefTypeOverrides] = useState<Record<string, string>>({});
+
+	const handleSwitchChiefType = async (
+		resident: { id: string; name: string; chiefType: string },
+		newChiefType: string
+	) => {
+		// Don't do anything if the role hasn't actually changed
+		const currentChiefType = chiefTypeOverrides[resident.id] ?? resident.chiefType;
+		if (currentChiefType === newChiefType) return;
+
+		setSwitchingChiefType(resident.id);
+		try {
+			const res = await fetch(`${config.apiUrl}/api/pgy4-chief/${resident.id}`, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ ChiefType: newChiefType || "None" }),
+			});
+
+			if (res.ok) {
+				toast({
+					variant: "success",
+					title: "Chief Type Updated",
+					description: `${resident.name} has been set to ${newChiefType || "None"}.`,
+				});
+				// Update local override so dropdown reflects immediately
+				setChiefTypeOverrides(prev => ({ ...prev, [resident.id]: newChiefType }));
+			} else {
+				const error = await res.text();
+				toast({
+					variant: "destructive",
+					title: "Error",
+					description: error || "Failed to switch user chief type.",
+				});
+			}
+		} catch (error) {
+			console.error('Error switching user chief role:', error);
+			toast({
+				variant: "destructive",
+				title: "Error",
+				description: "Failed to switch user chief type. Please try again.",
+			});
+		} finally {
+			setSwitchingChiefType(null);
+		}
+	};
 	const [formOverrideResidentId, setFormOverrideResidentId] = useState<string | null>(null);
 
 	// Helper to map RotationPrefResponse to ResidentPreference
@@ -404,46 +449,6 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 			});
 		}
 	}
-/*
-	const handleSwitchChiefType = async (user: {}, newChiefType: string) => {
-		//Don't do anything if the role hasn't actually changed
-		if(user.chief_type === newChiefType) return;
-
-		setSwitchingChiefType(user.id);
-		try {
-			const response = await fetch(`${config.apiUrl}/api/${endpoint}/${user.id}`, {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' }
-			});
-
-			if (response.ok) {
-				toast({
-					title: "Chief Type Updated",
-					description: `${user.first_name} ${user.last_name} has been switched to ${newChiefType}.`,
-					variant: "success"
-				});
-				//Refresh the page to update the user list
-				window.location.reload();
-			} else {
-				const error = await response.text();
-				toast({
-					title: "Error",
-					description: error || "Failed to switch user chief type.",
-					variant: "destructive"
-				});
-			}
-		} catch (error) {
-			console.error('Error switching user chief role:', error);
-			toast({
-				title: "Error",
-				description: "Failed to switch user chief type. Please try again.",
-				variant: "destructive"
-			});
-		} finally {
-			setSwitchingChiefType(null);
-		}
-	};
-*/
 	const handleRotationFormSuccess = async () => {
   const resident = PGY3Residents.find(r => r.id === formOverrideResidentId);
   setShowRotationFormModal(false);
@@ -789,16 +794,15 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 																	<td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{r.name}</td>
 																	<td className="px-6 py-4 whitespace-nowrap text-sm">
 																			<select
-																					value={r.chiefType ?? ""}
-																					onChange={/*(e) => handleSwitchChiefType(r, e.target.value)*/ undefined}
-																					disabled={switchingChiefType === r.id}
-																					className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+																				value={chiefTypeOverrides[r.id] ?? r.chiefType ?? ""}
+																				onChange={(e) => handleSwitchChiefType(r, e.target.value)}
+																				disabled={switchingChiefType === r.id}
+																				className="..." // The switching looked strange so we just disable the dropdown for a second
 																			>
-																					<option value="" >{switchingChiefType === r.id ? 'Switching...' : 'None'}</option>
-																					<option value="Admin">{switchingChiefType === r.id ? 'Switching...' : 'Admin'}</option>
-																					<option value="Clinic">{switchingChiefType === r.id ? 'Switching...' : 'Clinic'}</option>
-																					<option value="Education">{switchingChiefType === r.id ? 'Switching...' : 'Education'}</option>
-																					
+																				<option value="">None</option>
+																				<option value="Admin">Admin</option>
+																				<option value="Clinic">Clinic</option>
+																				<option value="Education">Education</option>
 																			</select>
 																	</td>
 						
