@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { CalendarRange, Users, UserX, CalendarClock, Trash2, Save, Download, X, Calendar } from "lucide-react";
-import { ConfirmDialog } from "./ConfirmDialog";
 import SubmissionViewDialog from "./SubmissionViewDialog";
 import ClearConfirmDialog from "./ClearConfirmDialog";
 import {DeleteConfirmDialog} from "./DeleteConfirmDialog";
@@ -221,7 +220,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
               */}
 						</div>
 
-						{/* Delete Schedule */}
+						{/* Delete Schedule - Uncomment when API is ready
 						<ConfirmDialog
 							triggerText={
 								<>
@@ -238,7 +237,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 							onConfirm={() => { }}
 							loading={false}
 							variant="danger"
-						/>
+						/>*/}
 					</div>
 				</div>
 			</Card>
@@ -270,80 +269,72 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 			</div>
 
 
-
-
-
-
-
-
-
-
-			{/* Tab Content */}
 			{activeTab === 'schedule' && (
-				<Card className="p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-4 mb-6 sm:mb-8 border border-gray-200 dark:border-gray-800">
-					<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
-						<h2 className="text-lg sm:text-xl font-bold">Current Schedule</h2>
-						<div className="flex gap-2">
-							<Button onClick={null} variant="outline" className="flex items-center gap-2 px-1 sm:px-6 py-1 sm:py-3 text-xs sm:text-sm lg:text-base">
-								<Save className="h-4 w-4" />
-								<span>Save</span>
-							</Button>
-							<Button onClick={null} className="py-2 flex items-center justify-center gap-2 bg-green-500 text-white hover:bg-green-600">
-								<Download className="h-4 w-4" />
-								<span>Export</span>
-							</Button>
-						</div>
-					</div>
-					<div className="overflow-x-auto max-h-96 overflow-y-auto w-full">
-						<table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
-							<thead className="bg-gray-100 dark:bg-neutral-800 ">
-								<tr>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ">Residents</th>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">JUL &apos;{selectedYear % 100}</th>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">AUG &apos;{selectedYear % 100}</th>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">SEP &apos;{selectedYear % 100}</th>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">OCT &apos;{selectedYear % 100}</th>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">NOV &apos;{selectedYear % 100}</th>
-									<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">DEC &apos;{selectedYear % 100}</th>
-								<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">JAN &apos;{(selectedYear + 1) % 100}</th>
-								<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">FEB &apos;{(selectedYear + 1) % 100}</th>
-								<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">MAR &apos;{(selectedYear + 1) % 100}</th>
-								<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">APR &apos;{(selectedYear + 1) % 100}</th>
-								<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">MAY &apos;{(selectedYear + 1) % 100}</th>
-								<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">JUN &apos;{(selectedYear + 1) % 100}</th>
-								</tr>
-							</thead>
-							<tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
-								{/* Check if schedule exists*/}
-								{1 > 0 ? (
-									PGY3Residents.map((PGY3Resident) =>(
-										<tr key={PGY3Resident.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800 divide-x divide-gray-200 dark:divide-gray-700">
-											<td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100 ">{PGY3Resident.name}</td>
+    			<Card className="p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-4 mb-6 sm:mb-8 border border-gray-200 dark:border-gray-800">
+        			{/* Header - Title only */}
+        			<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+            			<h2 className="text-lg sm:text-xl font-bold">Current Schedule</h2>
+        			</div>
+        
+        			{/* Table */}
+        			<div className="overflow-x-auto max-h-96 overflow-y-auto w-full">
+            			<table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
+                			<thead className="bg-gray-100 dark:bg-neutral-800 ">
+                    			<tr>
+                        			<th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ">Residents</th>
+                        			<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">JUL &apos;{selectedYear % 100}</th>
+                        			<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">AUG &apos;{selectedYear % 100}</th>
+                        			<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">SEP &apos;{selectedYear % 100}</th>
+                        			<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">OCT &apos;{selectedYear % 100}</th>
+                        			<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">NOV &apos;{selectedYear % 100}</th>
+                        			<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">DEC &apos;{selectedYear % 100}</th>
+                        			<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">JAN &apos;{(selectedYear + 1) % 100}</th>
+                        			<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">FEB &apos;{(selectedYear + 1) % 100}</th>
+                        			<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">MAR &apos;{(selectedYear + 1) % 100}</th>
+                        			<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">APR &apos;{(selectedYear + 1) % 100}</th>
+                        			<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">MAY &apos;{(selectedYear + 1) % 100}</th>
+                        			<th className="px-1 sm:px-3 py-2 sm:py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">JUN &apos;{(selectedYear + 1) % 100}</th>
+                    			</tr>
+                			</thead>
+                			<tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
+                    			{/* Check if schedule exists*/}
+                    			{1 > 0 ? (
+                        			PGY3Residents.map((PGY3Resident) =>(
+                            			<tr key={PGY3Resident.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800 divide-x divide-gray-200 dark:divide-gray-700">
+                                			<td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100 ">{PGY3Resident.name}</td>
 
-											<td className="px-3 py-2 whitespace-nowrap text-center text-sm font-medium">
-											<div className="w-full">
-												<Button variant="outline" size="sm" className=" w-full bg-purple-500 text-white hover:bg-purple-700 cursor-pointer"
-													onClick={() => setShowRotationChangeModal(true)}>
-													Addiction
-												</Button>
-											</div>
-										</td>
-										</tr>
-									))
-								) : (
-									<tr>
-										<td colSpan={13} className="px-6 py-4 text-center text-gray-500 italic">No schedule generated yet.</td>
-									</tr>
-								)}
-							</tbody>
-							
-						</table>
-					</div>
-				</Card>
-			)}
+                                			<td className="px-3 py-2 whitespace-nowrap text-center text-sm font-medium">
+                                    			<div className="w-full">
+                                        			<Button variant="outline" size="sm" className=" w-full bg-purple-500 text-white hover:bg-purple-700 cursor-pointer"
+                                            			onClick={() => setShowRotationChangeModal(true)}>
+                                            			Addiction
+                                        			</Button>
+                                    			</div>
+                                			</td>
+                            			</tr>
+                        			))
+                    			) : (
+                        			<tr>
+                            			<td colSpan={13} className="px-6 py-4 text-center text-gray-500 italic">No schedule generated yet.</td>
+                        			</tr>
+                    		)}
+                		</tbody>
+            		</table>
+        		</div>
 
-
-
+        		{/* Footer - Buttons at the bottom */}
+        		<div className="flex justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+            		<Button onClick={null} variant="outline" className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm lg:text-base">
+                		<Save className="h-4 w-4" />
+                		<span>Save</span>
+            		</Button>
+            		<Button onClick={null} className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-green-500 text-white hover:bg-green-600">
+                		<Download className="h-4 w-4" />
+                		<span>Export</span>
+            		</Button>
+        		</div>
+    		</Card>
+		)}
 
 
 			{activeTab === 'submissions' && (

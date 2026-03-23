@@ -87,18 +87,11 @@ const menuItems: MenuItem[] = [
   { title: "Swap Calls", icon: <Repeat className="w-6 h-6 mr-3" /> },
   { title: "Request Off", icon: <CalendarX className="w-6 h-6 mr-3" /> },
   { title: "Check My Schedule", icon: <UserCheck className="w-6 h-6 mr-3" /> },
+  { title: "PGY-4 Rotation Forms", icon: <ClipboardList className="w-6 h-6 mr-3" /> },
+  { title: "PGY-4 Schedule", icon: <Calendar1 className="w-6 h-6 mr-3" /> },
+  { title: "PGY-4 Rotations", icon: <CalendarRange className="w-6 h-6 mr-3" /> },
   { title: "Admin", icon: <Shield className="w-6 h-6 mr-3" /> },
   { title: "Settings", icon: <Settings className="w-6 h-6 mr-3" /> },
-  { title: "Home", icon: <Home className="w-5 h-5 mr-2" /> },
-  { title: "Calendar", icon: <CalendarDays className="w-5 h-5 mr-2" /> },
-  { title: "Swap Calls", icon: <Repeat className="w-5 h-5 mr-2" /> },
-  { title: "Request Off", icon: <CalendarDays className="w-5 h-5 mr-2" /> },
-  { title: "Check My Schedule", icon: <UserCheck className="w-5 h-5 mr-2" /> },
-  { title: "PGY-4 Rotation Forms", icon: <ClipboardList className="w-5 h-5 mr-2" /> },
-  { title: "PGY-4 Schedule", icon: <Calendar1 className="w-5 h-5 mr-2" /> },
-  { title: "PGY-4 Rotations", icon: <CalendarRange className="w-5 h-5 mr-2" /> },
-  { title: "Admin", icon: <Shield className="w-5 h-5 mr-2" /> },
-  { title: "Settings", icon: <Settings className="w-5 h-5 mr-2" /> },
 ];
 
 const leaveReasons: { id: string; name: string; halfDay?: string }[] = [
