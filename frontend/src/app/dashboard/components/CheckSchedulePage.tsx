@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Card } from "../../../components/ui/card";
-import { Calendar, CalendarDays } from "lucide-react";
+import { Calendar, UserCheck, CalendarDays } from "lucide-react";
 
 interface ScheduleEntry {
   id: string;
@@ -23,9 +23,11 @@ const CheckSchedulePage: React.FC<CheckSchedulePageProps> = ({ mySchedule }) => 
 
   // Group schedule entries by date proximity
   const scheduleCategories = mySchedule.reduce((acc, entry) => {
+    // Parse date string and apply timezone offset to keep it local
     const entryDate = new Date(entry.date);
+    entryDate.setMinutes(entryDate.getMinutes() + entryDate.getTimezoneOffset());
     entryDate.setHours(0, 0, 0, 0);
-    
+
     if (entryDate.getTime() === today.getTime()) {
       acc.today.push(entry);
     } else if (entryDate <= oneWeekFromNow) {
@@ -37,16 +39,18 @@ const CheckSchedulePage: React.FC<CheckSchedulePageProps> = ({ mySchedule }) => 
   }, { today: [] as ScheduleEntry[], thisWeek: [] as ScheduleEntry[], later: [] as ScheduleEntry[] });
 
   const formatDate = (dateString: string) => {
+    // Apply timezone offset to keep date local (same as calendar)
     const date = new Date(dateString);
+    date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
     date.setHours(0, 0, 0, 0);
-    
+
     if (date.getTime() === today.getTime()) return "Today";
     if (date.getTime() === today.getTime() + 24 * 60 * 60 * 1000) return "Tomorrow";
-    
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'short', 
-      month: 'short', 
-      day: 'numeric' 
+
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric'
     });
   };
 
@@ -91,7 +95,7 @@ const CheckSchedulePage: React.FC<CheckSchedulePageProps> = ({ mySchedule }) => 
         <div className="text-center mb-6">
           <div className="flex justify-center mb-3">
             <div className="p-3 bg-primary/10 rounded-full">
-              <CalendarDays className="h-6 w-6 text-primary" />
+              <UserCheck className="h-6 w-6 text-primary" />
             </div>
           </div>
           <h1 className="text-2xl font-bold text-foreground mb-2">My Upcoming Schedule</h1>

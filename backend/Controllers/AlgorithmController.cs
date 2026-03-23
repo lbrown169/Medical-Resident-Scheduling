@@ -1,5 +1,9 @@
+using MedicalDemo.Enums;
+using MedicalDemo.Models.DTO.Responses;
+using MedicalDemo.Models.Entities;
 using MedicalDemo.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace MedicalDemo.Controllers;
 
@@ -8,36 +12,71 @@ namespace MedicalDemo.Controllers;
 public class ScheduleController : ControllerBase
 {
     private readonly SchedulerService _schedulerService;
+    private readonly MedicalContext _context;
 
-    public ScheduleController(SchedulerService schedulerService)
+    public ScheduleController(SchedulerService schedulerService, MedicalContext context)
     {
         _schedulerService = schedulerService;
+        _context = context;
     }
 
-    [HttpPost("training/{year}")]
-    public async Task<IActionResult> GenerateFullSchedule(int year)
+    // for testing purposes -> logic check is in SchedulerService, implemented in Generate endpoint
+    [HttpGet("{year}/{semester}/check")]
+    public async Task<IActionResult> CheckScheduleRequirements(int year, Semester semester)
     {
-        if (year < DateTime.Now.Year)
+        // requirements logic method
+        (bool success, string? message)
+            = await _schedulerService.CheckScheduleRequirements(year, semester);
+
+        if (!success)
         {
-            return BadRequest(new
+            return BadRequest(new AlgorithmResponse
             {
-                success = false,
-                error = "Year must be the current year or later."
+                Success = false,
+                Message = message
             });
         }
 
-        // Generate the new schedule
-        (bool success, string error)
-            = await _schedulerService.GenerateFullSchedule(year);
-        if (!success)
+        return Ok(new AlgorithmResponse
         {
-            return StatusCode(500, new { success = false, error });
+            Success = true,
+            Message = message
+        });
+    }
+
+    [HttpPost("{year}/{semester}/generate")]
+    public async Task<IActionResult> GenerateSemesterSchedule(int year, Semester semester)
+    {
+        // validate resident hospital role profile assigned
+        (bool requirementsMet, string? requirementsMessage) = await _schedulerService.CheckScheduleRequirements(year, semester);
+
+        if (!requirementsMet)
+        {
+            return BadRequest(new AlgorithmResponse
+            {
+                Success = false,
+                Message = requirementsMessage
+            });
         }
 
-        return Ok(new
+        // Generate the schedule
+        (bool success, string? error, ScheduleResponse? schedule)
+            = await _schedulerService.GenerateScheduleForSemester(year, semester);
+        if (!success)
         {
-            success = true,
-            message = "Schedule generated and saved successfully."
+            return StatusCode(500, new AlgorithmResponse
+            {
+                Success = false,
+                Message = error ?? $"Failed to generate {semester} schedule",
+                Schedule = schedule
+            });
+        }
+
+        return Ok(new AlgorithmResponse
+        {
+            Success = true,
+            Message = $"{semester} Schedule generated and saved successfully.",
+            Schedule = schedule
         });
     }
 }

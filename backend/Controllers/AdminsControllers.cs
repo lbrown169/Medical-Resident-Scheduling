@@ -1,4 +1,7 @@
-using MedicalDemo.Models;
+using MedicalDemo.Converters;
+using MedicalDemo.Models.DTO.Requests;
+using MedicalDemo.Models.DTO.Responses;
+using MedicalDemo.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,114 +11,75 @@ namespace MedicalDemo.Controllers;
 [Route("api/[controller]")]
 public class AdminsController : ControllerBase
 {
+    private readonly ILogger<AdminsController> _logger;
     private readonly MedicalContext _context;
+    private readonly AdminConverter _adminConverter;
 
-    public AdminsController(MedicalContext context)
+    public AdminsController(MedicalContext context, AdminConverter adminConverter, ILogger<AdminsController> logger)
     {
         _context = context;
+        _adminConverter = adminConverter;
+        _logger = logger;
     }
 
     // GET: api/Admins
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Admins>>> GetAdmins()
+    public async Task<ActionResult<IEnumerable<AdminResponse>>> GetAdmins()
     {
-        return await _context.admins.ToListAsync();
+        return await _context.Admins.Select(a => _adminConverter.CreateAdminResponseFromAdmin(a))
+            .ToListAsync();
     }
 
-    // GET: api/Admins/5
-    [HttpGet("{id}")]
-    public async Task<ActionResult<Admins>> GetAdmin(string id)
+    // PUT: api/Admins/5
+    [HttpPut("{id}")]
+    public async Task<IActionResult> PutAdmin(string id, AdminUpdateRequest adminUpdateRequest)
     {
-        Admins? admin = await _context.admins.FindAsync(id);
-
+        Admin? admin = await _context.Admins.FindAsync(id);
         if (admin == null)
         {
             return NotFound();
         }
 
-        return admin;
-    }
+        _adminConverter.UpdateAdminFromAdminUpdateRequest(admin, adminUpdateRequest);
+        int affected = await _context.SaveChangesAsync();
 
-    // POST: api/Admins
-    [HttpPost]
-    public async Task<ActionResult<Admins>> PostAdmin(Admins admin)
-    {
-        _context.admins.Add(admin);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction("GetAdmin", new { id = admin.admin_id },
-            admin);
-    }
-
-    // PUT: api/Admins/5
-    [HttpPut("{id}")]
-    public async Task<IActionResult> PutAdmin(string id, Admins admin)
-    {
-        if (id != admin.admin_id)
-        {
-            return BadRequest();
-        }
-
-        _context.Entry(admin).State = EntityState.Modified;
-
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!AdminExists(id))
-            {
-                return NotFound();
-            }
-
-            throw;
-        }
-
-        return NoContent();
+        return affected > 0 ? Ok(_adminConverter.CreateAdminResponseFromAdmin(admin)) : NoContent();
     }
 
     // POST: api/Admins/promote-resident/{residentId}
     [HttpPost("promote-resident/{residentId}")]
     public async Task<IActionResult> PromoteResidentToAdmin(string residentId)
     {
-        Residents? resident
-            = await _context.residents.FindAsync(residentId);
+        Resident? resident
+            = await _context.Residents.FindAsync(residentId);
         if (resident == null)
         {
-            return NotFound("Resident not found.");
+            return NotFound();
         }
 
         // Check if admin already exists with this ID
-        Admins? existingAdmin
-            = await _context.admins.FindAsync(residentId);
+        Admin? existingAdmin
+            = await _context.Admins.FindAsync(residentId);
         if (existingAdmin != null)
         {
-            return BadRequest("Admin already exists with this ID.");
+            return Conflict();
         }
 
         // Create new admin account
-        Admins newAdmin = new()
-        {
-            admin_id = resident.resident_id,
-            first_name = resident.first_name,
-            last_name = resident.last_name,
-            email = resident.email,
-            password = resident.password,
-            phone_num = resident.phone_num
-        };
+        Admin newAdmin = _adminConverter.CreateAdminFromResident(resident);
 
         // Add admin and remove resident
-        _context.admins.Add(newAdmin);
-        _context.residents.Remove(resident);
+        _context.Admins.Add(newAdmin);
+        _context.Residents.Remove(resident);
 
         try
         {
             await _context.SaveChangesAsync();
-            return Ok(newAdmin);
+            return Ok(_adminConverter.CreateAdminResponseFromAdmin(newAdmin));
         }
         catch (DbUpdateException ex)
         {
+            _logger.LogError(ex, "Failed to promote resident");
             return StatusCode(500,
                 $"An error occurred while promoting resident: {ex.Message}");
         }
@@ -125,20 +89,15 @@ public class AdminsController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteAdmin(string id)
     {
-        Admins? admin = await _context.admins.FindAsync(id);
+        Admin? admin = await _context.Admins.FindAsync(id);
         if (admin == null)
         {
             return NotFound();
         }
 
-        _context.admins.Remove(admin);
+        _context.Admins.Remove(admin);
         await _context.SaveChangesAsync();
 
         return NoContent();
-    }
-
-    private bool AdminExists(string id)
-    {
-        return _context.admins.Any(e => e.admin_id == id);
     }
 }

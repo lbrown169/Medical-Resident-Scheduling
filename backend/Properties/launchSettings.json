@@ -15,8 +15,7 @@
       "launchBrowser": true,
       "applicationUrl": "http://localhost:5109",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "DB_CONNECTION_STRING": "Server=YOUR_SERVER;Port=YOUR_PORT;Database=YOUR_DB;User=YOUR_USER;Password=YOUR_PASSWORD;"
+        "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
     "https": {

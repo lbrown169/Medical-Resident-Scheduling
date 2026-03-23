@@ -14,7 +14,7 @@ import {
   SidebarTrigger,
 } from "../../components/ui/sidebar";
 import { SidebarUserCard } from "./components/SidebarUserCard";
-import { Repeat, CalendarDays, UserCheck, Shield, Settings, Home, LogOut, User as UserIcon, ChevronDown, Moon, Sun, ClipboardList, CalendarRange, Calendar1 } from "lucide-react";
+import { Repeat, CalendarDays, CalendarX, UserCheck, Shield, Settings, Home, LogOut, User as UserIcon, ChevronDown, Moon, Sun, LayoutList, CalendarRange, Calendar1, ClipboardList } from "lucide-react";
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { useRouter } from "next/navigation";
 import { toast } from '../../lib/use-toast';
@@ -35,46 +35,22 @@ import SwapCallsPage from "./components/SwapCallsPage";
 import RequestOffPage from "./components/RequestOffPage";
 import CheckSchedulePage from "./components/CheckSchedulePage";
 import AdminPage from "./components/AdminPage";
+import SchedulesPage from "./components/SchedulesPage";
 import PGY3RotationForm from "./components/PGY3RotationForm";
 import PGY4RotationPage from "./components/PGY4RotationPage";
 import PGY4SchedulePage from "../dashboard/pgy4-schedule/page";
 
 import MobileHeader from "./components/MobileHeader";
 import MobileUserMenu from "./components/MobileUserMenu";
+import { VacationResponse } from "@/lib/models/VacationResponse";
+import { CallType } from "@/lib/models/CallType";
+import { DateResponse } from "@/lib/models/DateResponse";
+import { CalendarEvent } from "@/lib/models/CalendarEvent";
 
 type MenuItem = {
   title: string;
   icon: ReactElement;
 };
-
-// Define types for API responses
-interface DateResponse {
-  dateId: string;
-  callType: string;
-  residentId?: string;
-  date: string;
-  scheduleId: string;
-  firstName?: string;
-  lastName?: string;
-}
-
-interface CalendarEvent {
-  id: string;
-  title: string;
-  start: Date;
-  end: Date;
-  backgroundColor: string;
-  borderColor: string;
-  extendedProps: {
-    scheduleId: string;
-    residentId?: string;
-    firstName?: string;
-    lastName?: string;
-    callType: string;
-    dateId: string;
-    pgyLevel?: number;
-  };
-}
 
 interface Resident {
   resident_id: string;
@@ -83,6 +59,8 @@ interface Resident {
   graduate_yr: number;
   email: string;
   phone_number?: string;
+  hospital_role_profile?: number;
+  total_hours: number;
 }
 
 interface Admin {
@@ -103,6 +81,14 @@ interface ScheduleItem {
 
 // menu items
 const menuItems: MenuItem[] = [
+  { title: "Home", icon: <Home className="w-6 h-6 mr-3" /> },
+  { title: "Calendar", icon: <CalendarDays className="w-6 h-6 mr-3" /> },
+  { title: "Schedules", icon: <LayoutList className="w-6 h-6 mr-3" /> },
+  { title: "Swap Calls", icon: <Repeat className="w-6 h-6 mr-3" /> },
+  { title: "Request Off", icon: <CalendarX className="w-6 h-6 mr-3" /> },
+  { title: "Check My Schedule", icon: <UserCheck className="w-6 h-6 mr-3" /> },
+  { title: "Admin", icon: <Shield className="w-6 h-6 mr-3" /> },
+  { title: "Settings", icon: <Settings className="w-6 h-6 mr-3" /> },
   { title: "Home", icon: <Home className="w-5 h-5 mr-2" /> },
   { title: "Calendar", icon: <CalendarDays className="w-5 h-5 mr-2" /> },
   { title: "Swap Calls", icon: <Repeat className="w-5 h-5 mr-2" /> },
@@ -115,9 +101,11 @@ const menuItems: MenuItem[] = [
   { title: "Settings", icon: <Settings className="w-5 h-5 mr-2" /> },
 ];
 
-const leaveReasons = [
+const leaveReasons: { id: string; name: string; halfDay?: string }[] = [
   { id: "vacation", name: "Vacation" },
   { id: "sick", name: "Sick Leave" },
+  { id: "sick-am", name: "Sick Leave (AM)", halfDay: "A" },
+  { id: "sick-pm", name: "Sick Leave (PM)", halfDay: "P" },
   { id: "cme", name: "ED (Education Days)" },
   { id: "personal", name: "Personal Leave" },
   { id: "other", name: "Other" },
@@ -134,11 +122,6 @@ function SidebarFloatingTrigger() {
   );
 }
 
-function mapShiftType(shift: string) {
-  if (shift === "Saturday") return ["24h", "Saturday"];
-  if (shift === "Sunday") return ["12h", "Sunday"];
-  return [shift]; // "Short" stays "Short"
-}
 
 function Dashboard() {
   const router = useRouter();
@@ -165,6 +148,7 @@ function Dashboard() {
   const [partnerShiftDate, setPartnerShiftDate] = useState<string>("");
   const [partnerShift, setPartnerShift] = useState<string>("");
 
+
   // Request off form state
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
@@ -186,13 +170,7 @@ function Dashboard() {
   const [users, setUsers] = useState<{ id: string; first_name: string; last_name: string; email: string; role: string }[]>([]);
 
   // Add state for adminSwapRequests, myTimeOffRequests, and shifts
-  const [myTimeOffRequests, setMyTimeOffRequests] = useState<{
-    vacationId: string;
-    date: string;
-    reason: string;
-    status: string;
-    residentId: string;
-  }[]>([]);
+  const [myTimeOffRequests, setMyTimeOffRequests] = useState<VacationResponse[]>([]);
   const [shifts, setShifts] = useState<{
     id: string;
     name: string;
@@ -215,7 +193,7 @@ function Dashboard() {
   };
 
   // Updated color function to use graduate_yr directly
-  const getEventColor = (callType: string, graduateYear?: number) => {
+  const getEventColor = (callType: CallType, graduateYear?: number) => {
     // Use graduate_yr directly for PGY-based coloring
     if (graduateYear) {
       switch (graduateYear) {
@@ -231,12 +209,13 @@ function Dashboard() {
     }
     
     // Fallback to call type coloring if no graduate_yr
-    switch (callType) {
-      case 'Short':
+    switch (callType.id) {
+      case 0: // short
         return '#3b82f6'; // blue
-      case 'Saturday':
+      case 1: // saturday 24
+      case 2: // saturday 12
         return '#10b981'; // green
-      case 'Sunday':
+      case 3: // sunday 12
         return '#f59e0b'; // amber
       default:
         return '#6b7280'; // gray
@@ -277,46 +256,25 @@ function Dashboard() {
   const fetchMySchedule = useCallback(async () => {
     if (!user?.id) return;
     try {
-      const response = await fetch(`${config.apiUrl}/api/dates`);
+      const response = await fetch(`${config.apiUrl}/api/dates/published`);
       if (response.ok) {
-        const dates = await response.json();
+        const dates = await response.json() as DateResponse[];
         const currentDate = new Date();
         currentDate.setHours(0, 0, 0, 0); // Start of today
 
-        // Find the scheduleId with the most recent date (same as calendar)
-        let latestScheduleId = null;
-        if (dates.length > 0) {
-          const scheduleIdToLatestDate = {};
-          dates.forEach((date) => {
-            if (!date.scheduleId) return;
-            const current = scheduleIdToLatestDate[date.scheduleId];
-            const thisDate = new Date(date.date).getTime();
-            if (!current || thisDate > current) {
-              scheduleIdToLatestDate[date.scheduleId] = thisDate;
-            }
-          });
-          latestScheduleId = Object.entries(scheduleIdToLatestDate)
-            .sort((a, b) => (Number(b[1]) - Number(a[1])))[0]?.[0];
-        }
-
-        // Only include events from the latest schedule
-        const filteredDates = latestScheduleId
-          ? dates.filter((date) => date.scheduleId === latestScheduleId)
-          : dates;
-
         // Filter for current user and future dates only, and with a real callType
-        const userSchedule = filteredDates
+        const userSchedule = dates
           .filter((date) => {
-            const dateObj = new Date(date.date);
+            const dateObj = new Date(date.shiftDate);
             return date.residentId === user.id && dateObj >= currentDate && date.callType;
           })
-          .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+          .sort((a, b) => new Date(a.shiftDate).getTime() - new Date(b.shiftDate).getTime())
           .slice(0, 20)
           .map((date) => ({
             id: date.dateId,
-            date: date.date,
+            date: date.shiftDate,
             time: "All Day",
-            shift: `${date.callType} Call`,
+            shift: `${date.callType.description}${date.callType.id === 99 ? ` (${date.hours}h)` : ''} Call`,
             location: "Hospital"
           }));
 
@@ -332,64 +290,42 @@ function Dashboard() {
   const fetchCalendarEvents = useCallback(async () => {
     try {
       // Fetch all dates - the backend doesn't support month/year filtering yet
-      const response = await fetch(`${config.apiUrl}/api/dates`);
+      const response = await fetch(`${config.apiUrl}/api/dates/published`);
       if (response.ok) {
-        const dates = await response.json();
+        const dates = await response.json() as DateResponse[];
+        console.log(dates)
 
-        // Find the scheduleId with the most recent date
-        let latestScheduleId = null;
-        if (dates.length > 0) {
-          // Map of scheduleId to most recent date
-          const scheduleIdToLatestDate: Record<string, number> = {};
-          dates.forEach((date: DateResponse) => {
-            if (!date.scheduleId) return;
-            const current = scheduleIdToLatestDate[date.scheduleId];
-            const thisDate = new Date(date.date).getTime();
-            if (!current || thisDate > current) {
-              scheduleIdToLatestDate[date.scheduleId] = thisDate;
-            }
-          });
-          // Find the scheduleId with the most recent date
-          latestScheduleId = Object.entries(scheduleIdToLatestDate)
-            .sort((a, b) => (Number(b[1]) - Number(a[1])))[0]?.[0];
-        }
-
-        // Only include events from the latest schedule
-        const filteredDates = latestScheduleId
-          ? dates.filter((date: DateResponse) => date.scheduleId === latestScheduleId)
-          : dates;
-
-        const events = filteredDates.map((date: DateResponse) => {
+        const events = dates.map((date: DateResponse) => {
           // Only show the resident's name on the calendar
           const fullName = date.firstName && date.lastName
             ? `${date.firstName} ${date.lastName}`
             : date.residentId;
 
-          // Standardize callType
-          let callType = date.callType;
-          if (callType === 'Sunday') callType = '12h';
-          if (callType === 'Saturday') callType = '24h';
-
           // Find the resident to get graduate_yr directly (for details only)
           const resident = residents.find(r => r.resident_id === date.residentId);
           const graduateYear = resident?.graduate_yr;
-          const eventColor = getEventColor(callType, graduateYear);
+          const eventColor = getEventColor(date.callType, graduateYear);
+
+          const d = new Date(date.shiftDate)
+          // date comes in as UTC and gets changed to previous day in local time. keep everything local
+          d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
 
           return {
             id: date.dateId,
             title: fullName || '', // Only name
-            start: new Date(date.date),
-            end: new Date(date.date),
+            start: d,
+            end: d,
             backgroundColor: eventColor,
-            borderColor: eventColor,
             extendedProps: {
               scheduleId: date.scheduleId,
               residentId: date.residentId,
               firstName: date.firstName,
               lastName: date.lastName,
-              callType: callType,
+              callType: date.callType.description,
+              callTypeId: date.callType.id,
               dateId: date.dateId,
-              pgyLevel: graduateYear
+              pgyLevel: graduateYear,
+              hours: date.hours,
             }
           };
         });
@@ -403,8 +339,8 @@ function Dashboard() {
           description: "Failed to load calendar events",
         });
       }
-    } catch {
-      console.error('Error fetching calendar events');
+    } catch (e) {
+      console.error(e, 'Error fetching calendar events');
       toast({
         variant: "destructive",
         title: "Error",
@@ -511,19 +447,6 @@ function Dashboard() {
     }
 
     try {
-      // First, get the current resident data
-      const getResponse = await fetch(`${config.apiUrl}/api/residents/filter?resident_id=${user.id}`);
-      if (!getResponse.ok) {
-        throw new Error('Failed to fetch current resident data');
-      }
-      
-      const residentsData = await getResponse.json();
-      if (!residentsData || residentsData.length === 0) {
-        throw new Error('Resident not found');
-      }
-      
-      const currentResident = residentsData[0];
-
       // Update with existing data but new phone number
       const response = await fetch(`${config.apiUrl}/api/residents/${user.id}`, {
         method: 'PUT',
@@ -531,16 +454,7 @@ function Dashboard() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          resident_id: currentResident.resident_id,
-          first_name: currentResident.first_name,
-          last_name: currentResident.last_name,
-          email: currentResident.email,
-          password: currentResident.password, // Keep existing password
-          phone_num: phoneNumber, // Update phone number
-          graduate_yr: currentResident.graduate_yr,
-          weekly_hours: currentResident.weekly_hours,
-          total_hours: currentResident.total_hours,
-          bi_yearly_hours: currentResident.bi_yearly_hours
+          phone_num: phoneNumber,
         })
       });
 
@@ -590,19 +504,6 @@ function Dashboard() {
     }
 
     try {
-      // First, get the current resident data
-      const getResponse = await fetch(`${config.apiUrl}/api/residents/filter?resident_id=${user.id}`);
-      if (!getResponse.ok) {
-        throw new Error('Failed to fetch current resident data');
-      }
-      
-      const residentsData = await getResponse.json();
-      if (!residentsData || residentsData.length === 0) {
-        throw new Error('Resident not found');
-      }
-      
-      const currentResident = residentsData[0];
-
       // Update with existing data but new email
       const response = await fetch(`${config.apiUrl}/api/residents/${user.id}`, {
         method: 'PUT',
@@ -610,16 +511,7 @@ function Dashboard() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          resident_id: currentResident.resident_id,
-          first_name: currentResident.first_name,
-          last_name: currentResident.last_name,
-          email: email, // Update email
-          password: currentResident.password, // Keep existing password
-          phone_num: currentResident.phone_num,
-          graduate_yr: currentResident.graduate_yr,
-          weekly_hours: currentResident.weekly_hours,
-          total_hours: currentResident.total_hours,
-          bi_yearly_hours: currentResident.bi_yearly_hours
+          email: email,
         })
       });
 
@@ -707,12 +599,11 @@ function Dashboard() {
     console.log("Approving groupId:", groupId);
     try {
 
-      const response = await fetch(`${config.apiUrl}/api/vacations/group/${groupId}/status`, {
+      const response = await fetch(`${config.apiUrl}/api/vacations/group/${groupId}/status/approve`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status: "Approved" }),
       });
   
       if (!response.ok) {
@@ -740,12 +631,11 @@ function Dashboard() {
   
   const handleDenyRequest = async (groupId: string) => {
     try {
-      const response = await fetch(`${config.apiUrl}/api/vacations/group/${groupId}/status`, {
+      const response = await fetch(`${config.apiUrl}/api/vacations/group/${groupId}/status/deny`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status: "Denied" }),
       });
   
       if (!response.ok) {
@@ -811,69 +701,16 @@ function Dashboard() {
     }
 
     try {
-      // Filter for user's shift
-      const myCandidates = calendarEvents.filter((event) => {
-        const eventCallType = (event.extendedProps?.callType || "").trim();
-        const eventResidentId = (event.extendedProps?.residentId || "").trim();
-        const validCallTypes = mapShiftType(selectedShift);
-        if (
-          eventResidentId === (user?.id || "").trim() &&
-          validCallTypes.includes(eventCallType)
-        ) {
-          const eventDateLocal = new Date(event.start);
-          const yourShiftDateLocal = parseLocalDate(yourShiftDate);
-          const equal = isSameDay(eventDateLocal, yourShiftDateLocal);
-          console.log("Date compare (my):", {
-            eventDate: eventDateLocal.toString(),
-            yourShiftDate: yourShiftDateLocal?.toString(),
-            equal,
-          });
-          return equal;
-        }
-        return false;
-      });
-
-      console.log(
-        'All events for my user on yourShiftDate:',
-        calendarEvents.filter(
-          (event) =>
-            (event.extendedProps?.residentId || '').trim() === (user?.id || '').trim() &&
-            isSameDay(event.start, parseLocalDate(yourShiftDate))
-        )
+      const myShift = calendarEvents.find((event) =>
+        (event.extendedProps?.residentId || "").trim() === (user?.id || "").trim() &&
+        isSameDay(event.start, yourShiftDate)
       );
 
-      const myEventsOnDate = calendarEvents.filter(
-        (event) =>
-          (event.extendedProps?.residentId || '').trim() === (user?.id || '').trim() &&
-          isSameDay(event.start, parseLocalDate(yourShiftDate))
+      const partnerShiftEvent = calendarEvents.find((event) =>
+        (event.extendedProps?.residentId || "").trim() === (selectedResident || "").trim() &&
+        isSameDay(event.start, partnerShiftDate)
       );
-      console.log('All events for my user on yourShiftDate (full details):', JSON.stringify(myEventsOnDate, null, 2));
 
-      // Filter for partner's shift
-      const partnerCandidates = calendarEvents.filter((event) => {
-        const eventCallType = (event.extendedProps?.callType || "").trim();
-        const eventResidentId = (event.extendedProps?.residentId || "").trim();
-        const validCallTypes = mapShiftType(partnerShift);
-        if (
-          eventResidentId === (selectedResident || "").trim() &&
-          validCallTypes.includes(eventCallType)
-        ) {
-          const eventDateLocal = new Date(event.start);
-          const partnerShiftDateLocal = parseLocalDate(partnerShiftDate);
-          const equal = isSameDay(eventDateLocal, partnerShiftDateLocal);
-          console.log("Date compare (partner):", {
-            eventDate: eventDateLocal.toString(),
-            partnerShiftDate: partnerShiftDateLocal?.toString(),
-            equal,
-          });
-          return equal;
-        }
-        return false;
-      });
-      console.log('myCandidates:', myCandidates);
-      console.log('partnerCandidates:', partnerCandidates);
-      const myShift = myCandidates[0];
-      const partnerShiftEvent = partnerCandidates[0];
       if (!myShift || !partnerShiftEvent) {
         toast({
           variant: "destructive",
@@ -884,12 +721,10 @@ function Dashboard() {
       }
       // Create a swap request (pending approval)
       const swapRequest = {
-        ScheduleSwapId: myShift.extendedProps.scheduleId, // or partnerShiftEvent.extendedProps.scheduleId
         RequesterId: user?.id,
         RequesteeId: selectedResident,
         RequesterDate: yourShiftDate,
         RequesteeDate: partnerShiftDate,
-        Status: "Pending",
         Details: ""
       };
       console.log('Submitting swapRequest:', swapRequest);
@@ -958,19 +793,37 @@ function Dashboard() {
     }
   
     try {
+      // Parse dates and apply timezone offset to keep them local
       const start = new Date(startDate);
+      start.setMinutes(start.getMinutes() + start.getTimezoneOffset());
       const end = new Date(endDate);
+      end.setMinutes(end.getMinutes() + end.getTimezoneOffset());
+
       const groupId = crypto.randomUUID(); //group ID
       const requests = [];
-  
+
+      // Helper to format date as YYYY-MM-DD without timezone conversion
+      const formatLocalDate = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
+      const selectedReason = leaveReasons.find((r) => r.id === reason);
+      const apiReason = selectedReason?.id?.startsWith("sick")
+        ? "Sick Leave"
+        : (selectedReason?.name ?? reason);
+      const halfDay = selectedReason?.halfDay ?? null;
+
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
         requests.push({
-          groupId: groupId, //New request
+          GroupId: groupId, //New request
           ResidentId: user.id,
-          Date: d.toISOString().split('T')[0],
-          Reason: reason,
-          Description: description || '',
-          Status: 'Pending',
+          Date: formatLocalDate(d),
+          Reason: apiReason,
+          Details: description || '',
+          ...(halfDay ? { HalfDay: halfDay } : {}),
         });
       }
   
@@ -1081,15 +934,8 @@ case "Home":
     console.log('Rendering AdminPage with users length:', users.length);
     return (
       <AdminPage
-        residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr }))}
-        myTimeOffRequests={myTimeOffRequests.map(r => ({
-          id: r.vacationId,
-          startDate: r.date || '',
-          endDate: r.date || '',
-          resident: r.residentId || '',
-          reason: r.reason,
-          status: r.status,
-        }))}
+        residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr, hospitalRole: r.hospital_role_profile ?? undefined, hours: r.total_hours }))}
+        myTimeOffRequests={myTimeOffRequests}
         shifts={shifts.map(s => ({
           id: s.id,
           name: s.name
@@ -1105,10 +951,6 @@ case "Home":
         handleDeleteUser={handleDeleteUser}
         inviteRole={inviteRole}
         setInviteRole={setInviteRole}
-        onNavigateToCalendar={() => {
-          setSelected("Calendar");
-          fetchCalendarEvents();
-        }}
         userId={user?.id || ""}
       />
     );
@@ -1143,6 +985,7 @@ case "Home":
             onNavigateToCheckSchedule={() => setSelected("Check My Schedule")}
             onNavigateToSettings={() => setSelected("Settings")}
             onNavigateToHome={() => setSelected("Home")}
+            onNavigateToSchedules={() => setSelected("Schedules")}
             isAdmin={isAdmin}
           />
         );
@@ -1162,35 +1005,34 @@ case "Home":
           />
         );
 
-      case "Swap Calls":
-        // Compute PGY-matched residents for swap
+      case "Swap Calls": {
         const myPGY = residents.find(r => r.resident_id === user?.id)?.graduate_yr;
         const pgyMatchedResidents = residents.filter(r => r.graduate_yr === myPGY && r.resident_id !== user?.id)
           .map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}` }));
-        
-        const availableShifts = [
-          { id: "Short", name: "Short" },
-          { id: "Saturday", name: "Saturday" },
-          { id: "Sunday", name: "Sunday" }
-        ];
-        
+        const now = new Date(); now.setHours(0, 0, 0, 0);
+        const filterShiftEvents = (residentId: string) =>
+          calendarEvents
+            .filter(e => (e.extendedProps?.residentId || "").trim() === residentId.trim() && new Date(e.start) >= now)
+            .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+        const userShiftEvents = user?.id ? filterShiftEvents(user.id) : [];
+        const partnerShiftEvents = selectedResident ? filterShiftEvents(selectedResident) : [];
         return (
           <SwapCallsPage
             yourShiftDate={yourShiftDate}
-            setYourShiftDate={setYourShiftDate}
             partnerShiftDate={partnerShiftDate}
-            setPartnerShiftDate={setPartnerShiftDate}
             selectedResident={selectedResident}
-            setSelectedResident={setSelectedResident}
+            setSelectedResident={(v) => { setSelectedResident(v); setPartnerShiftDate(""); setPartnerShift(""); }}
             residents={pgyMatchedResidents}
             selectedShift={selectedShift}
-            setSelectedShift={setSelectedShift}
             partnerShift={partnerShift}
-            setPartnerShift={setPartnerShift}
-            shifts={availableShifts}
+            userShiftEvents={userShiftEvents}
+            partnerShiftEvents={partnerShiftEvents}
+            onSelectUserShift={(date, callType) => { setYourShiftDate(date); setSelectedShift(callType); }}
+            onSelectPartnerShift={(date, callType) => { setPartnerShiftDate(date); setPartnerShift(callType); }}
             handleSubmitSwap={handleSubmitSwap}
           />
         );
+      }
 
       case "Request Off":
         return (
@@ -1225,15 +1067,8 @@ case "Home":
         }
         return (
           <AdminPage
-            residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr }))}
-            myTimeOffRequests={myTimeOffRequests.map(r => ({
-              id: r.vacationId,
-              startDate: r.date || '',
-              endDate: r.date || '',
-              resident: r.residentId || '',
-              reason: r.reason,
-              status: r.status,
-            }))}
+            residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr, hospitalRole: r.hospital_role_profile ?? undefined, hours: r.total_hours }))}
+            myTimeOffRequests={myTimeOffRequests}
             shifts={shifts.map(s => ({
               id: s.id,
               name: s.name
@@ -1249,11 +1084,27 @@ case "Home":
             handleDeleteUser={handleDeleteUser}
             inviteRole={inviteRole}
             setInviteRole={setInviteRole}
+            userId={user?.id || ""}
+          />
+        );
+
+      case "Schedules":
+        if (!isAdmin) {
+          return (
+            <div className="w-full pt-4 flex flex-col items-center">
+              <h1 className="text-2xl font-bold mb-6">Access Denied</h1>
+              <p className="text-center text-gray-600 dark:text-gray-400">
+                You do not have permission to access the schedules page.
+              </p>
+            </div>
+          );
+        }
+        return (
+          <SchedulesPage
             onNavigateToCalendar={() => {
               setSelected("Calendar");
               fetchCalendarEvents();
             }}
-            userId={user?.id || ""}
           />
         );
 
@@ -1343,6 +1194,9 @@ case "Home":
     if (selected === "Check My Schedule") {
       fetchMySchedule();
     }
+    if (selected === "Calendar") {
+      fetchCalendarEvents();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected]);
 
@@ -1374,6 +1228,10 @@ case "Home":
   
   const filteredMenuItems = menuItems.filter(item => {
     if (item.title === "Admin") return false; //hide admin option
+    if (item.title === "Request Off") return !isAdmin; // residents only
+    if (item.title === "Check My Schedule") return !isAdmin; // residents only
+    if (item.title === "Swap Calls") return !isAdmin; // residents only
+    if (item.title === "Schedules") return isAdmin; // admin only
     if (item.title === "Request Off") return !isAdmin;
     if (item.title === "Check My Schedule") return !isAdmin;
     // Only show PGY-4 Rotation Forms to PGY-3 residents

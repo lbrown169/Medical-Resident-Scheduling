@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
-import { Calendar, Clock, RotateCcw, CalendarCheck, Bell, Users } from "lucide-react";
+import { Calendar, CalendarX, Clock, UserCheck, RotateCcw, Repeat, CalendarCheck, Bell, Users } from "lucide-react";
 import { config } from "../../../config";
 import { Dialog } from "../../../components/ui/dialog";
 import { toast } from "../../../lib/use-toast";
+import { CalendarEvent } from "@/lib/models/CalendarEvent";
 
 interface HomeProps {
   displayName: string;
@@ -40,20 +41,13 @@ interface DashboardData {
   }>;
 }
 
-interface CalendarEvent {
-  start: Date | string;
-  extendedProps?: {
-    residentId?: string;
-  };
-}
-
 const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId: string; onRefreshCalendar?: () => void }> = ({
   displayName,
   onNavigateToSwapCalls,
   onNavigateToRequestOff,
   onNavigateToSchedule,
   userId,
-  calendarEvents = [], // Accept calendarEvents as prop if available
+  calendarEvents,
   onRefreshCalendar,
   isAdmin,
 }) => {
@@ -64,11 +58,31 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
     teamUpdates: []
   });
   const [loading, setLoading] = useState(true);
-  const [hoursThisMonth, setHoursThisMonth] = useState(0);
   const [denyModalOpen, setDenyModalOpen] = useState(false);
   const [denyReason, setDenyReason] = useState("");
   const [pendingDenyId, setPendingDenyId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+
+  const upcomingShifts = useMemo(() => {
+    if (!calendarEvents?.length) return dashboardData.upcomingShifts;
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return calendarEvents
+      .filter(e => {
+        const start = e.start instanceof Date ? e.start : new Date(e.start);
+        return e.extendedProps?.residentId === userId && start >= now;
+      })
+      .sort((a, b) => {
+        const aDate = a.start instanceof Date ? a.start : new Date(a.start);
+        const bDate = b.start instanceof Date ? b.start : new Date(b.start);
+        return aDate.getTime() - bDate.getTime();
+      })
+      .slice(0, 5)
+      .map(e => ({
+        date: (e.start instanceof Date ? e.start : new Date(e.start)).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        type: `${e.extendedProps?.callType ?? ''}${e.extendedProps?.callTypeId === 99 ? ` (${e.extendedProps.hours}h)` : ''}`,
+      }));
+  }, [calendarEvents, userId, dashboardData.upcomingShifts]);
 
   const refreshDashboard = async () => {
     setLoading(true);
@@ -170,28 +184,6 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
     }
   }, [userId]);
 
-  useEffect(() => {
-    // Calculate hours from calendarEvents for current user and current month
-    if (calendarEvents && calendarEvents.length > 0) {
-      const now = new Date();
-      const currentMonth = now.getMonth();
-      const currentYear = now.getFullYear();
-      
-      const userEvents = calendarEvents.filter(event => {
-        const eventDate = new Date(event.start);
-        return (
-          eventDate.getMonth() === currentMonth &&
-          eventDate.getFullYear() === currentYear &&
-          event.extendedProps && event.extendedProps.residentId === userId
-        );
-      });
-      
-      setHoursThisMonth(userEvents.length * 8); // 8 hours per event
-    } else {
-      setHoursThisMonth(0);
-    }
-  }, [calendarEvents, userId]);
-
   if (loading) {
     return (
       <div className="w-full pt-4 flex flex-col items-center">
@@ -206,9 +198,8 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
     );
   }
 
-  // Filter out the 'schedule' type recent activity
   const filteredRecentActivity = dashboardData.recentActivity.filter(
-    (activity) => activity.type !== 'schedule'
+    (activity) => activity.type.startsWith('swap')
   );
 
   return (
@@ -231,7 +222,7 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
                 Hours This Month
               </h2>
               <p className="text-3xl font-bold text-primary w-full text-center">
-                {hoursThisMonth}
+                {dashboardData.monthlyHours}
               </p>
               <p className="text-sm text-muted-foreground w-full text-center">Total hours</p>
             </div>
@@ -243,11 +234,11 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
                 Upcoming Shifts
               </h2>
               <div className="space-y-1">
-                {dashboardData.upcomingShifts.length > 0 ? (
-                  dashboardData.upcomingShifts.map((shift, index) => (
+                {upcomingShifts.length > 0 ? (
+                  upcomingShifts.map((shift, index) => (
                     <div key={index} className="text-sm">
                       <span className="font-medium">{shift.date}</span>
-                      <span className="text-muted-foreground ml-2">({shift.type})</span>
+                      <span className="text-muted-foreground ml-2">{shift.type}</span>
                     </div>
                   ))
                 ) : (
@@ -266,7 +257,7 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
             >
               <div className="text-left w-full">
                 <div className="flex items-center gap-3 mb-2">
-                  <RotateCcw className="h-4 w-4" />
+                  <Repeat className="h-4 w-4" />
                   <span className="font-semibold text-base">Request Call Swap</span>
                 </div>
                 <p className="text-sm text-muted-foreground">Submit a swap request</p>
@@ -280,7 +271,7 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
             >
               <div className="text-left w-full">
                 <div className="flex items-center gap-3 mb-2">
-                  <Calendar className="h-6 w-6" />
+                  <CalendarX className="h-4 w-4" />
                   <span className="font-semibold text-base">Request Time Off</span>
                 </div>
                 <p className="text-sm text-muted-foreground ">Plan your time off</p>
@@ -296,8 +287,8 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
               >
                 <div className="text-left w-full">
                   <div className="flex items-center gap-3 mb-2">
-                    <CalendarCheck className="h-6 w-6" />
-                    <span className="font-semibold text-base">View My Schedule</span>
+                    <UserCheck className="h-4 w-4" />
+                    <span className="font-semibold text-base">Check My Schedule</span>
                   </div>
                   <p className="text-sm text-muted-foreground mt-2">See your full schedule</p>
                 </div>
@@ -312,12 +303,12 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
           <Card className="p-6 bg-card shadow-lg rounded-2xl min-h-[300px] flex flex-col flex-1">
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
               <Bell className="h-5 w-5" />
-              Recent Activity
+              Swap Notifications
             </h2>
             <div className="space-y-3 flex-1">
               {filteredRecentActivity.length > 0 ? (
                 filteredRecentActivity.map((activity) => (
-                  <div key={activity.id} className={`flex items-start gap-3 p-3 rounded-lg ${activity.type === 'swap_approved' ? 'bg-green-100' : activity.type === 'swap_denied' ? 'bg-red-100' : 'bg-muted/50'}`}>
+                  <div key={activity.id} className={`flex items-start gap-3 p-3 rounded-lg ${activity.type === 'swap_approved' ? 'bg-green-100 dark:bg-green-950/40' : activity.type === 'swap_denied' ? 'bg-red-100 dark:bg-red-950/40' : 'bg-muted/50'}`}>
                     <div className="p-2 bg-primary/10 rounded-full">
                       {activity.type.startsWith('swap') ? (
                         <RotateCcw className="h-4 w-4 text-primary" />
@@ -339,7 +330,7 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
                 ))
               ) : (
                 <div className="flex-1 flex items-center justify-center">
-                  <p className="text-muted-foreground text-center">No recent activity</p>
+                  <p className="text-muted-foreground text-center">No swap notifications</p>
                 </div>
               )}
             </div>
@@ -371,11 +362,11 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
       {/* Deny Reason Modal */}
       <Dialog open={denyModalOpen} onOpenChange={setDenyModalOpen}>
         <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+          <div className="bg-card text-foreground rounded-lg shadow-lg p-6 w-full max-w-md border border-border">
             <h3 className="text-lg font-semibold mb-4">Deny Swap Request</h3>
             <label className="block mb-2 text-sm font-medium">Reason for denial:</label>
             <textarea
-              className="w-full border rounded p-2 mb-4"
+              className="w-full border border-border rounded p-2 mb-4 bg-background text-foreground"
               rows={3}
               value={denyReason}
               onChange={e => setDenyReason(e.target.value)}

@@ -3,19 +3,18 @@
 import React, { useState, useEffect } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
-import { CalendarDays, Send, Check, X, Shield, Users, Repeat2 } from "lucide-react";
+import { Dialog } from "../../../components/ui/dialog";
+import { ConfirmDialog } from "../../../components/ui/confirm-dialog";
+import { CalendarDays, CalendarX, Send, Check, X, Shield, Users, Repeat } from "lucide-react";
 import { differenceInCalendarDays, parseISO } from 'date-fns';
 import { config } from '../../../config';
 import { toast } from "../../../lib/use-toast";
 import { useMemo } from "react";
-import { Dialog } from "../../../components/ui/dialog";
-import { ConfirmDialog } from "./ConfirmDialog";
-import { Trash2 } from "lucide-react";
-
+import { VacationResponse } from "@/lib/models/VacationResponse";
 
 interface AdminPageProps {
-  residents: { id: string; name: string; email: string; pgyLevel: number | string }[];
-  myTimeOffRequests: { id: string; startDate: string; endDate: string; resident: string; reason: string; status: string; }[];
+  residents: { id: string; name: string; email: string; pgyLevel: number | string; hospitalRole?: number; hours: number }[];
+  myTimeOffRequests: VacationResponse[];
   shifts: { id: string; name: string }[];
   handleApproveRequest: (id: string) => void;
   handleDenyRequest: (id: string) => void;
@@ -29,7 +28,6 @@ interface AdminPageProps {
   users: { id: string; first_name: string; last_name: string; email: string; role: string }[];
   handleDeleteUser: (user: { id: string; first_name: string; last_name: string; email: string; role: string }) => void;
   latestVersion?: string;
-  onNavigateToCalendar?: () => void;
   userId: string;
 }
 
@@ -38,6 +36,7 @@ interface Request {
   firstName: string;
   lastName: string;
   reason: string;
+  halfDay?: string | null;
   status: string;
   date: string;
   startDate?: string;
@@ -48,27 +47,27 @@ interface Request {
 }
 
 interface SwapRequest {
-  SwapId: string;
-  ScheduleSwapId: string;
-  RequesterId: string;
-  RequesteeId: string;
-  RequesterDate: string;
-  RequesteeDate: string;
-  Status: string;
-  CreatedAt: string;
-  UpdatedAt: string;
-  Details?: string;
+  swapRequestId: string;
+  scheduleId: string;
+  requesterId: string;
+  requesteeId: string;
+  requesterDate: string;
+  requesteeDate: string;
+  status: SwapRequestStatus;
+  createdAt: string;
+  updatedAt: string;
+  details?: string;
+}
+
+interface SwapRequestStatus {
+  id: number;
+  description: string;
 }
 
 interface Announcement {
   announcementId: string;
   message: string;
   createdAt?: string;
-}
-
-interface DateEntry {
-  scheduleId?: string;
-  date?: string;
 }
 
 // Modal component
@@ -99,14 +98,11 @@ const AdminPage: React.FC<AdminPageProps> = ({
   // setInviteRole,
   users,
   handleDeleteUser,
-  onNavigateToCalendar,
   userId,
 }) => {
   console.log('AdminPage props - users:', users);
   console.log('AdminPage props - users length:', users.length);
 
-  const [generating, setGenerating] = useState(false);
-  const [message, setMessage] = useState("");
   const [showRequestsModal, setShowRequestsModal] = useState(false);
   const [showInvitationsModal, setShowInvitationsModal] = useState(false);
   const [myTimeOffRequests, setMyTimeOffRequests] = useState<Request[]>([]);
@@ -121,83 +117,6 @@ const AdminPage: React.FC<AdminPageProps> = ({
   const [showAnnouncementConfirm, setShowAnnouncementConfirm] = useState(false);
   const [deletingAnnouncement, setDeletingAnnouncement] = useState<string | null>(null);
   const [switchingRole, setSwitchingRole] = useState<string | null>(null);
-  const [deletingSchedule, setDeletingSchedule] = useState(false);
-  
-  const handleGenerateSchedule = async () => {
-    setGenerating(true);
-    setMessage("");
-    try {
-      // TODO: Year is hardcoded in front end but passed as a variable to backend
-      const response = await fetch(`${config.apiUrl}/api/algorithm/training/2025`, { method: "POST" });
-      if (!response.ok) throw new Error("Failed to generate schedule");
-      setMessage("New schedule generated successfully!");
-
-      // Navigate to calendar view after successful generation
-      if (onNavigateToCalendar) {
-        onNavigateToCalendar();
-      }
-    } catch {
-      setMessage("Error generating schedule. Please try again.");
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  // Helper to get id needed for schedule deletion
-  const getLatestScheduleId = async (): Promise<string | null> => {
-    try {
-      const res = await fetch(`${config.apiUrl}/api/dates`);
-      if (!res.ok) return null;
-      const dates: DateEntry[] = await res.json();
-      const map: Record<string, number> = {};
-
-      for (const d of dates) {
-        if (!d.scheduleId || !d.date) continue;
-        const t = new Date(d.date).getTime();
-        if (!map[d.scheduleId] || t > map[d.scheduleId]) {
-          map[d.scheduleId] = t;
-        }
-      }
-
-      const latest = Object.entries(map).sort((a, b) => b[1] - a[1])[0]?.[0];
-      return latest ?? null;
-    } catch (e) {
-      console.error("getLatestScheduleId error:", e);
-      return null;
-    }
-  };
-
-  const handleDeleteSchedule = async (): Promise<void> => {
-    setDeletingSchedule(true);
-    try {
-      const id = await getLatestScheduleId();
-      if (!id) {
-        toast({
-          title: "No schedule found",
-          description: "Couldn’t determine a schedule ID to delete.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const res = await fetch(`${config.apiUrl}/api/schedules/${encodeURIComponent(id)}`, { method: "DELETE" });
-      const ok = res.status === 204;
-
-      toast({
-        title: ok ? "Schedule deleted" : "Delete failed",
-        description: ok
-          ? "The current schedule was deleted successfully."
-          : (await res.text()) || `Unexpected error (${res.status}).`,
-        variant: ok ? "success" : "destructive",
-      });
-
-      if (ok && onNavigateToCalendar) {
-        onNavigateToCalendar();
-      }
-    } finally {
-      setDeletingSchedule(false);
-    }
-  };
 
   useEffect(() => {
     // Ping backend API
@@ -223,6 +142,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
           lastName: string;
           date: string;
           reason: string;
+          halfDay?: string | null;
           status: string;
           residentId: string;
           details?: string;
@@ -235,6 +155,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
           startDate: vac.date,
           endDate: vac.date,
           reason: vac.reason,
+          halfDay: vac.halfDay ?? null,
           status: vac.status,
           residentId: vac.residentId,
           details: vac.details,
@@ -352,6 +273,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
   useEffect(() => setResidentRows(residents), [residents]);
 
   const [savingPGY, setSavingPGY] = useState<Record<string, boolean>>({});
+  const [savingHospitalRole, setSavingHospitalRole] = useState<Record<string, boolean>>({});
 
   // Updates the PGY year when selected by administrators on the Resident Info tab
   const handleUpdatePGY = async (residentId: string, newPGY: number) => {
@@ -360,19 +282,6 @@ const AdminPage: React.FC<AdminPageProps> = ({
     setResidentRows(prev => prev.map(r => r.id === residentId ? { ...r, pgyLevel: newPGY } : r));
 
     try {
-      // First, get the current resident data
-      const getResponse = await fetch(`${config.apiUrl}/api/residents/filter?resident_id=${residentId}`);
-      if (!getResponse.ok) {
-        throw new Error('Failed to fetch current resident data');
-      }
-
-      const residentsData = await getResponse.json();
-      if (!residentsData || residentsData.length === 0) {
-        throw new Error('Resident not found');
-      }
-
-      const currentResident = residentsData[0];
-
       // Update with existing data but new phone number
       const res= await fetch(`${config.apiUrl}/api/residents/${residentId}`, {
         method: 'PUT',
@@ -380,16 +289,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          resident_id: currentResident.resident_id,
-          first_name: currentResident.first_name,
-          last_name: currentResident.last_name,
-          email: currentResident.email,
-          password: currentResident.password,
-          phone_num: currentResident.phone_num,
-          graduate_yr: newPGY, // Update PGY
-          weekly_hours: currentResident.weekly_hours,
-          total_hours: currentResident.total_hours,
-          bi_yearly_hours: currentResident.bi_yearly_hours
+          graduate_yr: newPGY,
         })
       });
 
@@ -415,7 +315,48 @@ const AdminPage: React.FC<AdminPageProps> = ({
       setSavingPGY(prev => ({ ...prev, [residentId]: false }));
     }
   };
-  
+
+  // Updates the Hospital Role Profile when selected by administrators on the Resident Info tab
+  const handleUpdateHospitalRole = async (residentId: string, newRole: number) => {
+    setSavingHospitalRole(prev => ({ ...prev, [residentId]: true }));
+    // Optimistic update
+    setResidentRows(prev => prev.map(r => r.id === residentId ? { ...r, hospitalRole: newRole } : r));
+
+    try {
+      // Update with existing data but new hospital role profile
+      const res = await fetch(`${config.apiUrl}/api/residents/${residentId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          hospital_role_profile: newRole
+        })
+      });
+
+      if (!res.ok) {
+        const msg = await res.text();
+        throw new Error(msg || 'Failed to update Hospital Role Profile');
+      }
+
+      toast({
+        title: 'Hospital Role Profile updated',
+        description: `Resident set to Profile ${newRole + 1}.`,
+        variant: 'success',
+      });
+    } catch (error) {
+      // Roll back on error
+      setResidentRows(prev => prev.map(r => r.id === residentId ? { ...r, hospitalRole: residents.find(x => x.id === residentId)?.hospitalRole ?? r.hospitalRole } : r));
+      toast({
+        title: 'Update failed',
+        description: error?.message || 'Could not update Hospital Role Profile.',
+        variant: 'destructive',
+      });
+    } finally {
+      setSavingHospitalRole(prev => ({ ...prev, [residentId]: false }));
+    }
+  };
+
   // Fetch announcements when switching to the announcements tab
   useEffect(() => {
     if (activeTab === 'announcements') {
@@ -437,7 +378,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
     const groupedMap = new Map<string, Request[]>();
 
     for (const req of requests) {
-      const key = `${req.firstName} ${req.lastName}||${req.reason}`;
+      const key = `${req.firstName} ${req.lastName}||${req.reason}||${req.halfDay ?? ''}`;
       if (!groupedMap.has(key)) {
         groupedMap.set(key, []);
       }
@@ -472,16 +413,22 @@ const AdminPage: React.FC<AdminPageProps> = ({
           firstName: current.firstName,
           lastName: current.lastName,
           reason: current.reason,
+          halfDay: current.halfDay ?? null,
           status: current.status,
           startDate: start,
           endDate: end,
           groupId: current.groupId,
+          details: current.details,
         });
 
 
         i = j;
       }
     }
+
+    result.sort((a, b) =>
+      new Date(a.startDate || "").getTime() - new Date(b.startDate || "").getTime()
+    );
 
     return result;
   }
@@ -522,7 +469,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
   const finalIdToName = users.length > 0 ? idToName : fallbackIdToName;
   console.log('Final mapping being used:', finalIdToName);
 
-  const pendingSwapsCount = swapHistory.filter(s => s.Status === 'Pending').length;
+  const pendingSwapsCount = swapHistory.filter(s => s.status.id === 0).length;
   console.log('swapHistory array:', swapHistory);
   console.log('pendingSwapsCount:', pendingSwapsCount);
   const pendingRequestsCount = groupedRequests.filter(r => r.status === 'Pending').length;
@@ -530,9 +477,10 @@ const AdminPage: React.FC<AdminPageProps> = ({
 
   // Helper to format a date as MM/DD/YYYY
   const formatDate = (dateStr: string) => {
-    console.log("Parsing dateStr:", dateStr); // <-- Debug line
     if (!dateStr) return 'N/A';
+    // Apply timezone offset to keep date local (same as calendar)
     const date = new Date(dateStr);
+    date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
     if (isNaN(date.getTime())) return 'N/A';
     return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
   };
@@ -659,8 +607,6 @@ const AdminPage: React.FC<AdminPageProps> = ({
     }
   };
 
-
-
   return (
     <div className="w-full pt-4 h-[calc(100vh-4rem)] flex flex-col items-center px-4 md:pl-8">
       {/* Dashboard Overview Card */}
@@ -681,57 +627,21 @@ const AdminPage: React.FC<AdminPageProps> = ({
             </div>
             <div className="flex flex-col items-center border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-700 pt-4 sm:pt-0 sm:pl-8">
               <div className="flex items-center gap-2 mb-1">
-                <Repeat2 className="w-5 h-5 text-yellow-500" />
+                <Repeat className="w-5 h-5 text-yellow-500" />
                 <span className="text-2xl font-bold text-gray-900 dark:text-white">{pendingSwapsCount}</span>
               </div>
               <span className="text-xs text-gray-500">Pending Swaps</span>
             </div>
             <div className="flex flex-col items-center border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-700 pt-4 sm:pt-0 sm:pl-8">
               <div className="flex items-center gap-2 mb-1">
-                <CalendarDays className="w-5 h-5 text-green-500" />
+                <CalendarX className="w-5 h-5 text-green-500" />
                 <span className="text-2xl font-bold text-gray-900 dark:text-white">{pendingRequestsCount}</span>
               </div>
               <span className="text-xs text-gray-500">Pending Time Off</span>
             </div>
-            <div className="h-6 sm:h-10 border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-700 mx-0 sm:mx-4 lg:mx-6 hidden sm:block" />
-            {/* Generate Schedule */}
-            <ConfirmDialog
-              triggerText={
-                <span className="flex items-center">
-                  {generating ? "Generating..." : "Generate New Schedule"}
-                </span>
-              }
-              title="Generate new schedule?"
-              message="This will overwrite the current schedule. Continue?"
-              confirmText="Generate"
-              cancelText="Cancel"
-              onConfirm={handleGenerateSchedule}
-              loading={generating}
-              variant="default"
-            />
-            {/* Delete Schedule */}
-            <ConfirmDialog
-              triggerText={
-                <>
-                  <span className="flex items-center justify-center">
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Current Schedule
-                  </span>
-                </>
-              }
-              title="Delete current schedule?"
-              message="This action cannot be undone."
-              confirmText="Delete"
-              cancelText="Cancel"
-              onConfirm={handleDeleteSchedule}
-              loading={deletingSchedule}
-              variant="danger"
-            />
-
           </div>
         </div>
       </Card>
-      {message && <div className="mb-4 text-center text-sm font-medium text-green-600 dark:text-green-400">{message}</div>}
 
       {/* Tab Navigation */}
       <div className="w-full max-w-6xl flex flex-col sm:flex-row gap-1 sm:gap-2 mb-4 sm:mb-6">
@@ -780,40 +690,40 @@ const AdminPage: React.FC<AdminPageProps> = ({
               <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-100 dark:bg-neutral-800">
                   <tr>
+                    <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                     <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requester</th>
                     <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requestee</th>
-                    <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                     <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Partner</th>
-                    <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                     <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                    <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
                   {swapHistory.length > 0 ? (
                     swapHistory.map((swap, idx) => {
                       console.log('Rendering swap:', swap);
-                      console.log('swap.RequesterId:', swap.RequesterId);
-                      console.log('swap.RequesteeId:', swap.RequesteeId);
-                      console.log('finalIdToName[swap.RequesterId]:', finalIdToName[swap.RequesterId]);
-                      console.log('finalIdToName[swap.RequesteeId]:', finalIdToName[swap.RequesteeId]);
+                      console.log('swap.RequesterId:', swap.requesterId);
+                      console.log('swap.RequesteeId:', swap.requesteeId);
+                      console.log('finalIdToName[swap.RequesterId]:', finalIdToName[swap.requesterId]);
+                      console.log('finalIdToName[swap.RequesteeId]:', finalIdToName[swap.requesteeId]);
 
                       return (
-                        <tr key={swap.SwapId || idx} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
+                        <tr key={swap.swapRequestId || idx} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
+                          <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.requesterDate ? formatDate(swap.requesterDate) : ''}</td>
                           <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                            {finalIdToName[swap.RequesterId] || `Resident ${swap.RequesterId}`}
+                            {finalIdToName[swap.requesterId] || `Resident ${swap.requesterId}`}
                           </td>
                           <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                            {finalIdToName[swap.RequesteeId] || `Resident ${swap.RequesteeId}`}
+                            {finalIdToName[swap.requesteeId] || `Resident ${swap.requesteeId}`}
                           </td>
-                          <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.RequesterDate ? new Date(swap.RequesterDate).toLocaleDateString() : ''}</td>
-                          <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.RequesteeDate ? new Date(swap.RequesteeDate).toLocaleDateString() : ''}</td>
-                          <td className={`px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm font-semibold ${swap.Status === 'Approved' ? 'text-green-600' :
-                            swap.Status === 'Denied' ? 'text-red-600' :
+                          <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.requesteeDate ? formatDate(swap.requesteeDate) : ''}</td>
+                          <td className="px-1 sm:px-3 py-3 sm:py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs break-all">{swap.details || '-'}</td>
+                          <td className={`px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm font-semibold ${swap.status.id === 1 ? 'text-green-600' :
+                            swap.status.id === 2 ? 'text-red-600' :
                               'text-yellow-600'
                             }`}>
-                            {swap.Status}
+                            {swap.status.description}
                           </td>
-                          <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.Details || '-'}</td>
                         </tr>
                       );
                     })
@@ -827,7 +737,6 @@ const AdminPage: React.FC<AdminPageProps> = ({
             </div>
           </Card>
         )}
-
         {activeTab === 'requests' && (
           <Card className="p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-4 mb-6 sm:mb-8 border border-gray-200 dark:border-gray-800">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
@@ -861,6 +770,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
                     <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Range</th>
                     <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resident</th>
                     <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+                    <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
                     <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                     <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                   </tr>
@@ -872,7 +782,10 @@ const AdminPage: React.FC<AdminPageProps> = ({
                         className="hover:bg-gray-50 dark:hover:bg-neutral-800">
                         <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{getRequestDate(request)}</td>
                         <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{getResidentName(request)}</td>
-                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{request.reason}</td>
+                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {request.reason}{request.halfDay === "A" ? " (AM)" : request.halfDay === "P" ? " (PM)" : ""}
+                        </td>
+                        <td className="px-2 sm:px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs break-all">{request.details || '-'}</td>
                         <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{request.status}</td>
                         <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           {request.status === "Pending" && (
@@ -1061,6 +974,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
                     <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resident</th>
                     <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                     <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current PGY Status</th>
+                    <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hospital Role Profile</th>
                     <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hours Scheduled</th>
                   </tr>
                 </thead>
@@ -1084,12 +998,41 @@ const AdminPage: React.FC<AdminPageProps> = ({
                             ))}
                           </select>
                         </td>
-                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">--</td>
+                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {resident.pgyLevel === 1 ? (
+                            <select
+                              value={resident.hospitalRole ?? ""}
+                              onChange={(e) => handleUpdateHospitalRole(resident.id, Number(e.target.value))}
+                              disabled={!!savingHospitalRole[resident.id]}
+                              className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                            >
+                              <option value="" disabled>Select Profile</option>
+                              {[0, 1, 2, 3, 4, 5, 6, 7].map(n => (
+                                <option key={n} value={n}>Profile {n + 1}</option>
+                              ))}
+                            </select>
+                          ) : resident.pgyLevel === 2 ? (
+                            <select
+                              value={resident.hospitalRole ?? ""}
+                              onChange={(e) => handleUpdateHospitalRole(resident.id, Number(e.target.value))}
+                              disabled={!!savingHospitalRole[resident.id]}
+                              className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                            >
+                              <option value="" disabled>Select Profile</option>
+                              {[8, 9, 10, 11, 12, 13, 14, 15].map(n => (
+                                <option key={n} value={n}>Profile {n + 1}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span className="text-gray-400 italic">N/A</span>
+                          )}
+                        </td>
+                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{resident.hours}</td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={6} className="px-6 py-4 text-center text-gray-500 italic">No residents found.</td>
+                      <td colSpan={5} className="px-6 py-4 text-center text-gray-500 italic">No residents found.</td>
                     </tr>
                   )}
                 </tbody>
@@ -1192,6 +1135,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Range</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resident</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
@@ -1203,7 +1147,10 @@ const AdminPage: React.FC<AdminPageProps> = ({
                     className="hover:bg-gray-50 dark:hover:bg-neutral-800">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{getRequestDate(request)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{getResidentName(request)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{request.reason}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                      {request.reason}{request.halfDay === "A" ? " (AM)" : request.halfDay === "P" ? " (PM)" : ""}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs break-all">{request.details || '-'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{request.status}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       {request.status === "Pending" && (
@@ -1221,7 +1168,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center text-gray-500 italic">No time off requests found.</td>
+                  <td colSpan={7} className="px-6 py-4 text-center text-gray-500 italic">No time off requests found.</td>
                 </tr>
               )}
             </tbody>
@@ -1286,6 +1233,8 @@ const AdminPage: React.FC<AdminPageProps> = ({
           </div>
         </div>
       </Modal>
+
+
     </div>
   )
 }

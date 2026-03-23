@@ -14,10 +14,10 @@ interface RequestOffPageProps {
   setEndDate: (value: string) => void;
   reason: string;
   setReason: (value: string) => void;
-  leaveReasons: { id: string; name: string }[];
+  leaveReasons: { id: string; name: string; halfDay?: string }[];
   description: string;
   setDescription: (value: string) => void;
-  handleSubmitRequestOff: () => void;
+  handleSubmitRequestOff: () => Promise<void>;
 }
 
 type ApiVacation = {
@@ -30,11 +30,13 @@ type ApiVacation = {
   status: "Pending" | "Approved" | "Denied" | string;
   details?: string | null;
   groupId?: string | null;
+  halfDay?: string | null;
 };
 
 type GroupedRequest = {
   groupId: string;
   reason: string;
+  halfDay?: string | null;
   status: string;
   details?: string | null;
   dates: string[];
@@ -76,7 +78,7 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
     setLoadingRequests(true);
     setErrorRequests(null);
     try {
-      const url = `${config.apiUrl}/api/vacations/filter?residentId=${encodeURIComponent(userId)}`;
+      const url = `${config.apiUrl}/api/vacations?residentId=${encodeURIComponent(userId)}`;
       const res = await fetch(url, { cache: "no-store" });
 
       if (res.status === 404) {
@@ -113,6 +115,7 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
         mp.set(key, {
           groupId: key,
           reason: v.reason,
+          halfDay: v.halfDay ?? null,
           status: v.status,
           details: v.details ?? null,
           dates: [v.date],
@@ -128,10 +131,12 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
     arr.forEach((g) => g.dates.sort((a, b) => +new Date(a) - +new Date(b)));
     arr.sort(
       (A, B) =>
-        +new Date(B.dates[B.dates.length - 1]) - +new Date(A.dates[A.dates.length - 1])
+        +new Date(A.dates[0]) - +new Date(B.dates[0])
     );
     return arr;
   }, [requests]);
+
+  const reasonName = leaveReasons.find((r) => r.id === reason)?.name ?? reason;
 
   const handleInitialSubmit = () => {
     if (isFormValid) {
@@ -139,9 +144,10 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
     }
   };
 
-  const handleConfirmSubmit = () => {
-    handleSubmitRequestOff();
+  const handleConfirmSubmit = async () => {
+    await handleSubmitRequestOff();
     setShowConfirmation(false);
+    setRefreshKey((k) => k + 1);
   };
 
   const handleCancelSubmit = () => {
@@ -181,12 +187,16 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
     );
   };
 
-  const fmt = (d: string) =>
-    new Date(d).toLocaleDateString("en-US", {
+  const fmt = (d: string) => {
+    // Apply timezone offset to keep date local (same as calendar)
+    const date = new Date(d);
+    date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+    return date.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
     });
+  };
 
   return (
     <div className="w-full h-full bg-background p-4 overflow-hidden">
@@ -195,7 +205,7 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
         <div className="text-center mb-5">
           <div className="flex justify-center mb-2">
             <div className="p-2.5 bg-primary/10 rounded-full">
-              <CalendarX className="h-5 w-5 text-primary" />
+              <CalendarX className="h-6 w-6 text-primary" />
             </div>
           </div>
           <h1 className="text-2xl font-bold text-foreground mb-1">Request Time Off</h1>
@@ -259,7 +269,7 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
               >
                 <option value="" disabled>Select a reason</option>
                 {leaveReasons.map((r) => (
-                  <option key={r.id} value={r.name}>
+                  <option key={r.id} value={r.id}>
                     {r.name}
                   </option>
                 ))}
@@ -276,12 +286,18 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
               </div>
               <textarea
                 id="description-box"
-                rows={2}
+                rows={4}
+                maxLength={255}
                 className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors resize-none"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="e.g., specific duties, contact info, special considerations..."
               />
+              <div className="flex justify-end">
+                <span className={`text-xs ${description.length >= 255 ? 'text-red-500 font-semibold' : 'text-muted-foreground'}`}>
+                  {description.length}/255
+                </span>
+              </div>
             </div>
 
             {/* Form Summary */}
@@ -297,7 +313,8 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
                     <span className="font-medium text-foreground">
                       {new Date(startDate).toLocaleDateString('en-US', { 
                         month: 'short', 
-                        day: 'numeric' 
+                        day: 'numeric',
+                        timeZone: 'UTC'
                       })}
                     </span>
                   </div>
@@ -306,7 +323,8 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
                     <span className="font-medium text-foreground">
                       {new Date(endDate).toLocaleDateString('en-US', { 
                         month: 'short', 
-                        day: 'numeric' 
+                        day: 'numeric',
+                        timeZone: 'UTC' 
                       })}
                     </span>
                   </div>
@@ -319,7 +337,7 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Reason:</span>
                     <span className="font-medium text-foreground">
-                      {reason}
+                      {reasonName}
                     </span>
                   </div>
                 </div>
@@ -328,7 +346,7 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
           </div>
 
           {/* Submit Button / Confirmation */}
-          <div className="pt-3 mt-auto">
+          <div className="mt-auto">
             {!showConfirmation ? (
               <>
                 <Button 
@@ -358,8 +376,8 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
                     Are you sure you want to submit this time off request? This will be sent to your supervisor for approval.
                   </p>
                   <div className="text-xs text-yellow-600 dark:text-yellow-400">
-                    <strong>Duration:</strong> {new Date(startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - {new Date(endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} ({calculateDays()} day{calculateDays() !== 1 ? 's' : ''})<br/>
-                    <strong>Reason:</strong> {reason}
+                    <strong>Duration:</strong> {new Date(startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })} - {new Date(endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })} ({calculateDays()} day{calculateDays() !== 1 ? 's' : ''})<br/>
+                    <strong>Reason:</strong> {reasonName}
                     {description && (
                       <>
                         <br/>
@@ -389,19 +407,8 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
 
           {/* Resident Submitted Requests */}
             <div className="mt-6">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-semibold">Your Submitted Requests</h2>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setRefreshKey((k) => k + 1)}
-                  className="gap-1"
-                  title="Refresh"
-                >
-                  Refresh
-                </Button>
+              <div className="flex items-center mb-2">
+                <h2 className="text-lg font-semibold">Your Submitted Requests</h2>
               </div>
 
               <Card className="p-3 shadow-lg border border-border">
@@ -425,7 +432,7 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
                           className="border border-border rounded-lg p-3 hover:bg-muted/40 transition-colors"
                         >
                           <div className="flex items-start justify-between gap-3">
-                            <div className="space-y-0.5">
+                            <div className="space-y-0.5 min-w-0">
                               <div className="flex items-center gap-2">
                                 <Calendar className="h-4 w-4 text-primary" />
                                 <span className="font-medium">
@@ -438,13 +445,14 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
                               </div>
                               <div className="text-sm">
                                 <span className="text-muted-foreground">Reason: </span>
-                                <span className="font-medium">{g.reason}</span>
+                                <span className="font-medium">
+                                  {g.reason}
+                                  {g.halfDay === "A" ? " (AM)" : g.halfDay === "P" ? " (PM)" : ""}
+                                </span>
                               </div>
                               {g.details ? (
-                                <div className="text-xs text-muted-foreground">
-                                  {g.details.length > 100
-                                    ? g.details.slice(0, 100) + "…"
-                                    : g.details}
+                                <div className="text-xs text-muted-foreground break-all">
+                                  {g.details}
                                 </div>
                               ) : null}
                             </div>
