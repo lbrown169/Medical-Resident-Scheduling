@@ -160,7 +160,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 	);
 
 	return (
-		<div className="w-full pt-4 h-[calc(100vh-4rem)] flex flex-col items-center px-4 md:pl-8">
+		<div className="w-full pt-4 pb-4 min-h-[calc(100vh-4rem)] flex flex-col items-center px-4 md:pl-8 overflow-y-auto">
 			{/* Rotation Dashboard Overview Card*/}
 			<Card className="mb-8 p-6 flex flex-col gap-4 items-center justify-between bg-white dark:bg-neutral-900 shadow-lg rounded-2xl border border-gray-200 dark:border-gray-800">
 				<h2 className="text-2xl font-bold flex items-center gap-2 justify-center w-full mb-2">
@@ -270,7 +270,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 
 
 			{activeTab === 'schedule' && (
-    			<Card className="p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-4 mb-6 sm:mb-8 border border-gray-200 dark:border-gray-800">
+    			<Card className="p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-4 mb-0 sm:mb-0 border border-gray-200 dark:border-gray-800">
         			{/* Header - Title only */}
         			<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
             			<h2 className="text-lg sm:text-xl font-bold">Current Schedule</h2>
@@ -338,7 +338,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 
 
 			{activeTab === 'submissions' && (
-			<Card className="p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-4 mb-6 sm:mb-8 border border-gray-200 dark:border-gray-800">
+			<Card className="p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-4 mb-0 border border-gray-200 dark:border-gray-800">
 				<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
 				<h2 className="text-lg sm:text-xl font-bold">Submissions</h2>
 				<div className="flex gap-2">
