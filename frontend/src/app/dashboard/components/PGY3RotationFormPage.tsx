@@ -47,12 +47,9 @@ const PGY3RotationFormPage: React.FC<PGY3RotationFormPageProps> = ({ userId, use
 
  return (
   <div className="max-w-4xl mx-auto">
-   <div className="bg-card rounded-xl shadow-lg border border-border p-8">
-    <div className="flex items-center justify-between mb-6">
-      <div className="flex items-center gap-3">
-        <ClipboardList className="h-8 w-8 text-primary" />
-        <h1 className="text-3xl font-bold text-foreground">Rotation Request Form</h1>
-      </div>
+    <div className="flex items-center gap-3 mb-6">
+      <ClipboardList className="h-8 w-8 text-primary" />
+      <h1 className="text-3xl font-bold text-foreground">Rotation Request Form</h1>
     </div>
 
     <div className="mb-6">
@@ -75,7 +72,6 @@ const PGY3RotationFormPage: React.FC<PGY3RotationFormPageProps> = ({ userId, use
      submitEndpoint="api/rotation-pref-request"
      fetchEndpoint="api/rotation-pref-request/resident"
     />
-   </div>
   </div>
  );
 };
