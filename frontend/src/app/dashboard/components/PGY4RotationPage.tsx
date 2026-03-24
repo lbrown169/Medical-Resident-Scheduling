@@ -593,7 +593,10 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 				{activeTab === 'schedule' && (
 					<Card className="p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-4 mb-6 sm:mb-8 border border-gray-200 dark:border-gray-800">
 						<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
-							<h2 className="text-lg sm:text-xl font-bold">Current Schedule</h2>
+							<div className="flex flex-col sm:flex-row items-baseline gap-2">
+								<h2 className="text-lg sm:text-xl font-bold font-color">Current Schedule</h2>
+								<p className="text-xs sm:text-sm text-gray-500">Click a table cell to choose the rotation type</p>
+							</div>
 							<div className="flex gap-2 items-center">
 								{schedules.length > 0 && (
 									<>
