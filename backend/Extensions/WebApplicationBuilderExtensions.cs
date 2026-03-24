@@ -77,14 +77,14 @@ public static class WebApplicationBuilderExtensions
                     = builder.Configuration.GetValue<string>("Mailgun:ApiKey");
                 string? domain
                     = builder.Configuration.GetValue<string>("Mailgun:Domain");
-                if (apiKey == null || domain == null)
+                if (string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(domain))
                 {
                     apiKey = Environment
                         .GetEnvironmentVariable("MailgunApiKey");
                     domain = Environment
                         .GetEnvironmentVariable("MailgunDomain");
 
-                    if (apiKey == null || domain == null)
+                    if (string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(domain))
                     {
                         throw new Exception(
                             "Mailgun API key/domain was not set, but HTTP client was created"
@@ -126,13 +126,21 @@ public static class WebApplicationBuilderExtensions
 
             if (!hasLoggedConnectionString)
             {
-                logger.LogInformation("Connecting to {mySqlConnectionString}",
-                    mySqlConnectionString);
-                hasLoggedConnectionString = true;
+                logger.LogInformation("Connecting to database");
             }
 
-            options.UseMySql(mySqlConnectionString,
-                ServerVersion.AutoDetect(mySqlConnectionString));
+            options.UseMySql(
+                mySqlConnectionString,
+                new MySqlServerVersion(new Version(8, 0, 36)),
+                mySqlOptions =>
+                {
+                    mySqlOptions.EnableRetryOnFailure(
+                        maxRetryCount: 10,
+                        maxRetryDelay: TimeSpan.FromSeconds(5),
+                        errorNumbersToAdd: null
+                    );
+                }
+            );
         });
 
         return builder;
@@ -156,7 +164,7 @@ public static class WebApplicationBuilderExtensions
             IConfigurationSection sentrySection = builder.Configuration.GetSection("Sentry");
             string? sentryDsn =
                 sentrySection.GetValue<string>("Dsn") ??
-                Environment.GetEnvironmentVariable("SentryDsn");
+                Environment.GetEnvironmentVariable("SENTRY_DSN");
 
             if (string.IsNullOrEmpty(sentryDsn))
             {
@@ -191,6 +199,8 @@ public static class WebApplicationBuilderExtensions
                         origin.StartsWith("https://psycall.net") ||
                         origin.StartsWith("https://www.psycall.net") ||
                         origin.StartsWith("https://backend.psycall.net") ||
+                        origin.StartsWith("https://staging.psycall.net") ||
+                        origin.StartsWith("https://backend.staging.psycall.net") ||
                         origin.StartsWith("http://localhost"))
                     .AllowAnyMethod()
                     .AllowAnyHeader()
