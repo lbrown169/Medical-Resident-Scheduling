@@ -195,49 +195,6 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 							</div>
 							<span className="text-xs text-gray-500">Submission Deadline</span>
 						</div>
-						<div className="h-6 sm:h-10 border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-700 mx-0 sm:mx-4 lg:mx-6 hidden sm:block" />
-						<div className="flex items-center">
-							<Button
-								onClick={() => {}}
-								disabled={generating}
-								className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl shadow"
-							>
-								{generating ? "Generating..." : `Generate ${selectedYear} - ${selectedYear + 1} Schedule`}
-							</Button>
-
-							{/*
-              <ConfirmDialog
-                open={confirmOpen}
-                onOpenChange={setConfirmOpen}
-                title="Generate new schedule?"
-                message={`This will overwrite the current schedule for ${selectedYear}. Continue?`}
-                confirmText="Generate"
-                cancelText="Cancel"
-                onConfirm={() => {}}
-                loading={generating}
-                variant="default"
-              />
-              */}
-						</div>
-
-						{/* Delete Schedule - Uncomment when API is ready
-						<ConfirmDialog
-							triggerText={
-								<>
-									<span className="flex items-center justify-center">
-										<Trash2 className="h-4 w-4 mr-2" />
-										Delete Current Schedule
-									</span>
-								</>
-							}
-							title="Delete current schedule?"
-							message="This action cannot be undone."
-							confirmText="Delete"
-							cancelText="Cancel"
-							onConfirm={() => { }}
-							loading={false}
-							variant="danger"
-						/>*/}
 					</div>
 				</div>
 			</Card>
@@ -448,6 +405,53 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 					<div className="overflow-x-auto max-h-96 overflow-y-auto w-full">
 
 					</div>
+					{/* Action Buttons at Bottom */}
+					<div className="flex justify-end gap-3 pt-6 border-t border-gray-200 dark:border-gray-700 mt-6">
+    				<Button
+        				onClick={() => {}}
+        				disabled={generating}
+        				className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl shadow flex items-center gap-2"
+    				>
+        				<Save className="h-5 w-5" />
+        				{generating ? "Generating..." : `Generate ${selectedYear} - ${selectedYear + 1} Schedule`}
+    				</Button>
+					{/*<ConfirmDialog
+                		open={confirmOpen}
+                		onOpenChange={setConfirmOpen}
+                		title="Generate new schedule?"
+                		message={`This will overwrite the current schedule for ${selectedYear}. Continue?`}
+                		confirmText="Generate"
+                		cancelText="Cancel"
+                		onConfirm={() => {}}
+                		loading={generating}
+                		variant="default"
+              		/>*/}
+    				<Button
+        				onClick={() => {}}
+        				className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-3 rounded-xl shadow flex items-center gap-2"
+    				>
+        				<Trash2 className="h-5 w-5" />
+        				Delete Schedule
+    				</Button>
+					{/* Delete Schedule - Uncomment when API is ready
+                        <ConfirmDialog
+                            triggerText={
+                                <>
+                                    <span className="flex items-center justify-center">
+                                        <Trash2 className="h-4 w-4 mr-2" />
+                                        Delete Current Schedule
+                                    </span>
+                                </>
+                            }
+                            title="Delete current schedule?"
+                            message="This action cannot be undone."
+                            confirmText="Delete"
+                            cancelText="Cancel"
+                            onConfirm={() => { }}
+                            loading={false}
+                            variant="danger"
+                        />*/}
+				</div>
 
 				</Card>
 			)}
