@@ -761,68 +761,67 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 								<label className="flex items-center text-sm font-semibold gap-2 mb-2">
 									Due Date
 								</label>
+								<input
+									id=""
+									type="date"
+									className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+									value={undefined}
+									onChange={() => null}
+									min={new Date().toISOString().split('T')[0]}
+								/>
 							</div>
-							<input
-								id="rotation-form-due-date"
-								type="date"
-								className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
-								value={null}
-								onChange={() => null}
-								min={new Date().toISOString().split('T')[0]}
-							/>
+							<div className="flex flex-row gap-2">
+								<Button
+									onClick={() => setShowRotationFormModal(true)}
+									disabled={showRotationFormModal == true}
+									className="py-2 flex items-center justify-center gap-2 bg-blue-500 text-white hover:bg-blue-600"
+								>
+									<ClipboardList className="h-4 w-4" />
+									Create Rotation Form
+								</Button>
+							</div>
+							
 						</div>
-					</div>
-					<h2 className="text-lg sm:text-xl font-bold mb-4">Chief Selection</h2>
-					<div className="overflow-x-auto max-h-96 overflow-y-auto w-full">
 
+						<h2 className="text-lg sm:text-xl font-bold mb-4">Chief Selection</h2>
+							
+						<div className="overflow-x-auto max-h-96 overflow-y-auto">
+							<table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+									<thead className="sticky top-0 bg-gray-100 dark:bg-neutral-800">
+											<tr>
+													<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+													<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chief Type</th>
+											</tr>
+									</thead>
+									<tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
+											{PGY3Residents.length > 0 ? (
+													PGY3Residents.map((r) => (
+															<tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
+																	<td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{r.name}</td>
+																	<td className="px-6 py-4 whitespace-nowrap text-sm">
+																			<select
+																				value={chiefTypeOverrides[r.id] ?? r.chiefType ?? ""}
+																				onChange={(e) => handleSwitchChiefType(r, e.target.value)}
+																				disabled={switchingChiefType === r.id}
+																				className="..." // The switching looked strange so we just disable the dropdown for a second
+																			>
+																				<option value="">None</option>
+																				<option value="Admin">Admin</option>
+																				<option value="Clinic">Clinic</option>
+																				<option value="Education">Education</option>
+																			</select>
+																	</td>
+						
+															</tr>
+													))
+											) : (
+													<tr>
+															<td colSpan={4} className="px-6 py-4 text-center text-gray-500 italic">No PGY-3 residents found.</td>
+													</tr>
+											)}
+									</tbody>
+							</table>
 					</div>
-					{/* Action Buttons at Bottom */}
-					<div className="flex justify-end gap-3 pt-6 border-t border-gray-200 dark:border-gray-700 mt-6">
-    				<Button
-        				onClick={() => {}}
-        				disabled={generating}
-        				className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl shadow flex items-center gap-2"
-    				>
-        				<Save className="h-5 w-5" />
-        				{generating ? "Generating..." : `Generate ${selectedYear} - ${selectedYear + 1} Schedule`}
-    				</Button>
-					{/*<ConfirmDialog
-                		open={confirmOpen}
-                		onOpenChange={setConfirmOpen}
-                		title="Generate new schedule?"
-                		message={`This will overwrite the current schedule for ${selectedYear}. Continue?`}
-                		confirmText="Generate"
-                		cancelText="Cancel"
-                		onConfirm={() => {}}
-                		loading={generating}
-                		variant="default"
-              		/>*/}
-    				<Button
-        				onClick={() => {}}
-        				className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-3 rounded-xl shadow flex items-center gap-2"
-    				>
-        				<Trash2 className="h-5 w-5" />
-        				Delete Schedule
-    				</Button>
-					{/* Delete Schedule - Uncomment when API is ready
-                        <ConfirmDialog
-                            triggerText={
-                                <>
-                                    <span className="flex items-center justify-center">
-                                        <Trash2 className="h-4 w-4 mr-2" />
-                                        Delete Current Schedule
-                                    </span>
-                                </>
-                            }
-                            title="Delete current schedule?"
-                            message="This action cannot be undone."
-                            confirmText="Delete"
-                            cancelText="Cancel"
-                            onConfirm={() => { }}
-                            loading={false}
-                            variant="danger"
-                        />*/}
-				</div>
 
 					</Card>
 				)}
