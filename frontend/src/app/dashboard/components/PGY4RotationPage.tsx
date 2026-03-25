@@ -523,6 +523,35 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 							</div>
 							<span className="text-xs text-gray-500">Submission Deadline</span>
 						</div>
+						<div className="h-6 sm:h-10 border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-700 mx-0 sm:mx-4 lg:mx-6 hidden sm:block" />
+						<div className="flex items-center">
+							<Button
+								onClick={handleGenerate}
+								disabled={generating || schedules.length >= 5}
+								className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl shadow"
+							>
+								{generating ? "Generating..." : `Generate ${selectedYear} - ${selectedYear + 1} Schedule`}
+							</Button>
+						</div>
+
+						{/* Delete Schedule */}
+						<ConfirmDialog
+							triggerText={
+								<>
+									<span className="flex items-center justify-center">
+										<Trash2 className="h-4 w-4 mr-2" />
+										Delete Current Schedule
+									</span>
+								</>
+							}
+							title="Delete current schedule?"
+							message="This action cannot be undone."
+							confirmText="Delete"
+							cancelText="Cancel"
+							onConfirm={handleDelete}
+							loading={false}
+							variant="danger"
+						/>
 					</div>
 				</div>
 			</Card>
@@ -742,7 +771,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 								min={new Date().toISOString().split('T')[0]}
 							/>
 						</div>
-					
+					</div>
 					<h2 className="text-lg sm:text-xl font-bold mb-4">Chief Selection</h2>
 					<div className="overflow-x-auto max-h-96 overflow-y-auto w-full">
 
@@ -768,7 +797,14 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                 		loading={generating}
                 		variant="default"
               		/>*/}
-					{/* Delete Schedule*/}
+    				<Button
+        				onClick={() => {}}
+        				className="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-3 rounded-xl shadow flex items-center gap-2"
+    				>
+        				<Trash2 className="h-5 w-5" />
+        				Delete Schedule
+    				</Button>
+					{/* Delete Schedule - Uncomment when API is ready
                         <ConfirmDialog
                             triggerText={
                                 <>
@@ -785,7 +821,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                             onConfirm={() => { }}
                             loading={false}
                             variant="danger"
-                        />
+                        />*/}
 				</div>
 
 					</Card>
