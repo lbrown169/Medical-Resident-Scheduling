@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { Button } from "../../../components/ui/button";
 
 
@@ -154,6 +154,16 @@ export const RotationScheduleTable: React.FC<RotationScheduleTableProps> = ({
 		onRotationChange?.(residentId, monthIndex, newRotation);
 	};
 
+	// Sort the schedule by last name with first as tiebreaker
+	const sortedSchedule = useMemo(() => {
+		return [...schedule].sort((a, b) => {
+			const lastA = a.resident.last_name.toLowerCase();
+			const lastB = b.resident.last_name.toLowerCase();
+			if (lastA !== lastB) return lastA.localeCompare(lastB);
+			return a.resident.first_name.toLowerCase().localeCompare(b.resident.first_name.toLowerCase());
+		});
+	}, [schedule]);
+
 	return (
 		<div className="overflow-x-auto max-h-[32rem] overflow-y-auto w-full">
 			<table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -170,14 +180,14 @@ export const RotationScheduleTable: React.FC<RotationScheduleTableProps> = ({
 					</tr>
 				</thead>
 				<tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
-					{schedule.length === 0 ? (
+					{sortedSchedule.length === 0 ? (
 						<tr>
 							<td colSpan={13} className="px-6 py-4 text-center text-gray-500 italic">
 								No schedule generated yet.
 							</td>
 						</tr>
 					) : (
-						schedule.map(residentSchedule => {
+						sortedSchedule.map(residentSchedule => {
 							const { resident, rotations } = residentSchedule;
 							const shortName = `${resident.first_name} ${resident.last_name.charAt(0)}.`;
 
