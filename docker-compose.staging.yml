@@ -41,7 +41,6 @@ services:
       MailgunApiKey: ${MailgunApiKey}
       MailgunDomain: ${MailgunDomain}
       MailgunFromEmail: ${MailgunFromEmail}
-      POSTMARK_API_KEY: ${POSTMARK_API_KEY}
     depends_on:
       db:
         condition: service_healthy
