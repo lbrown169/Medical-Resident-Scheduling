@@ -8,8 +8,6 @@ services:
       MYSQL_DATABASE: psycalldb
       MYSQL_USER: psycalluser
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-    ports:
-      - "3308:3306"
     volumes:
       - staging_db_data:/var/lib/mysql
     healthcheck:
