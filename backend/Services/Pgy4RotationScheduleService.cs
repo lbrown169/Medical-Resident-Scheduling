@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator;
 using MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator.Constraints;
 using MedicalDemo.Converters;
@@ -36,7 +37,8 @@ public class Pgy4RotationScheduleService(
 
     public async Task<List<Rotation>> GetRotationsFromGeneratedSchedule(
         Pgy4ScheduleData generatedSchedule,
-        Guid newScheduleId
+        Guid newScheduleId,
+        int academicYear
     )
     {
         Dictionary<string, RotationType> allRotationTypesDictionary = (
@@ -47,6 +49,8 @@ public class Pgy4RotationScheduleService(
 
         foreach (KeyValuePair<string, Pgy4RotationTypeEnum[]> kvp in generatedSchedule.Schedule)
         {
+            Guid newRotationId = Guid.NewGuid();
+
             for (
                 int calenderMonthIndex = 0;
                 calenderMonthIndex < kvp.Value.Length;
@@ -61,6 +65,8 @@ public class Pgy4RotationScheduleService(
                     kvp.Key,
                     currentRotationType,
                     newScheduleId,
+                    newRotationId,
+                    academicYear,
                     (MonthOfYear)calenderMonthIndex
                 );
                 rotationsToAdd.Add(newRotation);
@@ -72,7 +78,8 @@ public class Pgy4RotationScheduleService(
 
     public async Task<List<RotationPrefRequest>> GetAllPgy3RotationPrefRequests()
     {
-        return await context.RotationPrefRequests.IncludeAllRotationPrefRequestProperties()
+        return await context
+            .RotationPrefRequests.IncludeAllRotationPrefRequestProperties()
             .Include(request => request.Resident)
             .Where(request => request.Resident.GraduateYr == 3)
             .ToListAsync();
@@ -115,11 +122,13 @@ public class Pgy4RotationScheduleService(
         // Insert schedule
         Guid newScheduleId = Guid.NewGuid();
 
+        int scheduleYear = GetScheduleYear();
+
         Pgy4RotationSchedule schedule = new()
         {
             Pgy4RotationScheduleId = newScheduleId,
             Seed = seed,
-            Year = GetScheduleYear(),
+            Year = scheduleYear,
             IsPublished = false,
         };
 
@@ -129,7 +138,8 @@ public class Pgy4RotationScheduleService(
         // Add result to rotations table
         List<Rotation> rotationsToAdd = await GetRotationsFromGeneratedSchedule(
             generatedSchedule,
-            newScheduleId
+            newScheduleId,
+            scheduleYear
         );
 
         // Insert rotations

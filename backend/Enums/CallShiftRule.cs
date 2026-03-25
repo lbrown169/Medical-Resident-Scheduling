@@ -5,6 +5,7 @@ public enum CallShiftRule
     None,
     Weekday,
     FirstSaturdayOfJuly,
+    SundayInTraining,
     JulyFourth,
     LaborDay,
     Thanksgiving,

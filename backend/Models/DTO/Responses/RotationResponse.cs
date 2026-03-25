@@ -6,9 +6,13 @@ public class RotationResponse
 {
     public Guid RotationId { get; set; }
 
+    public string? ResidentId { get; set; }
+
     public Guid? ScheduleId { get; set; }
 
     public string Month { get; set; } = null!;
+
+    public int AcademicYear { get; set; }
 
     public MonthOfYear AcademicMonthIndex { get; set; }
 
