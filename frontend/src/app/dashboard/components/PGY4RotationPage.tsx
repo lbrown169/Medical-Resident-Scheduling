@@ -620,14 +620,6 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 										</Button>
 									</>
 								)}
-								<Button onClick={() => {}} variant="outline" className="flex items-center gap-2 px-1 sm:px-6 py-1 sm:py-3 text-xs sm:text-sm lg:text-base">
-									<Save className="h-4 w-4" />
-									<span>Save</span>
-								</Button>
-								<Button onClick={() => {}} className="py-2 flex items-center justify-center gap-2 bg-green-500 text-white hover:bg-green-600">
-									<Download className="h-4 w-4" />
-									<span>Export</span>
-								</Button>
 							</div>
 						</div>
 						{loadingSchedules ? (
@@ -645,6 +637,17 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 								}}
 							/>
 						)}
+						{/* Footer - Buttons at the bottom */}
+						<div className="flex justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    		<Button onClick={null} variant="outline" className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm lg:text-base">
+                        		<Save className="h-4 w-4" />
+                        		<span>Save</span>
+                    		</Button>
+                    		<Button onClick={null} className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-green-500 text-white hover:bg-green-600">
+                        		<Download className="h-4 w-4" />
+                        		<span>Export</span>
+                    		</Button>
+                		</div>
 					</Card>
 				)}
 
