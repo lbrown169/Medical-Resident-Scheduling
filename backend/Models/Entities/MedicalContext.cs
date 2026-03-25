@@ -274,11 +274,8 @@ namespace MedicalDemo.Models.Entities
 
                 entity.Property(e => e.ResidentId)
                     .HasMaxLength(15)
-                    .HasColumnName("resident_id");
-
-                entity.Property(e => e.Rotation1)
-                    .HasMaxLength(45)
-                    .HasColumnName("rotation");
+                    .HasColumnName("resident_id")
+                    .HasDefaultValue(null);
 
                 entity.HasOne(d => d.Resident)
                     .WithMany(p => p.Rotations)
