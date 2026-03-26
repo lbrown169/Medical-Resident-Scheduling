@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { Card } from "../../../components/ui/card";
-import { CalendarDays, Users } from "lucide-react";
+import { CalendarRange, Users, Copy } from "lucide-react";
 import { config } from "../../../config";
 import {
   RotationScheduleTable,
@@ -125,6 +125,9 @@ export default function PGY12RotationPage() {
   const [rotationTypes, setRotationTypes] = useState<RotationTypeFromApi[]>([]);
   const [pgy1Residents, setPgy1Residents] = useState<ResidentFromApi[]>([]);
   const [pgy2Residents, setPgy2Residents] = useState<ResidentFromApi[]>([]);
+  const [copyableYears, setCopyableYears] = useState<number[]>([]);
+  const [copyFromYear, setCopyFromYear] = useState<number | "">("");
+  const [copying, setCopying] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -136,18 +139,22 @@ export default function PGY12RotationPage() {
         if (!res.ok) throw new Error(`${res.url} returned ${res.status}`);
         return res.json();
       };
-      const [r1, r2, types, res1, res2] = await Promise.all([
+      const [r1, r2, types, res1, res2, copyable] = await Promise.all([
         fetch(`${config.apiUrl}/api/rotations?pgyYear=1&academicYear=${academicYear}`).then(jsonOrThrow),
         fetch(`${config.apiUrl}/api/rotations?pgyYear=2&academicYear=${academicYear}`).then(jsonOrThrow),
         fetch(`${config.apiUrl}/api/rotations/types?pgyYear=1&pgyYear=2`).then(jsonOrThrow),
         fetch(`${config.apiUrl}/api/residents?graduate_yr=1`).then(jsonOrThrow),
         fetch(`${config.apiUrl}/api/residents?graduate_yr=2`).then(jsonOrThrow),
+        fetch(`${config.apiUrl}/api/rotations/copyable`).then(jsonOrThrow),
       ]);
       setPgy1Rotations(Array.isArray(r1) ? r1 : []);
       setPgy2Rotations(Array.isArray(r2) ? r2 : []);
       setRotationTypes(Array.isArray(types) ? types : []);
       setPgy1Residents(Array.isArray(res1) ? res1 : []);
       setPgy2Residents(Array.isArray(res2) ? res2 : []);
+      const years = (Array.isArray(copyable) ? copyable : []).sort((a: number, b: number) => b - a);
+      setCopyableYears(years);
+      if (years.length > 0) setCopyFromYear(years[0]);
     } catch (e) {
       setError("Failed to load rotation data.");
       console.error(e);
@@ -225,6 +232,32 @@ export default function PGY12RotationPage() {
     }
   };
 
+  const handleCopyRotations = async () => {
+    if (!copyFromYear) return;
+    setCopying(true);
+    try {
+      const res = await fetch(`${config.apiUrl}/api/rotations/copy`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fromAcademicYear: copyFromYear, toAcademicYear: academicYear }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        const msg = body?.message ?? `Copy failed (${res.status})`;
+        setError(msg);
+        return;
+      }
+      await fetchData();
+    } catch (e) {
+      console.error("Failed to copy rotations", e);
+      setError("Failed to copy rotations.");
+    } finally {
+      setCopying(false);
+    }
+  };
+
+  const currentYearHasRotations = pgy1Rotations.length > 0 || pgy2Rotations.length > 0;
+
   const schedule = activeTab === 1 ? pgy1Schedule : pgy2Schedule;
   const residents = activeTab === 1 ? pgy1Residents : pgy2Residents;
   const residentList = [
@@ -253,7 +286,7 @@ export default function PGY12RotationPage() {
       {/* Overview Card */}
       <Card className="mb-8 p-6 flex flex-col gap-4 items-center justify-between bg-white dark:bg-neutral-900 shadow-lg rounded-2xl border border-gray-200 dark:border-gray-800">
         <h2 className="text-2xl font-bold flex items-center gap-2 justify-center w-full mb-2">
-          <CalendarDays className="w-6 h-6 text-blue-600" />
+          <CalendarRange className="w-6 h-6 text-blue-600" />
           PGY1 &amp; PGY2 Rotation Management
         </h2>
 
@@ -310,6 +343,46 @@ export default function PGY12RotationPage() {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Divider */}
+          <div className="hidden sm:block w-px bg-gray-200 dark:bg-gray-700" />
+
+          {/* Copy Rotations */}
+          <div className="flex flex-col items-center justify-center md:px-8 border-t sm:border-t-0 border-gray-200 dark:border-gray-700 pt-4 sm:pt-0">
+            {currentYearHasRotations ? (
+              <span className="text-xs text-gray-400 italic">Rotations exist</span>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 mb-1">
+                  <select
+                    className="border rounded px-2 py-1 text-xs dark:bg-neutral-800 dark:border-gray-600"
+                    value={copyFromYear}
+                    onChange={(e) => setCopyFromYear(Number(e.target.value))}
+                    disabled={copyableYears.length === 0}
+                  >
+                    {copyableYears.length === 0 ? (
+                      <option value="">No years</option>
+                    ) : (
+                      copyableYears.map((y) => (
+                        <option key={y} value={y}>
+                          {y}–{y + 1}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                  <button
+                    onClick={handleCopyRotations}
+                    disabled={copying || !copyFromYear || copyableYears.length === 0}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-500 hover:bg-blue-600 text-white shadow-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    {copying ? "Copying..." : "Copy"}
+                  </button>
+                </div>
+                <span className="text-xs text-gray-500">Copy from year</span>
+              </>
+            )}
           </div>
         </div>
       </Card>
