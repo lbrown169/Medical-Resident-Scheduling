@@ -130,7 +130,7 @@ public class DatesController : ControllerBase
             [FromQuery] DateOnly date)
     {
         (bool checkPassed, string? checkError, Resident? resident) = await _ruleViolationService.CheckResidentScheduledOnDate(schedule_id, resident_id, date);
-        if (!checkPassed || resident?.GraduateYr== null)
+        if (!checkPassed || resident?.GraduateYr == null)
         {
             return BadRequest(new GenericResponse()
             {
