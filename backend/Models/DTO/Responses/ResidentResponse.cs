@@ -12,6 +12,5 @@ public class ResidentResponse
     public int weekly_hours { get; set; }
     public int total_hours { get; set; }
     public int bi_yearly_hours { get; set; }
-    public int? hospital_role_profile { get; set; }
     public string? chief_type { get; set; }
 }

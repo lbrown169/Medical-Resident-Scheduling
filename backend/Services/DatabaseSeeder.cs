@@ -78,8 +78,7 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0201",
                 WeeklyHours = 0,
                 TotalHours = 0,
-                BiYearlyHours = 0,
-                HospitalRoleProfile = null
+                BiYearlyHours = 0
             },
             new()
             {
@@ -92,8 +91,7 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0202",
                 WeeklyHours = 0,
                 TotalHours = 0,
-                BiYearlyHours = 0,
-                HospitalRoleProfile = null
+                BiYearlyHours = 0
             },
             new()
             {
@@ -106,8 +104,7 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0203",
                 WeeklyHours = 0,
                 TotalHours = 0,
-                BiYearlyHours = 0,
-                HospitalRoleProfile = null
+                BiYearlyHours = 0
             },
             new()
             {
@@ -120,8 +117,7 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0204",
                 WeeklyHours = 0,
                 TotalHours = 0,
-                BiYearlyHours = 0,
-                HospitalRoleProfile = null
+                BiYearlyHours = 0
             },
             new()
             {
@@ -134,8 +130,7 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0205",
                 WeeklyHours = 0,
                 TotalHours = 0,
-                BiYearlyHours = 0,
-                HospitalRoleProfile = null
+                BiYearlyHours = 0
             },
             new()
             {
@@ -148,8 +143,7 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0206",
                 WeeklyHours = 0,
                 TotalHours = 0,
-                BiYearlyHours = 0,
-                HospitalRoleProfile = null
+                BiYearlyHours = 0
             },
             new()
             {
@@ -162,8 +156,7 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0207",
                 WeeklyHours = 0,
                 TotalHours = 0,
-                BiYearlyHours = 0,
-                HospitalRoleProfile = null
+                BiYearlyHours = 0
             },
             new()
             {
@@ -176,8 +169,7 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0208",
                 WeeklyHours = 0,
                 TotalHours = 0,
-                BiYearlyHours = 0,
-                HospitalRoleProfile = null
+                BiYearlyHours = 0
             },
             new()
             {
@@ -191,8 +183,7 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0105",
                 WeeklyHours = 0,
                 TotalHours = 69,
-                BiYearlyHours = 39,
-                HospitalRoleProfile = 8
+                BiYearlyHours = 39
             },
             new()
             {
@@ -206,8 +197,7 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0106",
                 WeeklyHours = 0,
                 TotalHours = 27,
-                BiYearlyHours = 27,
-                HospitalRoleProfile = 0
+                BiYearlyHours = 27
             },
             new()
             {
@@ -221,8 +211,7 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0107",
                 WeeklyHours = 0,
                 TotalHours = 57,
-                BiYearlyHours = 21,
-                HospitalRoleProfile = 13
+                BiYearlyHours = 21
             },
             new()
             {
@@ -236,8 +225,7 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0109",
                 WeeklyHours = 0,
                 TotalHours = 21,
-                BiYearlyHours = 9,
-                HospitalRoleProfile = 5
+                BiYearlyHours = 9
             },
             new()
             {
@@ -251,8 +239,7 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0110",
                 WeeklyHours = 0,
                 TotalHours = 63,
-                BiYearlyHours = 45,
-                HospitalRoleProfile = 9
+                BiYearlyHours = 45
             },
             new()
             {
@@ -266,8 +253,7 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0111",
                 WeeklyHours = 0,
                 TotalHours = 24,
-                BiYearlyHours = 24,
-                HospitalRoleProfile = 2
+                BiYearlyHours = 24
             },
             new()
             {
@@ -281,8 +267,7 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0113",
                 WeeklyHours = 0,
                 TotalHours = 33,
-                BiYearlyHours = 9,
-                HospitalRoleProfile = 6
+                BiYearlyHours = 9
             },
             new()
             {
@@ -297,7 +282,6 @@ public class DatabaseSeeder
                 WeeklyHours = 0,
                 TotalHours = 9,
                 BiYearlyHours = 9,
-                HospitalRoleProfile = null,
                 ChiefType = ChiefType.Clinic
             },
             new()
@@ -312,8 +296,7 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0115",
                 WeeklyHours = 0,
                 TotalHours = 30,
-                BiYearlyHours = 9,
-                HospitalRoleProfile = 4
+                BiYearlyHours = 9
             },
             new()
             {
@@ -327,8 +310,7 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0116",
                 WeeklyHours = 0,
                 TotalHours = 9,
-                BiYearlyHours = 9,
-                HospitalRoleProfile = null
+                BiYearlyHours = 9
             },
             new()
             {
@@ -342,8 +324,7 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0117",
                 WeeklyHours = 0,
                 TotalHours = 75,
-                BiYearlyHours = 21,
-                HospitalRoleProfile = 11
+                BiYearlyHours = 21
             },
             new()
             {
@@ -357,8 +338,7 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0118",
                 WeeklyHours = 0,
                 TotalHours = 9,
-                BiYearlyHours = 9,
-                HospitalRoleProfile = null
+                BiYearlyHours = 9
             },
             new()
             {
@@ -372,8 +352,7 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0119",
                 WeeklyHours = 0,
                 TotalHours = 54,
-                BiYearlyHours = 21,
-                HospitalRoleProfile = 12
+                BiYearlyHours = 21
             },
             new()
             {
@@ -387,8 +366,7 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0120",
                 WeeklyHours = 0,
                 TotalHours = 39,
-                BiYearlyHours = 39,
-                HospitalRoleProfile = 3
+                BiYearlyHours = 39
             },
             new()
             {
@@ -402,8 +380,7 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0121",
                 WeeklyHours = 0,
                 TotalHours = 78,
-                BiYearlyHours = 18,
-                HospitalRoleProfile = 10
+                BiYearlyHours = 18
             },
             new()
             {
@@ -417,8 +394,7 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0122",
                 WeeklyHours = 0,
                 TotalHours = 9,
-                BiYearlyHours = 9,
-                HospitalRoleProfile = null
+                BiYearlyHours = 9
             },
             new()
             {
@@ -432,8 +408,7 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0123",
                 WeeklyHours = 0,
                 TotalHours = 45,
-                BiYearlyHours = 9,
-                HospitalRoleProfile = 7
+                BiYearlyHours = 9
             },
             new()
             {
@@ -447,8 +422,7 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0124",
                 WeeklyHours = 0,
                 TotalHours = 60,
-                BiYearlyHours = 21,
-                HospitalRoleProfile = 15
+                BiYearlyHours = 21
             },
             new()
             {
@@ -462,8 +436,7 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0125",
                 WeeklyHours = 0,
                 TotalHours = 51,
-                BiYearlyHours = 27,
-                HospitalRoleProfile = 14
+                BiYearlyHours = 27
             },
             new()
             {
@@ -478,7 +451,6 @@ public class DatabaseSeeder
                 WeeklyHours = 0,
                 TotalHours = 9,
                 BiYearlyHours = 9,
-                HospitalRoleProfile = null,
                 ChiefType = ChiefType.Admin
             },
             new()
@@ -493,8 +465,7 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0127",
                 WeeklyHours = 0,
                 TotalHours = 9,
-                BiYearlyHours = 9,
-                HospitalRoleProfile = null
+                BiYearlyHours = 9
             },
             new()
             {
@@ -508,8 +479,7 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0128",
                 WeeklyHours = 0,
                 TotalHours = 45,
-                BiYearlyHours = 45,
-                HospitalRoleProfile = 1
+                BiYearlyHours = 45
             },
             new()
             {
@@ -524,7 +494,6 @@ public class DatabaseSeeder
                 WeeklyHours = 0,
                 TotalHours = 87,
                 BiYearlyHours = 67,
-                HospitalRoleProfile = null,
                 ChiefType = ChiefType.Education
             },
             new()
@@ -540,7 +509,6 @@ public class DatabaseSeeder
                 WeeklyHours = 0,
                 TotalHours = 11,
                 BiYearlyHours = 4,
-                HospitalRoleProfile = null,
                 ChiefType = ChiefType.Clinic
             }
         ];

@@ -53,19 +53,22 @@ public class SchedulerService
             .Select(r => new ResidentRequirementInfo
             {
                 GraduateYr = r.GraduateYr!.Value,
-                HasHospitalRoleProfile = r.HospitalRoleProfile.HasValue
+                ResidentId = r.ResidentId
             })
             .ToListAsync();
 
         int pgyDiff = year - DateTime.Now.AcademicYear;
 
+        List<Rotation> rotations = await _context.Rotations
+            .Where(r => r.AcademicYear == year && r.ResidentId != null)
+            .ToListAsync();
 
         int pgy1Count = residentRequirementInfo.Count(r => r.GraduateYr + pgyDiff == 1);
         int pgy2Count = residentRequirementInfo.Count(r => r.GraduateYr + pgyDiff == 2);
         int pgy3Count = residentRequirementInfo.Count(r => r.GraduateYr + pgyDiff == 3);
 
-        int pgy1HospitalRoleCount = residentRequirementInfo.Count(r => r.GraduateYr + pgyDiff == 1 && r.HasHospitalRoleProfile);
-        int pgy2HospitalRoleCount = residentRequirementInfo.Count(r => r.GraduateYr + pgyDiff == 2 && r.HasHospitalRoleProfile);
+        int pgy1HospitalRoleCount = residentRequirementInfo.Count(r => r.GraduateYr + pgyDiff == 1 && rotations.Count(rot => rot.ResidentId == r.ResidentId) == 12);
+        int pgy2HospitalRoleCount = residentRequirementInfo.Count(r => r.GraduateYr + pgyDiff == 2 && rotations.Count(rot => rot.ResidentId == r.ResidentId) == 12);
 
         // 8 pgys exist
         bool hasRequiredPgy1 = pgy1Count >= 8;
@@ -84,7 +87,7 @@ public class SchedulerService
         if (!hasHospitalProfilePgy1)
         {
             return (false,
-                $"Invalid Input - Cannot generate schedules: All PGY1s required to have hospital role assigned generate schedule, {pgy1Count - pgy1HospitalRoleCount} resident(s) missing hospital role."
+                $"Invalid Input - Cannot generate schedules: All PGY1s required to have rotations assigned, {pgy1Count - pgy1HospitalRoleCount} resident(s) missing rotations."
             );
         }
 
@@ -98,7 +101,7 @@ public class SchedulerService
         if (!hasHospitalProfilePgy2)
         {
             return (false,
-                $"Invalid Input - Cannot generate schedules: All PGY2s required to have hospital role assigned generate schedule, {pgy2Count - pgy2HospitalRoleCount} resident(s) missing hospital role."
+                $"Invalid Input - Cannot generate schedules: All PGY2s required to have rotations assigned, {pgy2Count - pgy2HospitalRoleCount} resident(s) missing rotations."
             );
         }
 
@@ -133,14 +136,6 @@ public class SchedulerService
             try
             {
                 ResidentData residentData = await LoadResidentData(year);
-
-                // Map DTOs to original algorithm classes
-                // List<PGY1> pgy1Models = residentData.PGY1s
-                //     .Select(MapToPGY1).ToList();
-                // List<PGY2> pgy2Models = residentData.PGY2s
-                //     .Select(MapToPGY2).ToList();
-                // List<PGY3> pgy3Models = residentData.PGY3s
-                //     .Select(MapToPGY3).ToList();
 
                 int looseFactor = 6 + Math.Min(18, attempt / 10 * 2);
 
@@ -236,7 +231,10 @@ public class SchedulerService
         int pgyDiff = year - DateTime.Now.AcademicYear;
 
         List<Resident> residents = await _context.Residents.ToListAsync();
-        List<Rotation> rotations = await _context.Rotations.ToListAsync();
+        List<Rotation> rotations = await _context.Rotations
+            .Include(r => r.RotationType)
+            .Where(r => r.AcademicYear == year && r.ResidentId != null)
+            .ToListAsync();
         List<Vacation> vacations = await _context.Vacations
             .Where(v => v.Status == "Approved").ToListAsync();
         List<Date> dates = await _context.Dates.Where(d => d.Schedule.Status == ScheduleStatus.Published && d.Schedule.Year == year).ToListAsync();
@@ -245,14 +243,15 @@ public class SchedulerService
             .Where(r => r.GraduateYr + pgyDiff == 1)
             .Select(r => _mapper.MapToPGY1DTO(
                 r,
-                r.HospitalRoleProfile is { } role ? HospitalRole.Pgy1Profiles[role] : [],
+                rotations.Where(rot => rot.ResidentId == r.ResidentId),
                 vacations.Where(v => v.ResidentId == r.ResidentId).ToList(),
                 dates)).ToList();
 
         List<Pgy2Dto> pgy2s = residents
             .Where(r => r.GraduateYr + pgyDiff == 2)
-            .Select(r => _mapper.MapToPGY2DTO(r,
-                r.HospitalRoleProfile is { } role ? HospitalRole.Pgy2Profiles[role - 8] : [],
+            .Select(r => _mapper.MapToPGY2DTO(
+                r,
+                rotations.Where(rot => rot.ResidentId == r.ResidentId),
                 vacations.Where(v => v.ResidentId == r.ResidentId).ToList(),
                 dates)).ToList();
 
