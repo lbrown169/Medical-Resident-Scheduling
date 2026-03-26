@@ -13,7 +13,6 @@ public class RotationPrefSubmissionWindowConverter
     {
         return new()
         {
-            SubmissionWindowId = Guid.NewGuid(),
             AcademicYear = academicYear,
             AvailableDate = request.AvailableDate,
             DueDate = request.DueDate,
@@ -26,7 +25,6 @@ public class RotationPrefSubmissionWindowConverter
     {
         return new()
         {
-            SubmissionWindowId = model.SubmissionWindowId,
             AcademicYear = model.AcademicYear,
             AvailableDate = model.AvailableDate,
             DueDate = model.DueDate,

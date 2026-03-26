@@ -7,8 +7,7 @@ namespace MedicalDemo.Models.Entities;
 public class RotationPrefSubmissionWindow
 {
     [Key]
-    public Guid SubmissionWindowId { get; set; }
-
+    [DatabaseGenerated(DatabaseGeneratedOption.None)]
     public int AcademicYear { get; set; }
 
     public DateTime? AvailableDate { get; set; }

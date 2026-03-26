@@ -537,12 +537,6 @@ namespace MedicalDemo.Models.Entities
                     .HasMaxLength(255);
             });
 
-            modelBuilder.Entity<RotationPrefSubmissionWindow>(entity =>
-            {
-                entity.Property(e => e.SubmissionWindowId)
-                    .HasColumnType("binary(16)");
-            });
-
             OnModelCreatingPartial(modelBuilder);
 
             PopulateRotationTypeTable(modelBuilder);
