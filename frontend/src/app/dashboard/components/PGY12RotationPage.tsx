@@ -139,12 +139,16 @@ export default function PGY12RotationPage() {
         if (!res.ok) throw new Error(`${res.url} returned ${res.status}`);
         return res.json();
       };
+      // Offset so future years show the right residents
+      const offset = academicYear - currentAcademicYear();
+      const pgy1GradYr = 1 - offset;
+      const pgy2GradYr = 2 - offset;
       const [r1, r2, types, res1, res2, copyable] = await Promise.all([
         fetch(`${config.apiUrl}/api/rotations?pgyYear=1&academicYear=${academicYear}`).then(jsonOrThrow),
         fetch(`${config.apiUrl}/api/rotations?pgyYear=2&academicYear=${academicYear}`).then(jsonOrThrow),
         fetch(`${config.apiUrl}/api/rotations/types?pgyYear=1&pgyYear=2`).then(jsonOrThrow),
-        fetch(`${config.apiUrl}/api/residents?graduate_yr=1`).then(jsonOrThrow),
-        fetch(`${config.apiUrl}/api/residents?graduate_yr=2`).then(jsonOrThrow),
+        fetch(`${config.apiUrl}/api/residents?graduate_yr=${pgy1GradYr}`).then(jsonOrThrow),
+        fetch(`${config.apiUrl}/api/residents?graduate_yr=${pgy2GradYr}`).then(jsonOrThrow),
         fetch(`${config.apiUrl}/api/rotations/copyable`).then(jsonOrThrow),
       ]);
       setPgy1Rotations(Array.isArray(r1) ? r1 : []);
