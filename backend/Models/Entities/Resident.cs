@@ -23,7 +23,6 @@ namespace MedicalDemo.Models.Entities
         public int WeeklyHours { get; set; }
         public int TotalHours { get; set; }
         public int BiYearlyHours { get; set; }
-        public int? HospitalRoleProfile { get; set; }
 
         public ChiefType ChiefType { get; set; }
 

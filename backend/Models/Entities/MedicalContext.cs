@@ -216,8 +216,6 @@ namespace MedicalDemo.Models.Entities
                     .HasColumnName("graduate_yr")
                     .HasDefaultValueSql(null);
 
-                entity.Property(e => e.HospitalRoleProfile).HasColumnName("hospital_role_profile");
-
                 entity.Property(e => e.LastName)
                     .HasMaxLength(45)
                     .HasColumnName("last_name");
