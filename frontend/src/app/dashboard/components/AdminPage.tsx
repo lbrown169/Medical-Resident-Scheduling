@@ -273,8 +273,6 @@ const AdminPage: React.FC<AdminPageProps> = ({
   useEffect(() => setResidentRows(residents), [residents]);
 
   const [savingPGY, setSavingPGY] = useState<Record<string, boolean>>({});
-  const [savingHospitalRole, setSavingHospitalRole] = useState<Record<string, boolean>>({});
-
   // Updates the PGY year when selected by administrators on the Resident Info tab
   const handleUpdatePGY = async (residentId: string, newPGY: number) => {
     setSavingPGY(prev => ({ ...prev, [residentId]: true }));
@@ -316,46 +314,6 @@ const AdminPage: React.FC<AdminPageProps> = ({
     }
   };
 
-  // Updates the Hospital Role Profile when selected by administrators on the Resident Info tab
-  const handleUpdateHospitalRole = async (residentId: string, newRole: number) => {
-    setSavingHospitalRole(prev => ({ ...prev, [residentId]: true }));
-    // Optimistic update
-    setResidentRows(prev => prev.map(r => r.id === residentId ? { ...r, hospitalRole: newRole } : r));
-
-    try {
-      // Update with existing data but new hospital role profile
-      const res = await fetch(`${config.apiUrl}/api/residents/${residentId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          hospital_role_profile: newRole
-        })
-      });
-
-      if (!res.ok) {
-        const msg = await res.text();
-        throw new Error(msg || 'Failed to update Hospital Role Profile');
-      }
-
-      toast({
-        title: 'Hospital Role Profile updated',
-        description: `Resident set to Profile ${newRole + 1}.`,
-        variant: 'success',
-      });
-    } catch (error) {
-      // Roll back on error
-      setResidentRows(prev => prev.map(r => r.id === residentId ? { ...r, hospitalRole: residents.find(x => x.id === residentId)?.hospitalRole ?? r.hospitalRole } : r));
-      toast({
-        title: 'Update failed',
-        description: error?.message || 'Could not update Hospital Role Profile.',
-        variant: 'destructive',
-      });
-    } finally {
-      setSavingHospitalRole(prev => ({ ...prev, [residentId]: false }));
-    }
-  };
 
   // Fetch announcements when switching to the announcements tab
   useEffect(() => {
