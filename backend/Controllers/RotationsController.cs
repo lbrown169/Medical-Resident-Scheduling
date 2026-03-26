@@ -237,7 +237,12 @@ public class RotationsController(
             rotation.ResidentId = null;
             rotation.Pgy4RotationScheduleId = null;
             rotation.AcademicYear = copyRequest.ToAcademicYear;
+
+            // We have to detach the navigation property before adding
+            RotationType rotationType = rotation.RotationType;
+            rotation.RotationType = null!;
             context.Rotations.Add(rotation);
+            rotation.RotationType = rotationType;
         }
 
         await context.SaveChangesAsync();
