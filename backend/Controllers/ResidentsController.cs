@@ -227,4 +227,24 @@ public class ResidentsController : ControllerBase
 
         return NoContent();
     }
+
+    [HttpPost("promote-pgy")]
+    public async Task<IActionResult> PromoteYears()
+    {
+        List<Resident> residents = await _context.Residents.Where(r => r.GraduateYr != null).ToListAsync();
+        foreach (Resident resident in residents)
+        {
+            if (resident.GraduateYr < 4)
+            {
+                resident.GraduateYr++;
+            }
+            else
+            {
+                resident.GraduateYr = null;
+            }
+        }
+
+        await _context.SaveChangesAsync();
+        return NoContent();
+    }
 }
