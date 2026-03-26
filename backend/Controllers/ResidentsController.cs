@@ -189,7 +189,7 @@ public class ResidentsController : ControllerBase
             Email = admin.Email,
             Password = admin.Password,
             PhoneNum = admin.PhoneNum,
-            GraduateYr = 1, // Default PGY level
+            GraduateYr = null, // Default PGY level
             WeeklyHours = 0,
             TotalHours = 0,
             BiYearlyHours = 0

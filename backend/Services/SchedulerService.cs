@@ -49,20 +49,23 @@ public class SchedulerService
         }
 
         List<ResidentRequirementInfo> residentRequirementInfo = await _context.Residents
+            .Where(r => r.GraduateYr != null)
             .Select(r => new ResidentRequirementInfo
             {
-                GraduateYr = r.GraduateYr,
+                GraduateYr = r.GraduateYr!.Value,
                 HasHospitalRoleProfile = r.HospitalRoleProfile.HasValue
             })
             .ToListAsync();
 
+        int pgyDiff = year - DateTime.Now.AcademicYear;
 
-        int pgy1Count = residentRequirementInfo.Count(r => r.GraduateYr == 1);
-        int pgy2Count = residentRequirementInfo.Count(r => r.GraduateYr == 2);
-        int pgy3Count = residentRequirementInfo.Count(r => r.GraduateYr == 3);
 
-        int pgy1HospitalRoleCount = residentRequirementInfo.Count(r => r.GraduateYr == 1 && r.HasHospitalRoleProfile);
-        int pgy2HospitalRoleCount = residentRequirementInfo.Count(r => r.GraduateYr == 2 && r.HasHospitalRoleProfile);
+        int pgy1Count = residentRequirementInfo.Count(r => r.GraduateYr + pgyDiff == 1);
+        int pgy2Count = residentRequirementInfo.Count(r => r.GraduateYr + pgyDiff == 2);
+        int pgy3Count = residentRequirementInfo.Count(r => r.GraduateYr + pgyDiff == 3);
+
+        int pgy1HospitalRoleCount = residentRequirementInfo.Count(r => r.GraduateYr + pgyDiff == 1 && r.HasHospitalRoleProfile);
+        int pgy2HospitalRoleCount = residentRequirementInfo.Count(r => r.GraduateYr + pgyDiff == 2 && r.HasHospitalRoleProfile);
 
         // 8 pgys exist
         bool hasRequiredPgy1 = pgy1Count >= 8;
@@ -230,6 +233,8 @@ public class SchedulerService
 #pragma warning disable IDE0060
     private async Task<ResidentData> LoadResidentData(int year)
     {
+        int pgyDiff = year - DateTime.Now.AcademicYear;
+
         List<Resident> residents = await _context.Residents.ToListAsync();
         List<Rotation> rotations = await _context.Rotations.ToListAsync();
         List<Vacation> vacations = await _context.Vacations
@@ -237,7 +242,7 @@ public class SchedulerService
         List<Date> dates = await _context.Dates.Where(d => d.Schedule.Status == ScheduleStatus.Published && d.Schedule.Year == year).ToListAsync();
 
         List<Pgy1Dto> pgy1s = residents
-            .Where(r => r.GraduateYr == 1)
+            .Where(r => r.GraduateYr + pgyDiff == 1)
             .Select(r => _mapper.MapToPGY1DTO(
                 r,
                 r.HospitalRoleProfile is { } role ? HospitalRole.Pgy1Profiles[role] : [],
@@ -245,14 +250,14 @@ public class SchedulerService
                 dates)).ToList();
 
         List<Pgy2Dto> pgy2s = residents
-            .Where(r => r.GraduateYr == 2)
+            .Where(r => r.GraduateYr + pgyDiff == 2)
             .Select(r => _mapper.MapToPGY2DTO(r,
                 r.HospitalRoleProfile is { } role ? HospitalRole.Pgy2Profiles[role - 8] : [],
                 vacations.Where(v => v.ResidentId == r.ResidentId).ToList(),
                 dates)).ToList();
 
         List<Pgy3Dto> pgy3s = residents
-            .Where(r => r.GraduateYr == 3)
+            .Where(r => r.GraduateYr + pgyDiff == 3)
             .Select(r => _mapper.MapToPGY3DTO(r,
                 vacations.Where(v => v.ResidentId == r.ResidentId).ToList(),
                 dates)).ToList();

@@ -214,7 +214,7 @@ namespace MedicalDemo.Models.Entities
 
                 entity.Property(e => e.GraduateYr)
                     .HasColumnName("graduate_yr")
-                    .HasDefaultValueSql("'1'");
+                    .HasDefaultValueSql(null);
 
                 entity.Property(e => e.HospitalRoleProfile).HasColumnName("hospital_role_profile");
 

@@ -16,7 +16,7 @@ namespace MedicalDemo.Models.Entities
         public string ResidentId { get; set; } = null!;
         public string FirstName { get; set; } = null!;
         public string LastName { get; set; } = null!;
-        public int GraduateYr { get; set; }
+        public int? GraduateYr { get; set; }
         public string Email { get; set; } = null!;
         public string Password { get; set; } = null!;
         public string PhoneNum { get; set; } = null!;

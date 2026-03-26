@@ -43,14 +43,14 @@ public class DatesController : ControllerBase
         Date date = _dateConverter.CreateDateFromDateCreateRequest(request);
         Resident? resident = await _context.Residents.FirstOrDefaultAsync(r => r.ResidentId == request.ResidentId);
 
-        if (resident == null)
+        if (resident?.GraduateYr is null)
         {
             return BadRequest();
         }
 
         if (request.CallType is not CallShiftType.Custom)
         {
-            if (CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(date.ShiftDate, resident.GraduateYr) is
+            if (CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(date.ShiftDate, resident.GraduateYr.Value) is
                 not { } shiftType)
             {
                 return BadRequest(new GenericResponse
@@ -130,7 +130,7 @@ public class DatesController : ControllerBase
             [FromQuery] DateOnly date)
     {
         (bool checkPassed, string? checkError, Resident? resident) = await _ruleViolationService.CheckResidentScheduledOnDate(schedule_id, resident_id, date);
-        if (!checkPassed || resident == null)
+        if (!checkPassed || resident?.GraduateYr== null)
         {
             return BadRequest(new GenericResponse()
             {
@@ -184,14 +184,14 @@ public class DatesController : ControllerBase
         _dateConverter.UpdateDateFromDateUpdateRequest(existingDate, updatedDate);
 
         Resident? resident = await _context.Residents.FirstOrDefaultAsync(r => r.ResidentId == existingDate.ResidentId);
-        if (resident == null)
+        if (resident?.GraduateYr == null)
         {
             return BadRequest();
         }
 
         if (updatedDate.CallType is not null and not CallShiftType.Custom)
         {
-            if (CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(existingDate.ShiftDate, resident.GraduateYr) is
+            if (CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(existingDate.ShiftDate, resident.GraduateYr.Value) is
                 not { } shiftType)
             {
                 return BadRequest(new GenericResponse

@@ -43,7 +43,7 @@ public class DashboardController : ControllerBase
 
             Resident? resident = await _context.Residents.FirstOrDefaultAsync(r => r.ResidentId == residentId);
 
-            if (resident == null)
+            if (resident?.GraduateYr == null)
             {
                 return NotFound();
             }
@@ -53,7 +53,7 @@ public class DashboardController : ControllerBase
 
             if (resident.HospitalRoleProfile is { } profile)
             {
-                int pgyLevel = resident.GraduateYr;
+                int pgyLevel = resident.GraduateYr.Value;
 
                 if (pgyLevel == 1 && profile >= 0 && profile < HospitalRole.Pgy1Profiles.Length)
                 {
