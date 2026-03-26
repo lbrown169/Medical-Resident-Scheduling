@@ -3,6 +3,7 @@ using System;
 using MedicalDemo.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MedicalDemo.Migrations
 {
     [DbContext(typeof(MedicalContext))]
-    partial class MedicalContextModelSnapshot : ModelSnapshot
+    [Migration("20260326191112_RotationPrefRequestSubmissionWindowPKChange")]
+    partial class RotationPrefRequestSubmissionWindowPKChange
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -246,9 +248,15 @@ namespace MedicalDemo.Migrations
                         .HasColumnType("varchar(45)")
                         .HasColumnName("first_name");
 
-                    b.Property<int?>("GraduateYr")
+                    b.Property<int>("GraduateYr")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int")
-                        .HasColumnName("graduate_yr");
+                        .HasColumnName("graduate_yr")
+                        .HasDefaultValueSql("'1'");
+
+                    b.Property<int?>("HospitalRoleProfile")
+                        .HasColumnType("int")
+                        .HasColumnName("hospital_role_profile");
 
                     b.Property<string>("LastName")
                         .IsRequired()

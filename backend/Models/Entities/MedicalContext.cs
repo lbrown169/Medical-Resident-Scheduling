@@ -28,6 +28,7 @@ namespace MedicalDemo.Models.Entities
         public virtual DbSet<RotationType> RotationTypes { get; set; } = null!;
         public virtual DbSet<RotationPrefRequest> RotationPrefRequests { get; set; } = null!;
         public virtual DbSet<Pgy4RotationSchedule> Pgy4RotationSchedules { get; set; } = null!;
+        public virtual DbSet<RotationPrefSubmissionWindow> RotationPrefRequestSubmissionWindows { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
