@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
+import { ConfirmDialog } from "../../../components/ui/confirm-dialog";
 import { Calendar, CalendarX, Clock, UserCheck, RotateCcw, Repeat, CalendarCheck, Bell, Users } from "lucide-react";
 import { config } from "../../../config";
-import { Dialog } from "../../../components/ui/dialog";
+/*import { Dialog } from "../../../components/ui/dialog";*/
 import { toast } from "../../../lib/use-toast";
 import { CalendarEvent } from "@/lib/models/CalendarEvent";
 
@@ -59,7 +60,7 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
   });
   const [loading, setLoading] = useState(true);
   const [denyModalOpen, setDenyModalOpen] = useState(false);
-  const [denyReason, setDenyReason] = useState("");
+  /*const [denyReason, setDenyReason] = useState("");*/
   const [pendingDenyId, setPendingDenyId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -137,13 +138,9 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
     if (!pendingDenyId) return;
     setActionLoading(true);
     try {
-      await fetch(`${config.apiUrl}/api/swaprequests/${pendingDenyId}/deny`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: denyReason })
-      });
+      await fetch(`${config.apiUrl}/api/swaprequests/${pendingDenyId}/deny`, { method: "POST" });
       setDenyModalOpen(false);
-      setDenyReason("");
+      //setDenyReason("");
       setPendingDenyId(null);
       await refreshDashboard();
       if (onRefreshCalendar) onRefreshCalendar();
@@ -360,7 +357,7 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
         </div>
       </div>
       {/* Deny Reason Modal */}
-      <Dialog open={denyModalOpen} onOpenChange={setDenyModalOpen}>
+      {/*<Dialog open={denyModalOpen} onOpenChange={setDenyModalOpen}>
         <div className="fixed inset-0 flex items-center justify-center z-50">
           <div className="bg-card text-foreground rounded-lg shadow-lg p-6 w-full max-w-md border border-border">
             <h3 className="text-lg font-semibold mb-4">Deny Swap Request</h3>
@@ -378,7 +375,18 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
             </div>
           </div>
         </div>
-      </Dialog>
+      </Dialog>*/}
+
+      <ConfirmDialog
+        open={denyModalOpen}
+        onOpenChange={setDenyModalOpen}
+        title="Deny Swap?"
+        message={`Are you sure you want to deny this swap request? This action cannot be undone.`}
+        confirmText="Deny"
+        cancelText="Cancel"
+        onConfirm={submitDeny}
+        variant="danger"
+      />
     </div>
   );
 };
