@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 #pragma warning disable CS0618 // Type or member is obsolete
 
 #nullable disable

@@ -57,10 +57,10 @@ public class SchedulerService
             })
             .ToListAsync();
 
-        int pgyDiff = year - DateTime.Now.AcademicYear;
+        int pgyDiff = academicYear - DateTime.Now.AcademicYear;
 
         List<Rotation> rotations = await _context.Rotations
-            .Where(r => r.AcademicYear == year && r.ResidentId != null)
+            .Where(r => r.AcademicYear == academicYear && r.ResidentId != null)
             .ToListAsync();
 
         int pgy1Count = residentRequirementInfo.Count(r => r.GraduateYr + pgyDiff == 1);
@@ -135,7 +135,7 @@ public class SchedulerService
             attempt++;
             try
             {
-                ResidentData residentData = await LoadResidentData(year);
+                ResidentData residentData = await LoadResidentData(year, semester);
 
                 int looseFactor = 6 + Math.Min(18, attempt / 10 * 2);
 
@@ -226,14 +226,15 @@ public class SchedulerService
     }
 
 #pragma warning disable IDE0060
-    private async Task<ResidentData> LoadResidentData(int year)
+    private async Task<ResidentData> LoadResidentData(int year, Semester semester)
     {
-        int pgyDiff = year - DateTime.Now.AcademicYear;
+        int academicYear = semester == Semester.Fall ? year : year - 1;
+        int pgyDiff = academicYear - DateTime.Now.AcademicYear;
 
         List<Resident> residents = await _context.Residents.ToListAsync();
         List<Rotation> rotations = await _context.Rotations
             .Include(r => r.RotationType)
-            .Where(r => r.AcademicYear == year && r.ResidentId != null)
+            .Where(r => r.AcademicYear == academicYear && r.ResidentId != null)
             .ToListAsync();
         List<Vacation> vacations = await _context.Vacations
             .Where(v => v.Status == "Approved").ToListAsync();
