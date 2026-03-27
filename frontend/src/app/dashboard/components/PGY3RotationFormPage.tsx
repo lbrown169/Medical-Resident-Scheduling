@@ -1,18 +1,48 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import RotationForm from "./RotationForm";
 import { ClipboardList } from "lucide-react";
+import { config } from "../../../config";
 
 interface PGY3RotationFormPageProps {
   userId: string;
   userPGY: number;
 }
 
-const PGY3RotationFormPage: React.FC<PGY3RotationFormPageProps> = ({ userId, userPGY }) => {
+interface SubmissionWindow {
+  academicYear: number;
+  availableDate: string;
+  dueDate: string;
+}
 
- // Deadline configuration, just may for now (this is configurable later)
- const deadline = new Date("2026-05-15T23:59:00-05:00"); // ! later have this be adjustable by admin
- const isDeadlinePassed = new Date() > deadline;
+const parseLocalDate = (iso: string) => {
+  const [year, month, day] = iso.slice(0, 10).split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
+const PGY3RotationFormPage: React.FC<PGY3RotationFormPageProps> = ({ userId, userPGY }) => {
+  const [window, setWindow] = useState<SubmissionWindow | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch(`${config.apiUrl}/api/rotation-request-submission-window`);
+        if (!res.ok) {
+          setFetchError(true);
+          return;
+        }
+        const data: SubmissionWindow = await res.json();
+        setWindow(data);
+      } catch {
+        setFetchError(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
 
  // Check if user is not PGY-3
  if (userPGY !== 3) {
@@ -29,15 +59,63 @@ const PGY3RotationFormPage: React.FC<PGY3RotationFormPageProps> = ({ userId, use
    );
  }
 
+ if (loading) {
+   return (
+     <div className="max-w-4xl mx-auto">
+       <div className="bg-card rounded-xl shadow-lg border border-border p-8 text-center">
+         <p className="text-muted-foreground">Loading...</p>
+       </div>
+     </div>
+   );
+ }
+
+ if (fetchError || !window) {
+   return (
+     <div className="max-w-4xl mx-auto">
+       <div className="bg-card rounded-xl shadow-lg border border-border p-8 text-center">
+         <ClipboardList className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+         <h2 className="text-2xl font-bold text-foreground mb-2">Form Unavailable</h2>
+         <p className="text-muted-foreground">
+           The rotation preference form is not available yet.
+         </p>
+       </div>
+     </div>
+   );
+ }
+
+ const now = new Date();
+ const availableDate = parseLocalDate(window.availableDate);
+ const dueDate = parseLocalDate(window.dueDate);
+ // Due at 11:59:59 PM local time of the due date.
+ const adjustedDueDate = new Date(dueDate);
+ adjustedDueDate.setHours(23, 59, 59, 999);
+
+ const formatDate = (d: Date) =>
+   d.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+
+ if (now < availableDate) {
+   return (
+     <div className="max-w-4xl mx-auto">
+       <div className="bg-card rounded-xl shadow-lg border border-border p-8 text-center">
+         <ClipboardList className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+         <h2 className="text-2xl font-bold text-foreground mb-2">Not Yet Open</h2>
+         <p className="text-muted-foreground">
+           The rotation preference form opens on {formatDate(availableDate)}.
+         </p>
+       </div>
+     </div>
+   );
+ }
+
  // Check if deadline has passed
- if (isDeadlinePassed) {
+ if (now >= adjustedDueDate) {
    return (
      <div className="max-w-4xl mx-auto">
        <div className="bg-card rounded-xl shadow-lg border border-border p-8 text-center">
          <ClipboardList className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
          <h2 className="text-2xl font-bold text-foreground mb-2">Submission Deadline Passed</h2>
          <p className="text-muted-foreground">
-           The deadline for submitting PGY-4 rotation preferences was {deadline.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })} at {deadline.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZoneName: 'short' })}.
+           The deadline for submitting PGY-4 rotation preferences was {formatDate(dueDate)}.
            The form is now closed.
          </p>
        </div>
@@ -60,17 +138,17 @@ const PGY3RotationFormPage: React.FC<PGY3RotationFormPageProps> = ({ userId, use
         You may return at anytime prior to the deadline to make changes.
       </p>
       <p className="text-red-600 dark:text-red-400 font-semibold">
-        Due: {deadline.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })} at {deadline.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZoneName: 'short' })}
+        Due: {formatDate(dueDate)} at 11:59 PM
       </p>
     </div>
     <RotationForm
-     userId={userId}
-     userPGY={userPGY}
-     requiredPGY={3}
-     rotationPgyYear={4}
-     deadline={deadline}
-     submitEndpoint="api/rotation-pref-request"
-     fetchEndpoint="api/rotation-pref-request/resident"
+      userId={userId}
+      userPGY={userPGY}
+      requiredPGY={3}
+      rotationPgyYear={4}
+      deadline={adjustedDueDate}
+      submitEndpoint="api/rotation-pref-request"
+      fetchEndpoint="api/rotation-pref-request/resident"
     />
   </div>
  );

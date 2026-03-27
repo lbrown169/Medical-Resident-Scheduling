@@ -136,6 +136,11 @@ const rotationDisplayNames: Record<string, string> = {
 	"Community Psy": "Comm",
 };
 
+const parseLocalDate = (iso: string) => {
+	const [year, month, day] = iso.slice(0, 10).split('-').map(Number);
+	return new Date(year, month - 1, day);
+};
+
 interface PGY4RotationScheduleProps {
 	residents: { id: string; name: string; email: string; pgyLevel: number | string ; chiefType: string}[];
 
@@ -159,9 +164,19 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 
 }) => {
 	const [activeTab, setActiveTab] = useState<'schedule' | 'submissions' | 'configure'>('schedule');
+	// Submission window state
+	const [windowAvailableDate, setWindowAvailableDate] = useState<string>("");
+	const [windowDueDate, setWindowDueDate] = useState<string>("");
+	const [savingWindow, setSavingWindow] = useState(false);
+	const [windowSaveError, setWindowSaveError] = useState<string | null>(null);
 	const currentYear = new Date().getFullYear();
 	const [selectedYear] = useState<number>(currentYear);
-	const deadline = new Date("2026-04-15T23:59:00-05:00"); // !! change to configured version obviously
+
+	let deadline = null;
+	if (windowDueDate) {
+		deadline = parseLocalDate(windowDueDate);
+		deadline.setHours(23, 59, 59, 999); // Set to 11:59:59 PM local time
+	}
 
 	// Schedule state
 	const [schedules, setSchedules] = useState<Pgy4RotationScheduleResponse[]>([]);
@@ -317,8 +332,22 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 			}
 		};
 
+		const loadSubmissionWindow = async () => {
+			try {
+				const res = await fetch(`${config.apiUrl}/api/rotation-request-submission-window`);
+				if (!res.ok) return;
+				const data = await res.json();
+				// Splice iso strings
+				if (data.availableDate) setWindowAvailableDate(data.availableDate.slice(0, 10));
+				if (data.dueDate) setWindowDueDate(data.dueDate.slice(0, 10));
+			} catch {
+				// Stay empty
+			}
+		};
+
 		loadSchedules();
 		loadRotationTypes();
+		loadSubmissionWindow();
 	}, []);
 
 	const handleGenerate = async () => {
@@ -463,6 +492,32 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
   });
 	};
 
+	const handleSaveSubmissionWindow = async () => {
+		setSavingWindow(true);
+		setWindowSaveError(null);
+		try {
+			const res = await fetch(`${config.apiUrl}/api/rotation-request-submission-window`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					availableDate: windowAvailableDate,
+					dueDate: windowDueDate,
+				}),
+			});
+			if (!res.ok) {
+				const err = await res.json();
+				const messages = Object.values(err.errors ?? {}).flat().join(" ");
+				setWindowSaveError(messages || "Failed to save submission window.");
+				return;
+			}
+			toast({ variant: "success", title: "Saved", description: "Submission window updated." });
+		} catch {
+			setWindowSaveError("Failed to save submission window.");
+		} finally {
+			setSavingWindow(false);
+		}
+	};
+
 	useEffect(() => {
 		const loadSubmissions = async () => {
 			try {
@@ -515,11 +570,11 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 						<div className="flex flex-col items-center border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-700 pt-4 sm:pt-0 sm:pl-8">
 							<div className="flex items-center gap-2 mb-1">
 								<CalendarClock className="w-5 h-5 text-yellow-500" />
-								<span className="whitespace-nowrap text-2xl font-bold text-gray-900 dark:text-white">{deadline.toLocaleDateString('en-US', {
-									month: 'short',
-									day: 'numeric',
-									year: 'numeric'
-								})}</span>
+								<span className="whitespace-nowrap text-2xl font-bold text-gray-900 dark:text-white">
+									{deadline
+										? `${deadline.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at 11:59 PM`
+										: "—"}
+								</span>
 							</div>
 							<span className="text-xs text-gray-500">Submission Deadline</span>
 						</div>
@@ -749,12 +804,10 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 									Available Date
 								</label>
 								<input
-									id=""
 									type="date"
 									className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
-									value={undefined}
-									onChange={() => null}
-									min={new Date().toISOString().split('T')[0]}
+									value={windowAvailableDate}
+									onChange={(e) => setWindowAvailableDate(e.target.value)}
 								/>
 							</div>
 							<div>
@@ -762,15 +815,24 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 									Due Date
 								</label>
 								<input
-									id=""
 									type="date"
 									className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
-									value={undefined}
-									onChange={() => null}
-									min={new Date().toISOString().split('T')[0]}
+									value={windowDueDate}
+									onChange={(e) => setWindowDueDate(e.target.value)}
+									min={windowAvailableDate}
 								/>
 							</div>
+							{windowSaveError && (
+								<p className="col-span-2 text-sm text-red-600 dark:text-red-400">{windowSaveError}</p>
+							)}
 							<div className="flex flex-row gap-2">
+								<Button
+									onClick={handleSaveSubmissionWindow}
+									disabled={savingWindow || !windowAvailableDate || !windowDueDate}
+									className="py-2 flex items-center justify-center gap-2 bg-green-600 text-white hover:bg-green-700"
+								>
+									{savingWindow ? "Saving..." : "Save Window"}
+								</Button>
 								<Button
 									onClick={() => setShowRotationFormModal(true)}
 									disabled={showRotationFormModal == true}
@@ -871,7 +933,8 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 						userPGY={PGY3Residents.find(r => r.id === formOverrideResidentId)?.pgyLevel as number ?? 3}
 						requiredPGY={3}
 						rotationPgyYear={4}
-						deadline={deadline}
+						deadline={deadline ?? new Date()}
+						ignoreDeadline={true}
 						submitEndpoint="api/rotation-pref-request"
 						fetchEndpoint="api/rotation-pref-request/resident"
 						onSuccess={handleRotationFormSuccess}
