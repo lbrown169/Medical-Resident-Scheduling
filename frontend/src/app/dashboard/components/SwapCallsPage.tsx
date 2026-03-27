@@ -337,6 +337,14 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                       {residents.find(r => r.id === selectedResident)?.name || 'N/A'}
                     </span>
                   </div>
+                  {description.trim() && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Additional Details:</span>
+                      <span className="font-medium text-foreground">
+                        {description}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -373,7 +381,13 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                   <div className="text-xs text-yellow-600 dark:text-yellow-400">
                     <strong>Your Shift:</strong> {formatDate(yourShiftDate, { month: 'short', day: 'numeric', year: 'numeric' })} — {selectedShift}<br />
                     <strong>Partner&apos;s Shift:</strong> {formatDate(partnerShiftDate, { month: 'short', day: 'numeric', year: 'numeric' })} — {partnerShift}<br />
-                    <strong>Partner:</strong> {residents.find(r => r.id === selectedResident)?.name}
+                    <strong>Partner:</strong> {residents.find(r => r.id === selectedResident)?.name}<br />
+                    {description.trim() && (
+                      <>
+                        <strong>Additional Details:</strong> {description}
+                        <br />
+                      </>
+                    )}
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -392,7 +406,7 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
           {/* Resident Submitted Swap Requests */}
           <div className="mt-2">
             <div className="flex items-center mb-2">
-              <h2 className="text-lg font-semibold">Your Submitted Swap Requests</h2>
+              <h2 className="text-lg font-semibold">Swap Request History</h2>
             </div>
 
             <Card className="p-3 shadow-lg border border-border">
@@ -402,7 +416,7 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                 <div className="text-sm text-rose-600 p-3">Error: {errorSwaps}</div>
               ) : swapRequests.length === 0 ? (
                 <div className="text-sm text-muted-foreground p-3">
-                  No swap requests yet. Your submissions will appear here.
+                  No swap request history. Your swaps will appear here.
                 </div>
               ) : (
                 <ul className="space-y-2">
