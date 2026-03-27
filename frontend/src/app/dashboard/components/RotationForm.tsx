@@ -67,9 +67,13 @@ interface RotationFormProps {
   rotationPgyYear: number;
 
   /** Submission deadline, form closes after this date
-   *  !!! Unsure if other team needs this. Would have to change
    */
   deadline: Date;
+
+  /** Ignore the submission deadline for the admins
+   *  Admins should always have access
+   */
+  ignoreDeadline?: boolean;
 
   /**
    * Optional color map for rotation types.
@@ -115,6 +119,7 @@ const RotationForm: React.FC<RotationFormProps> = ({
   requiredPGY,
   rotationPgyYear,
   deadline,
+  ignoreDeadline = false,
   rotationColors = DEFAULT_ROTATION_COLORS,
   submitEndpoint,
   fetchEndpoint,
@@ -155,8 +160,8 @@ const RotationForm: React.FC<RotationFormProps> = ({
   const [loading, setLoading] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
-  const isDeadlinePassed = new Date() > deadline;
 
+  const isDeadlinePassed = !ignoreDeadline && new Date() > deadline;
   // Load rotation types
   useEffect(() => {
     const loadRotationTypes = async () => {
