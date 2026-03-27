@@ -1,6 +1,7 @@
 using MedicalDemo.Algorithms.OnCallScheduleGenerator;
 using MedicalDemo.Enums;
 using MedicalDemo.Extensions;
+using MedicalDemo.Interfaces;
 using MedicalDemo.Models;
 using MedicalDemo.Models.DTO;
 using MedicalDemo.Models.DTO.Responses;
@@ -14,6 +15,7 @@ namespace MedicalDemo.Services;
 public class RuleViolationService
 {
     private readonly ILogger<SchedulerService> _logger;
+    private readonly IList<ICallShiftConstraint> _constraints;
     private readonly AlgorithmService _algorithmService;
     private readonly MedicalContext _context;
     private readonly SchedulingMapperService _mapper;
@@ -22,13 +24,15 @@ public class RuleViolationService
         MedicalContext context,
         SchedulingMapperService mapper,
         AlgorithmService algorithmService,
-        ILogger<SchedulerService> logger
+        ILogger<SchedulerService> logger,
+        IList<ICallShiftConstraint> constraints
     )
     {
         _context = context;
         _mapper = mapper;
         _algorithmService = algorithmService;
         _logger = logger;
+        _constraints = constraints.ToList();
     }
 
 
@@ -64,5 +68,41 @@ public class RuleViolationService
         }
 
         return (true, null, resident);
+    }
+
+    public async Task<ViolationResult> EvaluateConstraints(Guid schedule_id, string resident_id, DateOnly date)
+    {
+        //validate schedule and resident
+        Schedule? schedule = await _context.Schedules.FindAsync(schedule_id);
+        if (schedule == null)
+        {
+            throw new ArgumentException($"Invalid ScheduleID {schedule_id}.");
+        }
+
+        Resident resident = await _context.Residents.FindAsync(resident_id);
+        if (resident == null)
+        {
+            throw new ArgumentException($"Invalid ResidentID {resident_id}.");
+        }
+
+        // is this how we want to implement yearOffset?
+        int pgyDiff = date.AcademicYear - DateTime.Now.AcademicYear;
+        if (pgyDiff == 1)
+        {
+            ResidentDto residentDTO = new Pgy1Dto();
+        }
+        //etc
+
+        List<ConstraintResult> violations = new List<ConstraintResult>();
+        foreach (var constraints in _constraints)
+        {
+            ConstraintResult result = constraints.Evaluate(residentDTO, date);
+            if (result.IsViolated)
+            {
+                violations.Add(result);
+            }
+        }
+
+        return new ViolationResult(violations);
     }
 }
