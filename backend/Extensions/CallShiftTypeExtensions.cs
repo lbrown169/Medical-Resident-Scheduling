@@ -67,4 +67,6 @@ public static class CallShiftTypeExtensions
     public static int GetHours(this CallShiftType shift) => shift.Attr().Hours;
 
     public static CallLengthType GetLengthType(this CallShiftType shift) => shift.Attr().CallLengthType;
+
+    public static PartOfDay GetPartsOfDay(this CallShiftType shift) => shift.Attr().PartsOfDay;
 }

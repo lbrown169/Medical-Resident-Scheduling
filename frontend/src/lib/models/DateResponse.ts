@@ -8,4 +8,5 @@ export interface DateResponse {
   scheduleId: string;
   firstName?: string;
   lastName?: string;
+  hours: number;
 }
