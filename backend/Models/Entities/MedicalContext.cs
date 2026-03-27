@@ -28,6 +28,7 @@ namespace MedicalDemo.Models.Entities
         public virtual DbSet<RotationType> RotationTypes { get; set; } = null!;
         public virtual DbSet<RotationPrefRequest> RotationPrefRequests { get; set; } = null!;
         public virtual DbSet<Pgy4RotationSchedule> Pgy4RotationSchedules { get; set; } = null!;
+        public virtual DbSet<RotationPrefSubmissionWindow> RotationPrefRequestSubmissionWindows { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -214,9 +215,7 @@ namespace MedicalDemo.Models.Entities
 
                 entity.Property(e => e.GraduateYr)
                     .HasColumnName("graduate_yr")
-                    .HasDefaultValueSql("'1'");
-
-                entity.Property(e => e.HospitalRoleProfile).HasColumnName("hospital_role_profile");
+                    .HasDefaultValueSql(null);
 
                 entity.Property(e => e.LastName)
                     .HasMaxLength(45)

@@ -88,10 +88,17 @@ public class RotationPrefRequestController(
     // POST: api/rotation-pref-requests
     [HttpPost]
     public async Task<ActionResult<RotationPrefResponse>> Create(
-        [FromBody] RotationPrefRequestDto addRequestDto
+        [FromBody] RotationPrefRequestDto addRequestDto,
+        [FromQuery] bool adminOverride = false
     )
     {
         if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        bool isAllowedToAddRequest = await ValidateRotationPrefRequestDateTime();
+        if (!adminOverride && !isAllowedToAddRequest)
         {
             return BadRequest(ModelState);
         }
@@ -171,11 +178,18 @@ public class RotationPrefRequestController(
     [HttpPut("{id}")]
     public async Task<ActionResult<RotationPrefResponse>> UpdateById(
         [FromRoute] Guid id,
-        [FromBody] UpdateRotationPrefRequest updateRequest
+        [FromBody] UpdateRotationPrefRequest updateRequest,
+        [FromQuery] bool adminOverride = false
     )
     {
         // Validate model
         if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
+        }
+
+        bool isAllowedToAddRequest = await ValidateRotationPrefRequestDateTime();
+        if (!adminOverride && !isAllowedToAddRequest)
         {
             return BadRequest(ModelState);
         }
@@ -339,6 +353,53 @@ public class RotationPrefRequestController(
             ModelState.AddModelError(
                 "Chief Rotation Types",
                 $"ID: [{string.Join(", ", chiefRotationTypes)}] is a chief rotation type and should not be passed."
+            );
+            return false;
+        }
+
+        return true;
+    }
+
+    private async Task<bool> ValidateRotationPrefRequestDateTime()
+    {
+        int academicYear = pgy4RotationScheduleService.GetAcademicYear();
+
+        RotationPrefSubmissionWindow? submissionWindow =
+            await context.RotationPrefRequestSubmissionWindows.FirstOrDefaultAsync(
+                (w) => w.AcademicYear == academicYear + 1
+            );
+
+        DateTime localTime = DateTime.Now;
+        DateTime? availableDate = submissionWindow?.AvailableDate;
+
+        DateTime? dueDate = submissionWindow?.DueDate;
+
+        // Check if submission window exists
+        if (submissionWindow == null || availableDate == null || dueDate == null)
+        {
+            ModelState.AddModelError(
+                "Cannot Find Submission Window",
+                "Cannot find appropriate submission window or the submission window has not been set."
+            );
+            return false;
+        }
+
+        // Check if time is in between start date and due date
+        if (localTime <= availableDate)
+        {
+            ModelState.AddModelError(
+                "Before Available Date Time",
+                $"You can only submit a rotation preference request after {availableDate?.Month}/{availableDate?.Day}/{availableDate?.Year}"
+            );
+            return false;
+        }
+
+        DateTime? adjustedDueDate = dueDate?.AddDays(1);
+        if (localTime >= adjustedDueDate)
+        {
+            ModelState.AddModelError(
+                "Due Date Passed",
+                $"You cannot submit a rotation preference request after {dueDate?.Month}/{dueDate?.Day}/{dueDate?.Year}"
             );
             return false;
         }
