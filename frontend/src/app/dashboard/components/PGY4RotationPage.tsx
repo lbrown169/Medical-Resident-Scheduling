@@ -935,7 +935,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 						rotationPgyYear={4}
 						deadline={deadline ?? new Date()}
 						ignoreDeadline={true}
-						submitEndpoint="api/rotation-pref-request"
+						submitEndpoint="api/rotation-pref-request?adminOverride=true"
 						fetchEndpoint="api/rotation-pref-request/resident"
 						onSuccess={handleRotationFormSuccess}
 					/>
