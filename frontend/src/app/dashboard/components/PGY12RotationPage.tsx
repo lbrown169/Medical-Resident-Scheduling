@@ -63,11 +63,6 @@ interface ResidentFromApi {
   graduate_yr: number;
 }
 
-// Helpers
-function toAcademicIndex(calMonth: number): number {
-  return (calMonth + 6) % 12;
-}
-
 function currentAcademicYear(): number {
   const now = new Date();
   return now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1;
@@ -95,7 +90,7 @@ function buildSchedule(
       rotationId: r.rotationId,
       scheduleId: r.scheduleId ?? undefined,
       month: r.month,
-      academicMonthIndex: toAcademicIndex(r.academicMonthIndex),
+      academicMonthIndex: r.academicMonthIndex,
       pgyYear: r.pgyYear,
       rotationType: {
         rotationTypeId: r.rotationType.rotationTypeId,
@@ -190,7 +185,7 @@ export default function PGY12RotationPage() {
     const match = rotations.find(
       (r) =>
         (r.residentId === rowId || `unassigned-${r.rotationId}` === rowId) &&
-        toAcademicIndex(r.academicMonthIndex) === monthIndex,
+        r.academicMonthIndex === monthIndex,
     );
     if (!match) return;
 
