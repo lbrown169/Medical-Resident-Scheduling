@@ -11,14 +11,35 @@ interface PGY3RotationFormPageProps {
 
 interface SubmissionWindow {
   academicYear: number;
-  availableDate: string;
-  dueDate: string;
+  availableDate: string | null;
+  dueDate: string | null;
 }
 
-const parseLocalDate = (iso: string) => {
-  const [year, month, day] = iso.slice(0, 10).split('-').map(Number);
-  return new Date(year, month - 1, day);
+const parseLocalDate = (iso: string | null | undefined) => {
+  if (typeof iso !== "string") return new Date(NaN);
+
+  const match = iso.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return new Date(NaN);
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+
+  const parsed = new Date(year, month - 1, day);
+
+  // Reject overflowed values like 2026-99-99 that JS Date auto-normalizes.
+  if (
+    parsed.getFullYear() !== year ||
+    parsed.getMonth() !== month - 1 ||
+    parsed.getDate() !== day
+  ) {
+    return new Date(NaN);
+  }
+
+  return parsed;
 };
+
+const isInvalidDate = (d: Date) => Number.isNaN(d.getTime());
 
 const PGY3RotationFormPage: React.FC<PGY3RotationFormPageProps> = ({ userId, userPGY }) => {
   const [window, setWindow] = useState<SubmissionWindow | null>(null);
@@ -86,6 +107,21 @@ const PGY3RotationFormPage: React.FC<PGY3RotationFormPageProps> = ({ userId, use
  const now = new Date();
  const availableDate = parseLocalDate(window.availableDate);
  const dueDate = parseLocalDate(window.dueDate);
+
+ if (isInvalidDate(availableDate) || isInvalidDate(dueDate)) {
+   return (
+     <div className="max-w-4xl mx-auto">
+       <div className="bg-card rounded-xl shadow-lg border border-border p-8 text-center">
+         <ClipboardList className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+         <h2 className="text-2xl font-bold text-foreground mb-2">Form Unavailable</h2>
+         <p className="text-muted-foreground">
+           The rotation preference form is not available yet.
+         </p>
+       </div>
+     </div>
+   );
+ }
+
  // Due at 11:59:59 PM local time of the due date.
  const adjustedDueDate = new Date(dueDate);
  adjustedDueDate.setHours(23, 59, 59, 999);
