@@ -144,7 +144,11 @@ public class Pgy4RotationScheduleConverter(
         Dictionary<string, Resident> residentIdToResident = [];
         foreach (Rotation rotation in schedule.Rotations)
         {
-            if (!residentIdToResident.ContainsKey(rotation.ResidentId))
+            if (
+                rotation.ResidentId != null
+                && rotation.Resident != null
+                && !residentIdToResident.ContainsKey(rotation.ResidentId)
+            )
             {
                 residentIdToResident.Add(rotation.ResidentId, rotation.Resident);
             }
@@ -174,6 +178,11 @@ public class Pgy4RotationScheduleConverter(
         Dictionary<string, Resident> residentIdToResident = [];
         foreach (Rotation rotation in scheduleModel.Rotations)
         {
+            if (rotation.ResidentId == null || rotation.Resident == null)
+            {
+                continue;
+            }
+
             if (residentIdToRotations.TryGetValue(rotation.ResidentId, out List<Rotation>? value))
             {
                 value.Add(rotation);

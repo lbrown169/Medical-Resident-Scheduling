@@ -88,7 +88,8 @@ public class Pgy4RotationScheduleOverrideConverter(
         foreach (Rotation rotation in schedule.Rotations)
         {
             if (
-                residentIdToOverrides.TryGetValue(
+                rotation.ResidentId != null
+                && residentIdToOverrides.TryGetValue(
                     rotation.ResidentId,
                     out List<Pgy4RotationScheduleOverride>? overridesForResident
                 )
