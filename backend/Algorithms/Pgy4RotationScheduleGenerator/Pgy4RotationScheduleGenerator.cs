@@ -18,8 +18,8 @@ public class Pgy4RotationScheduleGenerator
 
     // Parameters
     private const double PER_MONTH_DIVERSITY_PENALTY = 1; // Penalty score applied when a rotation is used more often for all the months
-    private const double SINGLE_MONTH_DIVERSITY_PENALTY = 18; // Penalty score applied when a rotation is used more often for the current month
-    private const double REQUIRED_ROTATION_URGENCY_MULTIPLIER = 12; // Score multiplier when a required rotation needs to be assigned
+    private const double SINGLE_MONTH_DIVERSITY_PENALTY = 20; // Penalty score applied when a rotation is used more often for the current month
+    private const double REQUIRED_ROTATION_URGENCY_MULTIPLIER = 1.5; // Score multiplier when a required rotation needs to be assigned
     private const double CLUSTER_PENALTY = 1; // Penalty score applied when the same rotation is applied in the previous month
 
     // Randomization Parameters
@@ -483,8 +483,6 @@ public class Pgy4RotationScheduleGenerator
                 numConsultsRequired--;
                 numConsultsRequired = numConsultsRequired < 0 ? 0 : numConsultsRequired;
             }
-
-            monthRemaining--;
         }
 
         // Apply penalty if rotation was already chosen once or more by other residents
@@ -511,12 +509,16 @@ public class Pgy4RotationScheduleGenerator
             if (preferenceScores.ContainsKey(Pgy4RotationTypeEnum.InpatientPsy))
             {
                 preferenceScores[Pgy4RotationTypeEnum.InpatientPsy] +=
-                    numInpatientsRequired * REQUIRED_ROTATION_URGENCY_MULTIPLIER;
+                    (12 - monthRemaining)
+                    * numInpatientsRequired
+                    * REQUIRED_ROTATION_URGENCY_MULTIPLIER;
             }
             if (preferenceScores.ContainsKey(Pgy4RotationTypeEnum.PsyConsults))
             {
                 preferenceScores[Pgy4RotationTypeEnum.PsyConsults] +=
-                    numConsultsRequired * REQUIRED_ROTATION_URGENCY_MULTIPLIER;
+                    (12 - monthRemaining)
+                    * numConsultsRequired
+                    * REQUIRED_ROTATION_URGENCY_MULTIPLIER;
             }
         }
 

@@ -24,6 +24,11 @@ public class Pgy4RotationScheduleConverter(
 
         foreach (Rotation rotation in scheduleModel.Rotations)
         {
+            if (rotation.ResidentId == null)
+            {
+                continue;
+            }
+
             if (residentIdToRotations.TryGetValue(rotation.ResidentId, out List<Rotation>? value))
             {
                 value.Add(rotation);
@@ -40,7 +45,7 @@ public class Pgy4RotationScheduleConverter(
             .. residentIdToRotations.Select(
                 (kvp) =>
                 {
-                    Resident resident = kvp.Value[0].Resident;
+                    Resident resident = kvp.Value[0].Resident!;
                     return CreateSingleResidentRotationSchedule(resident, kvp.Value);
                 }
             ),

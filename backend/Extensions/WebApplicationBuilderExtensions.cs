@@ -57,6 +57,7 @@ public static class WebApplicationBuilderExtensions
         builder.Services.AddScoped<RotationPrefRequestConverter>();
         builder.Services.AddScoped<RotationTypeConverter>();
         builder.Services.AddScoped<RotationConverter>();
+        builder.Services.AddScoped<RotationPrefSubmissionWindowConverter>();
         builder.Services.AddScoped<Pgy4RotationScheduleOverrideConverter>();
 
         // Email

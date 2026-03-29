@@ -201,7 +201,7 @@ public class Pgy4RotationScheduleController(
     [HttpPost("publish/{id}")]
     public async Task<ActionResult> PublishSchedule([FromRoute] Guid id)
     {
-        int scheduleYear = pgy4RotationScheduleService.GetScheduleYear();
+        int scheduleYear = pgy4RotationScheduleService.GetAcademicYear();
 
         Pgy4RotationSchedule? scheduleToBePublished =
             await pgy4RotationScheduleService.GetScheduleById(id);
@@ -241,12 +241,12 @@ public class Pgy4RotationScheduleController(
     [HttpGet("published")]
     public async Task<ActionResult<Pgy4RotationScheduleResponse>> GetPublishedSchedule()
     {
+        int academicYear = pgy4RotationScheduleService.GetAcademicYear();
+
         Pgy4RotationSchedule? foundSchedule = await context
             .Pgy4RotationSchedules.IncludeRotationTypeAndResidentProperties()
             .FirstOrDefaultAsync(
-                (schedule) =>
-                    schedule.Year == pgy4RotationScheduleService.GetScheduleYear()
-                    && schedule.IsPublished
+                (schedule) => schedule.Year == academicYear && schedule.IsPublished
             );
 
         if (foundSchedule == null)
@@ -286,12 +286,12 @@ public class Pgy4RotationScheduleController(
             return BadRequest(ModelState);
         }
 
+        int academicYear = pgy4RotationScheduleService.GetAcademicYear();
+
         Pgy4RotationSchedule? foundSchedule = await context
             .Pgy4RotationSchedules.IncludeRotationTypeAndResidentProperties()
             .FirstOrDefaultAsync(
-                (schedule) =>
-                    schedule.Year == pgy4RotationScheduleService.GetScheduleYear()
-                    && schedule.IsPublished
+                (schedule) => schedule.Year == academicYear && schedule.IsPublished
             );
 
         // Check published schedule existence
