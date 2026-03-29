@@ -1,5 +1,3 @@
-using System.ComponentModel;
-
 namespace MedicalDemo.Enums;
 
 public enum MonthOfYear
