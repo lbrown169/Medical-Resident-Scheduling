@@ -21,7 +21,6 @@ public class ResidentConverter
             weekly_hours = resident.WeeklyHours,
             total_hours = resident.TotalHours,
             bi_yearly_hours = resident.BiYearlyHours,
-            hospital_role_profile = resident.HospitalRoleProfile,
             chief_type = resident.ChiefType.GetDisplayNameOrDefault()
         };
     }
@@ -34,6 +33,5 @@ public class ResidentConverter
         resident.GraduateYr = request.graduate_yr ?? resident.GraduateYr;
         resident.Email = request.email ?? resident.Email;
         resident.PhoneNum = request.phone_num ?? resident.PhoneNum;
-        resident.HospitalRoleProfile = request.hospital_role_profile ?? resident.HospitalRoleProfile; ;
     }
 }

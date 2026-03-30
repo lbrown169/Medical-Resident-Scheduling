@@ -33,7 +33,7 @@ public class AuthController : ControllerBase
             Resident? resident = await _context.Residents
                 .FirstOrDefaultAsync(r => r.Email == request.email);
 
-            if (resident != null)
+            if (resident?.GraduateYr != null)
             {
                 bool passwordMatch
                     = BCrypt.Net.BCrypt.Verify(request.password,
