@@ -14,7 +14,7 @@ import {
   SidebarTrigger,
 } from "../../components/ui/sidebar";
 import { SidebarUserCard } from "./components/SidebarUserCard";
-import { Repeat, CalendarDays, CalendarX, UserCheck, Shield, Settings, Home, LogOut, User as UserIcon, ChevronDown, Moon, Sun, LayoutList } from "lucide-react";
+import { Repeat, CalendarDays, CalendarX, UserCheck, Shield, Settings, Home, LogOut, User as UserIcon, ChevronDown, Moon, Sun, LayoutList, CalendarRange } from "lucide-react";
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { useRouter } from "next/navigation";
 import { toast } from '../../lib/use-toast';
@@ -36,37 +36,19 @@ import RequestOffPage from "./components/RequestOffPage";
 import CheckSchedulePage from "./components/CheckSchedulePage";
 import AdminPage from "./components/AdminPage";
 import SchedulesPage from "./components/SchedulesPage";
+import PGY12RotationPage from "./components/PGY12RotationPage";
 
 import MobileHeader from "./components/MobileHeader";
 import MobileUserMenu from "./components/MobileUserMenu";
 import { VacationResponse } from "@/lib/models/VacationResponse";
 import { CallType } from "@/lib/models/CallType";
 import { DateResponse } from "@/lib/models/DateResponse";
+import { CalendarEvent } from "@/lib/models/CalendarEvent";
 
 type MenuItem = {
   title: string;
   icon: ReactElement;
 };
-
-// Define types for API responses
-
-interface CalendarEvent {
-  id: string;
-  title: string;
-  start: Date;
-  end: Date;
-  backgroundColor: string;
-  borderColor: string;
-  extendedProps: {
-    scheduleId: string;
-    residentId?: string;
-    firstName?: string;
-    lastName?: string;
-    callType: string;
-    dateId: string;
-    pgyLevel?: number;
-  };
-}
 
 interface Resident {
   resident_id: string;
@@ -100,6 +82,7 @@ const menuItems: MenuItem[] = [
   { title: "Home", icon: <Home className="w-6 h-6 mr-3" /> },
   { title: "Calendar", icon: <CalendarDays className="w-6 h-6 mr-3" /> },
   { title: "Schedules", icon: <LayoutList className="w-6 h-6 mr-3" /> },
+  { title: "Rotations", icon: <CalendarRange className="w-6 h-6 mr-3" /> },
   { title: "Swap Calls", icon: <Repeat className="w-6 h-6 mr-3" /> },
   { title: "Request Off", icon: <CalendarX className="w-6 h-6 mr-3" /> },
   { title: "Check My Schedule", icon: <UserCheck className="w-6 h-6 mr-3" /> },
@@ -128,11 +111,6 @@ function SidebarFloatingTrigger() {
   );
 }
 
-function mapShiftType(shift: string) {
-  if (shift === "Saturday") return ["Saturday (24h)", "Saturday (12h)"];
-  if (shift === "Sunday") return ["Sunday (12h)"];
-  return [shift]; // "Short" stays "Short"
-}
 
 function Dashboard() {
   const router = useRouter();
@@ -158,6 +136,7 @@ function Dashboard() {
   const [yourShiftDate, setYourShiftDate] = useState<string>("");
   const [partnerShiftDate, setPartnerShiftDate] = useState<string>("");
   const [partnerShift, setPartnerShift] = useState<string>("");
+
 
   // Request off form state
   const [startDate, setStartDate] = useState<string>("");
@@ -284,7 +263,7 @@ function Dashboard() {
             id: date.dateId,
             date: date.shiftDate,
             time: "All Day",
-            shift: `${date.callType.description} Call`,
+            shift: `${date.callType.description}${date.callType.id === 99 ? ` (${date.hours}h)` : ''} Call`,
             location: "Hospital"
           }));
 
@@ -326,15 +305,16 @@ function Dashboard() {
             start: d,
             end: d,
             backgroundColor: eventColor,
-            borderColor: eventColor,
             extendedProps: {
               scheduleId: date.scheduleId,
               residentId: date.residentId,
               firstName: date.firstName,
               lastName: date.lastName,
               callType: date.callType.description,
+              callTypeId: date.callType.id,
               dateId: date.dateId,
-              pgyLevel: graduateYear
+              pgyLevel: graduateYear,
+              hours: date.hours,
             }
           };
         });
@@ -710,69 +690,16 @@ function Dashboard() {
     }
 
     try {
-      // Filter for user's shift
-      const myCandidates = calendarEvents.filter((event) => {
-        const eventCallType = (event.extendedProps?.callType || "").trim();
-        const eventResidentId = (event.extendedProps?.residentId || "").trim();
-        const validCallTypes = mapShiftType(selectedShift);
-        if (
-          eventResidentId === (user?.id || "").trim() &&
-          validCallTypes.includes(eventCallType)
-        ) {
-          const eventDateLocal = new Date(event.start);
-          const yourShiftDateLocal = parseLocalDate(yourShiftDate);
-          const equal = isSameDay(eventDateLocal, yourShiftDateLocal);
-          console.log("Date compare (my):", {
-            eventDate: eventDateLocal.toString(),
-            yourShiftDate: yourShiftDateLocal?.toString(),
-            equal,
-          });
-          return equal;
-        }
-        return false;
-      });
-
-      console.log(
-        'All events for my user on yourShiftDate:',
-        calendarEvents.filter(
-          (event) =>
-            (event.extendedProps?.residentId || '').trim() === (user?.id || '').trim() &&
-            isSameDay(event.start, parseLocalDate(yourShiftDate))
-        )
+      const myShift = calendarEvents.find((event) =>
+        (event.extendedProps?.residentId || "").trim() === (user?.id || "").trim() &&
+        isSameDay(event.start, yourShiftDate)
       );
 
-      const myEventsOnDate = calendarEvents.filter(
-        (event) =>
-          (event.extendedProps?.residentId || '').trim() === (user?.id || '').trim() &&
-          isSameDay(event.start, parseLocalDate(yourShiftDate))
+      const partnerShiftEvent = calendarEvents.find((event) =>
+        (event.extendedProps?.residentId || "").trim() === (selectedResident || "").trim() &&
+        isSameDay(event.start, partnerShiftDate)
       );
-      console.log('All events for my user on yourShiftDate (full details):', JSON.stringify(myEventsOnDate, null, 2));
 
-      // Filter for partner's shift
-      const partnerCandidates = calendarEvents.filter((event) => {
-        const eventCallType = (event.extendedProps?.callType || "").trim();
-        const eventResidentId = (event.extendedProps?.residentId || "").trim();
-        const validCallTypes = mapShiftType(partnerShift);
-        if (
-          eventResidentId === (selectedResident || "").trim() &&
-          validCallTypes.includes(eventCallType)
-        ) {
-          const eventDateLocal = new Date(event.start);
-          const partnerShiftDateLocal = parseLocalDate(partnerShiftDate);
-          const equal = isSameDay(eventDateLocal, partnerShiftDateLocal);
-          console.log("Date compare (partner):", {
-            eventDate: eventDateLocal.toString(),
-            partnerShiftDate: partnerShiftDateLocal?.toString(),
-            equal,
-          });
-          return equal;
-        }
-        return false;
-      });
-      console.log('myCandidates:', myCandidates);
-      console.log('partnerCandidates:', partnerCandidates);
-      const myShift = myCandidates[0];
-      const partnerShiftEvent = partnerCandidates[0];
       if (!myShift || !partnerShiftEvent) {
         toast({
           variant: "destructive",
@@ -1067,35 +994,34 @@ case "Home":
           />
         );
 
-      case "Swap Calls":
-        // Compute PGY-matched residents for swap
+      case "Swap Calls": {
         const myPGY = residents.find(r => r.resident_id === user?.id)?.graduate_yr;
         const pgyMatchedResidents = residents.filter(r => r.graduate_yr === myPGY && r.resident_id !== user?.id)
           .map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}` }));
-        
-        const availableShifts = [
-          { id: "Short", name: "Short" },
-          { id: "Saturday", name: "Saturday" },
-          { id: "Sunday", name: "Sunday" }
-        ];
-        
+        const now = new Date(); now.setHours(0, 0, 0, 0);
+        const filterShiftEvents = (residentId: string) =>
+          calendarEvents
+            .filter(e => (e.extendedProps?.residentId || "").trim() === residentId.trim() && new Date(e.start) >= now)
+            .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+        const userShiftEvents = user?.id ? filterShiftEvents(user.id) : [];
+        const partnerShiftEvents = selectedResident ? filterShiftEvents(selectedResident) : [];
         return (
           <SwapCallsPage
             yourShiftDate={yourShiftDate}
-            setYourShiftDate={setYourShiftDate}
             partnerShiftDate={partnerShiftDate}
-            setPartnerShiftDate={setPartnerShiftDate}
             selectedResident={selectedResident}
-            setSelectedResident={setSelectedResident}
+            setSelectedResident={(v) => { setSelectedResident(v); setPartnerShiftDate(""); setPartnerShift(""); }}
             residents={pgyMatchedResidents}
             selectedShift={selectedShift}
-            setSelectedShift={setSelectedShift}
             partnerShift={partnerShift}
-            setPartnerShift={setPartnerShift}
-            shifts={availableShifts}
+            userShiftEvents={userShiftEvents}
+            partnerShiftEvents={partnerShiftEvents}
+            onSelectUserShift={(date, callType) => { setYourShiftDate(date); setSelectedShift(callType); }}
+            onSelectPartnerShift={(date, callType) => { setPartnerShiftDate(date); setPartnerShift(callType); }}
             handleSubmitSwap={handleSubmitSwap}
           />
         );
+      }
 
       case "Request Off":
         return (
@@ -1171,6 +1097,19 @@ case "Home":
           />
         );
 
+      case "Rotations":
+        if (!isAdmin) {
+          return (
+            <div className="w-full pt-4 flex flex-col items-center">
+              <h1 className="text-2xl font-bold mb-6">Access Denied</h1>
+              <p className="text-center text-gray-600 dark:text-gray-400">
+                You do not have permission to access this page.
+              </p>
+            </div>
+          );
+        }
+        return <PGY12RotationPage />;
+
       default:
         return null;
     }
@@ -1218,6 +1157,9 @@ case "Home":
     if (selected === "Check My Schedule") {
       fetchMySchedule();
     }
+    if (selected === "Calendar") {
+      fetchCalendarEvents();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected]);
 
@@ -1249,6 +1191,7 @@ case "Home":
     if (item.title === "Check My Schedule") return !isAdmin; // residents only
     if (item.title === "Swap Calls") return !isAdmin; // residents only
     if (item.title === "Schedules") return isAdmin; // admin only
+    if (item.title === "Rotations") return isAdmin; // admin only
     return true;
   });
 
