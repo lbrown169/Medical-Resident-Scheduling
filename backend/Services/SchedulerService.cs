@@ -226,7 +226,7 @@ public class SchedulerService
     }
 
 #pragma warning disable IDE0060
-    private async Task<ResidentData> LoadResidentData(int year, Semester semester)
+    private async Task<ResidentData> LoadResidentData(int year, Semester semester, bool includeDates = false)
     {
         int academicYear = semester == Semester.Fall ? year : year - 1;
         int pgyDiff = academicYear - DateTime.Now.AcademicYear;
@@ -238,7 +238,18 @@ public class SchedulerService
             .ToListAsync();
         List<Vacation> vacations = await _context.Vacations
             .Where(v => v.Status == "Approved").ToListAsync();
-        List<Date> dates = await _context.Dates.Where(d => d.Schedule.Status == ScheduleStatus.Published && d.Schedule.Year == year).ToListAsync();
+
+        List<Date> dates = [];
+
+        if (includeDates)
+        {
+            dates = await _context.Dates
+                .Where(d =>
+                    d.Schedule.Status == ScheduleStatus.Published
+                    && d.Schedule.Year == year
+                )
+                .ToListAsync();
+        }
 
         List<Pgy1Dto> pgy1s = residents
             .Where(r => r.GraduateYr + pgyDiff == 1)
