@@ -130,7 +130,7 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
           const arr = Array.isArray(combinedData) ? combinedData : [combinedData];
           arr.sort(
             (a, b) =>
-              +new Date(b.createdAt || b.updatedAt) - +new Date(a.createdAt || a.updatedAt)
+              +new Date(b.updatedAt || b.createdAt) - +new Date(a.updatedAt || a.createdAt)
           );
           const filteredArr = arr.filter((swap) => (swap.requesterId === userId || (swap.requesteeId === userId && swap.status.description !== "Denied")));
           setSwapRequests(filteredArr);
@@ -167,8 +167,10 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
 
   const handleConfirmSubmit = () => {
     handleSubmitSwap();
-    setShowConfirmation(false);
-    setRefreshKey((k) => k + 1);
+    setTimeout(() => {
+      setShowConfirmation(false);
+      setRefreshKey((k) => k + 1);
+    }, 500);
   };
 
 /*  const handleCancelSubmit = () => {
@@ -203,6 +205,7 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
       });
     } finally {
       setActionLoading(false);
+      setRefreshKey((k) => k + 1);
     }
   };
 
@@ -223,6 +226,7 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
       if (onRefreshCalendar) onRefreshCalendar();*/
     } finally {
       setActionLoading(false);
+      setRefreshKey((k) => k + 1);
     }
   };
 

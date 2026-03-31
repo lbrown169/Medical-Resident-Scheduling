@@ -729,10 +729,19 @@ function Dashboard() {
         });
       } else {
         const error = await response.text();
+        let message = "Failed to create swap request.";
+
+        try {
+          const parsed = JSON.parse(error);
+          message = parsed.message || message;
+        } catch {
+          message = error || message;
+        }
+
         toast({
           variant: "destructive",
           title: "Error",
-          description: error || "Failed to create swap request.",
+          description: message,
         });
       }
     } catch (error) {
