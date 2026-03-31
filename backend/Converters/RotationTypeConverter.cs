@@ -1,6 +1,7 @@
 using MedicalDemo.Enums;
 using MedicalDemo.Extensions;
 using MedicalDemo.Models.DTO.Responses;
+using MedicalDemo.Models.DTO.Scheduling;
 using MedicalDemo.Models.Entities;
 
 namespace MedicalDemo.Converters;
@@ -67,5 +68,10 @@ public class RotationTypeConverter
         throw new ArgumentException(
             "ERROR: Failed to convert RotationType to AlgorithmRotationType because it cannot find the corresponding enum!"
         );
+    }
+
+    public HospitalRole CreateHospitalRoleFromRotationType(RotationType rotationType)
+    {
+        return new HospitalRole(rotationType.RotationName, rotationType.DoesShortCall, rotationType.DoesLongCall, rotationType.DoesTrainingShortCall, rotationType.DoesTrainingLongCall);
     }
 }

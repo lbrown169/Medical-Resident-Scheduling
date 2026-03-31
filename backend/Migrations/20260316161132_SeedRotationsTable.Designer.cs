@@ -3,6 +3,7 @@ using System;
 using MedicalDemo.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MedicalDemo.Migrations
 {
     [DbContext(typeof(MedicalContext))]
-    partial class MedicalContextModelSnapshot : ModelSnapshot
+    [Migration("20260316161132_SeedRotationsTable")]
+    partial class SeedRotationsTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -246,9 +248,15 @@ namespace MedicalDemo.Migrations
                         .HasColumnType("varchar(45)")
                         .HasColumnName("first_name");
 
-                    b.Property<int?>("GraduateYr")
+                    b.Property<int>("GraduateYr")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int")
-                        .HasColumnName("graduate_yr");
+                        .HasColumnName("graduate_yr")
+                        .HasDefaultValueSql("'1'");
+
+                    b.Property<int?>("HospitalRoleProfile")
+                        .HasColumnType("int")
+                        .HasColumnName("hospital_role_profile");
 
                     b.Property<string>("LastName")
                         .IsRequired()
@@ -316,6 +324,7 @@ namespace MedicalDemo.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("ResidentId")
+                        .IsRequired()
                         .HasMaxLength(15)
                         .HasColumnType("varchar(15)")
                         .HasColumnName("resident_id");
@@ -431,22 +440,6 @@ namespace MedicalDemo.Migrations
                     b.HasIndex("ThirdPriorityId");
 
                     b.ToTable("rotation_pref_request");
-                });
-
-            modelBuilder.Entity("MedicalDemo.Models.Entities.RotationPrefSubmissionWindow", b =>
-                {
-                    b.Property<int>("AcademicYear")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("AvailableDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime?>("DueDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.HasKey("AcademicYear");
-
-                    b.ToTable("rotation_pref_request_submission_window");
                 });
 
             modelBuilder.Entity("MedicalDemo.Models.Entities.RotationType", b =>
@@ -943,6 +936,8 @@ namespace MedicalDemo.Migrations
                     b.HasOne("MedicalDemo.Models.Entities.Resident", "Resident")
                         .WithMany("Rotations")
                         .HasForeignKey("ResidentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
                         .HasConstraintName("resident_id_rotation");
 
                     b.HasOne("MedicalDemo.Models.Entities.RotationType", "RotationType")
