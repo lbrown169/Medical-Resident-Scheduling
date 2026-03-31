@@ -13,6 +13,11 @@ public static class ResidentExtensions
 
     public static int GetGraduateYrForSemesterAndYear(this Resident resident, Semester semester, int year)
     {
+        if (resident.GraduateYr == null)
+        {
+            throw new NullReferenceException("Resident.GraduateYr is null");
+        }
+
         int offset = 0;
         int currAcademicYear = DateTime.Now.AcademicYear;
         int inputtedDateAcademicYear = semester == Semester.Fall ? year : year - 1;
@@ -23,7 +28,7 @@ public static class ResidentExtensions
             offset = inputtedDateAcademicYear - currAcademicYear;
         }
 
-        int graduateYr = resident.GraduateYr + offset;
+        int graduateYr = resident.GraduateYr.Value + offset;
         return (graduateYr);
     }
 }

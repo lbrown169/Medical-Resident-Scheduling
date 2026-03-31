@@ -2,23 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import { ChevronLeft, ChevronRight, CalendarDays, Home, Repeat2, UserCheck, CalendarX, Settings as SettingsIcon, LayoutList } from "lucide-react";
-
-interface CalendarEvent {
-  id: string;
-  title: string;
-  start: Date;
-  end: Date;
-  backgroundColor: string;
-  extendedProps?: {
-    scheduleId?: string;
-    residentId?: string;
-    firstName?: string;
-    lastName?: string;
-    callType?: string;
-    dateId?: string;
-    pgyLevel?: number | string;
-  };
-}
+import { CalendarEvent } from "@/lib/models/CalendarEvent";
 
 interface CalendarPageProps {
   events: CalendarEvent[];
@@ -502,7 +486,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
 
                               <div className="text-sm text-gray-600 dark:text-gray-300">
                                 <span className="font-semibold">Call Type: </span>
-                                {event.extendedProps?.callType}
+                                {event.extendedProps?.callType}{event.extendedProps?.callTypeId === 99 && ` (${event.extendedProps.hours}h)`}
                               </div>
 
                               <div className="text-sm text-gray-600 dark:text-gray-300">
@@ -581,7 +565,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                                   </div>
 
                                   <div className="text-xs opacity-90 mb-3 truncate">
-                                    {event.extendedProps?.callType}
+                                    {event.extendedProps?.callType}{event.extendedProps?.callTypeId === 99 && ` (${event.extendedProps.hours}h)`}
                                   </div>
 
                                   <div className="text-xs mb-1 truncate">
@@ -815,7 +799,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
             </div>
             <div className="mb-2">
               <span className="font-semibold">Call Type: </span>
-              {selectedEvent.extendedProps?.callType}
+              {selectedEvent.extendedProps?.callType}{selectedEvent.extendedProps?.callTypeId === 99 && ` (${selectedEvent.extendedProps.hours}h)`}
             </div>
             <div className="mb-2">
               <span className="font-semibold">Resident: </span>
@@ -847,7 +831,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
             </div>
             <div className="mb-2">
               <span className="font-semibold">Call Type: </span>
-              {eventPopover.event.extendedProps?.callType}
+              {eventPopover.event.extendedProps?.callType}{eventPopover.event.extendedProps?.callTypeId === 99 && ` (${eventPopover.event.extendedProps.hours}h)`}
             </div>
             <div className="mb-2">
               <span className="font-semibold">Resident: </span>

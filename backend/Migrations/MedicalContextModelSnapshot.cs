@@ -59,6 +59,12 @@ namespace MedicalDemo.Migrations
                         .HasColumnType("varchar(15)")
                         .HasColumnName("phone_num");
 
+                    b.Property<int>("Role")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(1)
+                        .HasColumnName("role");
+
                     b.HasKey("AdminId");
 
                     b.HasIndex(new[] { "AdminId" }, "admin_id_UNIQUE")
@@ -246,15 +252,9 @@ namespace MedicalDemo.Migrations
                         .HasColumnType("varchar(45)")
                         .HasColumnName("first_name");
 
-                    b.Property<int>("GraduateYr")
-                        .ValueGeneratedOnAdd()
+                    b.Property<int?>("GraduateYr")
                         .HasColumnType("int")
-                        .HasColumnName("graduate_yr")
-                        .HasDefaultValueSql("'1'");
-
-                    b.Property<int?>("HospitalRoleProfile")
-                        .HasColumnType("int")
-                        .HasColumnName("hospital_role_profile");
+                        .HasColumnName("graduate_yr");
 
                     b.Property<string>("LastName")
                         .IsRequired()
@@ -322,16 +322,9 @@ namespace MedicalDemo.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("ResidentId")
-                        .IsRequired()
                         .HasMaxLength(15)
                         .HasColumnType("varchar(15)")
                         .HasColumnName("resident_id");
-
-                    b.Property<string>("Rotation1")
-                        .IsRequired()
-                        .HasMaxLength(45)
-                        .HasColumnType("varchar(45)")
-                        .HasColumnName("rotation");
 
                     b.Property<byte[]>("RotationTypeId")
                         .IsRequired()
@@ -444,6 +437,22 @@ namespace MedicalDemo.Migrations
                     b.HasIndex("ThirdPriorityId");
 
                     b.ToTable("rotation_pref_request");
+                });
+
+            modelBuilder.Entity("MedicalDemo.Models.Entities.RotationPrefSubmissionWindow", b =>
+                {
+                    b.Property<int>("AcademicYear")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("AvailableDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DueDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("AcademicYear");
+
+                    b.ToTable("rotation_pref_request_submission_window");
                 });
 
             modelBuilder.Entity("MedicalDemo.Models.Entities.RotationType", b =>
@@ -778,9 +787,12 @@ namespace MedicalDemo.Migrations
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("Details")
-                        .HasMaxLength(150)
-                        .HasColumnType("varchar(150)")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
                         .HasColumnName("details");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<DateOnly>("RequesteeDate")
                         .HasColumnType("date")
@@ -940,8 +952,6 @@ namespace MedicalDemo.Migrations
                     b.HasOne("MedicalDemo.Models.Entities.Resident", "Resident")
                         .WithMany("Rotations")
                         .HasForeignKey("ResidentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
                         .HasConstraintName("resident_id_rotation");
 
                     b.HasOne("MedicalDemo.Models.Entities.RotationType", "RotationType")

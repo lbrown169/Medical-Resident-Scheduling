@@ -189,7 +189,7 @@ public class ResidentsController : ControllerBase
             Email = admin.Email,
             Password = admin.Password,
             PhoneNum = admin.PhoneNum,
-            GraduateYr = 1, // Default PGY level
+            GraduateYr = null, // Default PGY level
             WeeklyHours = 0,
             TotalHours = 0,
             BiYearlyHours = 0
@@ -225,6 +225,26 @@ public class ResidentsController : ControllerBase
         _context.Residents.Remove(resident);
         await _context.SaveChangesAsync();
 
+        return NoContent();
+    }
+
+    [HttpPost("promote-pgy")]
+    public async Task<IActionResult> PromoteYears()
+    {
+        List<Resident> residents = await _context.Residents.Where(r => r.GraduateYr != null).ToListAsync();
+        foreach (Resident resident in residents)
+        {
+            if (resident.GraduateYr < 4)
+            {
+                resident.GraduateYr++;
+            }
+            else
+            {
+                resident.GraduateYr = null;
+            }
+        }
+
+        await _context.SaveChangesAsync();
         return NoContent();
     }
 }
