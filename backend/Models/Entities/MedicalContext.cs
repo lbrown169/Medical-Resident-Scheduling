@@ -366,6 +366,10 @@ namespace MedicalDemo.Models.Entities
                     .HasColumnType("binary(16)")
                     .HasColumnName("schedule_swap_id");
 
+                entity.Property(e => e.IsRead)
+                    .HasColumnName("is_read")
+                    .HasDefaultValue(false);
+
                 entity.Property(e => e.Status)
                     .HasColumnType("int")
                     .HasColumnName("status");
