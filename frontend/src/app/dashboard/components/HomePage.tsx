@@ -4,7 +4,6 @@ import { Button } from "../../../components/ui/button";
 import { ConfirmDialog } from "../../../components/ui/confirm-dialog";
 import { Calendar, CalendarX, Clock, UserCheck, RotateCcw, Repeat, CalendarCheck, Bell, Users } from "lucide-react";
 import { config } from "../../../config";
-/*import { Dialog } from "../../../components/ui/dialog";*/
 import { toast } from "../../../lib/use-toast";
 import { CalendarEvent } from "@/lib/models/CalendarEvent";
 
@@ -60,7 +59,6 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
   });
   const [loading, setLoading] = useState(true);
   const [denyModalOpen, setDenyModalOpen] = useState(false);
-  /*const [denyReason, setDenyReason] = useState("");*/
   const [pendingDenyId, setPendingDenyId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -140,7 +138,6 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
     try {
       await fetch(`${config.apiUrl}/api/swaprequests/${pendingDenyId}/deny`, { method: "POST" });
       setDenyModalOpen(false);
-      //setDenyReason("");
       setPendingDenyId(null);
       await refreshDashboard();
       if (onRefreshCalendar) onRefreshCalendar();
@@ -356,27 +353,8 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
           </Card>
         </div>
       </div>
-      {/* Deny Reason Modal */}
-      {/*<Dialog open={denyModalOpen} onOpenChange={setDenyModalOpen}>
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="bg-card text-foreground rounded-lg shadow-lg p-6 w-full max-w-md border border-border">
-            <h3 className="text-lg font-semibold mb-4">Deny Swap Request</h3>
-            <label className="block mb-2 text-sm font-medium">Reason for denial:</label>
-            <textarea
-              className="w-full border border-border rounded p-2 mb-4 bg-background text-foreground"
-              rows={3}
-              value={denyReason}
-              onChange={e => setDenyReason(e.target.value)}
-              disabled={actionLoading}
-            />
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setDenyModalOpen(false)} disabled={actionLoading}>Cancel</Button>
-              <Button onClick={submitDeny} disabled={actionLoading || !denyReason.trim()} className="bg-red-600 text-white hover:bg-red-700">Submit Denial</Button>
-            </div>
-          </div>
-        </div>
-      </Dialog>*/}
 
+      {/* Deny Reason Modal */}
       <ConfirmDialog
         open={denyModalOpen}
         onOpenChange={setDenyModalOpen}

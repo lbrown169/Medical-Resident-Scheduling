@@ -173,12 +173,7 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
     }, 500);
   };
 
-/*  const handleCancelSubmit = () => {
-    setShowConfirmation(false);
-  };*/
-
   const [denyModalOpen, setDenyModalOpen] = useState(false);
-  /*const [denyReason, setDenyReason] = useState("");*/
   const [pendingDenyId, setPendingDenyId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -193,9 +188,6 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
           variant: "success"
         });
       }
-
-      /*await refreshDashboard();
-      if (onRefreshCalendar) onRefreshCalendar();*/
     } catch (error) {
       console.error('Error approving swap:', error);
       toast({
@@ -220,10 +212,7 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
     try {
       await fetch(`${config.apiUrl}/api/swaprequests/${pendingDenyId}/deny`, { method: "POST" });
       setDenyModalOpen(false);
-      //setDenyReason("");
       setPendingDenyId(null);
-      /*await refreshDashboard();
-      if (onRefreshCalendar) onRefreshCalendar();*/
     } finally {
       setActionLoading(false);
       setRefreshKey((k) => k + 1);
@@ -584,7 +573,7 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                 <div className="text-sm text-rose-600 p-3">Error: {errorSwaps}</div>
               ) : swapRequests.filter((swap) => swap.status.description !== "Pending").length === 0 ? (
                 <div className="text-sm text-muted-foreground p-3">
-                  Your submitted requests and requests you accept will appear here.
+                  Completed requests and requests you accept from others will appear here.
                 </div>
               ) : (
                 <ul className="space-y-2">

@@ -188,7 +188,6 @@ public class SwapRequestsController : ControllerBase
         }
 
         swap.Status = RequestStatus.Denied;
-        // swap.Details = swap.Details;
         swap.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
