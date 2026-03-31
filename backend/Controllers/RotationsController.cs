@@ -67,6 +67,11 @@ public class RotationsController(
             return NotFound(GenericResponse.Failure("Resident not found"));
         }
 
+        if (resident.GraduateYr == null)
+        {
+            return BadRequest(GenericResponse.Failure("Resident does not have PGY set"));
+        }
+
         int newRotationYear = existingRotations.First().AcademicYear;
         foreach (Rotation rotation in allRotations.Where(r =>
                      r.AcademicYear == newRotationYear && r.ResidentId == assignRequest.ResidentId))
@@ -78,7 +83,7 @@ public class RotationsController(
         foreach (Rotation rotation in existingRotations)
         {
             int yearOffset = rotation.AcademicYear - DateTime.Now.AcademicYear;
-            int residentGraduateYr = resident.GraduateYr + yearOffset;
+            int residentGraduateYr = resident.GraduateYr.Value + yearOffset;
             if (rotation.PgyYear != residentGraduateYr)
             {
                 return BadRequest(

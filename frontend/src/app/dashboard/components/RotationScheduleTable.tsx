@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "../../../components/ui/button";
 
 
@@ -50,8 +51,7 @@ export interface RotationScheduleTableProps {
 	/**
 	 * Called when a resident is reassigned to a rotation slot.
 	 * Only used when allowResidentReassignment is true.
-	 * !!! Since PGY4s don't need this. Algo revision will need to change this.
-	 * !!! This has zero effects on PGY4s, so do whatever you need.
+	 * !!! This has zero effects on PGY4s.
 	 */
 	onResidentChange?: (rotationId: string, newResidentId: string) => void;
 }
@@ -86,42 +86,78 @@ function RotationDropdown({
 	onSelect,
 }: RotationDropdownProps) {
 	const [open, setOpen] = useState(false);
-	const ref = useRef<HTMLDivElement>(null);
+	const buttonRef = useRef<HTMLButtonElement>(null);
+	const dropdownRef = useRef<HTMLDivElement>(null);
+	const [pos, setPos] = useState<{ top: number; left: number; width: number; flipUp: boolean }>({ top: 0, left: 0, width: 160, flipUp: false });
+
+	const updatePosition = useCallback(() => {
+		if (!buttonRef.current) return;
+		const rect = buttonRef.current.getBoundingClientRect();
+		const dropdownHeight = 200;
+		const spaceBelow = window.innerHeight - rect.bottom;
+		const flipUp = spaceBelow < dropdownHeight && rect.top > dropdownHeight;
+		setPos({
+			top: flipUp ? rect.top : rect.bottom + 4,
+			left: rect.right - Math.max(160, rect.width),
+			width: Math.max(160, rect.width),
+			flipUp,
+		});
+	}, []);
 
 	useEffect(() => {
+		if (!open) return;
+		updatePosition();
 		const handleClickOutside = (e: MouseEvent) => {
-			if (ref.current && !ref.current.contains(e.target as Node)) {
+			if (
+				dropdownRef.current && !dropdownRef.current.contains(e.target as Node) &&
+				buttonRef.current && !buttonRef.current.contains(e.target as Node)
+			) {
 				setOpen(false);
 			}
 		};
-		if (open) document.addEventListener("mousedown", handleClickOutside);
-		return () => document.removeEventListener("mousedown", handleClickOutside);
-	}, [open]);
+		const handleScroll = () => updatePosition();
+		document.addEventListener("mousedown", handleClickOutside);
+		window.addEventListener("scroll", handleScroll, true);
+		return () => {
+			document.removeEventListener("mousedown", handleClickOutside);
+			window.removeEventListener("scroll", handleScroll, true);
+		};
+	}, [open, updatePosition]);
 
 	const color = colorMap[currentRotation] ?? FALLBACK_COLOR;
 	const displayName = displayNames[currentRotation] ?? currentRotation;
 
 	return (
-		<div ref={ref} className="relative inline-block">
+		<>
 			<Button
+				ref={buttonRef}
 				variant="outline"
 				size="sm"
-				className="text-white hover:opacity-80 cursor-pointer text-xs font-semibold px-3 py-1 h-auto rounded-full"
-				style={{ backgroundColor: color, borderColor: color }}
+				className="text-white hover:opacity-80 cursor-pointer font-semibold px-1.5 py-0.5 h-auto rounded-full whitespace-nowrap"
+				style={{ backgroundColor: color, borderColor: color, fontSize: "clamp(7px, 0.7vw, 12px)" }}
 				onClick={() => setOpen(prev => !prev)}
 			>
 				{displayName}
 			</Button>
 
-			{open && (
-				<div className="absolute z-50 top-full mt-1 left-0 min-w-[140px] bg-white dark:bg-neutral-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden">
+			{open && createPortal(
+				<div
+					ref={dropdownRef}
+					className="fixed z-[9999] bg-white dark:bg-neutral-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto overscroll-contain"
+					style={{
+						top: pos.flipUp ? undefined : pos.top,
+						bottom: pos.flipUp ? window.innerHeight - pos.top + 4 : undefined,
+						left: pos.left,
+						width: pos.width,
+					}}
+				>
 					{rotationTypes.map(rotation => {
 						const optDisplay = displayNames[rotation.name] ?? rotation.name;
 						const isCurrent = rotation.name === currentRotation;
 						return (
 							<button
 								key={rotation.id}
-								className={`w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-gray-50 dark:hover:bg-neutral-700 transition-colors ${isCurrent ? "font-bold bg-gray-50 dark:bg-neutral-700" : ""}`}
+								className={`w-full flex items-center gap-2 px-2 py-1.5 text-xs text-left hover:bg-gray-50 dark:hover:bg-neutral-700 transition-colors ${isCurrent ? "font-bold bg-gray-50 dark:bg-neutral-700" : ""}`}
 								onClick={() => {
 									onSelect(residentId, monthIndex, rotation.id);
 									setOpen(false);
@@ -131,9 +167,10 @@ function RotationDropdown({
 							</button>
 						);
 					})}
-				</div>
+				</div>,
+				document.body
 			)}
-		</div>
+		</>
 	);
 }
 
@@ -155,15 +192,15 @@ export const RotationScheduleTable: React.FC<RotationScheduleTableProps> = ({
 	};
 
 	return (
-		<div className="overflow-x-auto max-h-[32rem] overflow-y-auto w-full">
-			<table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
+		<div className="max-h-[calc(100vh-12rem)] overflow-y-auto w-full">
+			<table className="w-full table-fixed divide-y divide-gray-200 dark:divide-gray-700">
 				<thead className="bg-gray-100 dark:bg-neutral-800">
 					<tr>
-						<th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-100 dark:bg-neutral-800">
+						<th className="px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-100 dark:bg-neutral-800" style={{ fontSize: "clamp(8px, 0.7vw, 12px)" }}>
 							Residents
 						</th>
 						{ACADEMIC_MONTHS.map(month => (
-							<th key={month} className="px-2 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+							<th key={month} className="px-1 py-2 text-center font-medium text-gray-500 uppercase tracking-wider" style={{ fontSize: "clamp(8px, 0.7vw, 12px)" }}>
 								{month}
 							</th>
 						))}
@@ -186,15 +223,12 @@ export const RotationScheduleTable: React.FC<RotationScheduleTableProps> = ({
 									key={resident.resident_id}
 									className="hover:bg-gray-50 dark:hover:bg-neutral-800 divide-x divide-gray-200 dark:divide-gray-700"
 								>
-									<td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100 sticky left-0 bg-white dark:bg-neutral-900">
+									<td className="px-2 py-1.5 font-medium text-gray-900 dark:text-gray-100 sticky left-0 bg-white dark:bg-neutral-900 overflow-hidden text-ellipsis whitespace-nowrap" style={{ fontSize: "clamp(9px, 0.8vw, 14px)" }}>
 										{allowResidentReassignment && residentList.length > 0 ? (
 											<select
-												className="text-sm font-medium bg-transparent border-b border-dotted border-gray-400 focus:outline-none cursor-pointer"
+												className="w-full font-medium bg-transparent border-b border-dotted border-gray-400 focus:outline-none cursor-pointer truncate" style={{ fontSize: "inherit" }}
 												value={resident.resident_id}
 												onChange={e => {
-													// !!! This needs to change for Algo Revision group.
-													// Currently passes the first rotationId in the row as a placeholder.
-													// You will likely need to change what data is passed here.
 													const rotation = rotations[0];
 													if (rotation) onResidentChange?.(rotation.rotationId, e.target.value);
 												}}
@@ -212,13 +246,14 @@ export const RotationScheduleTable: React.FC<RotationScheduleTableProps> = ({
 										const rotation = rotations.find(r => r.academicMonthIndex === monthIndex);
 
 										return (
-											<td key={monthIndex} className="px-1 py-1.5 whitespace-nowrap text-center">
+											<td key={monthIndex} className="px-0.5 py-1 text-center whitespace-nowrap">
 												{rotation ? (
 													readOnly ? (
 														<span
-															className="text-white text-xs font-semibold px-3 py-1 rounded-full"
+															className="text-white font-semibold px-1.5 py-0.5 rounded-full inline-block whitespace-nowrap"
 															style={{
 																backgroundColor: colorMap[rotation.rotationType.rotationName] ?? FALLBACK_COLOR,
+																fontSize: "clamp(7px, 0.7vw, 12px)",
 															}}
 														>
 															{displayNames[rotation.rotationType.rotationName] ?? rotation.rotationType.rotationName}
