@@ -4,8 +4,10 @@ import React, { useEffect, useState } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { config } from '../../../config';
+import { toast } from "../../../lib/use-toast";
 import { Calendar, Users, FileText, Repeat, Send, ArrowRightLeft, AlertTriangle, CornerDownRight } from "lucide-react";
 import { CalendarEvent } from "@/lib/models/CalendarEvent";
+import { ConfirmDialog } from "../../../components/ui/confirm-dialog";
 
 interface SwapCallsPageProps {
   userId: string;
@@ -172,6 +174,57 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
 /*  const handleCancelSubmit = () => {
     setShowConfirmation(false);
   };*/
+
+  const [denyModalOpen, setDenyModalOpen] = useState(false);
+  /*const [denyReason, setDenyReason] = useState("");*/
+  const [pendingDenyId, setPendingDenyId] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
+  const handleApprove = async (swapId: string) => {
+    setActionLoading(true);
+    try {
+      const response = await fetch(`${config.apiUrl}/api/swaprequests/${swapId}/approve`, { method: "POST" });
+      if (response.ok) {
+        toast({
+          title: "Swap Approved",
+          description: "The swap request has been approved successfully.",
+          variant: "success"
+        });
+      }
+
+      /*await refreshDashboard();
+      if (onRefreshCalendar) onRefreshCalendar();*/
+    } catch (error) {
+      console.error('Error approving swap:', error);
+      toast({
+        title: "Error",
+        description: "Failed to approve swap request.",
+        variant: "destructive"
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeny = (swapId: string) => {
+    setPendingDenyId(swapId);
+    setDenyModalOpen(true);
+  };
+
+  const submitDeny = async () => {
+    if (!pendingDenyId) return;
+    setActionLoading(true);
+    try {
+      await fetch(`${config.apiUrl}/api/swaprequests/${pendingDenyId}/deny`, { method: "POST" });
+      setDenyModalOpen(false);
+      //setDenyReason("");
+      setPendingDenyId(null);
+      /*await refreshDashboard();
+      if (onRefreshCalendar) onRefreshCalendar();*/
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const StatusPill: React.FC<{ status: string }> = ({ status }) => {
     const base = "px-2 py-0.5 text-xs font-semibold rounded-full border";
@@ -467,7 +520,7 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                           <StatusPill status={swap.status.description} />
                         </div>
                       ): swap.requesteeId === userId ? (
-                        <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-stretch justify-between gap-3">
                           <div className="space-y-1 min-w-0">
                             <div className="flex items-center gap-2">
                               <CornerDownRight className="h-4 w-4 text-primary shrink-0" />
@@ -497,7 +550,14 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                             ) : null}
                           </div>
 
-                          <StatusPill status={swap.status.description} />
+                          <div className="flex flex-col items-end min-w-0">
+                            <StatusPill status={swap.status.description} />
+
+                            <div className="flex gap-2 mt-auto">
+                              <Button size="sm" disabled={actionLoading} onClick={() => handleApprove(swap.swapRequestId)} className="bg-green-600 text-white hover:bg-green-700 cursor-pointer">Approve</Button>
+                              <Button size="sm" disabled={actionLoading} onClick={() => handleDeny(swap.swapRequestId)} className="bg-red-600 text-white hover:bg-red-700 cursor-pointer">Deny</Button>
+                            </div>
+                          </div>
                         </div>
                       ) : (<></>)}
                     </li>
@@ -593,7 +653,7 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                             ) : null}
                           </div>
 
-                        <StatusPill status={swap.status.description} />
+                          <StatusPill status={swap.status.description} />
                         </div>
                       ) : (<></>)}
                     </li>
@@ -604,6 +664,17 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
           </div>
         </Card>
       </div>
+
+      <ConfirmDialog
+        open={denyModalOpen}
+        onOpenChange={setDenyModalOpen}
+        title="Deny swap?"
+        message={`Are you sure you want to deny this swap request? This action cannot be undone.`}
+        confirmText="Deny"
+        cancelText="Cancel"
+        onConfirm={submitDeny}
+        variant="danger"
+      />
     </div>
   );
 };
