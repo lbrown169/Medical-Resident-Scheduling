@@ -1,5 +1,4 @@
 using MedicalDemo.Enums;
-using MedicalDemo.Models;
 using MedicalDemo.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -66,8 +65,113 @@ public class DatabaseSeeder
             );
         }
 
-        List<Resident> residents = [
-            new Resident
+        List<Resident> residents =
+        [
+            new()
+            {
+                ResidentId = "AAB1001",
+                FirstName = "Cillian",
+                LastName = "Murphy",
+                GraduateYr = 0,
+                Email = "cillian.murphy@example.com",
+                Password = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
+                PhoneNum = "201-555-0201",
+                WeeklyHours = 0,
+                TotalHours = 0,
+                BiYearlyHours = 0
+            },
+            new()
+            {
+                ResidentId = "AAB1002",
+                FirstName = "Natalie",
+                LastName = "Portman",
+                GraduateYr = 0,
+                Email = "natalie.portman@example.com",
+                Password = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
+                PhoneNum = "201-555-0202",
+                WeeklyHours = 0,
+                TotalHours = 0,
+                BiYearlyHours = 0
+            },
+            new()
+            {
+                ResidentId = "AAB1003",
+                FirstName = "Russell",
+                LastName = "Crowe",
+                GraduateYr = 0,
+                Email = "russell.crowe@example.com",
+                Password = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
+                PhoneNum = "201-555-0203",
+                WeeklyHours = 0,
+                TotalHours = 0,
+                BiYearlyHours = 0
+            },
+            new()
+            {
+                ResidentId = "AAB1004",
+                FirstName = "Charlize",
+                LastName = "Theron",
+                GraduateYr = 0,
+                Email = "charlize.theron@example.com",
+                Password = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
+                PhoneNum = "201-555-0204",
+                WeeklyHours = 0,
+                TotalHours = 0,
+                BiYearlyHours = 0
+            },
+            new()
+            {
+                ResidentId = "AAB1005",
+                FirstName = "Javier",
+                LastName = "Bardem",
+                GraduateYr = 0,
+                Email = "javier.bardem@example.com",
+                Password = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
+                PhoneNum = "201-555-0205",
+                WeeklyHours = 0,
+                TotalHours = 0,
+                BiYearlyHours = 0
+            },
+            new()
+            {
+                ResidentId = "AAB1006",
+                FirstName = "Viola",
+                LastName = "Davis",
+                GraduateYr = 0,
+                Email = "viola.davis@example.com",
+                Password = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
+                PhoneNum = "201-555-0206",
+                WeeklyHours = 0,
+                TotalHours = 0,
+                BiYearlyHours = 0
+            },
+            new()
+            {
+                ResidentId = "AAB1007",
+                FirstName = "Idris",
+                LastName = "Elba",
+                GraduateYr = 0,
+                Email = "idris.elba@example.com",
+                Password = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
+                PhoneNum = "201-555-0207",
+                WeeklyHours = 0,
+                TotalHours = 0,
+                BiYearlyHours = 0
+            },
+            new()
+            {
+                ResidentId = "AAB1008",
+                FirstName = "Lupita",
+                LastName = "Nyong'o",
+                GraduateYr = 0,
+                Email = "lupita.nyongo@example.com",
+                Password = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
+                PhoneNum = "201-555-0208",
+                WeeklyHours = 0,
+                TotalHours = 0,
+                BiYearlyHours = 0
+            },
+            new()
             {
                 ResidentId = "BEA3374",
                 FirstName = "Brad",
@@ -79,10 +183,9 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0105",
                 WeeklyHours = 0,
                 TotalHours = 69,
-                BiYearlyHours = 39,
-                HospitalRoleProfile = 8
+                BiYearlyHours = 39
             },
-            new Resident
+            new()
             {
                 ResidentId = "COH3276",
                 FirstName = "Angelina",
@@ -94,10 +197,9 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0106",
                 WeeklyHours = 0,
                 TotalHours = 27,
-                BiYearlyHours = 27,
-                HospitalRoleProfile = 0
+                BiYearlyHours = 27
             },
-            new Resident
+            new()
             {
                 ResidentId = "CTE3965",
                 FirstName = "Leonardo",
@@ -109,10 +211,9 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0107",
                 WeeklyHours = 0,
                 TotalHours = 57,
-                BiYearlyHours = 21,
-                HospitalRoleProfile = 13
+                BiYearlyHours = 21
             },
-            new Resident
+            new()
             {
                 ResidentId = "FEU3416",
                 FirstName = "Robert",
@@ -124,10 +225,9 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0109",
                 WeeklyHours = 0,
                 TotalHours = 21,
-                BiYearlyHours = 9,
-                HospitalRoleProfile = 5
+                BiYearlyHours = 9
             },
-            new Resident
+            new()
             {
                 ResidentId = "FVO3464",
                 FirstName = "Chris",
@@ -139,10 +239,9 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0110",
                 WeeklyHours = 0,
                 TotalHours = 63,
-                BiYearlyHours = 45,
-                HospitalRoleProfile = 9
+                BiYearlyHours = 45
             },
-            new Resident
+            new()
             {
                 ResidentId = "FXI2766",
                 FirstName = "Chris",
@@ -154,10 +253,9 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0111",
                 WeeklyHours = 0,
                 TotalHours = 24,
-                BiYearlyHours = 24,
-                HospitalRoleProfile = 2
+                BiYearlyHours = 24
             },
-            new Resident
+            new()
             {
                 ResidentId = "GKU3319",
                 FirstName = "Ryan",
@@ -169,10 +267,9 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0113",
                 WeeklyHours = 0,
                 TotalHours = 33,
-                BiYearlyHours = 9,
-                HospitalRoleProfile = 6
+                BiYearlyHours = 9
             },
-            new Resident
+            new()
             {
                 ResidentId = "GMO4083",
                 FirstName = "Jennifer",
@@ -185,10 +282,9 @@ public class DatabaseSeeder
                 WeeklyHours = 0,
                 TotalHours = 9,
                 BiYearlyHours = 9,
-                HospitalRoleProfile = null,
-                ChiefType = Enums.ChiefType.Clinic
+                ChiefType = ChiefType.Clinic
             },
-            new Resident
+            new()
             {
                 ResidentId = "HKU2780",
                 FirstName = "Morgan",
@@ -200,10 +296,9 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0115",
                 WeeklyHours = 0,
                 TotalHours = 30,
-                BiYearlyHours = 9,
-                HospitalRoleProfile = 4
+                BiYearlyHours = 9
             },
-            new Resident
+            new()
             {
                 ResidentId = "HQU5921",
                 FirstName = "Cate",
@@ -215,10 +310,9 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0116",
                 WeeklyHours = 0,
                 TotalHours = 9,
-                BiYearlyHours = 9,
-                HospitalRoleProfile = null
+                BiYearlyHours = 9
             },
-            new Resident
+            new()
             {
                 ResidentId = "IDP3419",
                 FirstName = "Joaquin",
@@ -230,10 +324,9 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0117",
                 WeeklyHours = 0,
                 TotalHours = 75,
-                BiYearlyHours = 21,
-                HospitalRoleProfile = 11
+                BiYearlyHours = 21
             },
-            new Resident
+            new()
             {
                 ResidentId = "JCI5092",
                 FirstName = "Samuel",
@@ -245,10 +338,9 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0118",
                 WeeklyHours = 0,
                 TotalHours = 9,
-                BiYearlyHours = 9,
-                HospitalRoleProfile = null
+                BiYearlyHours = 9
             },
-            new Resident
+            new()
             {
                 ResidentId = "JXU4079",
                 FirstName = "Keira",
@@ -260,10 +352,9 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0119",
                 WeeklyHours = 0,
                 TotalHours = 54,
-                BiYearlyHours = 21,
-                HospitalRoleProfile = 12
+                BiYearlyHours = 21
             },
-            new Resident
+            new()
             {
                 ResidentId = "KOS3940",
                 FirstName = "Hugh",
@@ -275,10 +366,9 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0120",
                 WeeklyHours = 0,
                 TotalHours = 39,
-                BiYearlyHours = 39,
-                HospitalRoleProfile = 3
+                BiYearlyHours = 39
             },
-            new Resident
+            new()
             {
                 ResidentId = "LLU6249",
                 FirstName = "Christian",
@@ -290,10 +380,9 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0121",
                 WeeklyHours = 0,
                 TotalHours = 78,
-                BiYearlyHours = 18,
-                HospitalRoleProfile = 10
+                BiYearlyHours = 18
             },
-            new Resident
+            new()
             {
                 ResidentId = "LZU4568",
                 FirstName = "Anne",
@@ -305,10 +394,9 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0122",
                 WeeklyHours = 0,
                 TotalHours = 9,
-                BiYearlyHours = 9,
-                HospitalRoleProfile = null
+                BiYearlyHours = 9
             },
-            new Resident
+            new()
             {
                 ResidentId = "MGE3752",
                 FirstName = "Will",
@@ -320,10 +408,9 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0123",
                 WeeklyHours = 0,
                 TotalHours = 45,
-                BiYearlyHours = 9,
-                HospitalRoleProfile = 7
+                BiYearlyHours = 9
             },
-            new Resident
+            new()
             {
                 ResidentId = "MPE3472",
                 FirstName = "Zoe",
@@ -335,10 +422,9 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0124",
                 WeeklyHours = 0,
                 TotalHours = 60,
-                BiYearlyHours = 21,
-                HospitalRoleProfile = 15
+                BiYearlyHours = 21
             },
-            new Resident
+            new()
             {
                 ResidentId = "MPE3473",
                 FirstName = "Matt",
@@ -350,10 +436,9 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0125",
                 WeeklyHours = 0,
                 TotalHours = 51,
-                BiYearlyHours = 27,
-                HospitalRoleProfile = 14
+                BiYearlyHours = 27
             },
-            new Resident
+            new()
             {
                 ResidentId = "RCU4642",
                 FirstName = "Amy",
@@ -366,10 +451,9 @@ public class DatabaseSeeder
                 WeeklyHours = 0,
                 TotalHours = 9,
                 BiYearlyHours = 9,
-                HospitalRoleProfile = null,
-                ChiefType = Enums.ChiefType.Admin
+                ChiefType = ChiefType.Admin
             },
-            new Resident
+            new()
             {
                 ResidentId = "RRO4170",
                 FirstName = "Mark",
@@ -381,10 +465,9 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0127",
                 WeeklyHours = 0,
                 TotalHours = 9,
-                BiYearlyHours = 9,
-                HospitalRoleProfile = null
+                BiYearlyHours = 9
             },
-            new Resident
+            new()
             {
                 ResidentId = "RUZ2717",
                 FirstName = "Benedict",
@@ -396,10 +479,9 @@ public class DatabaseSeeder
                 PhoneNum = "201-555-0128",
                 WeeklyHours = 0,
                 TotalHours = 45,
-                BiYearlyHours = 45,
-                HospitalRoleProfile = 1
+                BiYearlyHours = 45
             },
-            new Resident
+            new()
             {
                 ResidentId = "VKD7295",
                 FirstName = "Jackie",
@@ -412,10 +494,9 @@ public class DatabaseSeeder
                 WeeklyHours = 0,
                 TotalHours = 87,
                 BiYearlyHours = 67,
-                HospitalRoleProfile = null,
-                ChiefType = Enums.ChiefType.Education
+                ChiefType = ChiefType.Education
             },
-            new Resident
+            new()
             {
                 ResidentId = "KMD4264",
                 FirstName = "Barack",
@@ -428,8 +509,7 @@ public class DatabaseSeeder
                 WeeklyHours = 0,
                 TotalHours = 11,
                 BiYearlyHours = 4,
-                HospitalRoleProfile = null,
-                ChiefType = Enums.ChiefType.Clinic
+                ChiefType = ChiefType.Clinic
             }
         ];
 
@@ -463,13 +543,14 @@ public class DatabaseSeeder
                         {
                             0 => (PartOfDay.Morning | PartOfDay.Afternoon).DbChar,
                             1 => PartOfDay.Morning.DbChar,
-                            2 => PartOfDay.Afternoon.DbChar,
+                            2 => PartOfDay.Afternoon.DbChar
                         },
                         ResidentId = residents[Random.Shared.Next(0, residents.Count)].ResidentId,
                         Status = "Approved",
-                        VacationId = Guid.NewGuid(),
+                        VacationId = Guid.NewGuid()
                     });
                 }
+
                 start = start.AddDays(1);
             }
 

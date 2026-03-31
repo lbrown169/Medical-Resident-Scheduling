@@ -16,14 +16,13 @@ namespace MedicalDemo.Models.Entities
         public string ResidentId { get; set; } = null!;
         public string FirstName { get; set; } = null!;
         public string LastName { get; set; } = null!;
-        public int GraduateYr { get; set; }
+        public int? GraduateYr { get; set; }
         public string Email { get; set; } = null!;
         public string Password { get; set; } = null!;
         public string PhoneNum { get; set; } = null!;
         public int WeeklyHours { get; set; }
         public int TotalHours { get; set; }
         public int BiYearlyHours { get; set; }
-        public int? HospitalRoleProfile { get; set; }
 
         public ChiefType ChiefType { get; set; }
 

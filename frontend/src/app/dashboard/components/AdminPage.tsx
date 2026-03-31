@@ -273,8 +273,6 @@ const AdminPage: React.FC<AdminPageProps> = ({
   useEffect(() => setResidentRows(residents), [residents]);
 
   const [savingPGY, setSavingPGY] = useState<Record<string, boolean>>({});
-  const [savingHospitalRole, setSavingHospitalRole] = useState<Record<string, boolean>>({});
-
   // Updates the PGY year when selected by administrators on the Resident Info tab
   const handleUpdatePGY = async (residentId: string, newPGY: number) => {
     setSavingPGY(prev => ({ ...prev, [residentId]: true }));
@@ -316,46 +314,6 @@ const AdminPage: React.FC<AdminPageProps> = ({
     }
   };
 
-  // Updates the Hospital Role Profile when selected by administrators on the Resident Info tab
-  const handleUpdateHospitalRole = async (residentId: string, newRole: number) => {
-    setSavingHospitalRole(prev => ({ ...prev, [residentId]: true }));
-    // Optimistic update
-    setResidentRows(prev => prev.map(r => r.id === residentId ? { ...r, hospitalRole: newRole } : r));
-
-    try {
-      // Update with existing data but new hospital role profile
-      const res = await fetch(`${config.apiUrl}/api/residents/${residentId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          hospital_role_profile: newRole
-        })
-      });
-
-      if (!res.ok) {
-        const msg = await res.text();
-        throw new Error(msg || 'Failed to update Hospital Role Profile');
-      }
-
-      toast({
-        title: 'Hospital Role Profile updated',
-        description: `Resident set to Profile ${newRole + 1}.`,
-        variant: 'success',
-      });
-    } catch (error) {
-      // Roll back on error
-      setResidentRows(prev => prev.map(r => r.id === residentId ? { ...r, hospitalRole: residents.find(x => x.id === residentId)?.hospitalRole ?? r.hospitalRole } : r));
-      toast({
-        title: 'Update failed',
-        description: error?.message || 'Could not update Hospital Role Profile.',
-        variant: 'destructive',
-      });
-    } finally {
-      setSavingHospitalRole(prev => ({ ...prev, [residentId]: false }));
-    }
-  };
 
   // Fetch announcements when switching to the announcements tab
   useEffect(() => {
@@ -974,7 +932,6 @@ const AdminPage: React.FC<AdminPageProps> = ({
                     <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resident</th>
                     <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                     <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current PGY Status</th>
-                    <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hospital Role Profile</th>
                     <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hours Scheduled</th>
                   </tr>
                 </thead>
@@ -998,41 +955,12 @@ const AdminPage: React.FC<AdminPageProps> = ({
                             ))}
                           </select>
                         </td>
-                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {resident.pgyLevel === 1 ? (
-                            <select
-                              value={resident.hospitalRole ?? ""}
-                              onChange={(e) => handleUpdateHospitalRole(resident.id, Number(e.target.value))}
-                              disabled={!!savingHospitalRole[resident.id]}
-                              className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                            >
-                              <option value="" disabled>Select Profile</option>
-                              {[0, 1, 2, 3, 4, 5, 6, 7].map(n => (
-                                <option key={n} value={n}>Profile {n + 1}</option>
-                              ))}
-                            </select>
-                          ) : resident.pgyLevel === 2 ? (
-                            <select
-                              value={resident.hospitalRole ?? ""}
-                              onChange={(e) => handleUpdateHospitalRole(resident.id, Number(e.target.value))}
-                              disabled={!!savingHospitalRole[resident.id]}
-                              className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                            >
-                              <option value="" disabled>Select Profile</option>
-                              {[8, 9, 10, 11, 12, 13, 14, 15].map(n => (
-                                <option key={n} value={n}>Profile {n + 1}</option>
-                              ))}
-                            </select>
-                          ) : (
-                            <span className="text-gray-400 italic">N/A</span>
-                          )}
-                        </td>
                         <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{resident.hours}</td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={5} className="px-6 py-4 text-center text-gray-500 italic">No residents found.</td>
+                      <td colSpan={4} className="px-6 py-4 text-center text-gray-500 italic">No residents found.</td>
                     </tr>
                   )}
                 </tbody>
