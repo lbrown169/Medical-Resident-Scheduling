@@ -29,6 +29,7 @@ interface AdminPageProps {
   handleDeleteUser: (user: { id: string; first_name: string; last_name: string; email: string; role: string }) => void;
   latestVersion?: string;
   userId: string;
+  onRefreshResidents?: () => void;
 }
 
 interface Request {
@@ -99,14 +100,11 @@ const AdminPage: React.FC<AdminPageProps> = ({
   users,
   handleDeleteUser,
   userId,
+  onRefreshResidents,
 }) => {
-  console.log('AdminPage props - users:', users);
-  console.log('AdminPage props - users length:', users.length);
-
   const [showRequestsModal, setShowRequestsModal] = useState(false);
   const [showInvitationsModal, setShowInvitationsModal] = useState(false);
   const [myTimeOffRequests, setMyTimeOffRequests] = useState<Request[]>([]);
-  console.log("RAW REQUESTS:", myTimeOffRequests);
   const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; user: { id: string; first_name: string; last_name: string; email: string; role: string } | null }>({ open: false, user: null });
   const [swapHistory, setSwapHistory] = useState<SwapRequest[]>([]);
   const [activeTab, setActiveTab] = useState<'swaps' | 'requests' | 'users' | 'residents' | 'announcements'>('swaps');
@@ -271,6 +269,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
   // Local copy of residents for optimistic update
   const [residentRows, setResidentRows] = useState(residents);
   useEffect(() => setResidentRows(residents), [residents]);
+  const sortedResidentRows = useMemo(() => [...residentRows].sort((a, b) => a.name.localeCompare(b.name)), [residentRows]);
 
   const [savingPGY, setSavingPGY] = useState<Record<string, boolean>>({});
   // Updates the PGY year when selected by administrators on the Resident Info tab
@@ -393,29 +392,20 @@ const AdminPage: React.FC<AdminPageProps> = ({
 
 
 
-  const groupedRequests = groupRequests(myTimeOffRequests);
-  console.log("Grouped requests:", groupedRequests);
+  const groupedRequests = useMemo(() => groupRequests(myTimeOffRequests), [myTimeOffRequests]);
 
   // Create a mapping from resident ID to name
   const idToName = useMemo(() => {
-    console.log('Creating idToName mapping with users:', users);
-    console.log('Users array length:', users.length);
-    console.log('First few users:', users.slice(0, 3));
-
     const mapping: { [key: string]: string } = {};
     users.forEach(user => {
-      console.log('Processing user:', user);
       mapping[user.id] = `${user.first_name} ${user.last_name}`;
     });
-    console.log('Final idToName mapping:', mapping);
     return mapping;
   }, [users]);
 
   // Fallback mapping using residents data if users is empty
   const fallbackIdToName = useMemo(() => {
-    console.log('Creating fallback mapping, users length:', users.length);
     if (users.length === 0) {
-      // This is a temporary fallback - we'll need to pass residents data to AdminPage
       return {
         'LLU6249': 'Felix Hernandez Perez',
         'FVO3464': 'Alexis Shahidi'
@@ -425,12 +415,9 @@ const AdminPage: React.FC<AdminPageProps> = ({
   }, [users]);
 
   const finalIdToName = users.length > 0 ? idToName : fallbackIdToName;
-  console.log('Final mapping being used:', finalIdToName);
 
-  const pendingSwapsCount = swapHistory.filter(s => s.status.id === 0).length;
-  console.log('swapHistory array:', swapHistory);
-  console.log('pendingSwapsCount:', pendingSwapsCount);
-  const pendingRequestsCount = groupedRequests.filter(r => r.status === 'Pending').length;
+  const pendingSwapsCount = useMemo(() => swapHistory.filter(s => s.status.id === 0).length, [swapHistory]);
+  const pendingRequestsCount = useMemo(() => groupedRequests.filter(r => r.status === 'Pending').length, [groupedRequests]);
 
 
   // Helper to format a date as MM/DD/YYYY
@@ -658,14 +645,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
                   {swapHistory.length > 0 ? (
-                    swapHistory.map((swap, idx) => {
-                      console.log('Rendering swap:', swap);
-                      console.log('swap.RequesterId:', swap.requesterId);
-                      console.log('swap.RequesteeId:', swap.requesteeId);
-                      console.log('finalIdToName[swap.RequesterId]:', finalIdToName[swap.requesterId]);
-                      console.log('finalIdToName[swap.RequesteeId]:', finalIdToName[swap.requesteeId]);
-
-                      return (
+                    swapHistory.map((swap, idx) => (
                         <tr key={swap.swapRequestId || idx} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
                           <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.requesterDate ? formatDate(swap.requesterDate) : ''}</td>
                           <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
@@ -683,8 +663,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
                             {swap.status.description}
                           </td>
                         </tr>
-                      );
-                    })
+                    ))
                   ) : (
                     <tr>
                       <td colSpan={6} className="px-6 py-4 text-center text-gray-500 italic">No swap call history found.</td>
@@ -874,50 +853,30 @@ const AdminPage: React.FC<AdminPageProps> = ({
         )}
         {activeTab === 'residents' && (
           <Card className="p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-1 mb-8 border border-gray-200 dark:border-gray-800">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-start mb-4 gap-2">
-              <div className="flex items-center gap-3">
-                <h2 className="text-lg sm:text-xl font-bold">Resident Information</h2>
-                <ConfirmDialog
-                  triggerText={
-                    <>
-                      <Users className="h-4 w-4" />
-                      <span>Promote Residents</span>
-                    </>
+            <div className="flex flex-row justify-between items-center mb-4 gap-2">
+              <h2 className="text-lg sm:text-xl font-bold">Resident Information</h2>
+              <ConfirmDialog
+                triggerText={
+                  <>
+                    <Users className="h-4 w-4" />
+                    <span>Promote Residents</span>
+                  </>
+                }
+                title="Promote all residents?"
+                message="This will increase all PGY levels by 1."
+                confirmText="Promote"
+                cancelText="Cancel"
+                onConfirm={async () => {
+                  try {
+                    const res = await fetch(`${config.apiUrl}/api/residents/promote-pgy`, { method: 'POST' });
+                    if (!res.ok) throw new Error();
+                    toast({ title: 'Residents promoted', description: 'All PGY levels have been increased by 1.', variant: 'success' });
+                    onRefreshResidents?.();
+                  } catch {
+                    toast({ title: 'Promotion failed', description: 'Could not promote residents. Please try again.', variant: 'destructive' });
                   }
-                  title="Promote all residents?"
-                  message="This will increase all PGY levels by 1."
-                  confirmText="Promote"
-                  cancelText="Cancel"
-                  onConfirm={() => { }}
-                />
-              </div>
-              <div className="flex flex-col items-start gap-2 sm:items-end">
-                <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                  {/*<Button variant="outline" size="sm" className="flex items-center gap-2 cursor-pointer"
-                    onClick={() => { } }> */}{/* Change to a dropdown menu of years */}{/*
-                    <CalendarDays className="h-4 w-4" />
-                    */}{/* Name will reflect selected schedule name */}{/* <span>Current Year</span>
-                  </Button>*/}
-                  <CalendarDays className="h-4 w-4" /> Show hours from:
-                  <select
-                    value="Current Year"
-                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                  >
-                    <option value="Current Year">Current Year</option>
-                    <option value="2024-2025">2026</option>
-                  </select>
-                </div>
-                <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
-                  <input
-                    type="checkbox"
-                    defaultChecked
-                    className="w-3 h-3 accent-blue-600 rounded border-gray-300 dark:border-gray-600 cursor-pointer"
-                  /* Implement function checked={ } 
-                  onChange={(e) => setIncludeUnscheduled(e.target.checked)} */
-                  />
-                  Include unscheduled residents
-                </label>
-              </div>
+                }}
+              />
             </div>
             <div className="overflow-x-auto max-h-96 overflow-y-auto w-full">
               <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -926,25 +885,23 @@ const AdminPage: React.FC<AdminPageProps> = ({
                     <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resident</th>
                     <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                     <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current PGY Status</th>
-                    <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hours Scheduled</th>
+                    <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hours Scheduled This Semester</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
-                  {residentRows.length > 0 ? (
-                    [...residentRows]
-                      .sort((a, b) => a.name.localeCompare(b.name))
-                      .map((resident) => (
+                  {sortedResidentRows.length > 0 ? (
+                    sortedResidentRows.map((resident) => (
                         <tr key={resident.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
                           <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{resident.name}</td>
                           <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{resident.email}</td>
                           <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                             <select
-                              value={resident.pgyLevel ?? 1}
+                              value={resident.pgyLevel ?? ''}
                               onChange={(e) => handleUpdatePGY(resident.id, Number(e.target.value))}
                               disabled={!!savingPGY[resident.id]}
                               className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                             >
-                              {[1, 2, 3, 4].map(n => (
+                              {[0, 1, 2, 3, 4].map(n => (
                                 <option key={n} value={n}>PGY {n}</option>
                               ))}
                             </select>

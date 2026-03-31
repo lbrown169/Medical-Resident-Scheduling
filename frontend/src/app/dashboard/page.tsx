@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, ReactElement, useCallback } from "react";
+import React, { useState, useEffect, ReactElement, useCallback, useMemo } from "react";
 import {
   SidebarProvider,
   Sidebar,
@@ -129,6 +129,24 @@ function Dashboard() {
 
   // Calendar state
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
+
+  // Hours each resident is scheduled for the current published semester
+  const semesterHours = useMemo(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const isSpring = now.getMonth() < 6;
+    const start = isSpring ? new Date(year, 0, 1) : new Date(year, 6, 1);
+    const end   = isSpring ? new Date(year, 5, 30, 23, 59, 59) : new Date(year, 11, 31, 23, 59, 59);
+    const map: Record<string, number> = {};
+    calendarEvents.forEach(e => {
+      const d = e.start instanceof Date ? e.start : new Date(e.start);
+      if (d >= start && d <= end) {
+        const id = e.extendedProps?.residentId;
+        if (id) map[id] = (map[id] ?? 0) + (e.extendedProps?.hours ?? 0);
+      }
+    });
+    return map;
+  }, [calendarEvents]);
 
   // Swap calls form state
   const [selectedResident, setSelectedResident] = useState<string>("");
@@ -936,7 +954,8 @@ case "Home":
     console.log('Rendering AdminPage with users length:', users.length);
     return (
       <AdminPage
-        residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr, hospitalRole: r.hospital_role_profile ?? undefined, hours: r.total_hours }))}
+        residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr, hospitalRole: r.hospital_role_profile ?? undefined, hours: semesterHours[r.resident_id] ?? 0 }))}
+        onRefreshResidents={fetchResidents}
         myTimeOffRequests={myTimeOffRequests}
         shifts={shifts.map(s => ({
           id: s.id,
@@ -1069,7 +1088,8 @@ case "Home":
         }
         return (
           <AdminPage
-            residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr, hospitalRole: r.hospital_role_profile ?? undefined, hours: r.total_hours }))}
+            residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr, hospitalRole: r.hospital_role_profile ?? undefined, hours: semesterHours[r.resident_id] ?? 0 }))}
+            onRefreshResidents={fetchResidents}
             myTimeOffRequests={myTimeOffRequests}
             shifts={shifts.map(s => ({
               id: s.id,
