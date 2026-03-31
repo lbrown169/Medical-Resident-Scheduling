@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { config } from '../../../config';
-import { Calendar, Users, FileText, Repeat, Send, ArrowRightLeft, AlertTriangle } from "lucide-react";
+import { Calendar, Users, FileText, Repeat, Send, ArrowRightLeft, AlertTriangle, CornerDownRight } from "lucide-react";
 import { CalendarEvent } from "@/lib/models/CalendarEvent";
 
 interface SwapCallsPageProps {
@@ -82,6 +82,7 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
 
   const [loadingSwaps, setLoadingSwaps] = useState(false);
   const [swapRequests, setSwapRequests] = useState<ApiSwaps[]>([]);
+  const [pendingSwapRequests, setPendingSwapRequests] = useState<ApiSwaps[]>([]);
   const [errorSwaps, setErrorSwaps] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -100,9 +101,11 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
 
       try {
         const url = `${config.apiUrl}/api/swaprequests?requester_id=${encodeURIComponent(userId)}`;
+        const bUrl = `${config.apiUrl}/api/swaprequests?requestee_id=${encodeURIComponent(userId)}`;
         const res = await fetch(url, { cache: "no-store" });
+        const bRes = await fetch(bUrl, { cache: "no-store" });
 
-        if (res.status === 404) {
+        if (res.status === 404 || bRes.status === 404) {
           if (!abort) setSwapRequests([]);
           return;
         }
@@ -112,14 +115,27 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
           throw new Error(txt || `HTTP ${res.status}`);
         }
 
+        if (!bRes.ok) {
+          const txt = await bRes.text();
+          throw new Error(txt || `HTTP ${bRes.status}`);
+        }
+
         const data: ApiSwaps[] = await res.json();
+        const bData: ApiSwaps[] = await bRes.json();
+        const combinedData: ApiSwaps[] = [...data, ...bData];
+
         if (!abort) {
-          const arr = Array.isArray(data) ? data : [data];
+          const arr = Array.isArray(combinedData) ? combinedData : [combinedData];
           arr.sort(
             (a, b) =>
               +new Date(b.createdAt || b.updatedAt) - +new Date(a.createdAt || a.updatedAt)
           );
-          setSwapRequests(arr);
+          const filteredArr = arr.filter((swap) => (swap.requesterId === userId || (swap.requesteeId === userId && swap.status.description !== "Denied")));
+          setSwapRequests(filteredArr);
+
+          const pending = arr.filter((swap) => swap.status.description === "Pending");
+          setPendingSwapRequests(pending);
+
         }
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : "Failed to load swap requests.";
@@ -403,6 +419,94 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
             )}
           </div>
 
+          {/* Resident Pending Swap Requests */}
+          {loadingSwaps ? (<></>) : errorSwaps ? (<></>) : pendingSwapRequests.length === 0 ? (<></>) : (
+            <div className="mt-2">
+              <div className="flex items-center mb-2">
+                <h2 className="text-lg font-semibold">Pending Swap Requests</h2>
+              </div>
+
+              <Card className="p-3 shadow-lg border border-border">
+                <ul className="space-y-2">
+                  {pendingSwapRequests.map((swap) => (
+                    <li
+                      key={swap.swapRequestId}
+                      className="border border-border rounded-lg p-3 hover:bg-muted/40 transition-colors"
+                    >
+                      {swap.requesterId === userId ? (
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <ArrowRightLeft className="h-4 w-4 text-primary shrink-0" />
+                              <span className="font-medium break-words">
+                                {getResidentName(swap.requesteeId)} (Outgoing)
+                              </span>
+                            </div>
+
+                            <div className="text-sm">
+                              <span className="text-muted-foreground">Your Shift: </span>
+                              <span className="font-medium break-words">
+                                {fmt(swap.requesterDate)}
+                              </span>
+                            </div>
+
+                            <div className="text-sm">
+                              <span className="text-muted-foreground">Partner&apos;s Shift: </span>
+                              <span className="font-medium break-words">
+                                {fmt(swap.requesteeDate)}
+                              </span>
+                            </div>
+
+                            {swap.details ? (
+                              <div className="text-xs text-muted-foreground break-all">
+                                {swap.details}
+                              </div>
+                            ) : null}
+                          </div>
+
+                          <StatusPill status={swap.status.description} />
+                        </div>
+                      ): swap.requesteeId === userId ? (
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <CornerDownRight className="h-4 w-4 text-primary shrink-0" />
+                              <span className="font-medium break-words">
+                                {getResidentName(swap.requesterId)} (Incoming)
+                              </span>
+                            </div>
+
+                            <div className="text-sm">
+                              <span className="text-muted-foreground">Your Shift: </span>
+                              <span className="font-medium break-words">
+                                {fmt(swap.requesteeDate)}
+                              </span>
+                            </div>
+
+                            <div className="text-sm">
+                              <span className="text-muted-foreground">Partner&apos;s Shift: </span>
+                              <span className="font-medium break-words">
+                                {fmt(swap.requesterDate)}
+                              </span>
+                            </div>
+
+                            {swap.details ? (
+                              <div className="text-xs text-muted-foreground break-all">
+                                {swap.details}
+                              </div>
+                            ) : null}
+                          </div>
+
+                          <StatusPill status={swap.status.description} />
+                        </div>
+                      ) : (<></>)}
+                    </li>
+                  ))}
+                </ul>
+              </Card>
+            </div>
+          )}
+
           {/* Resident Submitted Swap Requests */}
           <div className="mt-2">
             <div className="flex items-center mb-2">
@@ -414,49 +518,84 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                 <div className="text-sm text-muted-foreground p-3">Loading your swap requests...</div>
               ) : errorSwaps ? (
                 <div className="text-sm text-rose-600 p-3">Error: {errorSwaps}</div>
-              ) : swapRequests.length === 0 ? (
+              ) : swapRequests.filter((swap) => swap.status.description !== "Pending").length === 0 ? (
                 <div className="text-sm text-muted-foreground p-3">
-                  No swap request history. Your swaps will appear here.
+                  Your submitted requests and requests you accept will appear here.
                 </div>
               ) : (
                 <ul className="space-y-2">
-                  {swapRequests.map((swap) => (
+                  {swapRequests.filter((swap) => swap.status.description !== "Pending").map((swap) => (
                     <li
                       key={swap.swapRequestId}
                       className="border border-border rounded-lg p-3 hover:bg-muted/40 transition-colors"
                     >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="space-y-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <ArrowRightLeft className="h-4 w-4 text-primary shrink-0" />
-                            <span className="font-medium break-words">
-                              {getResidentName(swap.requesteeId)}
-                            </span>
-                          </div>
-
-                          <div className="text-sm">
-                            <span className="text-muted-foreground">Your Shift: </span>
-                            <span className="font-medium break-words">
-                              {fmt(swap.requesterDate)}
-                            </span>
-                          </div>
-
-                          <div className="text-sm">
-                            <span className="text-muted-foreground">Partner&apos;s Shift: </span>
-                            <span className="font-medium break-words">
-                              {fmt(swap.requesteeDate)}
-                            </span>
-                          </div>
-
-                          {swap.details ? (
-                            <div className="text-xs text-muted-foreground break-all">
-                              {swap.details}
+                      {swap.requesterId === userId ? (
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <ArrowRightLeft className="h-4 w-4 text-primary shrink-0" />
+                              <span className="font-medium break-words">
+                                {getResidentName(swap.requesteeId)}
+                              </span>
                             </div>
-                          ) : null}
+
+                            <div className="text-sm">
+                              <span className="text-muted-foreground">Your Shift: </span>
+                              <span className="font-medium break-words">
+                                {fmt(swap.requesterDate)}
+                              </span>
+                            </div>
+
+                            <div className="text-sm">
+                              <span className="text-muted-foreground">Partner&apos;s Shift: </span>
+                              <span className="font-medium break-words">
+                                {fmt(swap.requesteeDate)}
+                              </span>
+                            </div>
+
+                            {swap.details ? (
+                              <div className="text-xs text-muted-foreground break-all">
+                                {swap.details}
+                              </div>
+                            ) : null}
+                          </div>
+
+                          <StatusPill status={swap.status.description} />
                         </div>
+                      ) : swap.requesteeId === userId ? (
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="space-y-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <CornerDownRight className="h-4 w-4 text-primary shrink-0" />
+                              <span className="font-medium break-words">
+                                {getResidentName(swap.requesterId)}
+                              </span>
+                            </div>
+
+                            <div className="text-sm">
+                              <span className="text-muted-foreground">Your Shift: </span>
+                              <span className="font-medium break-words">
+                                {fmt(swap.requesteeDate)}
+                              </span>
+                            </div>
+
+                            <div className="text-sm">
+                              <span className="text-muted-foreground">Partner&apos;s Shift: </span>
+                              <span className="font-medium break-words">
+                                {fmt(swap.requesterDate)}
+                              </span>
+                            </div>
+
+                            {swap.details ? (
+                              <div className="text-xs text-muted-foreground break-all">
+                                {swap.details}
+                              </div>
+                            ) : null}
+                          </div>
 
                         <StatusPill status={swap.status.description} />
-                      </div>
+                        </div>
+                      ) : (<></>)}
                     </li>
                   ))}
                 </ul>

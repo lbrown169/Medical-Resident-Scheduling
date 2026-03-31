@@ -380,7 +380,7 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
       <ConfirmDialog
         open={denyModalOpen}
         onOpenChange={setDenyModalOpen}
-        title="Deny Swap?"
+        title="Deny swap?"
         message={`Are you sure you want to deny this swap request? This action cannot be undone.`}
         confirmText="Deny"
         cancelText="Cancel"

@@ -184,7 +184,7 @@ public class DashboardController : ControllerBase
                         : swap.RequesteeId;
                 string message = swap.Status == RequestStatus.Approved
                     ? $"Your swap request for {swap.RequesterDate:MM/dd/yyyy} (with {requesteeName}) was approved."
-                    : $"Your swap request for {swap.RequesterDate:MM/dd/yyyy} (with {requesteeName}) was denied. Reason: {swap.Details}";
+                    : $"Your swap request for {swap.RequesterDate:MM/dd/yyyy} (with {requesteeName}) was denied.";
                 dashboardData.RecentActivity.Add(new DashboardDataResponse.Activity
                 {
                     Id = swap.SwapRequestId.ToString(),
