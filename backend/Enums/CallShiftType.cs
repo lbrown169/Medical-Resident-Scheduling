@@ -6,7 +6,7 @@ namespace MedicalDemo.Enums;
 public enum CallShiftType
 {
     // Standard call shift types
-    [CallShift(Hours = 3, CallLengthType = CallLengthType.Short, DateRule = CallShiftRule.Weekday)]
+    [CallShift(Hours = 3, PartsOfDay = PartOfDay.Afternoon, CallLengthType = CallLengthType.Short, DateRule = CallShiftRule.Weekday)]
     [Display(Name = "Short (3h)")]
     WeekdayShortCall = 0,
 
@@ -18,7 +18,7 @@ public enum CallShiftType
     [Display(Name = "Saturday (12h)")]
     SaturdayHalfCall = 2,
 
-    [CallShift(Hours = 12, CallLengthType = CallLengthType.Long, ApplicableDays = [DayOfWeek.Sunday])]
+    [CallShift(Hours = 12, CallLengthType = CallLengthType.Long, RequiredPgy = 2, ApplicableDays = [DayOfWeek.Sunday])]
     [Display(Name = "Sunday (12h)")]
     SundayHalfCall = 3,
 
@@ -58,6 +58,11 @@ public enum CallShiftType
     [CallShift(Hours = 12, CallLengthType = CallLengthType.Long, RequiredPgy = 1, DateRule = CallShiftRule.MemorialDay, Priority = 10)]
     [Display(Name = "Memorial Day (12h)")]
     MemorialDay = 12,
+
+    // PGY1s in training need to do a Sunday shift, but they aren't allowed Sunday shifts outside...
+    [CallShift(Hours = 12, CallLengthType = CallLengthType.Long, ApplicableDays = [DayOfWeek.Sunday], DateRule = CallShiftRule.SundayInTraining, Priority = 5)]
+    [Display(Name = "Sunday (12h)")]
+    SundayTrainingCall = 13,
 
     [Display(Name = "Custom Shift")]
     Custom = 99

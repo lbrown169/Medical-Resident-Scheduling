@@ -41,15 +41,4 @@ public class SwapRequestConverter
             Details = swapRequest.Details,
         };
     }
-
-    public void UpdateSwapRequestFromSwapRequestUpdateRequest(SwapRequest swapRequest,
-        SwapRequestUpdateRequest updateRequest)
-    {
-        swapRequest.RequesterId = updateRequest.RequesterId ?? swapRequest.RequesterId;
-        swapRequest.RequesteeId = updateRequest.RequesteeId ?? swapRequest.RequesteeId;
-        swapRequest.RequesterDate = updateRequest.RequesterDate ?? swapRequest.RequesterDate;
-        swapRequest.RequesteeDate = updateRequest.RequesteeDate ?? swapRequest.RequesteeDate;
-        swapRequest.Details = updateRequest.Details ?? swapRequest.Details;
-        swapRequest.UpdatedAt = DateTime.Now;
-    }
 }

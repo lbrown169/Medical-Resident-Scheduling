@@ -10,6 +10,7 @@ public static class CallShiftRuleExtensions
         CallShiftRule.None => true,
         CallShiftRule.Weekday => date.DayOfWeek is >= DayOfWeek.Monday and <= DayOfWeek.Friday,
         CallShiftRule.FirstSaturdayOfJuly => IsNthWeekdayOfMonth(date, DayOfWeek.Saturday, 7, 1),
+        CallShiftRule.SundayInTraining => date is { Month: 7 or 8, DayOfWeek: DayOfWeek.Sunday },
         CallShiftRule.JulyFourth => date is { Month: 7, Day: 4 },
         CallShiftRule.LaborDay => IsNthWeekdayOfMonth(date, DayOfWeek.Monday, 9, 1),
         CallShiftRule.Thanksgiving => IsNthWeekdayOfMonth(date, DayOfWeek.Thursday, 11, 4),
