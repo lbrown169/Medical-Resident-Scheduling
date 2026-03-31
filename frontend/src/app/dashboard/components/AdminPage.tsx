@@ -281,7 +281,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
 
     try {
       // Update with existing data but new phone number
-      const res= await fetch(`${config.apiUrl}/api/residents/${residentId}`, {
+      const res = await fetch(`${config.apiUrl}/api/residents/${residentId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -872,31 +872,25 @@ const AdminPage: React.FC<AdminPageProps> = ({
             </div>
           </Card>
         )}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         {activeTab === 'residents' && (
           <Card className="p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-1 mb-8 border border-gray-200 dark:border-gray-800">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-start mb-4 gap-2">
-              <h2 className="text-lg sm:text-xl font-bold">Resident Information</h2>
+              <div className="flex items-center gap-3">
+                <h2 className="text-lg sm:text-xl font-bold">Resident Information</h2>
+                <ConfirmDialog
+                  triggerText={
+                    <>
+                      <Users className="h-4 w-4" />
+                      <span>Promote Residents</span>
+                    </>
+                  }
+                  title="Promote all residents?"
+                  message="This will increase all PGY levels by 1."
+                  confirmText="Promote"
+                  cancelText="Cancel"
+                  onConfirm={() => { }}
+                />
+              </div>
               <div className="flex flex-col items-start gap-2 sm:items-end">
                 <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
                   {/*<Button variant="outline" size="sm" className="flex items-center gap-2 cursor-pointer"
@@ -918,8 +912,8 @@ const AdminPage: React.FC<AdminPageProps> = ({
                     type="checkbox"
                     defaultChecked
                     className="w-3 h-3 accent-blue-600 rounded border-gray-300 dark:border-gray-600 cursor-pointer"
-                    /* Implement function checked={ } 
-                    onChange={(e) => setIncludeUnscheduled(e.target.checked)} */
+                  /* Implement function checked={ } 
+                  onChange={(e) => setIncludeUnscheduled(e.target.checked)} */
                   />
                   Include unscheduled residents
                 </label>
@@ -938,26 +932,26 @@ const AdminPage: React.FC<AdminPageProps> = ({
                 <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
                   {residentRows.length > 0 ? (
                     [...residentRows]
-                    .sort((a, b) => a.name.localeCompare(b.name))
-                    .map((resident) => (
-                      <tr key={resident.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
-                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{resident.name}</td>
-                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{resident.email}</td>
-                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          <select
-                            value={resident.pgyLevel ?? 1}
-                            onChange={(e) => handleUpdatePGY(resident.id, Number(e.target.value))}
-                            disabled={!!savingPGY[resident.id]}
-                            className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                          >
-                            {[1, 2, 3, 4].map(n => (
-                              <option key={n} value={n}>PGY {n}</option>
-                            ))}
-                          </select>
-                        </td>
-                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{resident.hours}</td>
-                      </tr>
-                    ))
+                      .sort((a, b) => a.name.localeCompare(b.name))
+                      .map((resident) => (
+                        <tr key={resident.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
+                          <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{resident.name}</td>
+                          <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{resident.email}</td>
+                          <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            <select
+                              value={resident.pgyLevel ?? 1}
+                              onChange={(e) => handleUpdatePGY(resident.id, Number(e.target.value))}
+                              disabled={!!savingPGY[resident.id]}
+                              className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                            >
+                              {[1, 2, 3, 4].map(n => (
+                                <option key={n} value={n}>PGY {n}</option>
+                              ))}
+                            </select>
+                          </td>
+                          <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{resident.hours}</td>
+                        </tr>
+                      ))
                   ) : (
                     <tr>
                       <td colSpan={4} className="px-6 py-4 text-center text-gray-500 italic">No residents found.</td>

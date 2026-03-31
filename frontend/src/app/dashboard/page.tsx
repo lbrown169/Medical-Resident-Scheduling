@@ -181,10 +181,19 @@ function Dashboard() {
     }
   };
 
+  function currentAcademicYear(): number {
+    const now = new Date();
+    return now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1;
+  }
+
+  function academicYearOf(date: Date): number {
+    return date.getMonth() >= 6 ? date.getFullYear() : date.getFullYear() - 1;
+  }
+
   // Updated color function to use graduate_yr directly
   const getEventColor = (callType: CallType, graduateYear?: number) => {
     // Use graduate_yr directly for PGY-based coloring
-    if (graduateYear) {
+    if (graduateYear != null) {
       switch (graduateYear) {
         case 1:
           return '#ef4444'; // red for PGY 1
@@ -293,11 +302,15 @@ function Dashboard() {
           // Find the resident to get graduate_yr directly (for details only)
           const resident = residents.find(r => r.resident_id === date.residentId);
           const graduateYear = resident?.graduate_yr;
-          const eventColor = getEventColor(date.callType, graduateYear);
 
           const d = new Date(date.shiftDate)
           // date comes in as UTC and gets changed to previous day in local time. keep everything local
           d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
+
+          // Offset PGY by how far ahead this shift's academic year is vs. today
+          const pgyOffset = academicYearOf(d) - currentAcademicYear();
+          const effectivePgy = graduateYear != null ? graduateYear + pgyOffset : undefined;
+          const eventColor = getEventColor(date.callType, effectivePgy);
 
           return {
             id: date.dateId,
@@ -313,7 +326,7 @@ function Dashboard() {
               callType: date.callType.description,
               callTypeId: date.callType.id,
               dateId: date.dateId,
-              pgyLevel: graduateYear,
+              pgyLevel: effectivePgy,
               hours: date.hours,
             }
           };

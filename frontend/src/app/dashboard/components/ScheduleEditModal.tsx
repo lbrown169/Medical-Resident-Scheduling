@@ -33,6 +33,11 @@ const toDateInputValue = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
+function currentAcademicYear(): number {
+  const now = new Date();
+  return now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1;
+}
+
 const getEventColor = (graduateYear?: number) => {
   switch (graduateYear) {
     case 1: return "#ef4444";
@@ -87,6 +92,13 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
   }, []);
 
   const fetchScheduleEvents = useCallback(async (scheduleId: string, residentList: Resident[], navigateToFirst = true) => {
+    // Compute how many years ahead this schedule is relative to the current academic year
+    // Fall semester: academic year = scheduleYear; Spring: academic year = scheduleYear - 1
+    const scheduleAcademicYear = scheduleYear != null
+      ? (scheduleSemester === "Spring" ? scheduleYear - 1 : scheduleYear)
+      : currentAcademicYear();
+    const pgyOffset = scheduleAcademicYear - currentAcademicYear();
+
     setLoading(true);
     try {
       const response = await fetch(`${config.apiUrl}/api/dates?schedule_id=${scheduleId}`);
@@ -100,6 +112,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
 
           const resident = residentList.find(r => r.resident_id === date.residentId);
           const graduateYear = resident?.graduate_yr;
+          const effectivePgy = graduateYear != null ? graduateYear + pgyOffset : undefined;
 
           const d = new Date(date.shiftDate);
           d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
@@ -109,7 +122,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
             title: fullName || "",
             start: d,
             end: d,
-            backgroundColor: getEventColor(graduateYear),
+            backgroundColor: getEventColor(effectivePgy),
             extendedProps: {
               scheduleId: date.scheduleId,
               residentId: date.residentId,
@@ -118,7 +131,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
               callType: date.callType.description,
               callTypeId: date.callType.id,
               dateId: date.dateId,
-              pgyLevel: graduateYear,
+              pgyLevel: effectivePgy,
               hours: date.hours,
             },
           };
@@ -138,7 +151,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [scheduleYear, scheduleSemester]);
 
   const refreshEvents = useCallback(async () => {
     if (!scheduleId) return;
