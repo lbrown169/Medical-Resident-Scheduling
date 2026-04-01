@@ -14,7 +14,7 @@ public class RotationResponse
 
     public int AcademicYear { get; set; }
 
-    public MonthOfYear AcademicMonthIndex { get; set; }
+    public int AcademicMonthIndex { get; set; }
 
     public int PgyYear { get; set; }
 

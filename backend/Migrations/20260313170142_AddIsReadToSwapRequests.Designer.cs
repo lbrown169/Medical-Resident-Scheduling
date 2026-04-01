@@ -3,6 +3,7 @@ using System;
 using MedicalDemo.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MedicalDemo.Migrations
 {
     [DbContext(typeof(MedicalContext))]
-    partial class MedicalContextModelSnapshot : ModelSnapshot
+    [Migration("20260313170142_AddIsReadToSwapRequests")]
+    partial class AddIsReadToSwapRequests
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -58,12 +60,6 @@ namespace MedicalDemo.Migrations
                         .HasMaxLength(15)
                         .HasColumnType("varchar(15)")
                         .HasColumnName("phone_num");
-
-                    b.Property<int>("Role")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(1)
-                        .HasColumnName("role");
 
                     b.HasKey("AdminId");
 
@@ -224,38 +220,6 @@ namespace MedicalDemo.Migrations
                     b.ToTable("pgy4_rotation_schedule");
                 });
 
-            modelBuilder.Entity("MedicalDemo.Models.Entities.Pgy4RotationScheduleOverride", b =>
-                {
-                    b.Property<byte[]>("Pgy4RotationScheduleOverrideId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("binary(16)");
-
-                    b.Property<int>("AcademicMonthIndexOverride")
-                        .HasColumnType("int");
-
-                    b.Property<byte[]>("Pgy4RotationScheduleId")
-                        .IsRequired()
-                        .HasColumnType("binary(16)");
-
-                    b.Property<string>("ResidentOverrideId")
-                        .IsRequired()
-                        .HasColumnType("varchar(15)");
-
-                    b.Property<byte[]>("RotationTypeOverrideId")
-                        .IsRequired()
-                        .HasColumnType("binary(16)");
-
-                    b.HasKey("Pgy4RotationScheduleOverrideId");
-
-                    b.HasIndex("Pgy4RotationScheduleId");
-
-                    b.HasIndex("ResidentOverrideId");
-
-                    b.HasIndex("RotationTypeOverrideId");
-
-                    b.ToTable("pgy4_rotation_schedule_override");
-                });
-
             modelBuilder.Entity("MedicalDemo.Models.Entities.Resident", b =>
                 {
                     b.Property<string>("ResidentId")
@@ -284,9 +248,15 @@ namespace MedicalDemo.Migrations
                         .HasColumnType("varchar(45)")
                         .HasColumnName("first_name");
 
-                    b.Property<int?>("GraduateYr")
+                    b.Property<int>("GraduateYr")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int")
-                        .HasColumnName("graduate_yr");
+                        .HasColumnName("graduate_yr")
+                        .HasDefaultValueSql("'1'");
+
+                    b.Property<int?>("HospitalRoleProfile")
+                        .HasColumnType("int")
+                        .HasColumnName("hospital_role_profile");
 
                     b.Property<string>("LastName")
                         .IsRequired()
@@ -354,9 +324,16 @@ namespace MedicalDemo.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("ResidentId")
+                        .IsRequired()
                         .HasMaxLength(15)
                         .HasColumnType("varchar(15)")
                         .HasColumnName("resident_id");
+
+                    b.Property<string>("Rotation1")
+                        .IsRequired()
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)")
+                        .HasColumnName("rotation");
 
                     b.Property<byte[]>("RotationTypeId")
                         .IsRequired()
@@ -469,22 +446,6 @@ namespace MedicalDemo.Migrations
                     b.HasIndex("ThirdPriorityId");
 
                     b.ToTable("rotation_pref_request");
-                });
-
-            modelBuilder.Entity("MedicalDemo.Models.Entities.RotationPrefSubmissionWindow", b =>
-                {
-                    b.Property<int>("AcademicYear")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("AvailableDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime?>("DueDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.HasKey("AcademicYear");
-
-                    b.ToTable("rotation_pref_request_submission_window");
                 });
 
             modelBuilder.Entity("MedicalDemo.Models.Entities.RotationType", b =>
@@ -819,8 +780,8 @@ namespace MedicalDemo.Migrations
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("Details")
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)")
                         .HasColumnName("details");
 
                     b.Property<bool>("IsRead")
@@ -974,33 +935,6 @@ namespace MedicalDemo.Migrations
                     b.Navigation("Schedule");
                 });
 
-            modelBuilder.Entity("MedicalDemo.Models.Entities.Pgy4RotationScheduleOverride", b =>
-                {
-                    b.HasOne("MedicalDemo.Models.Entities.Pgy4RotationSchedule", "Pgy4RotationSchedule")
-                        .WithMany("Overrides")
-                        .HasForeignKey("Pgy4RotationScheduleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("MedicalDemo.Models.Entities.Resident", "Resident")
-                        .WithMany()
-                        .HasForeignKey("ResidentOverrideId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("MedicalDemo.Models.Entities.RotationType", "RotationType")
-                        .WithMany()
-                        .HasForeignKey("RotationTypeOverrideId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Pgy4RotationSchedule");
-
-                    b.Navigation("Resident");
-
-                    b.Navigation("RotationType");
-                });
-
             modelBuilder.Entity("MedicalDemo.Models.Entities.Rotation", b =>
                 {
                     b.HasOne("MedicalDemo.Models.Entities.Pgy4RotationSchedule", null)
@@ -1011,6 +945,8 @@ namespace MedicalDemo.Migrations
                     b.HasOne("MedicalDemo.Models.Entities.Resident", "Resident")
                         .WithMany("Rotations")
                         .HasForeignKey("ResidentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
                         .HasConstraintName("resident_id_rotation");
 
                     b.HasOne("MedicalDemo.Models.Entities.RotationType", "RotationType")
@@ -1176,8 +1112,6 @@ namespace MedicalDemo.Migrations
 
             modelBuilder.Entity("MedicalDemo.Models.Entities.Pgy4RotationSchedule", b =>
                 {
-                    b.Navigation("Overrides");
-
                     b.Navigation("Rotations");
                 });
 
