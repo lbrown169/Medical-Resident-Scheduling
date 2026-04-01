@@ -292,8 +292,8 @@ export const RotationScheduleTable: React.FC<RotationScheduleTableProps> = ({
                         {rotation ? (
                           readOnly ? (
                             <span
-                              className="text-white text-xs font-semibold px-3 py-1 rounded-full"
-                              style={{ backgroundColor: colorMap[rotation.rotationType.rotationName] ?? FALLBACK_COLOR, fontSize: "clamp(7px, 0.7vw, 12px)" }}
+                              className="w-[95%] inline-block text-center text-white font-semibold px-3 py-1 rounded-full truncate border-2"
+                              style={{ backgroundColor: colorMap[rotation.rotationType.rotationName] ?? FALLBACK_COLOR, borderColor: colorMap[rotation.rotationType.rotationName] ?? FALLBACK_COLOR, fontSize: "clamp(7px, 0.7vw, 12px)" }}
                             >
                               {displayNames[rotation.rotationType.rotationName] ?? rotation.rotationType.rotationName}
                             </span>
