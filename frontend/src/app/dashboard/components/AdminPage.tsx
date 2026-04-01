@@ -604,7 +604,7 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({
               </thead>
               <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
                 {users.length > 0 ? (
-                  users.map((user) => (
+                  [...users].sort((a, b) => a.first_name.localeCompare(b.first_name) || a.last_name.localeCompare(b.last_name)).map((user) => (
                     <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{user.first_name} {user.last_name}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{user.email}</td>
