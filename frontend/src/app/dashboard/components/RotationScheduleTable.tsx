@@ -210,7 +210,7 @@ export const RotationScheduleTable: React.FC<RotationScheduleTableProps> = ({
 					{schedule.length === 0 ? (
 						<tr>
 							<td colSpan={13} className="px-6 py-4 text-center text-gray-500 italic">
-								No schedule generated yet.
+								No rotations found. Use the &quot;Copy&quot; button above to copy a rotation schedule.
 							</td>
 						</tr>
 					) : (
