@@ -1,5 +1,5 @@
-// DeleteConfirmDialog.tsx
 "use client";
+
 import React from "react";
 import {
   AlertDialog,
