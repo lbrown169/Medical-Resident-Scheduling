@@ -151,9 +151,10 @@ public class RotationsController(
             return BadRequest(GenericResponse.Failure("Academic month must be between 0 and 11"));
         }
 
+        MonthOfYear month = MonthOfYearExtensions.FromAcademicIndex(academicMonth, false);
         Rotation? existingRotation = await context.Rotations
             .Include(rotation => rotation.RotationType)
-            .FirstOrDefaultAsync(r => r.RotationId == id && r.AcademicMonthIndex == MonthOfYearExtensions.FromAcademicIndex(academicMonth, false));
+            .FirstOrDefaultAsync(r => r.RotationId == id && r.RotationMonthOfYear == month);
         if (existingRotation == null)
         {
             return NotFound(GenericResponse.Failure("Rotation not found"));

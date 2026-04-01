@@ -251,11 +251,11 @@ namespace MedicalDemo.Models.Entities
             {
                 entity.ToTable("rotations");
 
-                entity.HasKey((e) => new { e.RotationId, e.AcademicMonthIndex });
+                entity.HasKey((e) => new { e.RotationId, e.RotationMonthOfYear });
 
                 entity.HasIndex(e => e.ResidentId, "resident_id_rotation_idx");
 
-                entity.HasIndex(e => new { e.RotationId, e.AcademicMonthIndex }, "rotation_id_month_Unique")
+                entity.HasIndex(e => new { e.RotationId, e.RotationMonthOfYear }, "rotation_id_month_Unique")
                     .IsUnique();
 
                 entity.Property(e => e.RotationId)
@@ -273,7 +273,7 @@ namespace MedicalDemo.Models.Entities
                     .HasMaxLength(45)
                     .HasColumnName("month");
 
-                entity.Property(e => e.AcademicMonthIndex)
+                entity.Property(e => e.RotationMonthOfYear)
                     .HasConversion<int>()
                     .HasColumnType("int");
 
