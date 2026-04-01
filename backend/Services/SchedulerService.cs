@@ -135,7 +135,7 @@ public class SchedulerService
             attempt++;
             try
             {
-                ResidentData residentData = await LoadResidentData(year, semester);
+                ResidentData residentData = await LoadAllResidentData(year, semester);
 
                 int looseFactor = 6 + Math.Min(18, attempt / 10 * 2);
 
@@ -226,7 +226,9 @@ public class SchedulerService
     }
 
 #pragma warning disable IDE0060
-    private async Task<ResidentData> LoadResidentData(int year, Semester semester, bool includeDates = false)
+    //    private async Task<ResidentData> LoadResidentData(int year, Semester semester, bool includeDates = false)
+
+    public async Task<ResidentData> LoadAllResidentData(int year, Semester semester, Guid? existingSchedule = null)
     {
         int academicYear = semester == Semester.Fall ? year : year - 1;
         int pgyDiff = academicYear - DateTime.Now.AcademicYear;
@@ -241,12 +243,12 @@ public class SchedulerService
 
         List<Date> dates = [];
 
-        if (includeDates)
+        if (existingSchedule != null)
         {
             dates = await _context.Dates
                 .Where(d =>
                     d.Schedule.Status == ScheduleStatus.Published
-                    && d.Schedule.Year == year
+                    && d.Schedule.Year == academicYear
                 )
                 .ToListAsync();
         }
@@ -274,6 +276,70 @@ public class SchedulerService
                 dates)).ToList();
 
         return new ResidentData { PGY1s = pgy1s, PGY2s = pgy2s, PGY3s = pgy3s };
+    }
+
+    public async Task<ResidentData> LoadResidentData(int year, Semester semester, string residentId)
+    {
+        int academicYear = semester == Semester.Fall ? year : year - 1;
+        int pgyDiff = academicYear - DateTime.Now.AcademicYear;
+
+        Resident? resident = await _context.Residents.FindAsync(residentId);
+        List<Rotation> rotations = await _context.Rotations
+            .Include(r => r.RotationType)
+            .Where(r => r.AcademicYear == academicYear && r.ResidentId == residentId)
+            .ToListAsync();
+        List<Vacation> vacations = await _context.Vacations
+            .Where(v => v.Status == "Approved").ToListAsync();
+
+        List<Date> dates = [];
+
+        if (resident != null)
+        {
+            dates = await _context.Dates
+                .Where(d => d.ResidentId == residentId
+                            && d.Schedule.Status == ScheduleStatus.Published
+                            && d.Schedule.Year == academicYear
+                )
+                .ToListAsync();
+        }
+
+        Pgy1Dto pgy1 = null;
+        Pgy2Dto pgy2 = null;
+        Pgy3Dto pgy3 = null;
+
+        if (resident != null && resident.GraduateYr + pgyDiff == 1)
+        {
+            pgy1 = _mapper.MapToPGY1DTO(
+                resident,
+                rotations.Where(rot => rot.ResidentId == resident.ResidentId),
+                vacations.Where(v => v.ResidentId == resident.ResidentId).ToList(),
+                dates);
+
+            return new ResidentData { PGY1s = [pgy1], PGY2s = null, PGY3s = null };
+        }
+
+        if (resident != null && resident.GraduateYr + pgyDiff == 2)
+        {
+            pgy2 = _mapper.MapToPGY2DTO(
+                resident,
+                rotations.Where(rot => rot.ResidentId == resident.ResidentId),
+                vacations.Where(v => v.ResidentId == resident.ResidentId).ToList(),
+                dates);
+
+            return new ResidentData { PGY1s = null, PGY2s = [pgy2], PGY3s = null };
+        }
+
+        if (resident != null && resident.GraduateYr + pgyDiff == 3)
+        {
+            pgy3 = _mapper.MapToPGY3DTO(
+                resident,
+                vacations.Where(v => v.ResidentId == resident.ResidentId).ToList(),
+                dates);
+
+            return new ResidentData { PGY1s = null, PGY2s = null, PGY3s = [pgy3] };
+        }
+
+        return new ResidentData { PGY1s = [pgy1], PGY2s = [pgy2], PGY3s = [pgy3] };
     }
 #pragma warning restore IDE0060
 }

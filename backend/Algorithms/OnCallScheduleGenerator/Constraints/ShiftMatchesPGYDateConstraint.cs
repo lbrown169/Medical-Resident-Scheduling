@@ -1,4 +1,4 @@
-﻿using MedicalDemo.Enums;
+using MedicalDemo.Enums;
 using MedicalDemo.Extensions;
 using MedicalDemo.Interfaces;
 using MedicalDemo.Models;

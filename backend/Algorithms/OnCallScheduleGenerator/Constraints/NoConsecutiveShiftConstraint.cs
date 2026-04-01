@@ -1,4 +1,4 @@
-﻿using MedicalDemo.Enums;
+using MedicalDemo.Enums;
 using MedicalDemo.Extensions;
 using MedicalDemo.Interfaces;
 using MedicalDemo.Models;
@@ -11,7 +11,7 @@ public class NoConsecutiveShiftConstraint : ICallShiftConstraint
     public ConstraintResult Evaluate(ResidentDto resident, DateOnly date)
     {
         CallShiftType? shiftType = CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(date, resident.Pgy);
-        if (IsBackToBackShift(resident,date))
+        if (IsBackToBackShift(resident, date))
         {
             return ConstraintResult.Violation($"Resident {resident} will be working a back-to-back shift", true);
         }

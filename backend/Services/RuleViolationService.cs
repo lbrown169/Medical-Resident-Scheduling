@@ -19,13 +19,15 @@ public class RuleViolationService
     private readonly AlgorithmService _algorithmService;
     private readonly MedicalContext _context;
     private readonly SchedulingMapperService _mapper;
+    private readonly SchedulerService _schedulerService;
 
     public RuleViolationService(
         MedicalContext context,
         SchedulingMapperService mapper,
         AlgorithmService algorithmService,
         ILogger<SchedulerService> logger,
-        IList<ICallShiftConstraint> constraints
+        IList<ICallShiftConstraint> constraints,
+        SchedulerService schedulerService
     )
     {
         _context = context;
@@ -33,6 +35,7 @@ public class RuleViolationService
         _algorithmService = algorithmService;
         _logger = logger;
         _constraints = constraints.ToList();
+        _schedulerService = schedulerService;
     }
 
 
@@ -85,21 +88,46 @@ public class RuleViolationService
             throw new ArgumentException($"Invalid ResidentID {resident_id}.");
         }
 
-        // is this how we want to implement yearOffset?
         int pgyDiff = date.AcademicYear - DateTime.Now.AcademicYear;
-        if (pgyDiff == 1)
-        {
-            ResidentDto residentDTO = new Pgy1Dto();
-        }
-        //etc
+        ResidentData residentInfo = await _schedulerService.LoadResidentData(date.AcademicYear, date.Semester, resident_id);
+        List<ConstraintResult> violations = new();
 
-        List<ConstraintResult> violations = new List<ConstraintResult>();
-        foreach (var constraints in _constraints)
+        if (pgyDiff == 1 && residentInfo.PGY1s.Count == 1)
         {
-            ConstraintResult result = constraints.Evaluate(residentDTO, date);
-            if (result.IsViolated)
+            Pgy1Dto pgy1Dto = residentInfo.PGY1s[0];
+            foreach (ICallShiftConstraint constraint in _constraints)
             {
-                violations.Add(result);
+                ConstraintResult result = constraint.Evaluate(pgy1Dto, date);
+                if (result.IsViolated)
+                {
+                    violations.Add(result);
+                }
+            }
+        }
+
+        if (pgyDiff == 2 && residentInfo.PGY2s.Count == 1)
+        {
+            Pgy2Dto pgy2Dto = residentInfo.PGY2s[0];
+            foreach (ICallShiftConstraint constraint in _constraints)
+            {
+                ConstraintResult result = constraint.Evaluate(pgy2Dto, date);
+                if (result.IsViolated)
+                {
+                    violations.Add(result);
+                }
+            }
+        }
+
+        if (pgyDiff == 3 && residentInfo.PGY3s.Count == 1)
+        {
+            Pgy1Dto pgy1Dto = residentInfo.PGY1s[0];
+            foreach (ICallShiftConstraint constraint in _constraints)
+            {
+                ConstraintResult result = constraint.Evaluate(pgy1Dto, date);
+                if (result.IsViolated)
+                {
+                    violations.Add(result);
+                }
             }
         }
 

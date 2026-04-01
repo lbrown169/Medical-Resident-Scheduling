@@ -1,4 +1,4 @@
-﻿using System.Data.SqlTypes;
+using System.Data.SqlTypes;
 using System.Diagnostics.CodeAnalysis;
 using PostmarkDotNet.Model;
 
@@ -6,7 +6,7 @@ namespace MedicalDemo.Models;
 
 public class ConstraintResult
 {
-    public bool IsViolated { get;}
+    public bool IsViolated { get; }
     public string? Message { get; }
     public bool? IsOverridable { get; }
 

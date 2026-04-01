@@ -1,4 +1,4 @@
-﻿using MedicalDemo.Interfaces;
+using MedicalDemo.Interfaces;
 using MedicalDemo.Models;
 using MedicalDemo.Models.DTO.Scheduling;
 

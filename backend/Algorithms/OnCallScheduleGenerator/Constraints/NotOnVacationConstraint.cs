@@ -1,8 +1,8 @@
-﻿using MedicalDemo.Interfaces;
-using MedicalDemo.Models;
-using MedicalDemo.Models.DTO.Scheduling;
 using MedicalDemo.Enums;
 using MedicalDemo.Extensions;
+using MedicalDemo.Interfaces;
+using MedicalDemo.Models;
+using MedicalDemo.Models.DTO.Scheduling;
 
 namespace MedicalDemo.Constraints;
 

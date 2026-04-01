@@ -1,4 +1,4 @@
-﻿namespace MedicalDemo.Models;
+namespace MedicalDemo.Models;
 
 public class ViolationResult
 {
