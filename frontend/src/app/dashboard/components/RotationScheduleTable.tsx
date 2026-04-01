@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
+import React, { useState, useRef, useEffect, useLayoutEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "../../../components/ui/button";
 
@@ -230,6 +230,16 @@ export const RotationScheduleTable: React.FC<RotationScheduleTableProps> = ({
     }
   }, [schedule]);
 
+  const sortedSchedule = useMemo(() => {
+    if (allowResidentReassignment) return schedule;
+    return [...schedule].sort((a, b) => {
+      const lastA = a.resident.last_name.toLowerCase();
+      const lastB = b.resident.last_name.toLowerCase();
+      if (lastA !== lastB) return lastA.localeCompare(lastB);
+      return a.resident.first_name.toLowerCase().localeCompare(b.resident.first_name.toLowerCase());
+    });
+  }, [schedule, allowResidentReassignment]);
+
 
   return (
     <div ref={tableContainerRef} className="overflow-x-auto max-h-[calc(100vh-12rem)] overflow-y-auto w-full">
@@ -247,12 +257,12 @@ export const RotationScheduleTable: React.FC<RotationScheduleTableProps> = ({
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
-          {schedule.length === 0 ? (
+          {sortedSchedule.length === 0 ? (
             <tr>
               <td colSpan={13} className="px-6 py-4 text-center text-gray-500 italic">No schedule generated yet.</td>
             </tr>
           ) : (
-            schedule.map((residentSchedule, rowIndex) => {
+            sortedSchedule.map((residentSchedule, rowIndex) => {
               const { resident, rotations } = residentSchedule;
               const shortName = `${resident.first_name} ${resident.last_name.charAt(0)}.`;
 
@@ -292,7 +302,7 @@ export const RotationScheduleTable: React.FC<RotationScheduleTableProps> = ({
                               residentId={resident.resident_id}
                               monthIndex={monthIndex}
                               rowIndex={rowIndex}
-                              totalRows={schedule.length}
+                              totalRows={sortedSchedule.length}
                               tableHeight={tableHeight}
                               currentRotation={rotation.rotationType.rotationName}
                               rotationTypes={rotationTypes}
@@ -319,6 +329,3 @@ export const RotationScheduleTable: React.FC<RotationScheduleTableProps> = ({
 
 
 export default RotationScheduleTable;
-
-
-
