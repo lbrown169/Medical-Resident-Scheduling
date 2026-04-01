@@ -12,7 +12,7 @@ public class Pgy4RotationScheduleOverride
 
     public Guid Pgy4RotationScheduleId { get; set; }
 
-    public MonthOfYear AcademicMonthIndexOverride { get; set; }
+    public MonthOfYear RotationMonthOfYearOverride { get; set; }
 
     public string ResidentOverrideId { get; set; } = null!;
 

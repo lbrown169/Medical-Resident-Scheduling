@@ -399,7 +399,7 @@ public class Pgy4RotationScheduleController(
                     o =>
                         o.ResidentOverrideId == request.ResidentId
                         && o.Pgy4RotationScheduleId == scheduleId
-                        && o.AcademicMonthIndexOverride == (MonthOfYear)request.AcademicMonthIndex
+                        && o.RotationMonthOfYearOverride == (MonthOfYear)request.AcademicMonthIndex
                 )
             );
 
@@ -501,7 +501,7 @@ public class Pgy4RotationScheduleController(
                     o =>
                         o.ResidentOverrideId == deleteRequest.ResidentId
                         && o.Pgy4RotationScheduleId == scheduleId
-                        && o.AcademicMonthIndexOverride
+                        && o.RotationMonthOfYearOverride
                             == (MonthOfYear)deleteRequest.AcademicMonthIndex
                 )
             );

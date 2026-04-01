@@ -214,7 +214,7 @@ public class Pgy4RotationScheduleConverter(
             // Sort rotations by calendar year
             List<Rotation> sortedRotation =
             [
-                .. kvp.Value.OrderBy((rotation) => rotation.AcademicMonthIndex.ToAcademicIndex()),
+                .. kvp.Value.OrderBy((rotation) => rotation.RotationMonthOfYear),
             ];
             algoSchedule.Add(
                 algorithmResident,

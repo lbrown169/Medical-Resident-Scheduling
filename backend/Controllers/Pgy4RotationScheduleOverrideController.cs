@@ -80,7 +80,11 @@ public class Pgy4RotationScheduleOverrideController(
                     o =>
                         o.ResidentOverrideId == request.ResidentId
                         && o.Pgy4RotationScheduleId == scheduleId
-                        && o.AcademicMonthIndexOverride == (MonthOfYear)request.AcademicMonthIndex
+                        && o.RotationMonthOfYearOverride
+                            == MonthOfYearExtensions.FromAcademicIndex(
+                                request.AcademicMonthIndex,
+                                false
+                            )
                 )
             );
 
@@ -182,8 +186,11 @@ public class Pgy4RotationScheduleOverrideController(
                     o =>
                         o.ResidentOverrideId == deleteRequest.ResidentId
                         && o.Pgy4RotationScheduleId == scheduleId
-                        && o.AcademicMonthIndexOverride
-                            == (MonthOfYear)deleteRequest.AcademicMonthIndex
+                        && o.RotationMonthOfYearOverride
+                            == MonthOfYearExtensions.FromAcademicIndex(
+                                deleteRequest.AcademicMonthIndex,
+                                false
+                            )
                 )
             );
 

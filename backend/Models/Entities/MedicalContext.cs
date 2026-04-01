@@ -345,7 +345,7 @@ namespace MedicalDemo.Models.Entities
                         v => new Guid(v)
                     );
 
-                entity.Property(e => e.AcademicMonthIndexOverride)
+                entity.Property(e => e.RotationMonthOfYearOverride)
                     .HasConversion<int>()
                     .HasColumnType("int");
 

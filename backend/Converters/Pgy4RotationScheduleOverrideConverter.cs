@@ -1,4 +1,5 @@
 using MedicalDemo.Enums;
+using MedicalDemo.Extensions;
 using MedicalDemo.Models.DTO.Requests;
 using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.Entities;
@@ -26,7 +27,7 @@ public class Pgy4RotationScheduleOverrideConverter(
             Pgy4RotationScheduleOverrideId = Guid.NewGuid(),
             Pgy4RotationScheduleId = rotationScheduleId,
             ResidentOverrideId = request.ResidentId,
-            AcademicMonthIndexOverride = (MonthOfYear)request.AcademicMonthIndex,
+            RotationMonthOfYearOverride = MonthOfYearExtensions.FromAcademicIndex(request.AcademicMonthIndex, false),
             RotationTypeOverrideId = request.newRotationTypeId,
         };
     }
@@ -39,7 +40,7 @@ public class Pgy4RotationScheduleOverrideConverter(
         {
             Pgy4RotationScheduleOverrideId = model.Pgy4RotationScheduleOverrideId,
             Pgy4RotationScheduleId = model.Pgy4RotationScheduleId,
-            AcademicMonthIndex = model.AcademicMonthIndexOverride,
+            AcademicMonthIndex = model.RotationMonthOfYearOverride.ToAcademicIndex(),
             Resident = residentConverter.CreateResidentResponseFromResident(model.Resident),
             OverrideRotation = rotationTypeConverter.CreateRotationTypeResponse(model.RotationType),
         };
@@ -98,7 +99,7 @@ public class Pgy4RotationScheduleOverrideConverter(
                 Pgy4RotationScheduleOverride? foundOverride = overridesForResident.FirstOrDefault(
                     (o) =>
                         o.ResidentOverrideId == rotation.ResidentId
-                        && o.AcademicMonthIndexOverride == rotation.AcademicMonthIndex
+                        && o.RotationMonthOfYearOverride == rotation.RotationMonthOfYear
                 );
 
                 if (foundOverride != null)
@@ -115,21 +116,22 @@ public class Pgy4RotationScheduleOverrideConverter(
         List<Pgy4RotationScheduleOverride> overrides
     )
     {
-        residentSchedule = [.. residentSchedule.OrderBy((rotation) => rotation.AcademicMonthIndex)];
-        overrides = [.. overrides.OrderBy((o) => o.AcademicMonthIndexOverride)];
+        residentSchedule = [.. residentSchedule.OrderBy((rotation) => rotation.RotationMonthOfYear)];
+        overrides = [.. overrides.OrderBy((o) => o.RotationMonthOfYearOverride)];
 
         int overrideIndex = 0;
         foreach (Rotation rotation in residentSchedule)
         {
             if (
                 overrideIndex < overrides.Count
-                && overrides[overrideIndex].AcademicMonthIndexOverride
-                    == rotation.AcademicMonthIndex
+                && overrides[overrideIndex].RotationMonthOfYearOverride
+                    == rotation.RotationMonthOfYear
                 && overrides[overrideIndex].ResidentOverrideId == rotation.ResidentId
             )
             {
                 rotation.RotationType = overrides[overrideIndex].RotationType;
                 rotation.RotationTypeId = overrides[overrideIndex].RotationTypeOverrideId;
+                overrideIndex++;
             }
         }
     }

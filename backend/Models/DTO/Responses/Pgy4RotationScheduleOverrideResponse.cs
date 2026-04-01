@@ -1,5 +1,3 @@
-using MedicalDemo.Enums;
-
 namespace MedicalDemo.Models.DTO.Responses;
 
 public class Pgy4RotationScheduleOverrideResponse
@@ -8,7 +6,7 @@ public class Pgy4RotationScheduleOverrideResponse
 
     public Guid Pgy4RotationScheduleId { get; set; }
 
-    public MonthOfYear AcademicMonthIndex { get; set; }
+    public int AcademicMonthIndex { get; set; }
 
     public ResidentResponse? Resident { get; set; } = null!;
 
