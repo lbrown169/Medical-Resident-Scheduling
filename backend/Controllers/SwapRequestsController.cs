@@ -119,6 +119,30 @@ public class SwapRequestsController : ControllerBase
         return NoContent();
     }
 
+    // DELETE: api/swaprequests
+    [HttpDelete]
+    public async Task<IActionResult> DeleteAllSwapRequests(
+        [FromBody] List<Guid> swapRequestIds)
+    {
+        // Fetch all swap requests that are Approved/Denied status
+        List<SwapRequest> swapRequestsToDelete = await _context.SwapRequests
+            .Where(s => swapRequestIds.Contains(s.SwapRequestId) &&
+                    (s.Status == RequestStatus.Approved || s.Status == RequestStatus.Denied))
+        .ToListAsync();
+
+        // Find which IDs were not found (don't exist/pending status)
+        List<Guid> foundIds = swapRequestsToDelete.Select(s => s.SwapRequestId).ToList();
+        List<Guid> failedDeletedIds = swapRequestIds.Except(foundIds).ToList();
+
+        // Remove all found swap requests in one operation
+        _context.SwapRequests.RemoveRange(swapRequestsToDelete);
+        await _context.SaveChangesAsync();
+
+        SwapRequestsNotDeletedResponse response = new SwapRequestsNotDeletedResponse() { notDeleted = failedDeletedIds };
+
+        return Ok(response);
+    }
+
     // POST: api/swaprequests/{id}/approve
     [HttpPost("{id}/approve")]
     public async Task<IActionResult> ApproveSwapRequest(Guid id)
