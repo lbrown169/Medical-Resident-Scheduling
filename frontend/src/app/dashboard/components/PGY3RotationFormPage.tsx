@@ -42,7 +42,7 @@ const parseLocalDate = (iso: string | null | undefined) => {
 const isInvalidDate = (d: Date) => Number.isNaN(d.getTime());
 
 const PGY3RotationFormPage: React.FC<PGY3RotationFormPageProps> = ({ userId, userPGY }) => {
-  const [window, setWindow] = useState<SubmissionWindow | null>(null);
+  const [submissionWindow, setSubmissionWindow] = useState<SubmissionWindow | null>(null);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
 
@@ -55,7 +55,7 @@ const PGY3RotationFormPage: React.FC<PGY3RotationFormPageProps> = ({ userId, use
           return;
         }
         const data: SubmissionWindow = await res.json();
-        setWindow(data);
+        setSubmissionWindow(data);
       } catch {
         setFetchError(true);
       } finally {
@@ -90,7 +90,7 @@ const PGY3RotationFormPage: React.FC<PGY3RotationFormPageProps> = ({ userId, use
    );
  }
 
- if (fetchError || !window) {
+ if (fetchError || !submissionWindow) {
    return (
      <div className="max-w-4xl mx-auto">
        <div className="bg-card rounded-xl shadow-lg border border-border p-8 text-center">
@@ -105,8 +105,8 @@ const PGY3RotationFormPage: React.FC<PGY3RotationFormPageProps> = ({ userId, use
  }
 
  const now = new Date();
- const availableDate = parseLocalDate(window.availableDate);
- const dueDate = parseLocalDate(window.dueDate);
+ const availableDate = parseLocalDate(submissionWindow.availableDate);
+ const dueDate = parseLocalDate(submissionWindow.dueDate);
 
  if (isInvalidDate(availableDate) || isInvalidDate(dueDate)) {
    return (
