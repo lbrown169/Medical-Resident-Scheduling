@@ -257,12 +257,20 @@ function Dashboard() {
   // API functions
   const fetchResidents = useCallback(async () => {
     try {
-      const response = await fetch(`${config.apiUrl}/api/residents`);
-      if (response.ok) {
-        const residentsData = await response.json();
+      const [residentsResponse, adminsResponse] = await Promise.all([
+        fetch(`${config.apiUrl}/api/residents`),
+        fetch(`${config.apiUrl}/api/Admins`),
+      ]);
+      if (residentsResponse.ok) {
+        const residentsData = await residentsResponse.json() as Resident[];
         setResidents(residentsData);
-      } else {
-        console.error('Failed to fetch residents');
+        if (adminsResponse.ok) {
+          const admins = await adminsResponse.json() as Admin[];
+          setUsers([
+            ...residentsData.map((r: Resident) => ({ id: r.resident_id, first_name: r.first_name, last_name: r.last_name, email: r.email, role: 'resident' })),
+            ...admins.map((a: Admin) => ({ id: a.admin_id, first_name: a.first_name, last_name: a.last_name, email: a.email, role: 'admin' })),
+          ]);
+        }
       }
     } catch (error) {
       console.error('Error fetching residents:', error);
@@ -369,50 +377,6 @@ function Dashboard() {
     }
   }, [residents]);
 
-  const fetchUsers = async () => {
-    console.log('Fetching users...');
-    try {
-      const [residentsResponse, adminsResponse] = await Promise.all([
-        fetch(`${config.apiUrl}/api/Residents`),
-        fetch(`${config.apiUrl}/api/Admins`)
-      ]);
-
-      console.log('Residents response status:', residentsResponse.status);
-      console.log('Admins response status:', adminsResponse.status);
-
-      if (residentsResponse.ok && adminsResponse.ok) {
-        const residents = await residentsResponse.json() as Resident[];
-        const admins = await adminsResponse.json() as Admin[];
-
-        console.log('Residents data:', residents);
-        console.log('Admins data:', admins);
-
-        const combinedUsers = [
-          ...residents.map((r: Resident) => ({
-            id: r.resident_id,
-            first_name: r.first_name,
-            last_name: r.last_name,
-            email: r.email,
-            role: 'resident'
-          })),
-          ...admins.map((a: Admin) => ({
-            id: a.admin_id,
-            first_name: a.first_name,
-            last_name: a.last_name,
-            email: a.email,
-            role: 'admin'
-          }))
-        ];
-
-        console.log('Combined users:', combinedUsers);
-        setUsers(combinedUsers);
-      } else {
-        console.error('Failed to fetch users');
-      }
-    } catch (error) {
-      console.error('Error fetching users:', error);
-    }
-  };
 
   // Fetch time off requests
   const fetchMyTimeOffRequests = useCallback(async () => {
@@ -945,22 +909,27 @@ function Dashboard() {
   //   await fetchCalendarEvents();
   // };
 
+  const mappedResidents = useMemo(() =>
+    residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr, hospitalRole: r.hospital_role_profile ?? undefined, hours: semesterHours[r.resident_id] ?? 0 })),
+    [residents, semesterHours]
+  );
+
+  const mappedShifts = useMemo(() =>
+    shifts.map(s => ({ id: s.id, name: s.name })),
+    [shifts]
+  );
+
   // Render main content based on selected menu item
   const renderMainContent = () => {
     switch (selected) {
 case "Home":
   if (isAdmin) {
-    console.log('Rendering AdminPage with users:', users);
-    console.log('Rendering AdminPage with users length:', users.length);
     return (
       <AdminPage
-        residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr, hospitalRole: r.hospital_role_profile ?? undefined, hours: semesterHours[r.resident_id] ?? 0 }))}
+        residents={mappedResidents}
         onRefreshResidents={fetchResidents}
         myTimeOffRequests={myTimeOffRequests}
-        shifts={shifts.map(s => ({
-          id: s.id,
-          name: s.name
-        }))}
+        shifts={mappedShifts}
         handleApproveRequest={handleApproveRequest}
         handleDenyRequest={handleDenyRequest}
         userInvitations={userInvitations}
@@ -1088,13 +1057,10 @@ case "Home":
         }
         return (
           <AdminPage
-            residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr, hospitalRole: r.hospital_role_profile ?? undefined, hours: semesterHours[r.resident_id] ?? 0 }))}
+            residents={mappedResidents}
             onRefreshResidents={fetchResidents}
             myTimeOffRequests={myTimeOffRequests}
-            shifts={shifts.map(s => ({
-              id: s.id,
-              name: s.name
-            }))}
+            shifts={mappedShifts}
             handleApproveRequest={handleApproveRequest}
             handleDenyRequest={handleDenyRequest}
             userInvitations={userInvitations}
@@ -1196,15 +1162,6 @@ case "Home":
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected]);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []); // Run on mount
-
-  useEffect(() => {
-    if (user) {
-      fetchUsers();
-    }
-  }, [user]); // Also run when user is loaded
 
   // Fetch data when Admin page is selected
   useEffect(() => {
