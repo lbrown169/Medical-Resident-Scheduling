@@ -88,46 +88,21 @@ public class RuleViolationService
             throw new ArgumentException($"Invalid ResidentID {resident_id}.");
         }
 
-        int pgyDiff = date.AcademicYear - DateTime.Now.AcademicYear;
-        ResidentData residentInfo = await _schedulerService.LoadResidentData(date.AcademicYear, date.Semester, resident_id);
+        ResidentDto residentInfo = await _schedulerService.LoadResidentData(date.AcademicYear, date.Semester, resident_id);
         List<ConstraintResult> violations = new();
 
-        if (pgyDiff == 1 && residentInfo.PGY1s.Count == 1)
+        if (residentInfo == null)
         {
-            Pgy1Dto pgy1Dto = residentInfo.PGY1s[0];
-            foreach (ICallShiftConstraint constraint in _constraints)
-            {
-                ConstraintResult result = constraint.Evaluate(pgy1Dto, date);
-                if (result.IsViolated)
-                {
-                    violations.Add(result);
-                }
-            }
+            throw new Exception($"Resident Data for {resident_id} not found.");
         }
 
-        if (pgyDiff == 2 && residentInfo.PGY2s.Count == 1)
+        // check through all constrains for any rule violations
+        foreach (ICallShiftConstraint constraint in _constraints)
         {
-            Pgy2Dto pgy2Dto = residentInfo.PGY2s[0];
-            foreach (ICallShiftConstraint constraint in _constraints)
+            ConstraintResult result = constraint.Evaluate(residentInfo, date);
+            if (result.IsViolated)
             {
-                ConstraintResult result = constraint.Evaluate(pgy2Dto, date);
-                if (result.IsViolated)
-                {
-                    violations.Add(result);
-                }
-            }
-        }
-
-        if (pgyDiff == 3 && residentInfo.PGY3s.Count == 1)
-        {
-            Pgy1Dto pgy1Dto = residentInfo.PGY1s[0];
-            foreach (ICallShiftConstraint constraint in _constraints)
-            {
-                ConstraintResult result = constraint.Evaluate(pgy1Dto, date);
-                if (result.IsViolated)
-                {
-                    violations.Add(result);
-                }
+                violations.Add(result);
             }
         }
 

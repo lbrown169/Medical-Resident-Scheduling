@@ -278,7 +278,7 @@ public class SchedulerService
         return new ResidentData { PGY1s = pgy1s, PGY2s = pgy2s, PGY3s = pgy3s };
     }
 
-    public async Task<ResidentData> LoadResidentData(int year, Semester semester, string residentId)
+    public async Task<ResidentDto> LoadResidentData(int year, Semester semester, string residentId)
     {
         int academicYear = semester == Semester.Fall ? year : year - 1;
         int pgyDiff = academicYear - DateTime.Now.AcademicYear;
@@ -315,7 +315,7 @@ public class SchedulerService
                 vacations.Where(v => v.ResidentId == resident.ResidentId).ToList(),
                 dates);
 
-            return new ResidentData { PGY1s = [pgy1], PGY2s = null, PGY3s = null };
+            return pgy1;
         }
 
         if (resident != null && resident.GraduateYr + pgyDiff == 2)
@@ -326,7 +326,7 @@ public class SchedulerService
                 vacations.Where(v => v.ResidentId == resident.ResidentId).ToList(),
                 dates);
 
-            return new ResidentData { PGY1s = null, PGY2s = [pgy2], PGY3s = null };
+            return pgy2;
         }
 
         if (resident != null && resident.GraduateYr + pgyDiff == 3)
@@ -336,10 +336,10 @@ public class SchedulerService
                 vacations.Where(v => v.ResidentId == resident.ResidentId).ToList(),
                 dates);
 
-            return new ResidentData { PGY1s = null, PGY2s = null, PGY3s = [pgy3] };
+            return pgy3;
         }
 
-        return new ResidentData { PGY1s = [pgy1], PGY2s = [pgy2], PGY3s = [pgy3] };
+        return null;
     }
 #pragma warning restore IDE0060
 }
