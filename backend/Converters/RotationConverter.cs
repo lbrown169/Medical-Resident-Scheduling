@@ -30,17 +30,19 @@ public class RotationConverter(RotationTypeConverter rotationTypeConverter)
         Guid scheduleId,
         Guid rotationId,
         int academicYear,
-        MonthOfYear month
+        int month
     )
     {
+        MonthOfYear monthEnum = (MonthOfYear)month;
+
         return new()
         {
             RotationId = rotationId,
             Pgy4RotationScheduleId = scheduleId,
             ResidentId = residentId,
             AcademicYear = academicYear,
-            RotationMonthOfYear = month,
-            Month = month.GetDisplayName(),
+            RotationMonthOfYear = monthEnum,
+            Month = monthEnum.GetDisplayName(),
             PgyYear = 4,
             RotationType = rotationType,
             RotationTypeId = rotationType.RotationTypeId

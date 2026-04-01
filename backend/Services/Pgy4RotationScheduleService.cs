@@ -67,7 +67,7 @@ public class Pgy4RotationScheduleService(
                     newScheduleId,
                     newRotationId,
                     academicYear,
-                    (MonthOfYear)calenderMonthIndex
+                    calenderMonthIndex
                 );
                 rotationsToAdd.Add(newRotation);
             }
