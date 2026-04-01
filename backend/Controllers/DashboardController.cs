@@ -1,3 +1,4 @@
+using MedicalDemo.Converters;
 using MedicalDemo.Enums;
 using MedicalDemo.Extensions;
 using MedicalDemo.Models;
@@ -19,11 +20,13 @@ public class DashboardController : ControllerBase
 {
     private readonly ILogger<DashboardController> _logger;
     private readonly MedicalContext _context;
+    private readonly RotationTypeConverter _rotationTypeConverter;
 
-    public DashboardController(MedicalContext context, ILogger<DashboardController> logger)
+    public DashboardController(MedicalContext context, ILogger<DashboardController> logger, RotationTypeConverter rotationTypeConverter)
     {
         _context = context;
         _logger = logger;
+        _rotationTypeConverter = rotationTypeConverter;
     }
 
     // GET: api/dashboard/resident/{residentId}
@@ -43,33 +46,33 @@ public class DashboardController : ControllerBase
 
             Resident? resident = await _context.Residents.FirstOrDefaultAsync(r => r.ResidentId == residentId);
 
-            if (resident == null)
+            if (resident?.GraduateYr == null)
             {
                 return NotFound();
             }
 
             HospitalRole role = HospitalRole.Unassigned;
-            int monthIndex = (DateTime.Now.Month + 5) % 12;
 
-            if (resident.HospitalRoleProfile is { } profile)
+            if (resident.GraduateYr.Value is 1 or 2)
             {
-                int pgyLevel = resident.GraduateYr;
+                int year = DateTime.Now.AcademicYear;
+                MonthOfYear month = MonthOfYearExtensions.FromCalendarIndex(DateTime.Now.Month, false);
+                RotationType? type = await _context.Rotations
+                    .Where(r =>
+                        r.ResidentId == residentId
+                        && r.AcademicYear == year
+                        && r.AcademicMonthIndex == month
+                    )
+                    .Select(r => r.RotationType)
+                    .FirstOrDefaultAsync();
 
-                if (pgyLevel == 1 && profile >= 0 && profile < HospitalRole.Pgy1Profiles.Length)
+                if (type != null)
                 {
-                    role = HospitalRole.Pgy1Profiles[profile][monthIndex];
-                }
-                else if (pgyLevel == 2)
-                {
-                    int pgy2Index = profile - 8;
-                    if (pgy2Index >= 0 && pgy2Index < HospitalRole.Pgy2Profiles.Length)
-                    {
-                        role = HospitalRole.Pgy2Profiles[pgy2Index][monthIndex];
-                    }
+                    role = _rotationTypeConverter.CreateHospitalRoleFromRotationType(type);
                 }
             }
 
-            dashboardData.CurrentRotation = role.name;
+            dashboardData.CurrentRotation = role.Name;
 
             if (role != HospitalRole.Unassigned)
             {

@@ -18,7 +18,7 @@ public class RotationConverter(RotationTypeConverter rotationTypeConverter)
             ScheduleId = rotation.Pgy4RotationScheduleId,
             Month = rotation.Month,
             AcademicYear = rotation.AcademicYear,
-            AcademicMonthIndex = rotation.AcademicMonthIndex,
+            AcademicMonthIndex = rotation.AcademicMonthIndex.ToAcademicIndex(),
             PgyYear = rotation.PgyYear,
             RotationType = rotationTypeConverter.CreateRotationTypeResponse(rotation.RotationType),
         };

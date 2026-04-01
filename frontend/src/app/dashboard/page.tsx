@@ -16,7 +16,7 @@ import {
   SidebarSeparator,
 } from "../../components/ui/sidebar";
 import { SidebarUserCard } from "./components/SidebarUserCard";
-import { Repeat, CalendarDays, CalendarX, UserCheck, Shield, Settings, Home, LogOut, User as UserIcon, ChevronDown, Moon, Sun, ClipboardList, CalendarRange, Calendar1 } from "lucide-react"; // kept CalendarX from main
+import { Repeat, CalendarDays, CalendarX, UserCheck, Shield, Settings, Home, LogOut, User as UserIcon, ChevronDown, Moon, Sun, ClipboardList, CalendarRange, Calendar1, LayoutList } from "lucide-react";
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { useRouter } from "next/navigation";
 import { toast } from '../../lib/use-toast';
@@ -41,6 +41,7 @@ import PGY3RotationFormPage from "./components/PGY3RotationFormPage";
 import PGY4RotationPage from "./components/PGY4RotationPage";
 import PGY4SchedulePage from "../dashboard/pgy4-schedule/page";
 import SchedulesPage from "./components/SchedulesPage";
+import PGY12RotationPage from "./components/PGY12RotationPage";
 
 import MobileHeader from "./components/MobileHeader";
 import MobileUserMenu from "./components/MobileUserMenu";
@@ -87,6 +88,8 @@ interface ScheduleItem {
 const menuItems: MenuItem[] = [
   { title: "Home", icon: <Home className="w-6 h-6 mr-3" /> },
   { title: "Calendar", icon: <CalendarDays className="w-6 h-6 mr-3" /> },
+  { title: "Schedules", icon: <LayoutList className="w-6 h-6 mr-3" /> },
+  { title: "Rotations", icon: <CalendarRange className="w-6 h-6 mr-3" /> },
   { title: "Swap Calls", icon: <Repeat className="w-6 h-6 mr-3" /> },
   { title: "Request Off", icon: <CalendarX className="w-6 h-6 mr-3" /> },
   { title: "Check My Schedule", icon: <UserCheck className="w-6 h-6 mr-3" /> },
@@ -1104,6 +1107,19 @@ case "Home":
           />
         );
 
+      case "Rotations":
+        if (!isAdmin) {
+          return (
+            <div className="w-full pt-4 flex flex-col items-center">
+              <h1 className="text-2xl font-bold mb-6">Access Denied</h1>
+              <p className="text-center text-gray-600 dark:text-gray-400">
+                You do not have permission to access this page.
+              </p>
+            </div>
+          );
+        }
+        return <PGY12RotationPage />;
+
       case "PGY-4 Rotation Form":
         return (
           <PGY3RotationFormPage
@@ -1127,7 +1143,7 @@ case "Home":
         return <PGY4SchedulePage />;
       
       case "PGY-4 Rotations":
-          if (!isAdmin) {
+        if (!isAdmin) {
           return (
             <div className="w-full pt-4 flex flex-col items-center">
               <h1 className="text-2xl font-bold mb-6">Access Denied</h1>
@@ -1228,6 +1244,7 @@ case "Home":
     if (item.title === "Check My Schedule") return !isAdmin; // residents only
     if (item.title === "Swap Calls") return !isAdmin; // residents only
     if (item.title === "Schedules") return isAdmin; // admin only
+    if (item.title === "Rotations") return isAdmin; // admin only
     if (item.title === "PGY-4 Rotation Form") return currentUserPGY === 3; // pgy3 resident only
     if (item.title === "PGY-4 Schedule") return currentUserPGY === 4; // pgy4 resident only
     if (item.title === "PGY-4 Rotations") return isAdmin; // admin only
@@ -1243,7 +1260,7 @@ case "Home":
     {
       label: "PGY 1-3 Residents",
       showLabel: isAdmin,
-      items: ["Calendar", "Request Off", "Check My Schedule", "Swap Calls", "Schedules"],
+      items: ["Calendar", "Request Off", "Check My Schedule", "Swap Calls", "Schedules", "Rotations"],
     },
     {
       label: "PGY 4 Residents",

@@ -9,10 +9,10 @@ public static class MonthOfYearExtensions
 
     public static MonthOfYear FromCalendarIndex(int index, bool wrap) => (MonthOfYear)
     (wrap
-        ? index % 12
-        : index > 11
+        ? index - 1 % 12
+        : index - 1 > 11
             ? throw new ArgumentException("Invalid wrap")
-            : index
+            : index - 1
     );
     public static MonthOfYear FromAcademicIndex(int index, bool wrap) => (MonthOfYear)
         (((wrap
