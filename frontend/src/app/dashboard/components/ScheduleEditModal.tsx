@@ -453,7 +453,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
             <option value="">Select a Resident</option>
             {sortedResidents.filter(r => r.resident_id !== excludeResidentId).map(r => (
               <option key={r.resident_id} value={r.resident_id}>
-                {r.first_name} {r.last_name} (PGY{r.graduate_yr})
+                {r.first_name} {r.last_name}
               </option>
             ))}
           </select>
