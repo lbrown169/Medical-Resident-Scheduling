@@ -52,9 +52,11 @@ export const SubmissionViewDialog: React.FC<SubmissionViewDialogProps> = ({
     additionalNotes: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
 
   const fetchPreferences = useCallback(async () => {
     setIsLoading(true);
+    setFetchError(false);
     try {
       const response = await fetch(
         `${config.apiUrl}/api/residents/preferences/${residentId}`
@@ -75,15 +77,7 @@ export const SubmissionViewDialog: React.FC<SubmissionViewDialogProps> = ({
       });
     } catch (err) {
       console.error("Error fetching preferences:", err);
-      // Mock data for development - remove in production
-      setPreferences({
-        residentId: residentId,
-        residentName: residentName,
-        priorities: ["Inpatient Psychiatry", "Consult", "IOP", "Forensic", "", "", "", ""],
-        alternatives: ["VA", "TMS", ""],
-        avoids: ["Addiction", "", ""],
-        additionalNotes: "I would prefer to have my Inpatient rotation in the fall semester if possible.",
-      });
+      setFetchError(true);
     } finally {
       setIsLoading(false);
     }
@@ -148,6 +142,10 @@ const FieldCard = ({ value, label }: { value: string; label: string }) => (
         <div className="flex-1 overflow-y-auto px-8 py-6">
           {isLoading ? (
             <div className="text-center py-10 text-gray-500">Loading preferences...</div>
+          ) : fetchError ? (
+            <div className="text-center py-10 text-red-500">
+              Failed to load preferences. Please close and try again.
+            </div>
           ) : (
             <>
               {/* Priorities Section */}
