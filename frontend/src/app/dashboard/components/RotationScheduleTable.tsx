@@ -223,33 +223,6 @@ export const RotationScheduleTable: React.FC<RotationScheduleTableProps> = ({
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [tableHeight, setTableHeight] = useState(0);
 
-	return (
-		<div className="max-h-[calc(100vh-12rem)] overflow-y-auto w-full">
-			<table className="w-full table-fixed divide-y divide-gray-200 dark:divide-gray-700">
-				<thead className="bg-gray-100 dark:bg-neutral-800">
-					<tr>
-						<th className="px-2 py-2 text-left font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-100 dark:bg-neutral-800" style={{ fontSize: "clamp(8px, 0.7vw, 12px)" }}>
-							Residents
-						</th>
-						{ACADEMIC_MONTHS.map(month => (
-							<th key={month} className="px-1 py-2 text-center font-medium text-gray-500 uppercase tracking-wider" style={{ fontSize: "clamp(8px, 0.7vw, 12px)" }}>
-								{month}
-							</th>
-						))}
-					</tr>
-				</thead>
-				<tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
-					{schedule.length === 0 ? (
-						<tr>
-							<td colSpan={13} className="px-6 py-4 text-center text-gray-500 italic">
-								No rotations found. Use the &quot;Copy&quot; button above to copy a rotation schedule.
-							</td>
-						</tr>
-					) : (
-						schedule.map(residentSchedule => {
-							const { resident, rotations } = residentSchedule;
-							const shortName = `${resident.first_name} ${resident.last_name.charAt(0)}.`;
-
   useLayoutEffect(() => {
     if (tableContainerRef.current) {
       setTableHeight(tableContainerRef.current.clientHeight);
@@ -285,7 +258,7 @@ export const RotationScheduleTable: React.FC<RotationScheduleTableProps> = ({
         <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
           {sortedSchedule.length === 0 ? (
             <tr>
-              <td colSpan={13} className="px-6 py-4 text-center text-gray-500 italic">No schedule generated yet.</td>
+              <td colSpan={13} className="px-6 py-4 text-center text-gray-500 italic">No rotations found. Use the &quot;Copy&quot; button above to copy a rotation schedule.</td>
             </tr>
           ) : (
             sortedSchedule.map((residentSchedule, rowIndex) => {
