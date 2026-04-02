@@ -602,7 +602,8 @@ function Dashboard() {
         description: `Vacation request group ${groupId} has been approved.`,
       });
   
-      fetchMyTimeOffRequests(); //refresh UI
+      fetchMyTimeOffRequests();
+      fetchResidents();
     } catch (err) {
       console.error("Error approving vacation request group:", err);
       toast({
@@ -634,7 +635,8 @@ function Dashboard() {
         description: `Vacation request group ${groupId} has been denied.`,
       });
   
-      fetchMyTimeOffRequests(); //refresh UI
+      fetchMyTimeOffRequests();
+      fetchResidents();
     } catch (err) {
       console.error("Error denying vacation request group:", err);
       toast({

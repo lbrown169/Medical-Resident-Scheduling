@@ -415,12 +415,24 @@ const VacationRequestsTab: React.FC<VacationRequestsTabProps> = ({ handleApprove
               <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 {request.status === "Pending" && (
                   <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
-                    <Button variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-500 hover:text-white w-full sm:w-auto" onClick={() => handleApproveRequest(request.groupId || '')}>
-                      <Check className="h-4 w-4 mr-2" /> Approve
-                    </Button>
-                    <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white w-full sm:w-auto" onClick={() => handleDenyRequest(request.groupId || '')}>
-                      <X className="h-4 w-4 mr-2" /> Deny
-                    </Button>
+                    <ConfirmDialog
+                      triggerText={<><Check className="h-4 w-4 mr-1" /> Approve</>}
+                      className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md border border-green-600 text-green-600 hover:bg-green-500 hover:text-white bg-transparent shadow-none"
+                      title="Approve this request?"
+                      message={`Approve time off for ${request.firstName} ${request.lastName}?`}
+                      confirmText="Approve"
+                      cancelText="Cancel"
+                      onConfirm={async () => { await Promise.resolve(handleApproveRequest(request.groupId || '')); fetchVacations(); }}
+                    />
+                    <ConfirmDialog
+                      triggerText={<><X className="h-4 w-4 mr-1" /> Deny</>}
+                      className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md border border-red-600 text-red-600 hover:bg-red-500 hover:text-white bg-transparent shadow-none"
+                      title="Deny this request?"
+                      message={`Deny time off for ${request.firstName} ${request.lastName}?`}
+                      confirmText="Deny"
+                      cancelText="Cancel"
+                      onConfirm={async () => { await Promise.resolve(handleDenyRequest(request.groupId || '')); fetchVacations(); }}
+                    />
                   </div>
                 )}
               </td>
@@ -686,6 +698,7 @@ const ResidentInfoTab: React.FC<ResidentInfoTabProps> = ({ residents, onRefreshR
         throw new Error(msg || 'Failed to update PGY');
       }
       toast({ title: 'PGY updated', description: `Resident set to PGY ${newPGY}.`, variant: 'success' });
+      onRefreshResidents?.();
     } catch (error) {
       setResidentRows(prev => prev.map(r => r.id === residentId ? { ...r, pgyLevel: residents.find(x => x.id === residentId)?.pgyLevel ?? r.pgyLevel } : r));
       toast({ title: 'Update failed', description: (error as Error)?.message || 'Could not update PGY.', variant: 'destructive' });
