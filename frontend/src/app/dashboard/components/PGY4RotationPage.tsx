@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import RotationForm from "./RotationForm";
 
-// individual responses
+// Individual responses
 interface RotationPrefResponse {
   rotationPrefRequestId: string;
 
@@ -55,13 +55,13 @@ interface RotationPrefResponse {
   additionalNotes?: string;
 }
 
-// check how many submissions exist
+// Check how many submissions exist
 interface RotationPrefRequestsListResponse {
   count: number;
   rotationPrefRequests: RotationPrefResponse[];
 }
 
-// schedule api types
+// Schedule api types
 interface RotationTypeResponse {
   rotationTypeId: string;
   rotationName: string;
@@ -71,7 +71,7 @@ interface RotationResponse {
   rotationId: string;
   scheduleId?: string;
   month: string;
-  academicMonthIndex: number; // july is 0, so on and so forth
+  academicMonthIndex: number; // July is 0, so on and so forth
   pgyYear: number;
   rotationType: RotationTypeResponse;
 }
