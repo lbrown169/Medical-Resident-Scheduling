@@ -1,33 +1,18 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import {
-  CalendarRange,
-  Users,
-  UserX,
-  CalendarClock,
-  Trash2,
-  Save,
-  Download,
-  X,
-  ClipboardList,
-  ChevronDown,
-} from "lucide-react";
- 
 import { config } from "../../../config";
+import React, { useState, useEffect } from "react";
+
+
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { ConfirmDialog } from "../../../components/ui/confirm-dialog";
 import { toast } from "../../../lib/use-toast";
 import { SubmissionViewDialog } from "./SubmissionViewDialog";
 import { RotationScheduleTable } from "./RotationScheduleTable";
-import RotationForm from "./RotationForm";
 
-// schedule api types
-interface RotationTypeResponse {
-	rotationTypeId: string;
-	rotationName: string;
-}
+import { CalendarRange, Users, UserX, CalendarClock, Trash2, Save, Download, X, ClipboardList, ChevronDown } from "lucide-react";
+import RotationForm from "./RotationForm";
 
 // individual responses
 interface RotationPrefResponse {
@@ -60,10 +45,17 @@ interface RotationPrefResponse {
   	additionalNotes?: string;
 }
 
+
 // check how many submissions exist
 interface RotationPrefRequestsListResponse {
   count: number;
   rotationPrefRequests: RotationPrefResponse[];
+}
+
+// schedule api types
+interface RotationTypeResponse {
+	rotationTypeId: string;
+	rotationName: string;
 }
 
 interface RotationResponse {
@@ -119,18 +111,6 @@ interface RotationTypesListResponse {
 	rotationTypes: RotationTypeApiResponse[];
 }
 
-interface PGY4RotationScheduleProps {
-	residents: { 
-		id: string; 
-		name: string; 
-		email: string; 
-		pgyLevel: number | string ; 
-		chiefType: string;
-	}[];
-
-}
-
-type ActiveTab = 'schedule' | 'submissions' | 'configure';
 
 // Passed into RotationScheduleTable as colorMap
 const rotationColorMap: Record<string, string> = {
@@ -161,6 +141,11 @@ const parseLocalDate = (iso: string) => {
 	return new Date(year, month - 1, day);
 };
 
+interface PGY4RotationScheduleProps {
+	residents: { id: string; name: string; email: string; pgyLevel: number | string ; chiefType: string}[];
+
+}
+
 function Modal({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: React.ReactNode }) {
 	if (!open) return null;
 	return (
@@ -175,43 +160,23 @@ function Modal({ open, onClose, title, children }: { open: boolean; onClose: () 
 }
 
 const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
-	residents,
+	residents
+
 }) => {
-	const currentYear = new Date().getFullYear();
-	//Tab state
-	const [activeTab, setActiveTab] = useState<ActiveTab>('schedule');
+	const [activeTab, setActiveTab] = useState<'schedule' | 'submissions' | 'configure'>('schedule');
 	// Submission window state
 	const [windowAvailableDate, setWindowAvailableDate] = useState<string>("");
 	const [windowDueDate, setWindowDueDate] = useState<string>("");
 	const [savingWindow, setSavingWindow] = useState(false);
 	const [windowSaveError, setWindowSaveError] = useState<string | null>(null);
+	const currentYear = new Date().getFullYear();
+	const [selectedYear] = useState<number>(currentYear);
 
-	const deadline = windowDueDate
-		? (() => {
-			const date = parseLocalDate(windowDueDate);
-			date.setHours(23, 59, 59, 999); // Set to 11:59:59 PM local time
-			return date;
-		})()
-		: null;
-
-	// Helper to map RotationPrefResponse to ResidentPreference
-	const toPreference = (s: RotationPrefResponse) => ({
-		residentId: s.resident.resident_id,
-		residentName: `${s.resident.first_name} ${s.resident.last_name}`,
-		priorities: [
-			...s.priorities.map(p => p.rotationName),
-			...Array(Math.max(0, 8 - s.priorities.length)).fill(""),
-		],
-		alternatives: [
-			...s.alternatives.map(a => a.rotationName),
-			...Array(Math.max(0, 3 - s.alternatives.length)).fill(""),
-		],
-		avoids: [
-			...s.avoids.map(a => a.rotationName),
-			...Array(Math.max(0, 3 - s.avoids.length)).fill(""),
-		],
-		additionalNotes: s.additionalNotes ?? "",
-	});
+	let deadline = null;
+	if (windowDueDate) {
+		deadline = parseLocalDate(windowDueDate);
+		deadline.setHours(23, 59, 59, 999); // Set to 11:59:59 PM local time
+	}
 
 	// Schedule state
 	const [schedules, setSchedules] = useState<Pgy4RotationScheduleResponse[]>([]);
@@ -223,114 +188,168 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 
 	const selectedSchedule = schedules.find(s => s.pgy4RotationScheduleId === selectedScheduleId) ?? null;
 
-	// Submission state
+	// State for viewing a resident's rotation
+	// State for viewing a resident's rotation — handled inside RotationScheduleTable
+
+	// State for viewing form creation
+	const [showRotationFormModal, setShowRotationFormModal] = useState(false);
+
+	// Submission
 	const [submissions, setSubmissions] = useState<RotationPrefResponse[]>([]);
 	const [loadingSubmissions, setLoadingSubmissions] = useState(false);
-	const [deletingSubmission, setDeletingSubmission] = useState<string | null>(null);
 
-	// Submission view dialog state
+	// State for viewing a resident's submission
 	const [viewDialogOpen, setViewDialogOpen] = useState(false);
 	const [viewResident, setViewResident] = useState<RotationPrefResponse | null>(null);
 
-	// Rotation form modal state
-	const [showRotationFormModal, setShowRotationFormModal] = useState(false);
-	const [formOverrideResidentId, setFormOverrideResidentId] = useState<string | null>(null);
-	
-	// Cheif type state(Local overrides for chief types)
-	const [chiefTypeOverrides, setChiefTypeOverrides] = useState<Record<string, string>>({});
+	const handleViewSubmission = (submission: RotationPrefResponse) => {
+		setViewResident(submission);
+		setViewDialogOpen(true);
+	};
+
+	// State for submission deletion, used in handleDeleteSubmission for loading tracking
+	const [deletingSubmission, setDeletingSubmission] = useState<string | null>(null);
+
+	// Config Tab, setSwitchingChiefType used in handleSwitchChiefType
 	const [switchingChiefType, setSwitchingChiefType] = useState<string | null>(null);
+
+	// Local overrides for chief types
+	// "residents" is a prop so it won't rerender on its own
+	const [chiefTypeOverrides, setChiefTypeOverrides] = useState<Record<string, string>>({});
+
+	const handleSwitchChiefType = async (
+		resident: { id: string; name: string; chiefType: string },
+		newChiefType: string
+	) => {
+		// Don't do anything if the role hasn't actually changed
+		const currentChiefType = chiefTypeOverrides[resident.id] ?? resident.chiefType;
+		if (currentChiefType === newChiefType) return;
+
+		setSwitchingChiefType(resident.id);
+		try {
+			const res = await fetch(`${config.apiUrl}/api/pgy4-chief/${resident.id}`, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ ChiefType: newChiefType || "None" }),
+			});
+
+			if (res.ok) {
+				toast({
+					variant: "success",
+					title: "Chief Type Updated",
+					description: `${resident.name} has been set to ${newChiefType || "None"}.`,
+				});
+				// Update local override so dropdown reflects immediately
+				setChiefTypeOverrides(prev => ({ ...prev, [resident.id]: newChiefType }));
+			} else {
+				const error = await res.text();
+				toast({
+					variant: "destructive",
+					title: "Error",
+					description: error || "Failed to switch user chief type.",
+				});
+			}
+		} catch (error) {
+			console.error('Error switching user chief role:', error);
+			toast({
+				variant: "destructive",
+				title: "Error",
+				description: "Failed to switch user chief type. Please try again.",
+			});
+		} finally {
+			setSwitchingChiefType(null);
+		}
+	};
+	const [formOverrideResidentId, setFormOverrideResidentId] = useState<string | null>(null);
+
+	// Helper to map RotationPrefResponse to ResidentPreference
+	// Use spread to unpack elements
+	const toPreference = (s: RotationPrefResponse) => ({
+	residentId: s.resident.resident_id,
+	residentName: `${s.resident.first_name} ${s.resident.last_name}`,
+	priorities: [
+		...s.priorities.map(p => p.rotationName),
+		...Array(Math.max(0, 8 - s.priorities.length)).fill(""),
+	],
+	alternatives: [
+		...s.alternatives.map(a => a.rotationName),
+		...Array(Math.max(0, 3 - s.alternatives.length)).fill(""),
+	],
+	avoids: [
+		...s.avoids.map(a => a.rotationName),
+		...Array(Math.max(0, 3 - s.avoids.length)).fill(""),
+	],
+	additionalNotes: s.additionalNotes ?? "",
+	});
+
 
 	// Extract only PGY-3 residents
 	const PGY3Residents = residents.filter (resident =>
 		resident.pgyLevel === 3 || resident.pgyLevel === '3'
 	);
+
+	// Submission tracking
 	const submittedCount = submissions.length;
 	const missingCount = PGY3Residents.length - submittedCount;
 
-	// Load all PGY-4 rotation schedules and select the published one by default.
-	const loadSchedules = async () => {
-		try {
-			setLoadingSchedules(true);
-			setScheduleError(null);
-			const res = await fetch(`${config.apiUrl}/api/pgy4-rotation-schedule`);
-			if (!res.ok) throw new Error("Failed to fetch schedules");
-			const data: Pgy4RotationSchedulesListResponse = await res.json();
-			const list = data.schedules ?? [];
-			setSchedules(list);
-			const published = list.find(s => s.isPublished);
-			setSelectedScheduleId(published?.pgy4RotationScheduleId ?? list[0]?.pgy4RotationScheduleId ?? "");
-		} catch (err) {
-			console.error(err);
-			setScheduleError("Failed to load schedules.");
-		} finally {
-			setLoadingSchedules(false);
-		}
-	};
-
-	// Load rotation types for PGY-4, filtered to those with a known color.
-	const loadRotationTypes = async () => {
-		try {
-			const res = await fetch(`${config.apiUrl}/api/rotation-types?pgyYear=4`);
-			if (!res.ok) throw new Error("Failed to fetch rotation types");
-			const data: RotationTypesListResponse = await res.json();
-			// Filter out no colors.
-			// !! This will need to change if we add rotation name swapping. Colors may need to be stored.
-			const known = Object.keys(rotationColorMap);
-			setRotationTypeNames(
-				data.rotationTypes
-					.filter(rt => known.includes(rt.rotationName))
-					.map(rt => ({ id: rt.rotationTypeId, name: rt.rotationName }))
-			);
-		} catch (err) {
-			console.error("Failed to load rotation types", err);
-			setRotationTypeNames(Object.keys(rotationColorMap).map(name => ({ id: name, name })));
-		}
-	};
-	
-	// Load the current submission window dates.
-	const loadSubmissionWindow = async () => {
-		try {
-			const res = await fetch(`${config.apiUrl}/api/rotation-request-submission-window`);
-			if (!res.ok) return;
-			const data = await res.json();
-			// Splice iso strings
-			if (data.availableDate) setWindowAvailableDate(data.availableDate.slice(0, 10));
-			if (data.dueDate) setWindowDueDate(data.dueDate.slice(0, 10));
-		} catch {
-			// Stay empty
-		}
-	};
-
-	// Load all rotation preference submissions.
-	const loadSubmissions = async () => {
-		try {
-			setLoadingSubmissions(true);
-
-			const res = await fetch(
-				`${config.apiUrl}/api/rotation-pref-request`
-			);
-
-			if (!res.ok) throw new Error("Failed to fetch submissions");
-
-			const data: RotationPrefRequestsListResponse = await res.json();
-
-			setSubmissions(data.rotationPrefRequests ?? []);
-		} catch (err) {
-			console.error("Failed to load submissions", err);
-		} finally {
-			setLoadingSubmissions(false);
-		}
-	};
-
-	// Load all data on mount 
+	// Load schedules and rotation types on mount
 	useEffect(() => {
-		loadSchedules ();
-		loadRotationTypes ();
-		loadSubmissionWindow ();
-		loadSubmissions(); 
+		const loadSchedules = async () => {
+			try {
+				setLoadingSchedules(true);
+				setScheduleError(null);
+				const res = await fetch(`${config.apiUrl}/api/pgy4-rotation-schedule`);
+				if (!res.ok) throw new Error("Failed to fetch schedules");
+				const data: Pgy4RotationSchedulesListResponse = await res.json();
+				const list = data.schedules ?? [];
+				setSchedules(list);
+				const published = list.find(s => s.isPublished);
+				setSelectedScheduleId(published?.pgy4RotationScheduleId ?? list[0]?.pgy4RotationScheduleId ?? "");
+			} catch (err) {
+				console.error(err);
+				setScheduleError("Failed to load schedules.");
+			} finally {
+				setLoadingSchedules(false);
+			}
+		};
+
+		const loadRotationTypes = async () => {
+			try {
+				const res = await fetch(`${config.apiUrl}/api/rotation-types?pgyYear=4`);
+				if (!res.ok) throw new Error("Failed to fetch rotation types");
+				const data: RotationTypesListResponse = await res.json();
+				// Filter out no colors.
+				// !! This will need to change if we add rotation name swapping. Colors may need to be stored.
+				const known = Object.keys(rotationColorMap);
+				setRotationTypeNames(
+					data.rotationTypes
+						.filter(rt => known.includes(rt.rotationName))
+						.map(rt => ({ id: rt.rotationTypeId, name: rt.rotationName }))
+				);
+			} catch (err) {
+				console.error("Failed to load rotation types", err);
+				setRotationTypeNames(Object.keys(rotationColorMap).map(name => ({ id: name, name })));
+			}
+		};
+
+		const loadSubmissionWindow = async () => {
+			try {
+				const res = await fetch(`${config.apiUrl}/api/rotation-request-submission-window`);
+				if (!res.ok) return;
+				const data = await res.json();
+				// Splice iso strings
+				if (data.availableDate) setWindowAvailableDate(data.availableDate.slice(0, 10));
+				if (data.dueDate) setWindowDueDate(data.dueDate.slice(0, 10));
+			} catch {
+				// Stay empty
+			}
+		};
+
+		loadSchedules();
+		loadRotationTypes();
+		loadSubmissionWindow();
 	}, []);
 
-	//Handlers - Schedule
 	const handleGenerate = async () => {
 		try {
 			setGenerating(true);
@@ -395,51 +414,50 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 		}
 	};
 
-	// Handlers - Submissions
-	const handleViewSubmission = (submission: RotationPrefResponse) => {
-		setViewResident(submission);
-		setViewDialogOpen(true);
-	};
-
 	const handleDeleteSubmission = async (submissionId: string) => {
 		setDeletingSubmission(submissionId);
+
 		try {
 			const res = await fetch(`${config.apiUrl}/api/rotation-pref-request/${submissionId}`, {
 				method: 'DELETE',
 			});
 			if (!res.ok) {
 				const errorText = await res.text();
-    			throw new Error(`Failed to delete: ${res.status} ${errorText}`);
+    throw new Error(`Failed to delete: ${res.status} ${errorText}`);
 			}
+
 			// Refresh submissions
 			const data = await fetch(`${config.apiUrl}/api/rotation-pref-request`)
 			if (!data.ok) throw new Error("Failed to fetch submissions");
-   			const json: RotationPrefRequestsListResponse = await data.json();
-   			setSubmissions(json.rotationPrefRequests ?? []);
+   const json: RotationPrefRequestsListResponse = await data.json();
+   setSubmissions(json.rotationPrefRequests ?? []);
+
 			toast({
-				variant: "success", 
-				title: "Deleted", 
-				description: "Submission has been deleted.",
-			});
+      variant: "success",
+      title: "Deleted",
+      description: "Submission has been deleted.",
+    });
+
 		} catch (error) {
 			console.error('Delete submission eorr:', error);
 			toast({
-				variant: "destructive", 
-				title: "Error", 
-				description: "Failed to delete submission.",
-			});
+      variant: "destructive",
+      title: "Error",
+      description: "Failed to delete submission.",
+    });
 		} finally {
 			setDeletingSubmission(null);
 		}
+	
 	};
 
 	const handleDeleteAllSubmissions = async () => {
 		try {
 			const res = submissions.map(submission =>
-    			fetch(`${config.apiUrl}/api/rotation-pref-request/${submission.rotationPrefRequestId}`, {
-     				method: 'DELETE',
-     			})
-    		);
+    fetch(`${config.apiUrl}/api/rotation-pref-request/${submission.rotationPrefRequestId}`, {
+     method: 'DELETE',
+     })
+    );
 			await Promise.all(res);
 
 			const data = await fetch(`${config.apiUrl}/api/rotation-pref-request`);
@@ -451,7 +469,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 					title: "Cleared",
 					description: "All submissions have been deleted.",
 			});
-  		} catch (error) {
+  } catch (error) {
 			console.error('Clear submissions error:', error);
 			toast({
 					variant: "destructive",
@@ -459,23 +477,21 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 					description: "Failed to clear submissions.",
 			});
 		}
-	};
-
+	}
 	const handleRotationFormSuccess = async () => {
-		const resident = PGY3Residents.find(r => r.id === formOverrideResidentId);
-		setShowRotationFormModal(false);
-		const refreshRes = await fetch(`${config.apiUrl}/api/rotation-pref-request`);
-		if (!refreshRes.ok) return;
-		const json: RotationPrefRequestsListResponse = await refreshRes.json();
-		setSubmissions(json.rotationPrefRequests ?? []);
-		toast({
-		  variant: "success",
-		  title: "Submitted",
-		  description: `Rotation preference for ${resident?.name ?? "Unknown"} submitted.`,
-		});
+  const resident = PGY3Residents.find(r => r.id === formOverrideResidentId);
+  setShowRotationFormModal(false);
+  const refreshRes = await fetch(`${config.apiUrl}/api/rotation-pref-request`);
+  if (!refreshRes.ok) return;
+  const json: RotationPrefRequestsListResponse = await refreshRes.json();
+  setSubmissions(json.rotationPrefRequests ?? []);
+  toast({
+    variant: "success",
+    title: "Submitted",
+    description: `Rotation preference for ${resident?.name ?? "Unknown"} submitted.`,
+  });
 	};
 
-	//Handlers - Configuration 
 	const handleSaveSubmissionWindow = async () => {
 		setSavingWindow(true);
 		setWindowSaveError(null);
@@ -494,11 +510,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 				setWindowSaveError(messages || "Failed to save submission window.");
 				return;
 			}
-			toast({ 
-				variant: "success", 
-				title: "Saved", 
-				description: "Submission window updated.",
-			});
+			toast({ variant: "success", title: "Saved", description: "Submission window updated." });
 		} catch {
 			setWindowSaveError("Failed to save submission window.");
 		} finally {
@@ -506,51 +518,30 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 		}
 	};
 
-	const handleSwitchChiefType = async (
-		resident: { id: string; name: string; chiefType: string },
-		newChiefType: string
-	) => {
-		// Don't do anything if the role hasn't actually changed
-		const currentChiefType = chiefTypeOverrides[resident.id] ?? resident.chiefType;
-		if (currentChiefType === newChiefType) return;
+	useEffect(() => {
+		const loadSubmissions = async () => {
+			try {
+				setLoadingSubmissions(true);
 
-		setSwitchingChiefType(resident.id);
-		try {
-			const res = await fetch(`${config.apiUrl}/api/pgy4-chief/${resident.id}`, {
-				method: 'PATCH',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ ChiefType: newChiefType || "None" }),
-			});
+				const res = await fetch(
+					`${config.apiUrl}/api/rotation-pref-request`
+				);
 
-			if (res.ok) {
-				toast({
-					variant: "success",
-					title: "Chief Type Updated",
-					description: `${resident.name} has been set to ${newChiefType || "None"}.`,
-				});
-				// Update local override so dropdown reflects immediately
-				setChiefTypeOverrides(prev => ({ ...prev, [resident.id]: newChiefType }));
-			} else {
-				const error = await res.text();
-				toast({
-					variant: "destructive",
-					title: "Error",
-					description: error || "Failed to switch user chief type.",
-				});
+				if (!res.ok) throw new Error("Failed to fetch submissions");
+
+				const data: RotationPrefRequestsListResponse = await res.json();
+
+				setSubmissions(data.rotationPrefRequests ?? []);
+			} catch (err) {
+				console.error("Failed to load submissions", err);
+			} finally {
+				setLoadingSubmissions(false);
 			}
-		} catch (error) {
-			console.error('Error switching user chief role:', error);
-			toast({
-				variant: "destructive",
-				title: "Error",
-				description: "Failed to switch user chief type. Please try again.",
-			});
-		} finally {
-			setSwitchingChiefType(null);
-		}
-	};
+		};
 
-	//Renders	
+		loadSubmissions();
+	}, []);
+
 	return (
 		<div className="w-full pt-4 h-[calc(100vh-4rem)] flex flex-col items-center px-4 md:pl-8">
 			{/* Rotation Dashboard Overview Card*/}
@@ -559,10 +550,8 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 					<CalendarRange className="w-6 h-6 text-blue-600" />
 					PGY-4 Rotation Dashboard
 				</h2>
-
 				<div className="flex flex-col md:flex-row items-center w-full justify-between gap-4">
 					<div />
-
 					<div className="flex flex-col sm:flex-row gap-4 md:gap-8 items-center">
 						<div className="flex flex-col items-center">
 							<div className="flex items-center gap-2 mb-1">
@@ -571,8 +560,6 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 							</div>
 							<span className="text-xs text-gray-500">Submitted</span>
 						</div>
-
-						{/* Missing count */}
 						<div className="flex flex-col items-center border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-700 pt-4 sm:pt-0 sm:pl-8">
 							<div className="flex items-center gap-2 mb-1">
 								<UserX className="w-5 h-5 text-red-500" />
@@ -580,8 +567,6 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 							</div>
 							<span className="text-xs text-gray-500">Missing</span>
 						</div>
-
-						{/*deadline*/}
 						<div className="flex flex-col items-center border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-700 pt-4 sm:pt-0 sm:pl-8">
 							<div className="flex items-center gap-2 mb-1">
 								<CalendarClock className="w-5 h-5 text-yellow-500" />
@@ -593,27 +578,26 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 							</div>
 							<span className="text-xs text-gray-500">Submission Deadline</span>
 						</div>
-
-
 						<div className="h-6 sm:h-10 border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-700 mx-0 sm:mx-4 lg:mx-6 hidden sm:block" />
-						<div className="flex items-center"/>
+						<div className="flex items-center">
+							<Button
+								onClick={handleGenerate}
+								disabled={generating || schedules.length >= 5}
+								className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl shadow"
+							>
+								{generating ? "Generating..." : `Generate ${selectedYear} - ${selectedYear + 1} Schedule`}
+							</Button>
+						</div>
 
-						{/* Generate Button */}	
-						<Button
-							onClick={handleGenerate}
-							disabled={generating || schedules.length >= 5}
-							className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl shadow"
-						>
-							{generating ? "Generating..." : `Generate ${currentYear} - ${currentYear + 1} Schedule`}
-						</Button>
-						
 						{/* Delete Schedule */}
 						<ConfirmDialog
-							triggerText={	
-								<span className="flex items-center justify-center">
-									<Trash2 className="h-4 w-4 mr-2" />
-									Delete Current Schedule
-								</span>	
+							triggerText={
+								<>
+									<span className="flex items-center justify-center">
+										<Trash2 className="h-4 w-4 mr-2" />
+										Delete Current Schedule
+									</span>
+								</>
 							}
 							title="Delete current schedule?"
 							message="This action cannot be undone."
@@ -626,8 +610,6 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 					</div>
 				</div>
 			</Card>
-
-			{/* Schedule error message */}
 			{scheduleError && (
 				<div className="w-full max-w-6xl mb-4 px-4 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-400">
 					{scheduleError}
@@ -658,7 +640,9 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 					Configure
 				</Button>
 			</div>
-	
+
+
+			
 			{/* Tab Content */}
 			<div className="w-full">
 				{activeTab === 'schedule' && (
@@ -708,6 +692,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 								}}
 							/>
 						)}
+						{/* Footer - Buttons at the bottom */}
 						<div className="flex justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
                     		<Button onClick={null} variant="outline" className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm lg:text-base">
                         		<Save className="h-4 w-4" />
@@ -721,7 +706,8 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 					</Card>
 				)}
 
-				{/* Submissions Tab */}
+
+
 				{activeTab === 'submissions' && (
 					<Card className="p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-4 mb-6 sm:mb-8 border border-gray-200 dark:border-gray-800">
 						<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
@@ -761,56 +747,57 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 											Loading...
 											</td>
 										</tr>
-										) : submissions.length === 0 ? (
-											<tr>
-                      							<td colSpan={3} className="px-6 py-4 text-center text-gray-500 italic">
-                        						No submissions yet.
-                      							</td>
-                    						</tr>
-                  						) : (
-											submissions.map((submission) => (
-												<tr
-													key={submission.rotationPrefRequestId}
-													className="hover:bg-gray-50 dark:hover:bg-neutral-800"
+										) : submissions.length > 0 ? (
+										submissions.map((submission) => (
+											<tr
+											key={submission.rotationPrefRequestId}
+											className="hover:bg-gray-50 dark:hover:bg-neutral-800"
+											>
+											<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+												{submission.resident?.first_name} {submission.resident?.last_name}
+											</td>
+											<td className="px-3 py-2 whitespace-nowrap text-sm font-medium">
+												<Button
+													variant="outline"
+													size="sm"
+													onClick={() => handleViewSubmission(submission) /* ! REPLACE WITH POP UP VIEWING WINDOW, this just confirm that it works (it does) */} 
 												>
-												<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-													{submission.resident?.first_name} {submission.resident?.last_name}
-												</td>
-												<td className="px-3 py-2 whitespace-nowrap text-sm font-medium">
-													<Button
-														variant="outline"
-														size="sm"
-														onClick={() => handleViewSubmission(submission) } 
-													>
-													View
-													</Button>
-												</td>
+												View
+												</Button>
+											</td>
 
-												<td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-													<Button
-														variant="outline"
-														size="sm"
-														className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white"
-														onClick={() => handleDeleteSubmission(submission.rotationPrefRequestId)}
-														disabled={deletingSubmission === submission.rotationPrefRequestId}
-													>
-													{deletingSubmission === submission.rotationPrefRequestId ? "Deleting..." : "Delete"}
-													</Button>
-												</td>
+											<td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+												<Button
+													variant="outline"
+													size="sm"
+													className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white"
+													onClick={() => handleDeleteSubmission(submission.rotationPrefRequestId)}
+													disabled={deletingSubmission === submission.rotationPrefRequestId}
+												>
+												{deletingSubmission === submission.rotationPrefRequestId ? "Deleting..." : "Delete"}
+												</Button>
+											</td>
 											</tr>
 										))
-									)}
+										) : (
+										<tr>
+											<td colSpan={4} className="px-6 py-4 text-center text-gray-500 italic">
+											No submissions yet.
+											</td>
+										</tr>
+										)}
 								</tbody>
 							</table>
 						</div>
 					</Card>
 				)}
 
-				{/* Configuration Tab */}
+
+
 				{activeTab === 'configure' && (
 					<Card className="p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-4 mb-6 sm:mb-8 border border-gray-200 dark:border-gray-800">
-						{/* Submission window */}
 						<h2 className="text-lg sm:text-xl font-bold">Settings</h2>
+						{/*Form Availabity Selection */}
 						<div className="grid grid-cols-2 items-start sm:items-end gap-6">
 							<div>
 								<label className="flex items-center text-sm font-semibold gap-2 mb-2">
@@ -838,7 +825,6 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 							{windowSaveError && (
 								<p className="col-span-2 text-sm text-red-600 dark:text-red-400">{windowSaveError}</p>
 							)}
-
 							<div className="flex flex-row gap-2">
 								<Button
 									onClick={handleSaveSubmissionWindow}
@@ -855,91 +841,92 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 									<ClipboardList className="h-4 w-4" />
 									Create Rotation Form
 								</Button>
-							</div>	
+							</div>
+							
 						</div>
 
-						{/* Chief selection */}
-						<h2 className="text-lg sm:text-xl font-bold mb-4">Chief Selection</h2>	
+						<h2 className="text-lg sm:text-xl font-bold mb-4">Chief Selection</h2>
+							
 						<div className="overflow-x-auto max-h-96 overflow-y-auto">
 							<table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-								
-								<thead className="sticky top-0 bg-gray-100 dark:bg-neutral-800">
-									<tr>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-										<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chief Type</th>
-									</tr>
-								</thead>
-								<tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
-									{PGY3Residents.length === 0 ? (
-										<tr>
-											<td colSpan={2} className="px-6 py-4 text-center text-gray-500 italic">
-										  	No PGY-3 residents found.
-											</td>
-									    </tr>
-									) : (
-									PGY3Residents.map((r) => (
-										<tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
-											<td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{r.name}</td>
-											<td className="px-6 py-4 whitespace-nowrap text-sm">
-												<select
-													value={chiefTypeOverrides[r.id] ?? r.chiefType ?? ""}
-													onChange={(e) => handleSwitchChiefType(r, e.target.value)}
-													disabled={switchingChiefType === r.id}
-													className="px-3 py-2 border border-border rounded-lg bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
-												>
-													<option value="">None</option>
-													<option value="Admin">Admin</option>
-													<option value="Clinic">Clinic</option>
-													<option value="Education">Education</option>
-													</select>
-												</td>
+									<thead className="sticky top-0 bg-gray-100 dark:bg-neutral-800">
+											<tr>
+													<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+													<th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Chief Type</th>
 											</tr>
-										))
-									)}
-								</tbody>
+									</thead>
+									<tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
+											{PGY3Residents.length > 0 ? (
+													PGY3Residents.map((r) => (
+															<tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
+																	<td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{r.name}</td>
+																	<td className="px-6 py-4 whitespace-nowrap text-sm">
+																			<select
+																				value={chiefTypeOverrides[r.id] ?? r.chiefType ?? ""}
+																				onChange={(e) => handleSwitchChiefType(r, e.target.value)}
+																				disabled={switchingChiefType === r.id}
+																				className="..." // The switching looked strange so we just disable the dropdown for a second
+																			>
+																				<option value="">None</option>
+																				<option value="Admin">Admin</option>
+																				<option value="Clinic">Clinic</option>
+																				<option value="Education">Education</option>
+																			</select>
+																	</td>
+						
+															</tr>
+													))
+											) : (
+													<tr>
+															<td colSpan={4} className="px-6 py-4 text-center text-gray-500 italic">No PGY-3 residents found.</td>
+													</tr>
+											)}
+									</tbody>
 							</table>
-						</div>
+					</div>
+
 					</Card>
 				)}
 			</div>
 
-			{/* Rotation form modals*/}
+			{/* Modals*/}
 			<Modal
 				open={showRotationFormModal}
 				onClose={() => setShowRotationFormModal(false)}
 				title="Create Rotation Form"
 			>
 				<div className="grid grid-cols-2 items-start sm:items-end gap-6">
-					<div className="mb-2">
-						<label className="flex items-center text-sm font-semibold gap-2 mb-2">
-						  Resident Selection
-						</label>
-						<div className="relative">
-							<select
-								value={formOverrideResidentId ?? ""}
-								onChange={(e) => setFormOverrideResidentId(e.target.value || null)}
-								required={true}
-								className="w-full px-4 py-3 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none cursor-pointer"
-							>
-								<option value="">Select</option>
-								{PGY3Residents.map((r) => (
-									<option key={r.id} value={r.id}>
-										{r.name}
-									</option>
-								))}
-							</select>
-							<div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-								<ChevronDown className="h-4 w-4" />
-							</div>
+						<div className="mb-2">
+								<label className="flex items-center text-sm font-semibold gap-2 mb-2">
+										Resident Selection
+								</label>
+								<div className="relative">
+										<select
+												value={formOverrideResidentId ?? ""}
+												onChange={(e) => setFormOverrideResidentId(e.target.value || null)}
+												required={true}
+												className="w-full px-4 py-3 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none cursor-pointer"
+										>
+												<option value="">Select</option>
+												{PGY3Residents.map((r) => (
+														<option key={r.id} value={r.id}>
+																{r.name}
+														</option>
+												))}
+										</select>
+										<div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
+												<ChevronDown className="h-4 w-4" />
+										</div>
+								</div>
 						</div>
-					</div>
 				</div>
 
-				{/* Overlay until a resident is selected */}
+				{/* Form with disabled overlay */}
 				<div className="relative">
-					{!formOverrideResidentId && (
-						<div className="absolute inset-0 z-10 bg-background/60 backdrop-blur-[1px] rounded-lg flex items-center justify-center"/>
-					)}
+						{!formOverrideResidentId && (
+								<div className="absolute inset-0 z-10 bg-background/60 backdrop-blur-[1px] rounded-lg flex items-center justify-center">
+								</div>
+						)}
 					<RotationForm
 						key={formOverrideResidentId ?? ""}
 						userId={formOverrideResidentId ?? ""}
@@ -953,9 +940,8 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 						onSuccess={handleRotationFormSuccess}
 					/>
 				</div>
-			</Modal>
+		</Modal>
 
-			{/* Submission view dialog */}
 			{viewResident && (
 				<SubmissionViewDialog
 					open={viewDialogOpen}
@@ -968,5 +954,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 		</div>
 	);
 };
+
+
 
 export default PGY4RotationSchedulePage;
