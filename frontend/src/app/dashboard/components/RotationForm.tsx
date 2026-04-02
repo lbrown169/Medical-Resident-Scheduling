@@ -33,22 +33,22 @@ interface RotationTypeDto {
 const DEFAULT_ROTATION_COLORS: Record<string, string> = {
   "Inpatient Psy": "#8b5cf6",
   "Psy Consults": "#f97316",
-  "Addiction": "#14b8a6",
-  "VA": "#60a5fa",
-  "TMS": "#84cc16",
-  "NFETC": "#eab308",
-  "IOP": "#22c55e",
+  Addiction: "#14b8a6",
+  VA: "#60a5fa",
+  TMS: "#84cc16",
+  NFETC: "#eab308",
+  IOP: "#22c55e",
   "Community Psy": "#3b82f6",
-  "HPC": "#92400e",
-  "Forensic": "#ef4444",
-  "CLC": "#ec4899",
+  HPC: "#92400e",
+  Forensic: "#ef4444",
+  CLC: "#ec4899",
 };
 
 // Rotation types that should never appear in the form regardless of PGY year
 const EXCLUDED_ROTATIONS = ["Chief", "Unassigned", "Sum"];
 
 interface RotationFormProps {
-  // The logged-in resident's ID 
+  // The logged-in resident's ID
   userId: string;
 
   // The logged-in resident's PGY level
@@ -101,7 +101,7 @@ interface RotationFormProps {
 
 /**
  * Reusable Rotation Preference Form
- * 
+ *
  * Features:
  * - 8 priority selections (at least 4 required)
  * - 3 optional alternative selections
@@ -129,9 +129,9 @@ const RotationForm: React.FC<RotationFormProps> = ({
   const [rotationOptions, setRotationOptions] = useState<RotationOption[]>([]);
 
   // Existing request id if editing
-  const [existingRequestId, setExistingRequestId] = useState<string | null>(null);
-
-
+  const [existingRequestId, setExistingRequestId] = useState<string | null>(
+    null,
+  );
 
   // Priorities
   const [firstPriority, setFirstPriority] = useState<string | null>(null);
@@ -160,14 +160,13 @@ const RotationForm: React.FC<RotationFormProps> = ({
   const [loading, setLoading] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
-
   const isDeadlinePassed = !ignoreDeadline && new Date() > deadline;
   // Load rotation types
   useEffect(() => {
     const loadRotationTypes = async () => {
       try {
         const res = await fetch(
-          `${config.apiUrl}/api/rotation-types?pgyYear=${rotationPgyYear}`
+          `${config.apiUrl}/api/rotation-types?pgyYear=${rotationPgyYear}`,
         );
 
         if (!res.ok) throw new Error();
@@ -175,7 +174,10 @@ const RotationForm: React.FC<RotationFormProps> = ({
         const data = await res.json();
 
         const options = data.rotationTypes
-          .filter((rt: RotationTypeDto) => !EXCLUDED_ROTATIONS.includes(rt.rotationName))
+          .filter(
+            (rt: RotationTypeDto) =>
+              !EXCLUDED_ROTATIONS.includes(rt.rotationName),
+          )
           .map((rt: RotationTypeDto) => ({
             value: rt.rotationTypeId,
             label: rt.rotationName,
@@ -198,9 +200,7 @@ const RotationForm: React.FC<RotationFormProps> = ({
   // Define at component level, not inside useEffect
   const loadExistingRequest = useCallback(async () => {
     try {
-      const res = await fetch(
-        `${config.apiUrl}/${fetchEndpoint}/${userId}`
-      );
+      const res = await fetch(`${config.apiUrl}/${fetchEndpoint}/${userId}`);
       if (!res.ok) return;
       const data = await res.json();
 
@@ -257,7 +257,7 @@ const RotationForm: React.FC<RotationFormProps> = ({
   const validateNoDuplicates = () => {
     const arr = getPrioritiesArray();
     return new Set(arr).size === arr.length;
-  };  
+  };
 
   const validateMinFourFields = (): boolean => {
     return getPrioritiesArray().length >= 4;
@@ -281,7 +281,8 @@ const RotationForm: React.FC<RotationFormProps> = ({
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Each rotation can only be selected once in the priority fields.",
+        description:
+          "Each rotation can only be selected once in the priority fields.",
       });
       return;
     }
@@ -292,7 +293,9 @@ const RotationForm: React.FC<RotationFormProps> = ({
     try {
       // Use the input from user
       const priorities = getPrioritiesArray();
-      const alternatives = [alternative1, alternative2, alternative3].filter(Boolean);
+      const alternatives = [alternative1, alternative2, alternative3].filter(
+        Boolean,
+      );
       const avoids = [avoid1, avoid2, avoid3].filter(Boolean);
 
       const payload = {
@@ -332,16 +335,17 @@ const RotationForm: React.FC<RotationFormProps> = ({
     } finally {
       setLoading(false);
     }
-    
   };
 
   /**
    * Gets available options for priority fields, excluding already selected priorities.
    * Used to reduce dropdown options to avoid duplicates.
    */
-  const getAvailablePriorityOptions = (currentValue: string | null): typeof rotationOptions => {
-    const selected = getPrioritiesArray().filter(v => v !== currentValue);
-    return rotationOptions.filter(opt => !selected.includes(opt.value));
+  const getAvailablePriorityOptions = (
+    currentValue: string | null,
+  ): typeof rotationOptions => {
+    const selected = getPrioritiesArray().filter((v) => v !== currentValue);
+    return rotationOptions.filter((opt) => !selected.includes(opt.value));
   };
 
   const getAllOptions = (): typeof rotationOptions => rotationOptions;
@@ -352,7 +356,9 @@ const RotationForm: React.FC<RotationFormProps> = ({
       <div className="max-w-4xl mx-auto">
         <div className="bg-card rounded-xl shadow-lg border border-border p-8 text-center">
           <ClipboardList className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-          <h2 className="text-2xl font-bold text-foreground mb-2">Access Denied</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-2">
+            Access Denied
+          </h2>
           <p className="text-muted-foreground">
             This page is only accessible to PGY-{requiredPGY} residents.
           </p>
@@ -367,7 +373,9 @@ const RotationForm: React.FC<RotationFormProps> = ({
       <div className="max-w-4xl mx-auto">
         <div className="bg-card rounded-xl shadow-lg border border-border p-8 text-center">
           <ClipboardList className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-          <h2 className="text-2xl font-bold text-foreground mb-2">Submission Deadline Passed</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-2">
+            Submission Deadline Passed
+          </h2>
           <p className="text-muted-foreground">
             The deadline for submitting rotation preferences was{" "}
             {deadline.toLocaleDateString("en-US", {
@@ -488,7 +496,10 @@ const RotationForm: React.FC<RotationFormProps> = ({
             {/* Alternatives */}
             <div>
               <h2 className="text-xl font-bold text-foreground mb-4">
-                Alternatives <span className="text-muted-foreground text-sm">(optional)</span>
+                Alternatives{" "}
+                <span className="text-muted-foreground text-sm">
+                  (optional)
+                </span>
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <SelectField
@@ -515,7 +526,10 @@ const RotationForm: React.FC<RotationFormProps> = ({
             {/* Avoid */}
             <div>
               <h2 className="text-xl font-bold text-foreground mb-4">
-                Avoid <span className="text-muted-foreground text-sm">(optional)</span>
+                Avoid{" "}
+                <span className="text-muted-foreground text-sm">
+                  (optional)
+                </span>
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <SelectField
@@ -542,7 +556,10 @@ const RotationForm: React.FC<RotationFormProps> = ({
             {/* Additional Notes */}
             <div>
               <h2 className="text-xl font-bold text-foreground mb-4">
-                Additional Notes <span className="text-muted-foreground text-sm">(optional)</span>
+                Additional Notes{" "}
+                <span className="text-muted-foreground text-sm">
+                  (optional)
+                </span>
               </h2>
               <textarea
                 value={additionalNotes}
@@ -603,7 +620,10 @@ const SelectField: React.FC<SelectFieldProps> = ({
           className="w-full px-4 py-3 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors appearance-none cursor-pointer"
           style={
             selectedOption
-              ? { borderLeft: `4px solid ${selectedOption.color}`, paddingLeft: "12px" }
+              ? {
+                  borderLeft: `4px solid ${selectedOption.color}`,
+                  paddingLeft: "12px",
+                }
               : undefined
           }
         >
@@ -615,7 +635,11 @@ const SelectField: React.FC<SelectFieldProps> = ({
           ))}
         </select>
         <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-          <svg className="h-5 w-5 text-muted-foreground" viewBox="0 0 20 20" fill="currentColor">
+          <svg
+            className="h-5 w-5 text-muted-foreground"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
             <path
               fillRule="evenodd"
               d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
