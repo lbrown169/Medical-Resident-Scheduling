@@ -170,7 +170,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 	const [savingWindow, setSavingWindow] = useState(false);
 	const [windowSaveError, setWindowSaveError] = useState<string | null>(null);
 	const currentYear = new Date().getFullYear();
-	const [selectedYear] = useState<number>(currentYear);
+	const selectedYear = currentYear;
 
 	let deadline = null;
 	if (windowDueDate) {
@@ -187,9 +187,6 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 	const [rotationTypeNames, setRotationTypeNames] = useState<{ id: string; name: string }[]>([]);
 
 	const selectedSchedule = schedules.find(s => s.pgy4RotationScheduleId === selectedScheduleId) ?? null;
-
-	// State for viewing a resident's rotation
-	// State for viewing a resident's rotation — handled inside RotationScheduleTable
 
 	// State for viewing form creation
 	const [showRotationFormModal, setShowRotationFormModal] = useState(false);
@@ -290,7 +287,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 
 	// Submission tracking
 	const submittedCount = submissions.length;
-	const missingCount = PGY3Residents.length - submittedCount;
+	const missingCount = Math.max(0, PGY3Residents.length - submittedCount);
 
 	// Load schedules and rotation types on mount
 	useEffect(() => {
@@ -318,8 +315,6 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 				const res = await fetch(`${config.apiUrl}/api/rotation-types?pgyYear=4`);
 				if (!res.ok) throw new Error("Failed to fetch rotation types");
 				const data: RotationTypesListResponse = await res.json();
-				// Filter out no colors.
-				// !! This will need to change if we add rotation name swapping. Colors may need to be stored.
 				const known = Object.keys(rotationColorMap);
 				setRotationTypeNames(
 					data.rotationTypes
@@ -354,7 +349,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 		try {
 			setGenerating(true);
 			setScheduleError(null);
-			const res = await fetch(`${config.apiUrl}/api/pgy4-rotation-schedule/generate?count=1`); // !! one each is fine right? we can do 5 if wanted but i feel like 1 is best?
+			const res = await fetch(`${config.apiUrl}/api/pgy4-rotation-schedule/generate?count=1`);
 			if (!res.ok) {
 				const err: UnsubmittedResidentsResponse = await res.json();
 				if (err.unsubmittedResidents?.length > 0) {
@@ -423,28 +418,28 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 			});
 			if (!res.ok) {
 				const errorText = await res.text();
-    throw new Error(`Failed to delete: ${res.status} ${errorText}`);
+				throw new Error(`Failed to delete: ${res.status} ${errorText}`);
 			}
 
 			// Refresh submissions
-			const data = await fetch(`${config.apiUrl}/api/rotation-pref-request`)
+			const data = await fetch(`${config.apiUrl}/api/rotation-pref-request`);
 			if (!data.ok) throw new Error("Failed to fetch submissions");
-   const json: RotationPrefRequestsListResponse = await data.json();
-   setSubmissions(json.rotationPrefRequests ?? []);
+			const json: RotationPrefRequestsListResponse = await data.json();
+			setSubmissions(json.rotationPrefRequests ?? []);
 
 			toast({
-      variant: "success",
-      title: "Deleted",
-      description: "Submission has been deleted.",
-    });
+				variant: "success",
+				title: "Deleted",
+				description: "Submission has been deleted.",
+			});
 
 		} catch (error) {
-			console.error('Delete submission eorr:', error);
+			console.error('Delete submission error:', error);
 			toast({
-      variant: "destructive",
-      title: "Error",
-      description: "Failed to delete submission.",
-    });
+				variant: "destructive",
+				title: "Error",
+				description: "Failed to delete submission.",
+			});
 		} finally {
 			setDeletingSubmission(null);
 		}
@@ -453,43 +448,58 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 
 	const handleDeleteAllSubmissions = async () => {
 		try {
-			const res = submissions.map(submission =>
-    fetch(`${config.apiUrl}/api/rotation-pref-request/${submission.rotationPrefRequestId}`, {
-     method: 'DELETE',
-     })
-    );
-			await Promise.all(res);
+			const results = await Promise.allSettled(
+				submissions.map(submission =>
+					fetch(`${config.apiUrl}/api/rotation-pref-request/${submission.rotationPrefRequestId}`, {
+						method: 'DELETE',
+					})
+				)
+			);
+
+			const failed = results.filter(
+				r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.ok)
+			);
 
 			const data = await fetch(`${config.apiUrl}/api/rotation-pref-request`);
 			if (!data.ok) throw new Error("Failed to fetch submissions");
 			const json: RotationPrefRequestsListResponse = await data.json();
-			setSubmissions(json.rotationPrefRequests ?? [])
-			toast({
+			setSubmissions(json.rotationPrefRequests ?? []);
+
+			if (failed.length > 0) {
+				toast({
+					variant: "destructive",
+					title: "Partial Failure",
+					description: `${failed.length} submission(s) could not be deleted.`,
+				});
+			} else {
+				toast({
 					variant: "success",
 					title: "Cleared",
 					description: "All submissions have been deleted.",
-			});
-  } catch (error) {
+				});
+			}
+		} catch (error) {
 			console.error('Clear submissions error:', error);
 			toast({
-					variant: "destructive",
-					title: "Error",
-					description: "Failed to clear submissions.",
+				variant: "destructive",
+				title: "Error",
+				description: "Failed to clear submissions.",
 			});
 		}
-	}
+	};
+
 	const handleRotationFormSuccess = async () => {
-  const resident = PGY3Residents.find(r => r.id === formOverrideResidentId);
-  setShowRotationFormModal(false);
-  const refreshRes = await fetch(`${config.apiUrl}/api/rotation-pref-request`);
-  if (!refreshRes.ok) return;
-  const json: RotationPrefRequestsListResponse = await refreshRes.json();
-  setSubmissions(json.rotationPrefRequests ?? []);
-  toast({
-    variant: "success",
-    title: "Submitted",
-    description: `Rotation preference for ${resident?.name ?? "Unknown"} submitted.`,
-  });
+		const resident = PGY3Residents.find(r => r.id === formOverrideResidentId);
+		setShowRotationFormModal(false);
+		const refreshRes = await fetch(`${config.apiUrl}/api/rotation-pref-request`);
+		if (!refreshRes.ok) return;
+		const json: RotationPrefRequestsListResponse = await refreshRes.json();
+		setSubmissions(json.rotationPrefRequests ?? []);
+		toast({
+			variant: "success",
+			title: "Submitted",
+			description: `Rotation preference for ${resident?.name ?? "Unknown"} submitted.`,
+		});
 	};
 
 	const handleSaveSubmissionWindow = async () => {
@@ -694,15 +704,15 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 						)}
 						{/* Footer - Buttons at the bottom */}
 						<div className="flex justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    		<Button onClick={null} variant="outline" className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm lg:text-base">
-                        		<Save className="h-4 w-4" />
-                        		<span>Save</span>
-                    		</Button>
-                    		<Button onClick={null} className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-green-500 text-white hover:bg-green-600">
-                        		<Download className="h-4 w-4" />
-                        		<span>Export</span>
-                    		</Button>
-                		</div>
+							<Button disabled variant="outline" className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm lg:text-base">
+								<Save className="h-4 w-4" />
+								<span>Save</span>
+							</Button>
+							<Button disabled className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-green-500 text-white hover:bg-green-600">
+								<Download className="h-4 w-4" />
+								<span>Export</span>
+							</Button>
+						</div>
 					</Card>
 				)}
 
@@ -739,8 +749,6 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 									</tr>
 								</thead>
 								<tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
-									{/*check if submissions exists here*/}
-									{/* replaced with checking. boxes are created based on number of submissions */}
 									{loadingSubmissions ? (
 										<tr>
 											<td colSpan={4} className="px-6 py-4 text-center">
@@ -760,7 +768,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 												<Button
 													variant="outline"
 													size="sm"
-													onClick={() => handleViewSubmission(submission) /* ! REPLACE WITH POP UP VIEWING WINDOW, this just confirm that it works (it does) */} 
+													onClick={() => handleViewSubmission(submission)}
 												>
 												View
 												</Button>
@@ -858,23 +866,23 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 									<tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
 											{PGY3Residents.length > 0 ? (
 													PGY3Residents.map((r) => (
-															<tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
-																	<td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{r.name}</td>
-																	<td className="px-6 py-4 whitespace-nowrap text-sm">
-																			<select
-																				value={chiefTypeOverrides[r.id] ?? r.chiefType ?? ""}
-																				onChange={(e) => handleSwitchChiefType(r, e.target.value)}
-																				disabled={switchingChiefType === r.id}
-																				className="..." // The switching looked strange so we just disable the dropdown for a second
-																			>
-																				<option value="">None</option>
-																				<option value="Admin">Admin</option>
-																				<option value="Clinic">Clinic</option>
-																				<option value="Education">Education</option>
-																			</select>
-																	</td>
-						
-															</tr>
+																<tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
+																		<td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{r.name}</td>
+																		<td className="px-6 py-4 whitespace-nowrap text-sm">
+																				{/* Dropdown is briefly disabled */}
+																				<select
+																						value={chiefTypeOverrides[r.id] ?? r.chiefType ?? ""}
+																						onChange={(e) => handleSwitchChiefType(r, e.target.value)}
+																						disabled={switchingChiefType === r.id}
+																				>
+																						<option value="">None</option>
+																						<option value="Admin">Admin</option>
+																						<option value="Clinic">Clinic</option>
+																						<option value="Education">Education</option>
+																				</select>
+																		</td>
+												
+																</tr>
 													))
 											) : (
 													<tr>
