@@ -146,6 +146,7 @@ function Dashboard() {
   const [yourShiftDate, setYourShiftDate] = useState<string>("");
   const [partnerShiftDate, setPartnerShiftDate] = useState<string>("");
   const [partnerShift, setPartnerShift] = useState<string>("");
+  const [swapDescription, setSwapDescription] = useState<string>("");
 
 
   // Request off form state
@@ -724,7 +725,7 @@ function Dashboard() {
         RequesteeId: selectedResident,
         RequesterDate: yourShiftDate,
         RequesteeDate: partnerShiftDate,
-        Details: ""
+        Details: swapDescription.trim()
       };
       console.log('Submitting swapRequest:', swapRequest);
       const response = await fetch(`${config.apiUrl}/api/swaprequests`, {
@@ -740,10 +741,19 @@ function Dashboard() {
         });
       } else {
         const error = await response.text();
+        let message = "Failed to create swap request.";
+
+        try {
+          const parsed = JSON.parse(error);
+          message = parsed.message || message;
+        } catch {
+          message = error || message;
+        }
+
         toast({
           variant: "destructive",
           title: "Error",
-          description: error || "Failed to create swap request.",
+          description: message,
         });
       }
     } catch (error) {
@@ -759,6 +769,7 @@ function Dashboard() {
     setYourShiftDate("");
     setPartnerShiftDate("");
     setPartnerShift("");
+    setSwapDescription("");
   };
 
   const handleSubmitRequestOff = async () => {
@@ -1017,6 +1028,7 @@ case "Home":
         const partnerShiftEvents = selectedResident ? filterShiftEvents(selectedResident) : [];
         return (
           <SwapCallsPage
+            userId={user?.id || ""}
             yourShiftDate={yourShiftDate}
             partnerShiftDate={partnerShiftDate}
             selectedResident={selectedResident}
@@ -1028,6 +1040,8 @@ case "Home":
             partnerShiftEvents={partnerShiftEvents}
             onSelectUserShift={(date, callType) => { setYourShiftDate(date); setSelectedShift(callType); }}
             onSelectPartnerShift={(date, callType) => { setPartnerShiftDate(date); setPartnerShift(callType); }}
+            description={swapDescription}
+            setDescription={setSwapDescription}
             handleSubmitSwap={handleSubmitSwap}
           />
         );
