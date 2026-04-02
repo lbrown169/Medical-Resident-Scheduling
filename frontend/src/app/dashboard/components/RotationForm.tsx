@@ -56,13 +56,13 @@ interface RotationFormProps {
 
   /**
    * Which PGY level is required to access this form.
-   * !!! If multiple PGYs are to access the same form, the prop would need to change
+   * If multiple PGYs are to access the same form, the prop would need to change.
    */
   requiredPGY: number;
 
   /**
    * Which PGY year to fetch rotation types for.
-   * !!! If multiple PGYs are to access the same form, the prop would need to change
+   * If multiple PGYs are to access the same form, the prop would need to change.
    */
   rotationPgyYear: number;
 
@@ -111,7 +111,7 @@ interface RotationFormProps {
  *
  * Used by PGY3 residents to submit PGY4 rotation preferences,
  * and can be reused by other PGY levels by passing different props.
- * If the same form is to be used by multiple PGYs. The prop format would have to change a bit.
+ * If the same form is to be used by multiple PGYs, the prop format would need to change.
  */
 const RotationForm: React.FC<RotationFormProps> = ({
   userId,
@@ -128,7 +128,7 @@ const RotationForm: React.FC<RotationFormProps> = ({
   // Rotation options from backend
   const [rotationOptions, setRotationOptions] = useState<RotationOption[]>([]);
 
-  // Existing request id if editting
+  // Existing request id if editing
   const [existingRequestId, setExistingRequestId] = useState<string | null>(null);
 
 
@@ -336,8 +336,8 @@ const RotationForm: React.FC<RotationFormProps> = ({
   };
 
   /**
-   * Gets available options for priority fields, excluding already selected priorities
-   * used to render less options for the dropdown
+   * Gets available options for priority fields, excluding already selected priorities.
+   * Used to reduce dropdown options to avoid duplicates.
    */
   const getAvailablePriorityOptions = (currentValue: string | null): typeof rotationOptions => {
     const selected = getPrioritiesArray().filter(v => v !== currentValue);
