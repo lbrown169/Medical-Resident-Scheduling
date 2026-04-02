@@ -782,12 +782,9 @@ const AdminPage: React.FC<AdminPageProps> = ({
   const [deletingAnnouncement, setDeletingAnnouncement] = useState<string | null>(null);
 
   const idToName = useMemo(() => {
-    if (users.length > 0) {
-      const mapping: Record<string, string> = {};
-      users.forEach(user => { mapping[user.id] = `${user.first_name} ${user.last_name}`; });
-      return mapping;
-    }
-    return { 'LLU6249': 'Felix Hernandez Perez', 'FVO3464': 'Alexis Shahidi' };
+    const mapping: Record<string, string> = {};
+    users.forEach(user => { mapping[user.id] = `${user.first_name} ${user.last_name}`; });
+    return mapping;
   }, [users]);
 
   useEffect(() => {
