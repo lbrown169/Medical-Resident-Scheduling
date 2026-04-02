@@ -788,6 +788,20 @@ const AdminPage: React.FC<AdminPageProps> = ({
   }, [users]);
 
   useEffect(() => {
+    fetch(`${config.apiUrl}/api/swaprequests`)
+      .then(res => res.ok ? res.json() : [])
+      .then((data: SwapRequest[]) => setPendingSwapsCount(data.filter(s => s.status.id === 0).length))
+      .catch(() => {});
+    fetch(`${config.apiUrl}/api/vacations`)
+      .then(res => res.ok ? res.json() : [])
+      .then((data: { status: string; groupId: string }[]) => {
+        const pendingGroups = new Set(data.filter(v => v.status === 'Pending').map(v => v.groupId));
+        setPendingRequestsCount(pendingGroups.size);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
     if (activeTab === 'announcements') {
       fetch(`${config.apiUrl}/api/announcements`)
         .then(res => res.ok ? res.json() : [])
