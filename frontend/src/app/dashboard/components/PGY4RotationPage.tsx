@@ -885,7 +885,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                 <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
                   {loadingSubmissions ? (
                     <tr>
-                      <td colSpan={4} className="px-6 py-4 text-center">
+                      <td colSpan={3} className="px-6 py-4 text-center">
                         Loading...
                       </td>
                     </tr>
@@ -931,7 +931,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                   ) : (
                     <tr>
                       <td
-                        colSpan={4}
+                        colSpan={3}
                         className="px-6 py-4 text-center text-gray-500 italic"
                       >
                         No submissions yet.
