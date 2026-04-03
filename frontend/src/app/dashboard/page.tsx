@@ -600,7 +600,7 @@ function Dashboard() {
       toast({
         variant: "success",
         title: "Request Approved",
-        description: `Vacation request group ${groupId} has been approved.`,
+        description: "The vacation request has been approved.",
       });
   
       fetchMyTimeOffRequests();
@@ -633,7 +633,7 @@ function Dashboard() {
       toast({
         variant: "destructive",
         title: "Request Denied",
-        description: `Vacation request group ${groupId} has been denied.`,
+        description: "The vacation request has been denied.",
       });
   
       fetchMyTimeOffRequests();
