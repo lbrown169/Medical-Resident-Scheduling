@@ -193,8 +193,7 @@ public class SwapRequestsController : ControllerBase
 
     // POST: api/swaprequests/{id}/deny
     [HttpPost("{id}/deny")]
-    public async Task<IActionResult> DenySwapRequest(Guid id,
-        [FromBody] SwapRequestDenyRequest denyRequest)
+    public async Task<IActionResult> DenySwapRequest(Guid id)
     {
         SwapRequest? swap = await _context.SwapRequests.FindAsync(id);
         if (swap == null)
@@ -212,7 +211,6 @@ public class SwapRequestsController : ControllerBase
         }
 
         swap.Status = RequestStatus.Denied;
-        swap.Details = denyRequest.Reason ?? "";
         swap.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 

@@ -116,7 +116,7 @@ public class SchedulingMapperService
         foreach (Rotation rotation in rotations)
         {
             RotationType type = rotation.RotationType;
-            hospitalRoles[rotation.AcademicMonthIndex.ToAcademicIndex()] = _rotationTypeConverter.CreateHospitalRoleFromRotationType(type);
+            hospitalRoles[rotation.RotationMonthOfYear.ToAcademicIndex()] = _rotationTypeConverter.CreateHospitalRoleFromRotationType(type);
         }
 
         return hospitalRoles;

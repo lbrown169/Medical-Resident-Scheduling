@@ -56,12 +56,12 @@ public class DashboardController : ControllerBase
             if (resident.GraduateYr.Value is 1 or 2)
             {
                 int year = DateTime.Now.AcademicYear;
-                MonthOfYear month = MonthOfYearExtensions.FromCalendarIndex(DateTime.Now.Month, false);
+                MonthOfYear month = MonthOfYearExtensions.FromDateTime(DateTime.Now, false);
                 RotationType? type = await _context.Rotations
                     .Where(r =>
                         r.ResidentId == residentId
                         && r.AcademicYear == year
-                        && r.AcademicMonthIndex == month
+                        && r.RotationMonthOfYear == month
                     )
                     .Select(r => r.RotationType)
                     .FirstOrDefaultAsync();
@@ -187,7 +187,7 @@ public class DashboardController : ControllerBase
                         : swap.RequesteeId;
                 string message = swap.Status == RequestStatus.Approved
                     ? $"Your swap request for {swap.RequesterDate:MM/dd/yyyy} (with {requesteeName}) was approved."
-                    : $"Your swap request for {swap.RequesterDate:MM/dd/yyyy} (with {requesteeName}) was denied. Reason: {swap.Details}";
+                    : $"Your swap request for {swap.RequesterDate:MM/dd/yyyy} (with {requesteeName}) was denied.";
                 dashboardData.RecentActivity.Add(new DashboardDataResponse.Activity
                 {
                     Id = swap.SwapRequestId.ToString(),
