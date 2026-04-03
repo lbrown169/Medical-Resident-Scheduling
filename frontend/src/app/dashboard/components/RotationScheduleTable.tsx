@@ -223,7 +223,6 @@ export const RotationScheduleTable: React.FC<RotationScheduleTableProps> = ({
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [tableHeight, setTableHeight] = useState(0);
 
-
   useLayoutEffect(() => {
     if (tableContainerRef.current) {
       setTableHeight(tableContainerRef.current.clientHeight);
@@ -259,7 +258,7 @@ export const RotationScheduleTable: React.FC<RotationScheduleTableProps> = ({
         <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
           {sortedSchedule.length === 0 ? (
             <tr>
-              <td colSpan={13} className="px-6 py-4 text-center text-gray-500 italic">No schedule generated yet.</td>
+              <td colSpan={13} className="px-6 py-4 text-center text-gray-500 italic">No rotations found. Use the &quot;Copy&quot; button above to copy a rotation schedule.</td>
             </tr>
           ) : (
             sortedSchedule.map((residentSchedule, rowIndex) => {

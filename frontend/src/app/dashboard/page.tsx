@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, ReactElement, useCallback } from "react";
+import React, { useState, useEffect, ReactElement, useCallback, useMemo } from "react";
 import {
   SidebarProvider,
   Sidebar,
@@ -130,12 +130,31 @@ function Dashboard() {
   // Calendar state
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
 
+  // Hours each resident is scheduled for the current published semester
+  const semesterHours = useMemo(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const isSpring = now.getMonth() < 6;
+    const start = isSpring ? new Date(year, 0, 1) : new Date(year, 6, 1);
+    const end   = isSpring ? new Date(year, 5, 30, 23, 59, 59) : new Date(year, 11, 31, 23, 59, 59);
+    const map: Record<string, number> = {};
+    calendarEvents.forEach(e => {
+      const d = e.start instanceof Date ? e.start : new Date(e.start);
+      if (d >= start && d <= end) {
+        const id = e.extendedProps?.residentId;
+        if (id) map[id] = (map[id] ?? 0) + (e.extendedProps?.hours ?? 0);
+      }
+    });
+    return map;
+  }, [calendarEvents]);
+
   // Swap calls form state
   const [selectedResident, setSelectedResident] = useState<string>("");
   const [selectedShift, setSelectedShift] = useState<string>("");
   const [yourShiftDate, setYourShiftDate] = useState<string>("");
   const [partnerShiftDate, setPartnerShiftDate] = useState<string>("");
   const [partnerShift, setPartnerShift] = useState<string>("");
+  const [swapDescription, setSwapDescription] = useState<string>("");
 
 
   // Request off form state
@@ -181,10 +200,19 @@ function Dashboard() {
     }
   };
 
+  function currentAcademicYear(): number {
+    const now = new Date();
+    return now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1;
+  }
+
+  function academicYearOf(date: Date): number {
+    return date.getMonth() >= 6 ? date.getFullYear() : date.getFullYear() - 1;
+  }
+
   // Updated color function to use graduate_yr directly
   const getEventColor = (callType: CallType, graduateYear?: number) => {
     // Use graduate_yr directly for PGY-based coloring
-    if (graduateYear) {
+    if (graduateYear != null) {
       switch (graduateYear) {
         case 1:
           return '#ef4444'; // red for PGY 1
@@ -230,12 +258,20 @@ function Dashboard() {
   // API functions
   const fetchResidents = useCallback(async () => {
     try {
-      const response = await fetch(`${config.apiUrl}/api/residents`);
-      if (response.ok) {
-        const residentsData = await response.json();
+      const [residentsResponse, adminsResponse] = await Promise.all([
+        fetch(`${config.apiUrl}/api/residents`),
+        fetch(`${config.apiUrl}/api/Admins`),
+      ]);
+      if (residentsResponse.ok) {
+        const residentsData = await residentsResponse.json() as Resident[];
         setResidents(residentsData);
-      } else {
-        console.error('Failed to fetch residents');
+        if (adminsResponse.ok) {
+          const admins = await adminsResponse.json() as Admin[];
+          setUsers([
+            ...residentsData.map((r: Resident) => ({ id: r.resident_id, first_name: r.first_name, last_name: r.last_name, email: r.email, role: 'resident' })),
+            ...admins.map((a: Admin) => ({ id: a.admin_id, first_name: a.first_name, last_name: a.last_name, email: a.email, role: 'admin' })),
+          ]);
+        }
       }
     } catch (error) {
       console.error('Error fetching residents:', error);
@@ -293,11 +329,15 @@ function Dashboard() {
           // Find the resident to get graduate_yr directly (for details only)
           const resident = residents.find(r => r.resident_id === date.residentId);
           const graduateYear = resident?.graduate_yr;
-          const eventColor = getEventColor(date.callType, graduateYear);
 
           const d = new Date(date.shiftDate)
           // date comes in as UTC and gets changed to previous day in local time. keep everything local
           d.setMinutes(d.getMinutes() + d.getTimezoneOffset());
+
+          // Offset PGY by how far ahead this shift's academic year is vs. today
+          const pgyOffset = academicYearOf(d) - currentAcademicYear();
+          const effectivePgy = graduateYear != null ? graduateYear + pgyOffset : undefined;
+          const eventColor = getEventColor(date.callType, effectivePgy);
 
           return {
             id: date.dateId,
@@ -313,7 +353,7 @@ function Dashboard() {
               callType: date.callType.description,
               callTypeId: date.callType.id,
               dateId: date.dateId,
-              pgyLevel: graduateYear,
+              pgyLevel: effectivePgy,
               hours: date.hours,
             }
           };
@@ -338,50 +378,6 @@ function Dashboard() {
     }
   }, [residents]);
 
-  const fetchUsers = async () => {
-    console.log('Fetching users...');
-    try {
-      const [residentsResponse, adminsResponse] = await Promise.all([
-        fetch(`${config.apiUrl}/api/Residents`),
-        fetch(`${config.apiUrl}/api/Admins`)
-      ]);
-
-      console.log('Residents response status:', residentsResponse.status);
-      console.log('Admins response status:', adminsResponse.status);
-
-      if (residentsResponse.ok && adminsResponse.ok) {
-        const residents = await residentsResponse.json() as Resident[];
-        const admins = await adminsResponse.json() as Admin[];
-
-        console.log('Residents data:', residents);
-        console.log('Admins data:', admins);
-
-        const combinedUsers = [
-          ...residents.map((r: Resident) => ({
-            id: r.resident_id,
-            first_name: r.first_name,
-            last_name: r.last_name,
-            email: r.email,
-            role: 'resident'
-          })),
-          ...admins.map((a: Admin) => ({
-            id: a.admin_id,
-            first_name: a.first_name,
-            last_name: a.last_name,
-            email: a.email,
-            role: 'admin'
-          }))
-        ];
-
-        console.log('Combined users:', combinedUsers);
-        setUsers(combinedUsers);
-      } else {
-        console.error('Failed to fetch users');
-      }
-    } catch (error) {
-      console.error('Error fetching users:', error);
-    }
-  };
 
   // Fetch time off requests
   const fetchMyTimeOffRequests = useCallback(async () => {
@@ -607,7 +603,8 @@ function Dashboard() {
         description: `Vacation request group ${groupId} has been approved.`,
       });
   
-      fetchMyTimeOffRequests(); //refresh UI
+      fetchMyTimeOffRequests();
+      fetchResidents();
     } catch (err) {
       console.error("Error approving vacation request group:", err);
       toast({
@@ -639,7 +636,8 @@ function Dashboard() {
         description: `Vacation request group ${groupId} has been denied.`,
       });
   
-      fetchMyTimeOffRequests(); //refresh UI
+      fetchMyTimeOffRequests();
+      fetchResidents();
     } catch (err) {
       console.error("Error denying vacation request group:", err);
       toast({
@@ -714,7 +712,7 @@ function Dashboard() {
         RequesteeId: selectedResident,
         RequesterDate: yourShiftDate,
         RequesteeDate: partnerShiftDate,
-        Details: ""
+        Details: swapDescription.trim()
       };
       console.log('Submitting swapRequest:', swapRequest);
       const response = await fetch(`${config.apiUrl}/api/swaprequests`, {
@@ -730,10 +728,19 @@ function Dashboard() {
         });
       } else {
         const error = await response.text();
+        let message = "Failed to create swap request.";
+
+        try {
+          const parsed = JSON.parse(error);
+          message = parsed.message || message;
+        } catch {
+          message = error || message;
+        }
+
         toast({
           variant: "destructive",
           title: "Error",
-          description: error || "Failed to create swap request.",
+          description: message,
         });
       }
     } catch (error) {
@@ -749,6 +756,7 @@ function Dashboard() {
     setYourShiftDate("");
     setPartnerShiftDate("");
     setPartnerShift("");
+    setSwapDescription("");
   };
 
   const handleSubmitRequestOff = async () => {
@@ -914,21 +922,27 @@ function Dashboard() {
   //   await fetchCalendarEvents();
   // };
 
+  const mappedResidents = useMemo(() =>
+    residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr, hospitalRole: r.hospital_role_profile ?? undefined, hours: semesterHours[r.resident_id] ?? 0 })),
+    [residents, semesterHours]
+  );
+
+  const mappedShifts = useMemo(() =>
+    shifts.map(s => ({ id: s.id, name: s.name })),
+    [shifts]
+  );
+
   // Render main content based on selected menu item
   const renderMainContent = () => {
     switch (selected) {
 case "Home":
   if (isAdmin) {
-    console.log('Rendering AdminPage with users:', users);
-    console.log('Rendering AdminPage with users length:', users.length);
     return (
       <AdminPage
-        residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr, hospitalRole: r.hospital_role_profile ?? undefined, hours: r.total_hours }))}
+        residents={mappedResidents}
+        onRefreshResidents={fetchResidents}
         myTimeOffRequests={myTimeOffRequests}
-        shifts={shifts.map(s => ({
-          id: s.id,
-          name: s.name
-        }))}
+        shifts={mappedShifts}
         handleApproveRequest={handleApproveRequest}
         handleDenyRequest={handleDenyRequest}
         userInvitations={userInvitations}
@@ -1007,6 +1021,7 @@ case "Home":
         const partnerShiftEvents = selectedResident ? filterShiftEvents(selectedResident) : [];
         return (
           <SwapCallsPage
+            userId={user?.id || ""}
             yourShiftDate={yourShiftDate}
             partnerShiftDate={partnerShiftDate}
             selectedResident={selectedResident}
@@ -1018,6 +1033,8 @@ case "Home":
             partnerShiftEvents={partnerShiftEvents}
             onSelectUserShift={(date, callType) => { setYourShiftDate(date); setSelectedShift(callType); }}
             onSelectPartnerShift={(date, callType) => { setPartnerShiftDate(date); setPartnerShift(callType); }}
+            description={swapDescription}
+            setDescription={setSwapDescription}
             handleSubmitSwap={handleSubmitSwap}
           />
         );
@@ -1056,12 +1073,10 @@ case "Home":
         }
         return (
           <AdminPage
-            residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr, hospitalRole: r.hospital_role_profile ?? undefined, hours: r.total_hours }))}
+            residents={mappedResidents}
+            onRefreshResidents={fetchResidents}
             myTimeOffRequests={myTimeOffRequests}
-            shifts={shifts.map(s => ({
-              id: s.id,
-              name: s.name
-            }))}
+            shifts={mappedShifts}
             handleApproveRequest={handleApproveRequest}
             handleDenyRequest={handleDenyRequest}
             userInvitations={userInvitations}
@@ -1163,15 +1178,6 @@ case "Home":
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected]);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []); // Run on mount
-
-  useEffect(() => {
-    if (user) {
-      fetchUsers();
-    }
-  }, [user]); // Also run when user is loaded
 
   // Fetch data when Admin page is selected
   useEffect(() => {

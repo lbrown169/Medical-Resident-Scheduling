@@ -11,5 +11,6 @@ public class SwapRequestResponse
     public required SwapRequestStatusResponse Status { get; set; }
     public required DateTime CreatedAt { get; set; }
     public required DateTime UpdatedAt { get; set; }
+    public required bool IsRead { get; set; }
     public required string? Details { get; set; }
 }
