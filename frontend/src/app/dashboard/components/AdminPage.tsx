@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { ConfirmDialog } from "../../../components/ui/confirm-dialog";
-import { CalendarDays, CalendarX, Send, Check, X, Shield, Users, Repeat } from "lucide-react";
+import { CalendarX, Send, Check, X, Shield, Users, Repeat, Search } from "lucide-react";
 import { differenceInCalendarDays, parseISO } from 'date-fns';
 import { config } from '../../../config';
 import { toast } from "../../../lib/use-toast";
@@ -293,8 +293,8 @@ function groupRequests(requests: Request[]) {
 const VacationRequestsTab: React.FC<VacationRequestsTabProps> = ({ handleApproveRequest, handleDenyRequest, onPendingCountChange }) => {
   const [requests, setRequests] = useState<Request[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
-  const [availabilityDate, setAvailabilityDate] = useState('');
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [searchDate, setSearchDate] = useState('');
 
   const fetchVacations = useCallback(() => {
     setLoading(true);
@@ -455,9 +455,9 @@ const VacationRequestsTab: React.FC<VacationRequestsTabProps> = ({ handleApprove
           <h2 className="text-lg sm:text-xl font-bold">Time Off Requests</h2>
           <div className="flex gap-2">
             <Button variant="outline" className="flex items-center gap-2 px-1 sm:px-6 py-1 sm:py-3 text-xs sm:text-sm lg:text-base"
-              onClick={() => setShowAvailabilityModal(true)}>
-              <CalendarDays className="h-4 w-4" />
-              <span>Availability</span>
+              onClick={() => setShowSearchModal(true)}>
+              <Search className="h-4 w-4" />
+              <span>Search</span>
             </Button>
             <ConfirmDialog
               triggerText={<><X className="h-4 w-4" /><span>Clear</span></>}
@@ -474,34 +474,32 @@ const VacationRequestsTab: React.FC<VacationRequestsTabProps> = ({ handleApprove
           {requestsTable}
         </div>
       </Card>
-      <Modal open={showAvailabilityModal} onClose={() => { setShowAvailabilityModal(false); setAvailabilityDate(''); }} title="Availability Finder">
+      <Modal open={showSearchModal} onClose={() => { setShowSearchModal(false); setSearchDate(''); }} title="Search Date">
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-3">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">Select date:</label>
             <input
               type="date"
-              value={availabilityDate}
-              onChange={e => setAvailabilityDate(e.target.value)}
+              value={searchDate}
+              onChange={e => setSearchDate(e.target.value)}
               className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100"
             />
           </div>
-          {availabilityDate && (() => {
-            const selected = new Date(availabilityDate);
+          {searchDate && (() => {
+            const selected = new Date(searchDate);
             selected.setMinutes(selected.getMinutes() + selected.getTimezoneOffset());
-            const unavailable = requests.filter(r => {
-              if (r.status === 'Denied') return false;
+            const matched = requests.filter(r => {
               const start = new Date(r.startDate || r.date || '');
               start.setMinutes(start.getMinutes() + start.getTimezoneOffset());
               const end = new Date(r.endDate || r.date || '');
               end.setMinutes(end.getMinutes() + end.getTimezoneOffset());
               return selected >= start && selected <= end;
             });
-            const unique = Array.from(new Map(unavailable.map(r => [r.residentId, r])).values());
-            return unique.length === 0 ? (
-              <p className="text-sm text-green-600 font-medium">All residents are available on this date.</p>
+            return matched.length === 0 ? (
+              <p className="text-sm text-green-600 font-medium">No requests found for this date.</p>
             ) : (
               <div className="flex flex-col gap-2">
-                <p className="text-sm text-gray-500">{unique.length} resident{unique.length !== 1 ? 's' : ''} unavailable:</p>
+                <p className="text-sm text-gray-500">{matched.length} request{matched.length !== 1 ? 's' : ''} found:</p>
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                   <thead className="bg-gray-100 dark:bg-neutral-800">
                     <tr>
@@ -511,11 +509,11 @@ const VacationRequestsTab: React.FC<VacationRequestsTabProps> = ({ handleApprove
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
-                    {unique.map(r => (
-                      <tr key={r.residentId} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
+                    {matched.map((r, i) => (
+                      <tr key={`${r.residentId}-${i}`} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
                         <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{r.firstName} {r.lastName}</td>
                         <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{r.reason}{r.halfDay === 'A' ? ' (AM)' : r.halfDay === 'P' ? ' (PM)' : ''}</td>
-                        <td className={`px-4 py-3 text-sm font-medium ${r.status === 'Pending' ? 'text-yellow-600' : 'text-green-600'}`}>{r.status}</td>
+                        <td className={`px-4 py-3 text-sm font-medium ${r.status === 'Pending' ? 'text-yellow-600' : r.status === 'Denied' ? 'text-red-600' : 'text-green-600'}`}>{r.status}</td>
                       </tr>
                     ))}
                   </tbody>
