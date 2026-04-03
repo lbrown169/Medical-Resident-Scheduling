@@ -94,9 +94,9 @@ const menuItems: MenuItem[] = [
   { title: "Request Off", icon: <CalendarX className="w-6 h-6 mr-3" /> },
   { title: "Check My Schedule", icon: <UserCheck className="w-6 h-6 mr-3" /> },
   { title: "Admin", icon: <Shield className="w-6 h-6 mr-3" /> },
-  { title: "PGY-4 Rotation Form", icon: <ClipboardList className="w-6 h-6 mr-3" /> },
+  { title: "PGY-4 Form", icon: <ClipboardList className="w-6 h-6 mr-3" /> },
   { title: "PGY-4 Schedule", icon: <Calendar1 className="w-6 h-6 mr-3" /> },
-  { title: "PGY-4 Rotations", icon: <CalendarRange className="w-6 h-6 mr-3" /> },
+  { title: "Dashboard", icon: <CalendarRange className="w-6 h-6 mr-3" /> },
   { title: "Settings", icon: <Settings className="w-6 h-6 mr-3" /> }
 ];
 
@@ -1135,7 +1135,7 @@ case "Home":
         }
         return <PGY12RotationPage />;
 
-      case "PGY-4 Rotation Form":
+      case "PGY-4 Form":
         return (
           <PGY3RotationFormPage
             userId={user?.id || ""}
@@ -1157,7 +1157,7 @@ case "Home":
         }
         return <PGY4SchedulePage />;
       
-      case "PGY-4 Rotations":
+      case "Dashboard":
         if (!isAdmin) {
           return (
             <div className="w-full pt-4 flex flex-col items-center">
@@ -1251,9 +1251,9 @@ case "Home":
     if (item.title === "Swap Calls") return !isAdmin; // residents only
     if (item.title === "Schedules") return isAdmin; // admin only
     if (item.title === "Rotations") return isAdmin; // admin only
-    if (item.title === "PGY-4 Rotation Form") return currentUserPGY === 3; // pgy3 resident only
+    if (item.title === "PGY-4 Form") return currentUserPGY === 3; // pgy3 resident only
     if (item.title === "PGY-4 Schedule") return currentUserPGY === 4; // pgy4 resident only
-    if (item.title === "PGY-4 Rotations") return isAdmin; // admin only
+    if (item.title === "Dashboard") return isAdmin; // admin only
     return true;
   });
 
@@ -1271,7 +1271,7 @@ case "Home":
     {
       label: "PGY 4 Residents",
       showLabel: isAdmin,
-      items: ["PGY-4 Rotation Form", "PGY-4 Schedule", "PGY-4 Rotations"],
+      items: ["PGY-4 Form", "PGY-4 Schedule", "Dashboard"],
     },
     {
       label: null,
