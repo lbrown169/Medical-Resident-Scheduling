@@ -1,7 +1,7 @@
 "use client";
 
 import { config } from "../../../config";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 
 import { toast } from "../../../lib/use-toast";
 import { Button } from "../../../components/ui/button";
@@ -161,6 +161,14 @@ const RotationForm: React.FC<RotationFormProps> = ({
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
   const isDeadlinePassed = !ignoreDeadline && new Date() > deadline;
+
+  // Keep a ref to rotationColors
+  // If we don't it can infinitely refetch.
+  const rotationColorsRef = useRef(rotationColors);
+  useEffect(() => {
+    rotationColorsRef.current = rotationColors;
+  });
+
   // Load rotation types
   useEffect(() => {
     const loadRotationTypes = async () => {
@@ -181,7 +189,7 @@ const RotationForm: React.FC<RotationFormProps> = ({
           .map((rt: RotationTypeDto) => ({
             value: rt.rotationTypeId,
             label: rt.rotationName,
-            color: rotationColors[rt.rotationName] ?? "#94a3b8",
+            color: rotationColorsRef.current[rt.rotationName] ?? "#94a3b8",
           }));
 
         setRotationOptions(options);
@@ -195,7 +203,7 @@ const RotationForm: React.FC<RotationFormProps> = ({
     };
 
     loadRotationTypes();
-  }, [rotationPgyYear, rotationColors]);
+  }, [rotationPgyYear]);
 
   // Define at component level, not inside useEffect
   const loadExistingRequest = useCallback(async () => {
