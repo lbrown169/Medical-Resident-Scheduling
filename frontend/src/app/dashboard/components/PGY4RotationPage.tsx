@@ -794,6 +794,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                 colorMap={rotationColorMap}
                 displayNames={rotationDisplayNames}
                 rotationTypes={rotationTypeNames}
+                emptyMessage='No rotations found. Use the "Generate Schedule" button above to create a rotation schedule.'
                 allowResidentReassignment={false}
                 onRotationChange={(residentId, monthIndex, newRotation) => {
                   // !!! I think the endpoint for this isnt done currently

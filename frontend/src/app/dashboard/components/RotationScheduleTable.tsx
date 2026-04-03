@@ -36,6 +36,8 @@ export interface RotationScheduleTableProps {
 		/** If true, rotation pills are non-interactive colored labels instead of dropdowns */
   readOnly?: boolean;
   allowResidentReassignment?: boolean;
+    /** Message can be changed for pgy4s compared to others. Default is pgy1-2 prompt */
+  emptyMessage?: string;
 		/** Fires with the rotation type ID (not name) when a rotation is changed */
   onRotationChange?: (residentId: string, monthIndex: number, newRotationTypeId: string) => void;
 		
@@ -219,6 +221,7 @@ export const RotationScheduleTable: React.FC<RotationScheduleTableProps> = ({
   onRotationChange,
   residentList = [],
   onResidentChange,
+  emptyMessage = 'No rotations found. Use the "Copy" button above to copy a rotation schedule.', // ← default kept
 }) => {
   const tableContainerRef = useRef<HTMLDivElement>(null);
   const [tableHeight, setTableHeight] = useState(0);
@@ -258,7 +261,7 @@ export const RotationScheduleTable: React.FC<RotationScheduleTableProps> = ({
         <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
           {sortedSchedule.length === 0 ? (
             <tr>
-              <td colSpan={13} className="px-6 py-4 text-center text-gray-500 italic">No rotations found. Use the &quot;Copy&quot; button above to copy a rotation schedule.</td>
+              <td colSpan={13} className="px-6 py-4 text-center text-gray-500 italic">{emptyMessage}</td>
             </tr>
           ) : (
             sortedSchedule.map((residentSchedule, rowIndex) => {
