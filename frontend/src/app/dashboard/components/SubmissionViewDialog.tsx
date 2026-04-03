@@ -30,7 +30,7 @@ interface SubmissionViewDialogProps {
   prefetchedData?: ResidentPreference;
 }
 
-// Rotation options for dropdown
+// Rotation options for dropdown (SHOULD GET FROM THE PGY ROTATION LIST. WILL BE ADDED PRE DEMO BUT THIS DOES WORK)
 const ROTATION_OPTIONS = [
   "Inpatient Psy",
   "Forensic",

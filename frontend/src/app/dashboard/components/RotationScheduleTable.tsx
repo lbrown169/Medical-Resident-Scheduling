@@ -200,7 +200,7 @@ function RotationDropdown({
         variant="outline"
         size="sm"
         className="w-[95%] text-white border-2 hover:opacity-80 cursor-pointer font-semibold px-3 py-1 h-auto rounded-full truncate"
-        style={{ backgroundColor: color, borderColor: color, fontSize: "clamp(7px, 0.7vw, 14px" }}
+        style={{ backgroundColor: color, borderColor: color, fontSize: "clamp(7px, 0.7vw, 14px)" }}
         onClick={() => setOpen((prev) => !prev)}
       >
         {displayName}
