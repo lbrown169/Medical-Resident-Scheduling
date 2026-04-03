@@ -1339,7 +1339,7 @@ case "Home":
                               <SidebarMenuItem key={item.title}>
                                 <SidebarMenuButton asChild>
                                   <span
-                                    className={`flex items-center text-base cursor-pointer rounded-lg px-2 py-1 transition-colors ${
+                                    className={`flex items-center text-xl cursor-pointer rounded-lg px-2 py-1 transition-colors ${
                                       selected === item.title
                                         ? "font-bold text-gray-800 dark:text-gray-200 bg-gray-300 dark:bg-gray-700"
                                         : "hover:bg-gray-900 dark:hover:bg-gray-700"
