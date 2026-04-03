@@ -255,6 +255,8 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
   const [deletingSubmission, setDeletingSubmission] = useState<string | null>(
     null,
   );
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // Config Tab, setSwitchingChiefType used in handleSwitchChiefType
   const [switchingChiefType, setSwitchingChiefType] = useState<string | null>(
@@ -912,20 +914,16 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                             variant="outline"
                             size="sm"
                             className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white"
-                            onClick={() =>
-                              handleDeleteSubmission(
-                                submission.rotationPrefRequestId,
-                              )
-                            }
+                            onClick={() => {
+                              setDeleteTargetId(submission.rotationPrefRequestId);
+                              setDeleteDialogOpen(true);
+                            }}
                             disabled={
                               deletingSubmission ===
                               submission.rotationPrefRequestId
                             }
                           >
-                            {deletingSubmission ===
-                            submission.rotationPrefRequestId
-                              ? "Deleting..."
-                              : "Delete"}
+                            Delete
                           </Button>
                         </td>
                       </tr>
@@ -1128,6 +1126,19 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
           prefetchedData={toPreference(viewResident)}
         />
       )}
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        loading={deletingSubmission === deleteTargetId}
+        title="Delete Submission"
+        message="Are you sure you want to delete this submission? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={async () => {
+          if (deleteTargetId) await handleDeleteSubmission(deleteTargetId);
+        }}
+      />
     </div>
   );
 };
