@@ -30,22 +30,6 @@ interface SubmissionViewDialogProps {
   prefetchedData?: ResidentPreference;
 }
 
-// Rotation options for dropdown (SHOULD GET FROM THE PGY ROTATION LIST. WILL BE ADDED PRE DEMO BUT THIS DOES WORK)
-const ROTATION_OPTIONS = [
-  "Inpatient Psy",
-  "Forensic",
-  "Community Psy",
-  "Addiction",
-  "Psy Consults",
-  "TMS",
-  "CLC",
-  "NFETC",
-  "HPC",
-  "Chief",
-  "IOP",
-  "VA",
-];
-
 export const SubmissionViewDialog: React.FC<SubmissionViewDialogProps> = ({
   open,
   onOpenChange,
@@ -61,8 +45,30 @@ export const SubmissionViewDialog: React.FC<SubmissionViewDialogProps> = ({
     avoids: ["", "", ""],
     additionalNotes: "",
   });
+  const [rotationOptions, setRotationOptions] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [fetchError, setFetchError] = useState(false);
+
+  const fetchRotationTypes = useCallback(async () => {
+    try {
+      const response = await fetch(
+        `${config.apiUrl}/api/rotation-types?pgyYear=4`,
+      );
+      if (!response.ok) throw new Error("Failed to fetch rotation types");
+      const data = await response.json();
+      setRotationOptions(
+        (
+          data.rotationTypes as {
+            rotationTypeId: string;
+            rotationName: string;
+          }[]
+        ).map((rt) => rt.rotationName),
+      );
+    } catch (err) {
+      console.error("Error fetching rotation types:", err);
+      setFetchError(true);
+    }
+  }, []);
 
   const fetchPreferences = useCallback(async () => {
     setIsLoading(true);
@@ -96,13 +102,14 @@ export const SubmissionViewDialog: React.FC<SubmissionViewDialogProps> = ({
   // Fetch preferences when dialog opens
   useEffect(() => {
     if (open && residentId) {
+      fetchRotationTypes();
       if (prefetchedData) {
         setPreferences(prefetchedData);
       } else {
         fetchPreferences();
       }
     }
-  }, [open, residentId, prefetchedData, fetchPreferences]);
+  }, [open, residentId, prefetchedData, fetchPreferences, fetchRotationTypes]);
 
   // Field card component matching Figma exactly
   const FieldCard = ({ value, label }: { value: string; label: string }) => (
@@ -118,7 +125,7 @@ export const SubmissionViewDialog: React.FC<SubmissionViewDialogProps> = ({
             disabled
           >
             <option value="">Select</option>
-            {ROTATION_OPTIONS.map((opt) => (
+            {rotationOptions.map((opt) => (
               <option key={opt} value={opt}>
                 {opt}
               </option>
