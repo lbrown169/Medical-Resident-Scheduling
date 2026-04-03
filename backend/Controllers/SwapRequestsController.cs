@@ -23,7 +23,6 @@ public class SwapRequestsController : ControllerBase
         _swapRequestConverter = swapRequestConverter;
     }
 
-
     // POST: api/swaprequests
     [HttpPost]
     public async Task<IActionResult> CreateSwapRequest(
@@ -194,8 +193,7 @@ public class SwapRequestsController : ControllerBase
 
     // POST: api/swaprequests/{id}/deny
     [HttpPost("{id}/deny")]
-    public async Task<IActionResult> DenySwapRequest(Guid id,
-        [FromBody] SwapRequestDenyRequest denyRequest)
+    public async Task<IActionResult> DenySwapRequest(Guid id)
     {
         SwapRequest? swap = await _context.SwapRequests.FindAsync(id);
         if (swap == null)
@@ -213,13 +211,26 @@ public class SwapRequestsController : ControllerBase
         }
 
         swap.Status = RequestStatus.Denied;
-        swap.Details = denyRequest.Reason ?? "";
         swap.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
         // Optionally: Add logic to notify users, etc.
         // Add recent activity for requester (handled in dashboard fetch for now)
 
+        return Ok(_swapRequestConverter.CreateSwapRequestResponseFromSwapRequest(swap));
+    }
+
+    [HttpPatch("{id}")]
+    public async Task<ActionResult<SwapRequestResponse>> UpdateSwapRequest(Guid id, [FromBody] UpdateSwapRequest swapRequestUpdates)
+    {
+        SwapRequest? swap = await _context.SwapRequests.FindAsync(id);
+        if (swap == null)
+        {
+            return NotFound();
+        }
+
+        _swapRequestConverter.UpdateSwapRequestFromSwapRequestUpdates(swap, swapRequestUpdates);
+        await _context.SaveChangesAsync();
         return Ok(_swapRequestConverter.CreateSwapRequestResponseFromSwapRequest(swap));
     }
 
