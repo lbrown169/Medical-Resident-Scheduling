@@ -1,4 +1,5 @@
 using MedicalDemo.Enums;
+using MedicalDemo.Extensions;
 using MedicalDemo.Models.DTO.Pgy4Scheduling;
 
 namespace MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator.Constraints;
@@ -129,13 +130,15 @@ public class OneIopForenCommAddictPerMonthConstraint : IConstraint
         Dictionary<AlgorithmResident, Pgy4RotationTypeEnum[]> schedule
     )
     {
-        Dictionary<int, HashSet<Pgy4RotationTypeEnum>> encounteredErrorRotations = [];
+        Dictionary<MonthOfYear, HashSet<Pgy4RotationTypeEnum>> encounteredErrorRotations = [];
         List<Pgy4ConstraintError> errors = [];
 
         const string rotationsCountOverflowErrorTemplate = "{0} can have at most 1 {1} rotation";
 
         for (int monthIndex = 0; monthIndex < 12; monthIndex++)
         {
+            MonthOfYear calendarMonth = MonthOfYearExtensions.FromCalendarIndex(monthIndex, false);
+
             bool iopEncountered = false;
             bool forensicEncountered = false;
             bool communityEncountered = false;
@@ -150,7 +153,7 @@ public class OneIopForenCommAddictPerMonthConstraint : IConstraint
                     Pgy4RotationTypeEnum.IOP,
                     errors,
                     ref iopEncountered,
-                    monthIndex,
+                    calendarMonth,
                     rotationsCountOverflowErrorTemplate,
                     encounteredErrorRotations
                 );
@@ -160,7 +163,7 @@ public class OneIopForenCommAddictPerMonthConstraint : IConstraint
                     Pgy4RotationTypeEnum.Forensic,
                     errors,
                     ref forensicEncountered,
-                    monthIndex,
+                    calendarMonth,
                     rotationsCountOverflowErrorTemplate,
                     encounteredErrorRotations
                 );
@@ -170,7 +173,7 @@ public class OneIopForenCommAddictPerMonthConstraint : IConstraint
                     Pgy4RotationTypeEnum.CommunityPsy,
                     errors,
                     ref communityEncountered,
-                    monthIndex,
+                    calendarMonth,
                     rotationsCountOverflowErrorTemplate,
                     encounteredErrorRotations
                 );
@@ -180,7 +183,7 @@ public class OneIopForenCommAddictPerMonthConstraint : IConstraint
                     Pgy4RotationTypeEnum.Addiction,
                     errors,
                     ref addictionEncountered,
-                    monthIndex,
+                    calendarMonth,
                     rotationsCountOverflowErrorTemplate,
                     encounteredErrorRotations
                 );
@@ -195,9 +198,9 @@ public class OneIopForenCommAddictPerMonthConstraint : IConstraint
         Pgy4RotationTypeEnum constraintRotationType,
         List<Pgy4ConstraintError> errors,
         ref bool encountered,
-        int monthIndex,
+        MonthOfYear calendarMonth,
         string errorTemplate,
-        Dictionary<int, HashSet<Pgy4RotationTypeEnum>> encounteredErrorRotations
+        Dictionary<MonthOfYear, HashSet<Pgy4RotationTypeEnum>> encounteredErrorRotations
     )
     {
         if (currentMonthRotationType == constraintRotationType)
@@ -210,7 +213,7 @@ public class OneIopForenCommAddictPerMonthConstraint : IConstraint
             else
             {
                 encounteredErrorRotations.TryGetValue(
-                    monthIndex,
+                    calendarMonth,
                     out HashSet<Pgy4RotationTypeEnum>? encounteredRotations
                 );
 
@@ -224,12 +227,12 @@ public class OneIopForenCommAddictPerMonthConstraint : IConstraint
                 {
                     if (encounteredRotations == null)
                     {
-                        encounteredErrorRotations.Add(monthIndex, [constraintRotationType]);
+                        encounteredErrorRotations.Add(calendarMonth, [constraintRotationType]);
                     }
 
                     string errorMessage = string.Format(
                         errorTemplate,
-                        (MonthOfYear)monthIndex,
+                        calendarMonth,
                         constraintRotationType
                     );
 
@@ -237,7 +240,7 @@ public class OneIopForenCommAddictPerMonthConstraint : IConstraint
                         new()
                         {
                             Message = errorMessage,
-                            CalendarMonthIndex = (MonthOfYear)monthIndex,
+                            CalendarMonthIndex = calendarMonth,
                             Resident = null,
                         }
                     );

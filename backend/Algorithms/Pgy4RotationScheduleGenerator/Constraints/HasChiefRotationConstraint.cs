@@ -1,4 +1,5 @@
 using MedicalDemo.Enums;
+using MedicalDemo.Extensions;
 using MedicalDemo.Models.DTO.Pgy4Scheduling;
 
 namespace MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator.Constraints;
@@ -145,6 +146,11 @@ public class HasChiefRotationConstraint : IConstraint
 
             for (int monthIndex = 0; monthIndex < rotations.Length; monthIndex++)
             {
+                MonthOfYear calendarMonth = MonthOfYearExtensions.FromCalendarIndex(
+                    monthIndex,
+                    false
+                );
+
                 if (resident.ChiefType != ChiefType.None)
                 {
                     // Is chief resident
@@ -157,14 +163,14 @@ public class HasChiefRotationConstraint : IConstraint
                         string errorMessage = string.Format(
                             format: missingChiefRotationOnMonthErrorTemplate,
                             $"{resident.FirstName} {resident.LastName}",
-                            (MonthOfYear)monthIndex
+                            calendarMonth
                         );
 
                         errors.Add(
                             new()
                             {
                                 Message = errorMessage,
-                                CalendarMonthIndex = ((MonthOfYear)monthIndex),
+                                CalendarMonthIndex = calendarMonth,
                                 Resident = resident,
                             }
                         );
@@ -177,14 +183,14 @@ public class HasChiefRotationConstraint : IConstraint
                         string errorMessage = string.Format(
                             format: chiefRotationOnInvalidMonthErrorTemplate,
                             $"{resident.FirstName} {resident.LastName}",
-                            (MonthOfYear)monthIndex
+                            calendarMonth
                         );
 
                         errors.Add(
                             new()
                             {
                                 Message = errorMessage,
-                                CalendarMonthIndex = (MonthOfYear)monthIndex,
+                                CalendarMonthIndex = calendarMonth,
                                 Resident = resident,
                             }
                         );
@@ -199,14 +205,14 @@ public class HasChiefRotationConstraint : IConstraint
                         string errorMessage = string.Format(
                             chiefRotationOnNonChiefResidentErrorTemplate,
                             $"{resident.FirstName} {resident.LastName}",
-                            (MonthOfYear)monthIndex
+                            calendarMonth
                         );
 
                         errors.Add(
                             new()
                             {
                                 Message = errorMessage,
-                                CalendarMonthIndex = (MonthOfYear)monthIndex,
+                                CalendarMonthIndex = calendarMonth,
                                 Resident = resident,
                             }
                         );

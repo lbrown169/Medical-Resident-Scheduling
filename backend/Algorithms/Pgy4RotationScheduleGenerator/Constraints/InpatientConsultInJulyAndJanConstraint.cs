@@ -1,4 +1,5 @@
 using MedicalDemo.Enums;
+using MedicalDemo.Extensions;
 using MedicalDemo.Models.DTO.Pgy4Scheduling;
 
 namespace MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator.Constraints;
@@ -189,6 +190,8 @@ public class InpatientConsultInJulyAndJanConstraint : IConstraint
 
         foreach (int monthIndex in janAndJulyMonths)
         {
+            MonthOfYear calendarMonth = MonthOfYearExtensions.FromCalendarIndex(monthIndex, false);
+
             bool hasInpatient = false;
             bool hasConsult = false;
 
@@ -210,14 +213,14 @@ public class InpatientConsultInJulyAndJanConstraint : IConstraint
                 string errorMessage = string.Format(
                     missingRotationOnMonthErrorTemplate,
                     Pgy4RotationTypeEnum.InpatientPsy,
-                    (MonthOfYear)monthIndex
+                    calendarMonth
                 );
 
                 errors.Add(
                     new()
                     {
                         Message = errorMessage,
-                        CalendarMonthIndex = (MonthOfYear)monthIndex,
+                        CalendarMonthIndex = calendarMonth,
                         Resident = null,
                     }
                 );
@@ -228,14 +231,14 @@ public class InpatientConsultInJulyAndJanConstraint : IConstraint
                 string errorMessage = string.Format(
                     missingRotationOnMonthErrorTemplate,
                     Pgy4RotationTypeEnum.PsyConsults,
-                    (MonthOfYear)monthIndex
+                    calendarMonth
                 );
 
                 errors.Add(
                     new()
                     {
                         Message = errorMessage,
-                        CalendarMonthIndex = (MonthOfYear)monthIndex,
+                        CalendarMonthIndex = calendarMonth,
                         Resident = null,
                     }
                 );

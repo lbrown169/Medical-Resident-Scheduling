@@ -1,5 +1,4 @@
 using MedicalDemo.Converters;
-using MedicalDemo.Enums;
 using MedicalDemo.Extensions;
 using MedicalDemo.Models.DTO.Requests;
 using MedicalDemo.Models.DTO.Responses;
