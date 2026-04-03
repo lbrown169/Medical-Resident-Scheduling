@@ -204,7 +204,17 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
   let deadline = null;
   if (windowDueDate) {
     deadline = parseLocalDate(windowDueDate);
-    deadline.setHours(23, 59, 59, 999); // Set to 11:59:59 PM local time
+    deadline = new Date(
+      Date.UTC(
+        deadline.getFullYear(),
+        deadline.getMonth(),
+        deadline.getDate() + 1,
+        0,
+        0,
+        0,
+        0,
+      ),
+    );
   }
 
   // Schedule state
@@ -671,7 +681,13 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                 <CalendarClock className="w-5 h-5 text-yellow-500" />
                 <span className="whitespace-nowrap text-2xl font-bold text-gray-900 dark:text-white">
                   {deadline
-                    ? `${deadline.toLocaleDateString("en-US", { month: "short", day: "numeric" })} at 11:59 PM`
+                    ? `${deadline.toLocaleString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                        hour12: true,
+                      })}`
                     : "—"}
                 </span>
               </div>

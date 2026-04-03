@@ -134,9 +134,17 @@ const PGY3RotationFormPage: React.FC<PGY3RotationFormPageProps> = ({
     );
   }
 
-  // Due at 11:59:59 PM local time of the due date.
-  const adjustedDueDate = new Date(dueDate);
-  adjustedDueDate.setHours(23, 59, 59, 999);
+  const adjustedDueDate = new Date(
+    Date.UTC(
+      dueDate.getFullYear(),
+      dueDate.getMonth(),
+      dueDate.getDate() + 1,
+      0,
+      0,
+      0,
+      0,
+    ),
+  );
 
   const formatDate = (d: Date) =>
     d.toLocaleDateString("en-US", {
@@ -197,7 +205,15 @@ const PGY3RotationFormPage: React.FC<PGY3RotationFormPageProps> = ({
           You may return at anytime prior to the deadline to make changes.
         </p>
         <p className="text-red-600 dark:text-red-400 font-semibold">
-          Due: {formatDate(dueDate)} at 11:59 PM
+          Due:{" "}
+          {adjustedDueDate.toLocaleString("en-US", {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+          })}
         </p>
       </div>
       <RotationForm
