@@ -675,18 +675,6 @@ function Dashboard() {
       return;
     }
 
-    // Check PGY level
-    const myPGY = residents.find(r => r.resident_id === user?.id)?.graduate_yr;
-    const partnerPGY = residents.find(r => r.resident_id === selectedResident)?.graduate_yr;
-    if (myPGY !== partnerPGY) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Both residents must be the same PGY level.",
-      });
-      return;
-    }
-
     try {
       const myShift = calendarEvents.find((event) =>
         (event.extendedProps?.residentId || "").trim() === (user?.id || "").trim() &&
@@ -1009,8 +997,7 @@ case "Home":
         );
 
       case "Swap Calls": {
-        const myPGY = residents.find(r => r.resident_id === user?.id)?.graduate_yr;
-        const pgyMatchedResidents = residents.filter(r => r.graduate_yr === myPGY && r.resident_id !== user?.id)
+        const pgyMatchedResidents = residents.filter(r => r.resident_id !== user?.id)
           .map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}` }));
         const now = new Date(); now.setHours(0, 0, 0, 0);
         const filterShiftEvents = (residentId: string) =>

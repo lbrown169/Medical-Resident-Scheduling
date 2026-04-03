@@ -18,8 +18,8 @@ public class SwapRequestConverter
             RequesterDate = createRequest.RequesterDate,
             RequesteeDate = createRequest.RequesteeDate,
             Status = RequestStatus.Pending,
-            CreatedAt = DateTime.Now,
-            UpdatedAt = DateTime.Now,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
             Details = createRequest.Details,
         };
     }
