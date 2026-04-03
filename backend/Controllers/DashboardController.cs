@@ -56,12 +56,12 @@ public class DashboardController : ControllerBase
             if (resident.GraduateYr.Value is 1 or 2)
             {
                 int year = DateTime.Now.AcademicYear;
-                MonthOfYear month = MonthOfYearExtensions.FromCalendarIndex(DateTime.Now.Month, false);
+                MonthOfYear month = MonthOfYearExtensions.FromDateTime(DateTime.Now, false);
                 RotationType? type = await _context.Rotations
                     .Where(r =>
                         r.ResidentId == residentId
                         && r.AcademicYear == year
-                        && r.AcademicMonthIndex == month
+                        && r.RotationMonthOfYear == month
                     )
                     .Select(r => r.RotationType)
                     .FirstOrDefaultAsync();
