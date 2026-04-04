@@ -829,8 +829,9 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
   );
 
   // Submission tracking
-  const submittedCount = submissions.length;
-  const missingCount = Math.max(0, PGY3Residents.length - submittedCount);
+  const submittedResidentIds = new Set(submissions.map((s) => s.resident.resident_id));
+  const submittedCount = submittedResidentIds.size;
+  const missingCount = PGY3Residents.filter((r) => !submittedResidentIds.has(r.id)).length;
 
   // Load schedules and rotation types on mount
   useEffect(() => {

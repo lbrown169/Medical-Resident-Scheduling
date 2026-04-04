@@ -328,8 +328,6 @@ function Dashboard() {
       const response = await fetch(`${config.apiUrl}/api/dates/published`);
       if (response.ok) {
         const dates = await response.json() as DateResponse[];
-        console.log(dates)
-
         const events = dates.map((date: DateResponse) => {
           // Only show the resident's name on the calendar
           const fullName = date.firstName && date.lastName
@@ -591,7 +589,6 @@ function Dashboard() {
   };
 
   const handleApproveRequest = async (groupId: string) => {
-    console.log("Approving groupId:", groupId);
     try {
 
       const response = await fetch(`${config.apiUrl}/api/vacations/group/${groupId}/status/approve`, {
@@ -660,22 +657,6 @@ function Dashboard() {
   
 
   const handleSubmitSwap = async () => {
-    console.log('handleSubmitSwap called');
-    if (!selectedResident) {
-      console.log('Validation failed: selectedResident is missing');
-    }
-    if (!selectedShift) {
-      console.log('Validation failed: selectedShift is missing');
-    }
-    if (!yourShiftDate) {
-      console.log('Validation failed: yourShiftDate is missing');
-    }
-    if (!partnerShiftDate) {
-      console.log('Validation failed: partnerShiftDate is missing');
-    }
-    if (!partnerShift) {
-      console.log('Validation failed: partnerShift is missing');
-    }
     if (!selectedResident || !selectedShift || !yourShiftDate || !partnerShiftDate || !partnerShift) {
       toast({
         variant: "destructive",
@@ -724,7 +705,6 @@ function Dashboard() {
         RequesteeDate: partnerShiftDate,
         Details: swapDescription.trim()
       };
-      console.log('Submitting swapRequest:', swapRequest);
       const response = await fetch(`${config.apiUrl}/api/swaprequests`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
