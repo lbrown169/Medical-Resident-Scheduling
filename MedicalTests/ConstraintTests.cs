@@ -64,13 +64,13 @@ public static class ConstraintTests
     // Role that allows only short call
     private static HospitalRole ShortOnlyRole =>
         new("Short only", true, false, false, false);
-    
+
     private static HospitalRole ShortTrainingOnly =>
         new("Short training only", false, false, true, false);
 
     // Role that allows only long call
     private static HospitalRole LongOnlyRole => new("Long only", false, true, false, false);
-    
+
     private static HospitalRole LongTrainingOnly => new("Long training only", false, false, false, true);
 
     // July = calendar month 7 = academic index 0
@@ -85,10 +85,10 @@ public static class ConstraintTests
 
     // A weekend outside training months
     private static DateOnly OctoberSaturday => new(2025, 10, 4);
-    
+
     // A Sunday in October (no PGY1s)
     private static DateOnly OctoberSunday => new(2025, 10, 5);
-    
+
     // Chrismas (no PGY2s)
     private static DateOnly ChristmasDay => new(2025, 12, 25);
 
@@ -168,7 +168,7 @@ public static class ConstraintTests
             ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday);
             Assert.False(result.IsViolated);
         }
-        
+
         [Fact]
         public void Violation_WhenOnMorningVacation_OnWeekend()
         {
@@ -224,7 +224,7 @@ public static class ConstraintTests
             ConstraintResult result = _constraint.Evaluate(resident, JulyWeekday);
             Assert.False(result.IsViolated);
         }
-        
+
         [Fact]
         public void NoViolation_WhenRotationAllowsAll_OnTrainingWeekend()
         {
@@ -240,7 +240,7 @@ public static class ConstraintTests
             ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday);
             Assert.False(result.IsViolated);
         }
-        
+
         [Fact]
         public void NoViolation_WhenRotationAllowsAll_OnNormalWeekend()
         {
@@ -248,7 +248,7 @@ public static class ConstraintTests
             ConstraintResult result = _constraint.Evaluate(resident, OctoberSaturday);
             Assert.False(result.IsViolated);
         }
-        
+
         // Short only
         [Fact]
         public void Violation_WhenRotationAllowsShort_OnTrainingWeekday()
@@ -257,7 +257,7 @@ public static class ConstraintTests
             ConstraintResult result = _constraint.Evaluate(resident, JulyWeekday);
             Assert.True(result.IsViolated);
         }
-        
+
         [Fact]
         public void Violation_WhenRotationAllowsShort_OnTrainingWeekend()
         {
@@ -265,7 +265,7 @@ public static class ConstraintTests
             ConstraintResult result = _constraint.Evaluate(resident, JulySaturday);
             Assert.True(result.IsViolated);
         }
-        
+
         [Fact]
         public void NoViolation_WhenRotationAllowsShort_OnNormalWeekday()
         {
@@ -273,7 +273,7 @@ public static class ConstraintTests
             ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday);
             Assert.False(result.IsViolated);
         }
-        
+
         [Fact]
         public void Violation_WhenRotationAllowsShort_OnNormalWeekend()
         {
@@ -281,7 +281,7 @@ public static class ConstraintTests
             ConstraintResult result = _constraint.Evaluate(resident, OctoberSaturday);
             Assert.True(result.IsViolated);
         }
-        
+
         // Short Training Only
         [Fact]
         public void NoViolation_WhenRotationAllowsTrainingShort_OnTrainingWeekday()
@@ -290,7 +290,7 @@ public static class ConstraintTests
             ConstraintResult result = _constraint.Evaluate(resident, JulyWeekday);
             Assert.False(result.IsViolated);
         }
-        
+
         [Fact]
         public void Violation_WhenRotationAllowsTrainingShort_OnTrainingWeekend()
         {
@@ -298,7 +298,7 @@ public static class ConstraintTests
             ConstraintResult result = _constraint.Evaluate(resident, JulySaturday);
             Assert.True(result.IsViolated);
         }
-        
+
         [Fact]
         public void Violation_WhenRotationAllowsTrainingShort_OnNormalWeekday()
         {
@@ -306,7 +306,7 @@ public static class ConstraintTests
             ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday);
             Assert.True(result.IsViolated);
         }
-        
+
         [Fact]
         public void Violation_WhenRotationAllowsTrainingShort_OnNormalWeekend()
         {
@@ -314,7 +314,7 @@ public static class ConstraintTests
             ConstraintResult result = _constraint.Evaluate(resident, OctoberSaturday);
             Assert.True(result.IsViolated);
         }
-        
+
         // Long only
         [Fact]
         public void Violation_WhenRotationAllowsLong_OnTrainingWeekday()
@@ -323,7 +323,7 @@ public static class ConstraintTests
             ConstraintResult result = _constraint.Evaluate(resident, JulyWeekday);
             Assert.True(result.IsViolated);
         }
-        
+
         [Fact]
         public void Violation_WhenRotationAllowsLong_OnTrainingWeekend()
         {
@@ -331,7 +331,7 @@ public static class ConstraintTests
             ConstraintResult result = _constraint.Evaluate(resident, JulySaturday);
             Assert.True(result.IsViolated);
         }
-        
+
         [Fact]
         public void Violation_WhenRotationAllowsLong_OnNormalWeekday()
         {
@@ -339,7 +339,7 @@ public static class ConstraintTests
             ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday);
             Assert.True(result.IsViolated);
         }
-        
+
         [Fact]
         public void NoViolation_WhenRotationAllowsLong_OnNormalWeekend()
         {
@@ -347,7 +347,7 @@ public static class ConstraintTests
             ConstraintResult result = _constraint.Evaluate(resident, OctoberSaturday);
             Assert.False(result.IsViolated);
         }
-        
+
         // Long Training Only
         [Fact]
         public void Violation_WhenRotationAllowsTrainingLong_OnTrainingWeekday()
@@ -356,7 +356,7 @@ public static class ConstraintTests
             ConstraintResult result = _constraint.Evaluate(resident, JulyWeekday);
             Assert.True(result.IsViolated);
         }
-        
+
         [Fact]
         public void NoViolation_WhenRotationAllowsTrainingLong_OnTrainingWeekend()
         {
@@ -364,7 +364,7 @@ public static class ConstraintTests
             ConstraintResult result = _constraint.Evaluate(resident, JulySaturday);
             Assert.False(result.IsViolated);
         }
-        
+
         [Fact]
         public void Violation_WhenRotationAllowsTrainingLong_OnNormalWeekday()
         {
@@ -372,7 +372,7 @@ public static class ConstraintTests
             ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday);
             Assert.True(result.IsViolated);
         }
-        
+
         [Fact]
         public void Violation_WWhenRotationAllowsTrainingLong_OnNormalWeekend()
         {
@@ -405,7 +405,7 @@ public static class ConstraintTests
             ConstraintResult result = _constraint.Evaluate(resident, OctoberSaturday);
             Assert.False(result.IsViolated);
         }
-        
+
         [Fact]
         public void Violation_WhenNoValidShiftTypeExistsForPgy1_OnSunday()
         {
@@ -429,7 +429,7 @@ public static class ConstraintTests
             ConstraintResult result = _constraint.Evaluate(resident, OctoberSaturday);
             Assert.False(result.IsViolated);
         }
-        
+
         [Fact]
         public void Violation_WhenNoValidShiftTypeExistsForPgy2_OnWeekend()
         {
