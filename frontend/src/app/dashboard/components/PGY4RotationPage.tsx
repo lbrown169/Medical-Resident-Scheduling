@@ -1,7 +1,7 @@
 "use client";
 
 import { config } from "../../../config";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
@@ -21,6 +21,10 @@ import {
   X,
   ClipboardList,
   ChevronDown,
+  ChevronUp,
+  AlertTriangle,
+  CheckCircle2,
+  Loader2,
 } from "lucide-react";
 import RotationForm from "./RotationForm";
 
@@ -120,6 +124,34 @@ interface RotationTypesListResponse {
   rotationTypes: RotationTypeApiResponse[];
 }
 
+// Constraint Violation Types
+
+interface ConstraintErrorResponse {
+  message: string;
+  resident?: {
+    resident_id: string;
+    first_name: string;
+    last_name: string;
+  };
+  academicMonthIndex?: number;
+}
+
+interface ConstraintViolationResponse {
+  constraintViolated: string;
+  errors: ConstraintErrorResponse[];
+}
+
+interface ConstraintViolationsListResponse {
+  schedule: Pgy4RotationScheduleResponse;
+  violations: ConstraintViolationResponse[];
+}
+
+
+const ACADEMIC_MONTHS = [
+  "July", "August", "September", "October", "November", "December",
+  "January", "February", "March", "April", "May", "June",
+];
+
 // Passed into RotationScheduleTable as colorMap
 const rotationColorMap: Record<string, string> = {
   "Inpatient Psy": "#8b5cf6",
@@ -134,7 +166,6 @@ const rotationColorMap: Record<string, string> = {
   Forensic: "#ef4444",
   CLC: "#ec4899",
   Chief: "#4b5563",
-  Unassigned: "#6b7280",
 };
 
 // Passed into RotationScheduleTable as displayNames
@@ -187,6 +218,108 @@ function Modal({
   );
 }
 
+// Constraint Violations Panel
+function ConstraintViolationsPanel({
+  violations,
+  loading,
+}: {
+  violations: ConstraintViolationResponse[];
+  loading: boolean;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  const totalErrors = violations.reduce((sum, v) => sum + v.errors.length, 0);
+  const hasViolations = violations.length > 0;
+
+  // If there are issues we auto open this panel
+  useEffect(() => {
+    if (hasViolations) setExpanded(true);
+  }, [hasViolations]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 px-4 py-3 rounded-lg border border-border bg-background text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+        <span>Checking constraint violations…</span>
+      </div>
+    );
+  }
+
+  if (!hasViolations) {
+    return (
+      <div className="flex items-center gap-2 px-4 py-3 rounded-lg border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/30 text-sm text-green-700 dark:text-green-400">
+        <CheckCircle2 className="h-4 w-4 shrink-0" />
+        <span className="font-medium">No constraint violations detected</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20 overflow-hidden">
+      {/* Header (expands and collapses so it isn't too annoying if they want to keep the violations present) */}
+      <button
+        onClick={() => setExpanded((prev) => !prev)}
+        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-red-100/50 dark:hover:bg-red-900/20 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400 shrink-0" />
+          <span className="text-sm font-semibold text-red-700 dark:text-red-400">
+            {violations.length} constraint violation{violations.length !== 1 ? "s" : ""}
+            {" "}
+            <span className="font-normal text-red-500 dark:text-red-500">
+              ({totalErrors} error{totalErrors !== 1 ? "s" : ""} total)
+            </span>
+          </span>
+        </div>
+        {expanded ? (
+          <ChevronUp className="h-4 w-4 text-red-500 shrink-0" />
+        ) : (
+          <ChevronDown className="h-4 w-4 text-red-500 shrink-0" />
+        )}
+      </button>
+
+      {/* Expanded detail */}
+      {expanded && (
+        <div className="border-t border-red-200 dark:border-red-800 divide-y divide-red-100 dark:divide-red-900 max-h-72 overflow-y-auto">
+          {violations.map((violation, vi) => (
+            <div key={vi} className="px-4 py-3">
+              {/* Constraint name */}
+              <p className="text-xs font-bold uppercase tracking-wide text-red-600 dark:text-red-400 mb-2">
+                {violation.constraintViolated}
+              </p>
+              {/* Individual errors */}
+              <ul className="space-y-1.5">
+                {violation.errors.map((err, ei) => (
+                  <li
+                    key={ei}
+                    className="flex flex-col sm:flex-row sm:items-center gap-1 text-sm text-red-700 dark:text-red-300"
+                  >
+                    <span className="shrink-0 inline-block w-1.5 h-1.5 rounded-full bg-red-400 mt-1 sm:mt-0 self-start sm:self-auto" />
+                    <span className="flex-1">{err.message}</span>
+                    {/* Resident badge */}
+                    {err.resident && (
+                      <span className="text-xs bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 rounded px-1.5 py-0.5 whitespace-nowrap shrink-0">
+                        {err.resident.first_name} {err.resident.last_name}
+                      </span>
+                    )}
+                    {/* Month badge */}
+                    {err.academicMonthIndex != null && (
+                      <span className="text-xs bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 rounded px-1.5 py-0.5 whitespace-nowrap shrink-0">
+                        {ACADEMIC_MONTHS[err.academicMonthIndex] ?? `Month ${err.academicMonthIndex}`}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
   residents,
 }) => {
@@ -232,6 +365,42 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
   const selectedSchedule =
     schedules.find((s) => s.pgy4RotationScheduleId === selectedScheduleId) ??
     null;
+
+  // Constraint Violations State
+  const [constraintViolations, setConstraintViolations] = useState<
+    ConstraintViolationResponse[]
+  >([]);
+  const [loadingViolations, setLoadingViolations] = useState(false);
+
+  const fetchConstraintErrors = useCallback(async (scheduleId: string) => {
+    if (!scheduleId) return;
+    try {
+      setLoadingViolations(true);
+      const res = await fetch(
+        `${config.apiUrl}/api/pgy4-rotation-schedule/${scheduleId}/constraint-errors`,
+      );
+      if (!res.ok) {
+        setConstraintViolations([]);
+        return;
+      }
+      const data: ConstraintViolationsListResponse = await res.json();
+      setConstraintViolations(data.violations ?? []);
+    } catch (err) {
+      console.error("Failed to fetch constraint errors:", err);
+      setConstraintViolations([]);
+    } finally {
+      setLoadingViolations(false);
+    }
+  }, []);
+
+  // Check for violations when the schedule changes
+  useEffect(() => {
+    if (selectedScheduleId) {
+      fetchConstraintErrors(selectedScheduleId);
+    } else {
+      setConstraintViolations([]);
+    }
+  }, [selectedScheduleId, fetchConstraintErrors]);
 
   // State for viewing form creation
   const [showRotationFormModal, setShowRotationFormModal] = useState(false);
@@ -814,12 +983,13 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                 rotationTypes={rotationTypeNames}
                 emptyMessage='No rotations found. Use the "Generate Schedule" button above to create a rotation schedule.'
                 allowResidentReassignment={false}
-
-                // !!! THIS WORKS FOR UPDATING FOR NOW. OVERRIDE AND CONSTRAIN VALIDATION ISNT IN YET BUT SOON.
-                onRotationChange={async (residentId, monthIndex, newRotationTypeId) => {
-                  // Find rotation entry for the resident and month combo
+                onRotationChange={async (
+                  residentId,
+                  monthIndex,
+                  newRotationTypeId,
+                ) => {
                   const residentSchedule = selectedSchedule?.schedule.find(
-                    (s) => s.resident.resident_id === residentId
+                    (s) => s.resident.resident_id === residentId,
                   );
                   const rotation = residentSchedule?.rotations.find(
                     (r) => r.academicMonthIndex === monthIndex
@@ -865,13 +1035,24 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                     );
 
                     toast({ variant: "success", title: "Updated", description: "Rotation updated." });
+                    // Check constraints when an edit happens
+                    await fetchConstraintErrors(selectedScheduleId);
                   } catch {
                     toast({ variant: "destructive", title: "Error", description: "Failed to update rotation." });
                   }
                 }}
               />
             )}
-            {/* Footer - Buttons at the bottom */}
+
+            {/* Constraint Violations Panel */}
+            {!loadingSchedules && selectedSchedule && (
+              <ConstraintViolationsPanel
+                violations={constraintViolations}
+                loading={loadingViolations}
+              />
+            )}
+
+            {/* Footer (export is disabled until needed) */}
             <div className="flex justify-end gap-2 pt-4">
               <Button
                 disabled
