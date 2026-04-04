@@ -146,10 +146,19 @@ interface ConstraintViolationsListResponse {
   violations: ConstraintViolationResponse[];
 }
 
-
 const ACADEMIC_MONTHS = [
-  "July", "August", "September", "October", "November", "December",
-  "January", "February", "March", "April", "May", "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
 ];
 
 // Passed into RotationScheduleTable as colorMap
@@ -264,8 +273,8 @@ function ConstraintViolationsPanel({
         <div className="flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400 shrink-0" />
           <span className="text-sm font-semibold text-red-700 dark:text-red-400">
-            {violations.length} constraint violation{violations.length !== 1 ? "s" : ""}
-            {" "}
+            {violations.length} constraint violation
+            {violations.length !== 1 ? "s" : ""}{" "}
             <span className="font-normal text-red-500 dark:text-red-500">
               ({totalErrors} error{totalErrors !== 1 ? "s" : ""} total)
             </span>
@@ -305,7 +314,8 @@ function ConstraintViolationsPanel({
                     {/* Month badge */}
                     {err.academicMonthIndex != null && (
                       <span className="text-xs bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 rounded px-1.5 py-0.5 whitespace-nowrap shrink-0">
-                        {ACADEMIC_MONTHS[err.academicMonthIndex] ?? `Month ${err.academicMonthIndex}`}
+                        {ACADEMIC_MONTHS[err.academicMonthIndex] ??
+                          `Month ${err.academicMonthIndex}`}
                       </span>
                     )}
                   </li>
@@ -318,7 +328,6 @@ function ConstraintViolationsPanel({
     </div>
   );
 }
-
 
 const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
   residents,
@@ -992,7 +1001,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                     (s) => s.resident.resident_id === residentId,
                   );
                   const rotation = residentSchedule?.rotations.find(
-                    (r) => r.academicMonthIndex === monthIndex
+                    (r) => r.academicMonthIndex === monthIndex,
                   );
                   if (!rotation) return;
 
@@ -1002,43 +1011,70 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                       {
                         method: "PATCH",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ rotationTypeId: newRotationTypeId }),
-                      }
+                        body: JSON.stringify({
+                          rotationTypeId: newRotationTypeId,
+                        }),
+                      },
                     );
 
                     if (!res.ok) {
                       const err = await res.json();
-                      toast({ variant: "destructive", title: "Error", description: err?.message ?? "Failed to update rotation." });
+                      toast({
+                        variant: "destructive",
+                        title: "Error",
+                        description:
+                          err?.message ?? "Failed to update rotation.",
+                      });
                       return;
                     }
 
                     // Update optimistically
-                    const newRotationType = rotationTypeNames.find((rt) => rt.id === newRotationTypeId);
+                    const newRotationType = rotationTypeNames.find(
+                      (rt) => rt.id === newRotationTypeId,
+                    );
                     setSchedules((prev) =>
                       prev.map((s) => {
-                        if (s.pgy4RotationScheduleId !== selectedScheduleId) return s;
+                        if (s.pgy4RotationScheduleId !== selectedScheduleId)
+                          return s;
                         return {
                           ...s,
                           schedule: s.schedule.map((rs) => {
-                            if (rs.resident.resident_id !== residentId) return rs;
+                            if (rs.resident.resident_id !== residentId)
+                              return rs;
                             return {
                               ...rs,
                               rotations: rs.rotations.map((r) =>
                                 r.academicMonthIndex === monthIndex
-                                  ? { ...r, rotationType: { rotationTypeId: newRotationTypeId, rotationName: newRotationType?.name ?? r.rotationType.rotationName } }
-                                  : r
+                                  ? {
+                                      ...r,
+                                      rotationType: {
+                                        rotationTypeId: newRotationTypeId,
+                                        rotationName:
+                                          newRotationType?.name ??
+                                          r.rotationType.rotationName,
+                                      },
+                                    }
+                                  : r,
                               ),
                             };
                           }),
                         };
-                      })
+                      }),
                     );
 
-                    toast({ variant: "success", title: "Updated", description: "Rotation updated." });
+                    toast({
+                      variant: "success",
+                      title: "Updated",
+                      description: "Rotation updated.",
+                    });
                     // Check constraints when an edit happens
                     await fetchConstraintErrors(selectedScheduleId);
                   } catch {
-                    toast({ variant: "destructive", title: "Error", description: "Failed to update rotation." });
+                    toast({
+                      variant: "destructive",
+                      title: "Error",
+                      description: "Failed to update rotation.",
+                    });
                   }
                 }}
               />
@@ -1142,7 +1178,9 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                             size="sm"
                             className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white"
                             onClick={() => {
-                              setDeleteTargetId(submission.rotationPrefRequestId);
+                              setDeleteTargetId(
+                                submission.rotationPrefRequestId,
+                              );
                               setDeleteDialogOpen(true);
                             }}
                             disabled={
