@@ -383,8 +383,8 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 
   // Pending changes state
 
-  // Number of staged overrides for this schedule
-  const [pendingOverrideCount, setPendingOverrideCount] = useState(0);
+  // Whether there are any staged overrides for this schedule
+  const [hasPendingOverrides, setHasPendingOverrides] = useState(false);
   const [applyingOverrides, setApplyingOverrides] = useState(false);
   const [discardingOverrides, setDiscardingOverrides] = useState(false);
 
@@ -459,7 +459,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
   const syncOverrideState = useCallback(
     async (scheduleId: string) => {
       if (!scheduleId) {
-        setPendingOverrideCount(0);
+        setHasPendingOverrides(false);
         return;
       }
       try {
@@ -467,16 +467,16 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
           `${config.apiUrl}/api/pgy4-rotation-schedule-override/${scheduleId}`,
         );
         if (!res.ok) {
-          setPendingOverrideCount(0);
+          setHasPendingOverrides(false);
           return;
         }
         const data: Pgy4RotationScheduleOverrideListResponse = await res.json();
-        const count = data.count ?? 0;
-        setPendingOverrideCount(count);
-        if (count > 0) await fetchScheduleWithOverrides(scheduleId);
+        const hasAny = (data.count ?? 0) > 0;
+        setHasPendingOverrides(hasAny);
+        if (hasAny) await fetchScheduleWithOverrides(scheduleId);
       } catch (err) {
         console.error("Failed to sync override state:", err);
-        setPendingOverrideCount(0);
+        setHasPendingOverrides(false);
       }
     },
     [fetchScheduleWithOverrides],
@@ -489,7 +489,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
       fetchConstraintErrors(selectedScheduleId);
     } else {
       setConstraintViolations([]);
-      setPendingOverrideCount(0);
+      setHasPendingOverrides(false);
     }
   }, [selectedScheduleId, syncOverrideState, fetchConstraintErrors]);
 
@@ -497,7 +497,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
    * Commit staged overrides
    */
   const handleApplyOverrides = async () => {
-    if (!selectedScheduleId || pendingOverrideCount === 0) return;
+    if (!selectedScheduleId || !hasPendingOverrides) return;
     try {
       setApplyingOverrides(true);
       const res = await fetch(
@@ -521,7 +521,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
             : s,
         ),
       );
-      setPendingOverrideCount(0);
+      setHasPendingOverrides(false);
       await fetchConstraintErrors(selectedScheduleId);
       toast({
         variant: "success",
@@ -544,7 +544,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
    * Wipe all staged overrides on a discard
    */
   const handleDiscardOverrides = async () => {
-    if (!selectedScheduleId || pendingOverrideCount === 0) return;
+    if (!selectedScheduleId || !hasPendingOverrides) return;
     try {
       setDiscardingOverrides(true);
       const res = await fetch(
@@ -560,7 +560,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
         return;
       }
       await fetchScheduleWithoutOverrides(selectedScheduleId);
-      setPendingOverrideCount(0);
+      setHasPendingOverrides(false);
       await fetchConstraintErrors(selectedScheduleId);
       toast({
         variant: "success",
@@ -1115,14 +1115,6 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                 <p className="text-xs sm:text-sm text-gray-500">
                   Click a table cell to choose the rotation type
                 </p>
-                {/* Pending changes badge */}
-                {pendingOverrideCount > 0 && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />
-                    {pendingOverrideCount} unsaved change
-                    {pendingOverrideCount !== 1 ? "s" : ""}
-                  </span>
-                )}
               </div>
               <div className="flex gap-2 items-center">
                 {schedules.length > 0 && (
@@ -1197,7 +1189,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                       return;
                     }
 
-                    setPendingOverrideCount((prev) => prev + 1);
+                    setHasPendingOverrides(true);
 
                     // Re-fetch with overrides so the table reflects the staged change
                     await fetchScheduleWithOverrides(selectedScheduleId);
@@ -1229,14 +1221,14 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
               <Button
                 variant="outline"
                 disabled={
-                  pendingOverrideCount === 0 ||
+                  !hasPendingOverrides ||
                   discardingOverrides ||
                   applyingOverrides
                 }
                 onClick={handleDiscardOverrides}
-                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium 
-                          border-red-500 text-red-600 
-                          hover:bg-red-500 hover:text-white 
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium
+                          border-red-500 text-red-600
+                          hover:bg-red-500 hover:text-white
                           disabled:opacity-40"
               >
                 {discardingOverrides ? (
@@ -1244,22 +1236,19 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                 ) : (
                   <X className="h-4 w-4" />
                 )}
-                <span>
-                  Discard
-                  {pendingOverrideCount > 0 ? ` (${pendingOverrideCount})` : ""}
-                </span>
+                <span>Discard</span>
               </Button>
 
               {/* Apply */}
               <Button
                 disabled={
-                  pendingOverrideCount === 0 ||
+                  !hasPendingOverrides ||
                   applyingOverrides ||
                   discardingOverrides
                 }
                 onClick={handleApplyOverrides}
-                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium 
-                          bg-blue-600 hover:bg-blue-700 text-white 
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium
+                          bg-blue-600 hover:bg-blue-700 text-white
                           disabled:opacity-40"
               >
                 {applyingOverrides ? (
@@ -1267,10 +1256,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                 ) : (
                   <Save className="h-4 w-4" />
                 )}
-                <span>
-                  Apply
-                  {pendingOverrideCount > 0 ? ` (${pendingOverrideCount})` : ""}
-                </span>
+                <span>Apply</span>
               </Button>
 
               {/* Export */}
