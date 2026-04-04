@@ -814,14 +814,60 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                 rotationTypes={rotationTypeNames}
                 emptyMessage='No rotations found. Use the "Generate Schedule" button above to create a rotation schedule.'
                 allowResidentReassignment={false}
-                onRotationChange={(residentId, monthIndex, newRotation) => {
-                  // !!! I think the endpoint for this isnt done currently
-                  console.log(
-                    "Rotation change:",
-                    residentId,
-                    monthIndex,
-                    newRotation,
+
+                // !!! THIS WORKS FOR UPDATING FOR NOW. OVERRIDE AND CONSTRAIN VALIDATION ISNT IN YET BUT SOON.
+                onRotationChange={async (residentId, monthIndex, newRotationTypeId) => {
+                  // Find rotation entry for the resident and month combo
+                  const residentSchedule = selectedSchedule?.schedule.find(
+                    (s) => s.resident.resident_id === residentId
                   );
+                  const rotation = residentSchedule?.rotations.find(
+                    (r) => r.academicMonthIndex === monthIndex
+                  );
+                  if (!rotation) return;
+
+                  try {
+                    const res = await fetch(
+                      `${config.apiUrl}/api/rotations/${rotation.rotationId}/${monthIndex}`,
+                      {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ rotationTypeId: newRotationTypeId }),
+                      }
+                    );
+
+                    if (!res.ok) {
+                      const err = await res.json();
+                      toast({ variant: "destructive", title: "Error", description: err?.message ?? "Failed to update rotation." });
+                      return;
+                    }
+
+                    // Update optimistically
+                    const newRotationType = rotationTypeNames.find((rt) => rt.id === newRotationTypeId);
+                    setSchedules((prev) =>
+                      prev.map((s) => {
+                        if (s.pgy4RotationScheduleId !== selectedScheduleId) return s;
+                        return {
+                          ...s,
+                          schedule: s.schedule.map((rs) => {
+                            if (rs.resident.resident_id !== residentId) return rs;
+                            return {
+                              ...rs,
+                              rotations: rs.rotations.map((r) =>
+                                r.academicMonthIndex === monthIndex
+                                  ? { ...r, rotationType: { rotationTypeId: newRotationTypeId, rotationName: newRotationType?.name ?? r.rotationType.rotationName } }
+                                  : r
+                              ),
+                            };
+                          }),
+                        };
+                      })
+                    );
+
+                    toast({ variant: "success", title: "Updated", description: "Rotation updated." });
+                  } catch {
+                    toast({ variant: "destructive", title: "Error", description: "Failed to update rotation." });
+                  }
                 }}
               />
             )}
