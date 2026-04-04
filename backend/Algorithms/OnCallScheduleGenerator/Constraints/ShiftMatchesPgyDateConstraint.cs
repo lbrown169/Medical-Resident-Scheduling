@@ -5,7 +5,7 @@ using MedicalDemo.Models.DTO.Scheduling;
 
 namespace MedicalDemo.Algorithms.OnCallScheduleGenerator.Constraints;
 
-public class ShiftMatchesPGYDateConstraint : ICallShiftConstraint
+public class ShiftMatchesPgyDateConstraint : ICallShiftConstraint
 {
     public ConstraintResult Evaluate(ResidentDto resident, DateOnly date)
     {
@@ -17,6 +17,6 @@ public class ShiftMatchesPGYDateConstraint : ICallShiftConstraint
         }
 
         // if shiftType is null, no valid call type found given PGYear and date
-        return ConstraintResult.Violation($" No valid call type shift assignment available for Resident, {resident}, PGY: {resident.Pgy}, on date, {date}.", false);
+        return ConstraintResult.Violation($"No valid call type shift assignment available for Resident {resident.Name}, PGY: {resident.Pgy}, on date {date}.", false);
     }
 }

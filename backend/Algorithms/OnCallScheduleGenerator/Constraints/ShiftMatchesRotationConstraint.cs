@@ -16,7 +16,7 @@ public class ShiftMatchesRotationConstraint : ICallShiftConstraint
             return ConstraintResult.NoViolation();
         }
 
-        return ConstraintResult.Violation($"Resident {resident} shift disagrees with their rotation.", true);
+        return ConstraintResult.Violation($"Resident {resident.Name} shift disagrees with their rotation.", true);
     }
 
     private bool DoesRotationAllow(ResidentDto resident, DateOnly date, CallLengthType lengthType)

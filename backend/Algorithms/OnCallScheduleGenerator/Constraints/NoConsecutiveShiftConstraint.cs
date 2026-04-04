@@ -12,12 +12,12 @@ public class NoConsecutiveShiftConstraint : ICallShiftConstraint
         CallShiftType? shiftType = CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(date, resident.Pgy);
         if (IsBackToBackShift(resident, date))
         {
-            return ConstraintResult.Violation($"Resident {resident} will be working a back-to-back shift", true);
+            return ConstraintResult.Violation($"Resident {resident.Name} will be working a back-to-back shift", true);
         }
 
         if (shiftType is not null && IsInARowShift(resident, date, shiftType.Value))
         {
-            return ConstraintResult.Violation($"Resident {resident} will be working a in-a-row shift", true);
+            return ConstraintResult.Violation($"Resident {resident.Name} will be working an in-a-row shift", true);
         }
 
         return ConstraintResult.NoViolation();

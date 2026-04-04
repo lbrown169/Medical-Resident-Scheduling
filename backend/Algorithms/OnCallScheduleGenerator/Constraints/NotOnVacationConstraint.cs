@@ -17,9 +17,9 @@ public class NotOnVacationConstraint : ICallShiftConstraint
                 "Unable to determine Resident shiftType - invalid");
         }
 
-        if (shiftType is not null && IsVacation(resident, date, shiftType.Value.GetPartsOfDay()))
+        if (IsVacation(resident, date, shiftType.Value.GetPartsOfDay()))
         {
-            return ConstraintResult.Violation($"Resident {resident} is on vacation on {date}.",
+            return ConstraintResult.Violation($"Resident {resident.Name} is on vacation on {date}.",
                 true);
         }
 

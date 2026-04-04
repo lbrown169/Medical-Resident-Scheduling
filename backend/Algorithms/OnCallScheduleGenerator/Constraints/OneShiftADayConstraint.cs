@@ -9,7 +9,7 @@ public class OneShiftADayConstraint : ICallShiftConstraint
     {
         if (IsWorking(resident, date))
         {
-            return ConstraintResult.Violation($"Resident {resident} has scheduled shift on {date}.",
+            return ConstraintResult.Violation($"Resident {resident.Name} has a scheduled shift on {date}.",
                 false);
         }
 

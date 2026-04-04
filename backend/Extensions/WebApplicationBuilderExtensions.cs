@@ -72,7 +72,7 @@ public static class WebApplicationBuilderExtensions
         builder.Services.AddScoped<ICallShiftConstraint, NoConsecutiveShiftConstraint>();
         builder.Services.AddScoped<ICallShiftConstraint, NotOnVacationConstraint>();
         builder.Services.AddScoped<ICallShiftConstraint, OneShiftADayConstraint>();
-        builder.Services.AddScoped<ICallShiftConstraint, ShiftMatchesPGYDateConstraint>();
+        builder.Services.AddScoped<ICallShiftConstraint, ShiftMatchesPgyDateConstraint>();
         builder.Services.AddScoped<ICallShiftConstraint, ShiftMatchesRotationConstraint>();
 
         // Email
