@@ -4,7 +4,7 @@ using MedicalDemo.Models.DTO.Scheduling;
 
 namespace MedicalTests;
 
-public static class ConstraintTests
+public static class CallShiftConstraintTests
 {
     #region Helpers
 
