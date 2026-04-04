@@ -125,9 +125,22 @@ interface RotationTypesListResponse {
 }
 
 // Override types
+interface Pgy4RotationScheduleOverrideSummary {
+  resident: {
+    resident_id: string;
+    first_name: string;
+    last_name: string;
+  };
+  overrideRotation: {
+    rotationTypeId: string;
+    rotationName: string;
+  };
+  academicMonthIndex: number;
+}
+
 interface Pgy4RotationScheduleOverrideListResponse {
-  // Only count is used on the frontend; the rest of the shape is ignored
   count: number;
+  overrides: Pgy4RotationScheduleOverrideSummary[];
 }
 
 // Constraint Violation types
@@ -335,6 +348,91 @@ function ConstraintViolationsPanel({
   );
 }
 
+// Pending Changes Panel
+function PendingChangesPanel({
+  overrides,
+  onRevertOne,
+}: {
+  overrides: Pgy4RotationScheduleOverrideSummary[];
+  onRevertOne: (residentId: string, academicMonthIndex: number) => Promise<void>;
+}) {
+  const [expanded, setExpanded] = useState(true);
+  const [revertingKey, setRevertingKey] = useState<string | null>(null);
+
+  if (overrides.length === 0) return null;
+
+  const handleRevert = async (residentId: string, monthIndex: number) => {
+    const key = `${residentId}-${monthIndex}`;
+    setRevertingKey(key);
+    try {
+      await onRevertOne(residentId, monthIndex);
+    } finally {
+      setRevertingKey(null);
+    }
+  };
+
+  return (
+    <div className="rounded-lg border border-yellow-200 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-950/20 overflow-hidden">
+      <button
+        onClick={() => setExpanded((prev) => !prev)}
+        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-yellow-100/50 dark:hover:bg-yellow-900/20 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <Save className="h-4 w-4 text-yellow-600 dark:text-yellow-400 shrink-0" />
+          <span className="text-sm font-semibold text-yellow-700 dark:text-yellow-400">
+            {overrides.length} pending change{overrides.length !== 1 ? "s" : ""}{" "}
+            <span className="font-normal text-yellow-500">— not yet applied</span>
+          </span>
+        </div>
+        {expanded ? (
+          <ChevronUp className="h-4 w-4 text-yellow-500 shrink-0" />
+        ) : (
+          <ChevronDown className="h-4 w-4 text-yellow-500 shrink-0" />
+        )}
+      </button>
+
+      {expanded && (
+        <div className="border-t border-yellow-200 dark:border-yellow-700 divide-y divide-yellow-100 dark:divide-yellow-900 max-h-60 overflow-y-auto">
+          {overrides.map((o) => {
+            const key = `${o.resident.resident_id}-${o.academicMonthIndex}`;
+            const isReverting = revertingKey === key;
+            return (
+              <div
+                key={key}
+                className="flex items-center justify-between px-4 py-2.5 gap-3"
+              >
+                <div className="flex items-center gap-2 text-sm text-yellow-800 dark:text-yellow-300 flex-1 min-w-0">
+                  <span className="font-medium shrink-0">
+                    {o.resident.first_name} {o.resident.last_name}
+                  </span>
+                  <span className="text-yellow-500 shrink-0">·</span>
+                  <span className="shrink-0 text-xs bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400 rounded px-1.5 py-0.5">
+                    {ACADEMIC_MONTHS[o.academicMonthIndex] ?? `Month ${o.academicMonthIndex}`}
+                  </span>
+                  <span className="text-yellow-500 shrink-0">→</span>
+                  <span className="font-medium truncate">{o.overrideRotation.rotationName}</span>
+                </div>
+                <button
+                  onClick={() => handleRevert(o.resident.resident_id, o.academicMonthIndex)}
+                  disabled={isReverting}
+                  className="shrink-0 flex items-center gap-1 text-xs px-2 py-1 rounded border border-yellow-400 dark:border-yellow-600 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-200 dark:hover:bg-yellow-800/40 disabled:opacity-50 transition-colors"
+                >
+                  {isReverting ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <X className="h-3 w-3" />
+                  )}
+                  Revert
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
   residents,
 }) => {
@@ -385,6 +483,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 
   // Whether there are any staged overrides for this schedule
   const [hasPendingOverrides, setHasPendingOverrides] = useState(false);
+  const [pendingOverrides, setPendingOverrides] = useState<Pgy4RotationScheduleOverrideSummary[]>([]);
   const [applyingOverrides, setApplyingOverrides] = useState(false);
   const [discardingOverrides, setDiscardingOverrides] = useState(false);
 
@@ -473,6 +572,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
         const data: Pgy4RotationScheduleOverrideListResponse = await res.json();
         const hasAny = (data.count ?? 0) > 0;
         setHasPendingOverrides(hasAny);
+        setPendingOverrides(data.overrides ?? []);
         if (hasAny) await fetchScheduleWithOverrides(scheduleId);
       } catch (err) {
         console.error("Failed to sync override state:", err);
@@ -522,6 +622,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
         ),
       );
       setHasPendingOverrides(false);
+      setPendingOverrides([]);
       await fetchConstraintErrors(selectedScheduleId);
       toast({
         variant: "success",
@@ -561,6 +662,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
       }
       await fetchScheduleWithoutOverrides(selectedScheduleId);
       setHasPendingOverrides(false);
+      setPendingOverrides([]);
       await fetchConstraintErrors(selectedScheduleId);
       toast({
         variant: "success",
@@ -576,6 +678,41 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
       });
     } finally {
       setDiscardingOverrides(false);
+    }
+  };
+
+  /**
+   * Revert a staged override (just one)
+   * Lets admib revert changes individually
+   */
+  const handleRevertSingleOverride = async (residentId: string, academicMonthIndex: number) => {
+    if (!selectedScheduleId) return;
+    try {
+      const res = await fetch(
+        `${config.apiUrl}/api/pgy4-rotation-schedule-override/${selectedScheduleId}`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ residentId, academicMonthIndex }),
+        },
+      );
+      if (!res.ok) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to revert change.",
+        });
+        return;
+      }
+      // Sync override list and schedule preview
+      await syncOverrideState(selectedScheduleId);
+      await fetchConstraintErrors(selectedScheduleId);
+    } catch {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to revert change.",
+      });
     }
   };
 
@@ -1194,6 +1331,9 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                     // Re-fetch with overrides so the table reflects the staged change
                     await fetchScheduleWithOverrides(selectedScheduleId);
 
+                    // Sync override list for the pending changes panel
+                    await syncOverrideState(selectedScheduleId);
+
                     // Re-validate — backend applies overrides before checking constraints
                     await fetchConstraintErrors(selectedScheduleId);
                   } catch {
@@ -1212,6 +1352,14 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
               <ConstraintViolationsPanel
                 violations={constraintViolations}
                 loading={loadingViolations}
+              />
+            )}
+
+            {/* Pending Changes Panel */}
+            {!loadingSchedules && selectedSchedule && (
+              <PendingChangesPanel
+                overrides={pendingOverrides}
+                onRevertOne={handleRevertSingleOverride}
               />
             )}
 
