@@ -29,6 +29,7 @@ namespace MedicalDemo.Models.Entities
         public virtual DbSet<RotationPrefRequest> RotationPrefRequests { get; set; } = null!;
         public virtual DbSet<Pgy4RotationSchedule> Pgy4RotationSchedules { get; set; } = null!;
         public virtual DbSet<RotationPrefSubmissionWindow> RotationPrefRequestSubmissionWindows { get; set; } = null!;
+        public virtual DbSet<Pgy4RotationScheduleOverride> Pgy4RotationScheduleOverrides { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -318,6 +319,44 @@ namespace MedicalDemo.Models.Entities
                 entity.HasMany(e => e.Rotations)
                     .WithOne()
                     .HasForeignKey(e => e.Pgy4RotationScheduleId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<Pgy4RotationScheduleOverride>(entity =>
+            {
+                entity.Property(e => e.Pgy4RotationScheduleOverrideId)
+                    .HasColumnType("binary(16)")
+                    .HasConversion(
+                        v => v.ToByteArray(),
+                        v => new Guid(v)
+                    );
+
+                entity.Property(e => e.Pgy4RotationScheduleId)
+                    .HasColumnType("binary(16)")
+                    .HasConversion(
+                        v => v.ToByteArray(),
+                        v => new Guid(v)
+                    );
+
+                entity.Property(e => e.RotationTypeOverrideId)
+                    .HasColumnType("binary(16)")
+                    .HasConversion(
+                        v => v.ToByteArray(),
+                        v => new Guid(v)
+                    );
+
+                entity.Property(e => e.RotationMonthOfYearOverride)
+                    .HasConversion<int>()
+                    .HasColumnType("int");
+
+                entity.HasOne(d => d.Pgy4RotationSchedule)
+                    .WithMany(d => d.Overrides)
+                    .HasForeignKey(d => d.Pgy4RotationScheduleId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(d => d.Resident)
+                    .WithMany()
+                    .HasForeignKey(d => d.ResidentOverrideId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
