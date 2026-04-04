@@ -16,20 +16,20 @@ namespace MedicalDemo.Services;
 public class RuleViolationService
 {
     private readonly ILogger<SchedulerService> _logger;
-    private readonly IList<ICallShiftConstraint> _constraints;
+    private readonly List<ICallShiftConstraint> _constraints;
     private readonly MedicalContext _context;
     private readonly SchedulerService _schedulerService;
 
     public RuleViolationService(
         MedicalContext context,
         ILogger<SchedulerService> logger,
-        IList<ICallShiftConstraint> constraints,
+        IEnumerable<ICallShiftConstraint> constraints,
         SchedulerService schedulerService
     )
     {
         _context = context;
         _logger = logger;
-        _constraints = constraints;
+        _constraints = constraints.ToList();
         _schedulerService = schedulerService;
     }
 
