@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using MedicalDemo.Algorithms.OnCallScheduleGenerator;
 using MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator;
 using MedicalDemo.Constraints;
+using MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator.Constraints;
 using MedicalDemo.Converters;
 using MedicalDemo.Interfaces;
 using MedicalDemo.Models;
@@ -59,6 +60,13 @@ public static class WebApplicationBuilderExtensions
         builder.Services.AddScoped<RotationTypeConverter>();
         builder.Services.AddScoped<RotationConverter>();
         builder.Services.AddScoped<RotationPrefSubmissionWindowConverter>();
+        builder.Services.AddScoped<Pgy4RotationScheduleOverrideConverter>();
+
+        // Pgy4 schedule constraints
+        builder.Services.AddScoped<HasChiefRotationConstraint>();
+        builder.Services.AddScoped<InpatientConsultInJulyAndJanConstraint>();
+        builder.Services.AddScoped<Min2ConsultsInpatientConstraint>();
+        builder.Services.AddScoped<OneIopForenCommAddictPerMonthConstraint>();
 
         // Constraints
         builder.Services.AddScoped<ICallShiftConstraint, NoConsecutiveShiftConstraint>();

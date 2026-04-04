@@ -268,13 +268,30 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
   const { start: visibleStart, end: visibleEnd } = getVisibleRange();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const visibleEvents = events
-    .filter(event => {
-      const eventDate = ensureDate(event.start);
-      return eventDate >= visibleStart && eventDate <= visibleEnd && eventDate >= today;
-    })
-    .sort((a, b) => ensureDate(a.start).getTime() - ensureDate(b.start).getTime())
-    .slice(0, 10);
+
+  // Sidebar events: for month view show all events in the actual calendar month (not overflow days);
+  // for other views keep the existing visible-range + future filter.
+  const visibleEvents = (() => {
+    if (viewMode === 'month') {
+      const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      monthStart.setHours(0, 0, 0, 0);
+      const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      monthEnd.setHours(23, 59, 59, 999);
+      return events
+        .filter(event => {
+          const eventDate = ensureDate(event.start);
+          return eventDate >= monthStart && eventDate <= monthEnd && eventDate >= today;
+        })
+        .sort((a, b) => ensureDate(a.start).getTime() - ensureDate(b.start).getTime());
+    }
+    return events
+      .filter(event => {
+        const eventDate = ensureDate(event.start);
+        return eventDate >= visibleStart && eventDate <= visibleEnd && eventDate >= today;
+      })
+      .sort((a, b) => ensureDate(a.start).getTime() - ensureDate(b.start).getTime())
+      .slice(0, 10);
+  })();
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-background text-foreground relative">
@@ -431,7 +448,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
       {/* Main Content: Calendar + Upcoming */}
       <div className="flex flex-1 w-full relative pt-24 md:pt-[9rem] md:justify-start">
         {/* Calendar Grid */}
-        <div className={`w-full md:flex-1 pl-0 pr-6 md:px-8 py-4 md:py-8 transition-all duration-300 ${isUpcomingOpen ? 'mr-0 md:mr-[24rem]' : ''}`} ref={calendarGridRef}>
+        <div className={`w-full md:flex-1 pl-0 pr-6 md:px-8 py-4 md:py-8 transition-all duration-300 ${isUpcomingOpen && viewMode !== 'year' ? 'mr-0 md:mr-[24rem]' : ''}`} ref={calendarGridRef}>
           <div className="flex justify-center md:justify-start">
             <div className="calendar-print-area bg-card rounded-2xl shadow-xl border border-border overflow-hidden h-full w-full max-w-2xl md:max-w-none">
               {viewMode === 'day' ? (
@@ -741,7 +758,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
         </div>
         {/* Upcoming Section to the right (animated slide in/out) - Hidden on mobile */}
         <div
-          className={`max-w-xs w-[24rem] fixed right-0 bottom-0 z-10 border-l border-border bg-card p-6 flex flex-col transition-transform duration-300 ease-in-out ${isUpcomingOpen ? 'translate-x-0' : 'translate-x-full'} pointer-events-auto hidden md:flex`}
+          className={`max-w-xs w-[24rem] fixed right-0 bottom-0 z-10 border-l border-border bg-card p-6 flex flex-col transition-transform duration-300 ease-in-out ${isUpcomingOpen && viewMode !== 'year' ? 'translate-x-0' : 'translate-x-full'} pointer-events-auto hidden md:flex`}
           style={{ top: 'calc(4.5rem + 4.5rem + 0.7rem)', boxShadow: isUpcomingOpen ? '0 0 24px 0 rgba(0,0,0,0.08)' : 'none' }}
         >
           <div id="upcoming-panel-content" className="flex-1 overflow-y-auto pb-32">

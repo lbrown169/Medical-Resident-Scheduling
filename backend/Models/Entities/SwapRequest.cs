@@ -14,6 +14,7 @@ namespace MedicalDemo.Models.Entities
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public string? Details { get; set; }
+        public bool IsRead { get; set; } = false;
 
         public virtual Resident Requestee { get; set; } = null!;
         public virtual Resident Requester { get; set; } = null!;

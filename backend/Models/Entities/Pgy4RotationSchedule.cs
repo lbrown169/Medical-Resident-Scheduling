@@ -16,4 +16,6 @@ public class Pgy4RotationSchedule
     public bool IsPublished { get; set; }
 
     public virtual List<Rotation> Rotations { get; set; } = [];
+
+    public virtual List<Pgy4RotationScheduleOverride> Overrides { get; set; } = [];
 }

@@ -23,7 +23,6 @@ public class SwapRequestsController : ControllerBase
         _swapRequestConverter = swapRequestConverter;
     }
 
-
     // POST: api/swaprequests
     [HttpPost]
     public async Task<IActionResult> CreateSwapRequest(
@@ -119,6 +118,30 @@ public class SwapRequestsController : ControllerBase
         return NoContent();
     }
 
+    // DELETE: api/swaprequests
+    [HttpDelete]
+    public async Task<IActionResult> DeleteAllSwapRequests(
+        [FromBody] List<Guid> swapRequestIds)
+    {
+        // Fetch all swap requests that are Approved/Denied status
+        List<SwapRequest> swapRequestsToDelete = await _context.SwapRequests
+            .Where(s => swapRequestIds.Contains(s.SwapRequestId) &&
+                    (s.Status == RequestStatus.Approved || s.Status == RequestStatus.Denied))
+        .ToListAsync();
+
+        // Find which IDs were not found (don't exist/pending status)
+        List<Guid> foundIds = swapRequestsToDelete.Select(s => s.SwapRequestId).ToList();
+        List<Guid> failedDeletedIds = swapRequestIds.Except(foundIds).ToList();
+
+        // Remove all found swap requests in one operation
+        _context.SwapRequests.RemoveRange(swapRequestsToDelete);
+        await _context.SaveChangesAsync();
+
+        SwapRequestsNotDeletedResponse response = new SwapRequestsNotDeletedResponse() { notDeleted = failedDeletedIds };
+
+        return Ok(response);
+    }
+
     // POST: api/swaprequests/{id}/approve
     [HttpPost("{id}/approve")]
     public async Task<IActionResult> ApproveSwapRequest(Guid id)
@@ -170,8 +193,7 @@ public class SwapRequestsController : ControllerBase
 
     // POST: api/swaprequests/{id}/deny
     [HttpPost("{id}/deny")]
-    public async Task<IActionResult> DenySwapRequest(Guid id,
-        [FromBody] SwapRequestDenyRequest denyRequest)
+    public async Task<IActionResult> DenySwapRequest(Guid id)
     {
         SwapRequest? swap = await _context.SwapRequests.FindAsync(id);
         if (swap == null)
@@ -189,13 +211,26 @@ public class SwapRequestsController : ControllerBase
         }
 
         swap.Status = RequestStatus.Denied;
-        swap.Details = denyRequest.Reason ?? "";
         swap.UpdatedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync();
 
         // Optionally: Add logic to notify users, etc.
         // Add recent activity for requester (handled in dashboard fetch for now)
 
+        return Ok(_swapRequestConverter.CreateSwapRequestResponseFromSwapRequest(swap));
+    }
+
+    [HttpPatch("{id}")]
+    public async Task<ActionResult<SwapRequestResponse>> UpdateSwapRequest(Guid id, [FromBody] UpdateSwapRequest swapRequestUpdates)
+    {
+        SwapRequest? swap = await _context.SwapRequests.FindAsync(id);
+        if (swap == null)
+        {
+            return NotFound();
+        }
+
+        _swapRequestConverter.UpdateSwapRequestFromSwapRequestUpdates(swap, swapRequestUpdates);
+        await _context.SaveChangesAsync();
         return Ok(_swapRequestConverter.CreateSwapRequestResponseFromSwapRequest(swap));
     }
 
