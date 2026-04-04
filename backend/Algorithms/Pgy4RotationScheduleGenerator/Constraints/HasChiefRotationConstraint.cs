@@ -170,7 +170,7 @@ public class HasChiefRotationConstraint : IConstraint
                             new()
                             {
                                 Message = errorMessage,
-                                CalendarMonthIndex = calendarMonth,
+                                MonthIndex = calendarMonth,
                                 Resident = resident,
                             }
                         );
@@ -190,7 +190,7 @@ public class HasChiefRotationConstraint : IConstraint
                             new()
                             {
                                 Message = errorMessage,
-                                CalendarMonthIndex = calendarMonth,
+                                MonthIndex = calendarMonth,
                                 Resident = resident,
                             }
                         );
@@ -212,7 +212,7 @@ public class HasChiefRotationConstraint : IConstraint
                             new()
                             {
                                 Message = errorMessage,
-                                CalendarMonthIndex = calendarMonth,
+                                MonthIndex = calendarMonth,
                                 Resident = resident,
                             }
                         );

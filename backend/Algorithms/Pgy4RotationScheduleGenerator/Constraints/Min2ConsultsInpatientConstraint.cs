@@ -207,7 +207,7 @@ public class Min2ConsultsInpatientConstraint : IConstraint
                     new()
                     {
                         Message = errorMessage,
-                        CalendarMonthIndex = null,
+                        MonthIndex = null,
                         Resident = resident,
                     }
                 );
@@ -226,7 +226,7 @@ public class Min2ConsultsInpatientConstraint : IConstraint
                     new()
                     {
                         Message = errorMessage,
-                        CalendarMonthIndex = null,
+                        MonthIndex = null,
                         Resident = resident,
                     }
                 );

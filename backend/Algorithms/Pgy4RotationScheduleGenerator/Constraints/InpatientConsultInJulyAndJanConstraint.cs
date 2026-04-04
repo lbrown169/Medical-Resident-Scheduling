@@ -220,7 +220,7 @@ public class InpatientConsultInJulyAndJanConstraint : IConstraint
                     new()
                     {
                         Message = errorMessage,
-                        CalendarMonthIndex = calendarMonth,
+                        MonthIndex = calendarMonth,
                         Resident = null,
                     }
                 );
@@ -238,7 +238,7 @@ public class InpatientConsultInJulyAndJanConstraint : IConstraint
                     new()
                     {
                         Message = errorMessage,
-                        CalendarMonthIndex = calendarMonth,
+                        MonthIndex = calendarMonth,
                         Resident = null,
                     }
                 );

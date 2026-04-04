@@ -240,7 +240,7 @@ public class OneIopForenCommAddictPerMonthConstraint : IConstraint
                         new()
                         {
                             Message = errorMessage,
-                            CalendarMonthIndex = calendarMonth,
+                            MonthIndex = calendarMonth,
                             Resident = null,
                         }
                     );
