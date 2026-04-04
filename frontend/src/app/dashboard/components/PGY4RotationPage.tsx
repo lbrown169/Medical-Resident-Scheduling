@@ -390,11 +390,11 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 
   // Constraint violations state
 
-  const [constraintViolations, setConstraintViolations] = useState<ConstraintViolationResponse[]>([]);
+  const [constraintViolations, setConstraintViolations] = useState<
+    ConstraintViolationResponse[]
+  >([]);
   const [loadingViolations, setLoadingViolations] = useState(false);
 
-
-  
   const fetchConstraintErrors = useCallback(async (scheduleId: string) => {
     if (!scheduleId) return;
     try {
@@ -425,7 +425,9 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
     const updated: Pgy4RotationScheduleResponse = await res.json();
     setSchedules((prev) =>
       prev.map((s) =>
-        s.pgy4RotationScheduleId === scheduleId ? { ...s, schedule: updated.schedule } : s,
+        s.pgy4RotationScheduleId === scheduleId
+          ? { ...s, schedule: updated.schedule }
+          : s,
       ),
     );
   }, []);
@@ -433,30 +435,41 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
   /**
    * Get the raw schedule without overrides on a discard
    */
-  const fetchScheduleWithoutOverrides = useCallback(async (scheduleId: string) => {
-    const res = await fetch(
-      `${config.apiUrl}/api/pgy4-rotation-schedule/${scheduleId}`,
-    );
-    if (!res.ok) return;
-    const updated: Pgy4RotationScheduleResponse = await res.json();
-    setSchedules((prev) =>
-      prev.map((s) =>
-        s.pgy4RotationScheduleId === scheduleId ? { ...s, schedule: updated.schedule } : s,
-      ),
-    );
-  }, []);
+  const fetchScheduleWithoutOverrides = useCallback(
+    async (scheduleId: string) => {
+      const res = await fetch(
+        `${config.apiUrl}/api/pgy4-rotation-schedule/${scheduleId}`,
+      );
+      if (!res.ok) return;
+      const updated: Pgy4RotationScheduleResponse = await res.json();
+      setSchedules((prev) =>
+        prev.map((s) =>
+          s.pgy4RotationScheduleId === scheduleId
+            ? { ...s, schedule: updated.schedule }
+            : s,
+        ),
+      );
+    },
+    [],
+  );
 
   /**
    * Sync with previous sessions overrides
    */
   const syncOverrideState = useCallback(
     async (scheduleId: string) => {
-      if (!scheduleId) { setPendingOverrideCount(0); return; }
+      if (!scheduleId) {
+        setPendingOverrideCount(0);
+        return;
+      }
       try {
         const res = await fetch(
           `${config.apiUrl}/api/pgy4-rotation-schedule-override/${scheduleId}`,
         );
-        if (!res.ok) { setPendingOverrideCount(0); return; }
+        if (!res.ok) {
+          setPendingOverrideCount(0);
+          return;
+        }
         const data: Pgy4RotationScheduleOverrideListResponse = await res.json();
         const count = data.count ?? 0;
         setPendingOverrideCount(count);
@@ -492,7 +505,11 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
         { method: "PUT" },
       );
       if (!res.ok) {
-        toast({ variant: "destructive", title: "Error", description: "Failed to apply changes." });
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to apply changes.",
+        });
         return;
       }
       // Response is the schedule with overrides baked in — update display
@@ -506,10 +523,18 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
       );
       setPendingOverrideCount(0);
       await fetchConstraintErrors(selectedScheduleId);
-      toast({ variant: "success", title: "Applied", description: "All changes have been saved." });
+      toast({
+        variant: "success",
+        title: "Applied",
+        description: "All changes have been saved.",
+      });
     } catch (err) {
       console.error("Failed to apply overrides:", err);
-      toast({ variant: "destructive", title: "Error", description: "Failed to apply changes." });
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to apply changes.",
+      });
     } finally {
       setApplyingOverrides(false);
     }
@@ -527,16 +552,28 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
         { method: "DELETE" },
       );
       if (!res.ok) {
-        toast({ variant: "destructive", title: "Error", description: "Failed to discard changes." });
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to discard changes.",
+        });
         return;
       }
       await fetchScheduleWithoutOverrides(selectedScheduleId);
       setPendingOverrideCount(0);
       await fetchConstraintErrors(selectedScheduleId);
-      toast({ variant: "success", title: "Discarded", description: "All pending changes discarded." });
+      toast({
+        variant: "success",
+        title: "Discarded",
+        description: "All pending changes discarded.",
+      });
     } catch (err) {
       console.error("Failed to discard overrides:", err);
-      toast({ variant: "destructive", title: "Error", description: "Failed to discard changes." });
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to discard changes.",
+      });
     } finally {
       setDiscardingOverrides(false);
     }
@@ -1082,7 +1119,8 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                 {pendingOverrideCount > 0 && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />
-                    {pendingOverrideCount} unsaved change{pendingOverrideCount !== 1 ? "s" : ""}
+                    {pendingOverrideCount} unsaved change
+                    {pendingOverrideCount !== 1 ? "s" : ""}
                   </span>
                 )}
               </div>
@@ -1127,7 +1165,11 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                 rotationTypes={rotationTypeNames}
                 emptyMessage='No rotations found. Use the "Generate Schedule" button above to create a rotation schedule.'
                 allowResidentReassignment={false}
-                onRotationChange={async (residentId, monthIndex, newRotationTypeId) => {
+                onRotationChange={async (
+                  residentId,
+                  monthIndex,
+                  newRotationTypeId,
+                ) => {
                   if (!selectedScheduleId) return;
 
                   try {
@@ -1149,7 +1191,8 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                       toast({
                         variant: "destructive",
                         title: "Error",
-                        description: err?.message ?? "Failed to stage rotation change.",
+                        description:
+                          err?.message ?? "Failed to stage rotation change.",
                       });
                       return;
                     }
@@ -1161,7 +1204,6 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 
                     // Re-validate — backend applies overrides before checking constraints
                     await fetchConstraintErrors(selectedScheduleId);
-
                   } catch {
                     toast({
                       variant: "destructive",
@@ -1181,13 +1223,21 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
               />
             )}
 
-            {/* Footer (export is disabled until needed) */}
+            {/* Footer */}
             <div className="flex justify-end gap-2 pt-4">
+              {/* Discard */}
               <Button
                 variant="outline"
-                disabled={pendingOverrideCount === 0 || discardingOverrides || applyingOverrides}
+                disabled={
+                  pendingOverrideCount === 0 ||
+                  discardingOverrides ||
+                  applyingOverrides
+                }
                 onClick={handleDiscardOverrides}
-                className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm lg:text-base text-red-600 border-red-300 hover:bg-red-50 dark:hover:bg-red-950/30 disabled:opacity-40"
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium 
+                          border-red-500 text-red-600 
+                          hover:bg-red-500 hover:text-white 
+                          disabled:opacity-40"
               >
                 {discardingOverrides ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -1195,15 +1245,22 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                   <X className="h-4 w-4" />
                 )}
                 <span>
-                  Discard{pendingOverrideCount > 0 ? ` (${pendingOverrideCount})` : ""}
+                  Discard
+                  {pendingOverrideCount > 0 ? ` (${pendingOverrideCount})` : ""}
                 </span>
               </Button>
 
-              {/* Apply — commits staged overrides to the DB permanently */}
+              {/* Apply */}
               <Button
-                disabled={pendingOverrideCount === 0 || applyingOverrides || discardingOverrides}
+                disabled={
+                  pendingOverrideCount === 0 ||
+                  applyingOverrides ||
+                  discardingOverrides
+                }
                 onClick={handleApplyOverrides}
-                className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm lg:text-base bg-green-600 hover:bg-green-700 text-white disabled:opacity-40"
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium 
+                          bg-blue-600 hover:bg-blue-700 text-white 
+                          disabled:opacity-40"
               >
                 {applyingOverrides ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -1211,13 +1268,17 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                   <Save className="h-4 w-4" />
                 )}
                 <span>
-                  Apply{pendingOverrideCount > 0 ? ` (${pendingOverrideCount})` : ""}
+                  Apply
+                  {pendingOverrideCount > 0 ? ` (${pendingOverrideCount})` : ""}
                 </span>
               </Button>
 
+              {/* Export */}
               <Button
                 disabled
-                className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-green-500 text-white hover:bg-green-600"
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium 
+                          bg-green-600 hover:bg-green-700 text-white 
+                          disabled:opacity-40"
               >
                 <Download className="h-4 w-4" />
                 <span>Export</span>
