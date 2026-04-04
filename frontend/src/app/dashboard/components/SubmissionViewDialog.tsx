@@ -75,7 +75,7 @@ export const SubmissionViewDialog: React.FC<SubmissionViewDialogProps> = ({
     setFetchError(false);
     try {
       const response = await fetch(
-        `${config.apiUrl}/api/residents/preferences/${residentId}`,
+        `${config.apiUrl}/api/rotation-pref-request/resident/${residentId}`,
       );
 
       if (!response.ok) {

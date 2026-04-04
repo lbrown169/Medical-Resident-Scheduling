@@ -113,12 +113,8 @@ export default function PGY4SchedulePage() {
         </div>
         <div className="flex gap-3 print:hidden">
           <Button
-            onClick={() => {
-              // !! wire to export endpoint when ready
-              console.log("Export schedule");
-            }}
+            disabled
             className="py-2 flex items-center justify-center gap-2 bg-green-500 text-white hover:bg-green-600"
-            disabled={loading || !!error || !schedule}
           >
             <Download className="h-4 w-4" />
             Export
