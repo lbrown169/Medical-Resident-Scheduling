@@ -29,8 +29,4 @@ jobs:
 
             - name: Verify Backend formatting
               run: |
-                  dotnet format backend/MedicalDemo.sln --verify-no-changes --severity error
-
-            - name: Verify Medidcal Tests formatting
-              run: |
-                  dotnet format MedicalTests/MedicalDemo.sln --verify-no-changes --severity error
+                  dotnet format MedicalDemo.slnx --verify-no-changes --severity error
