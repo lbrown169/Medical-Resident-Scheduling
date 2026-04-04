@@ -3,7 +3,7 @@ using MedicalDemo.Models.DTO.Pgy4Scheduling;
 
 namespace MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator.Constraints;
 
-public class Min2ConsultsInpatientConstraint : IConstraint
+public class Min2ConsultsInpatientConstraint : IRotationConstraint
 {
     public int Weight => 3;
 
@@ -207,7 +207,7 @@ public class Min2ConsultsInpatientConstraint : IConstraint
                     new()
                     {
                         Message = errorMessage,
-                        CalendarMonthIndex = null,
+                        MonthIndex = null,
                         Resident = resident,
                     }
                 );
@@ -226,7 +226,7 @@ public class Min2ConsultsInpatientConstraint : IConstraint
                     new()
                     {
                         Message = errorMessage,
-                        CalendarMonthIndex = null,
+                        MonthIndex = null,
                         Resident = resident,
                     }
                 );

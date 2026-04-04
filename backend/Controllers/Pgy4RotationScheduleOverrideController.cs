@@ -148,36 +148,6 @@ public class Pgy4RotationScheduleOverrideController(
             return BadRequest(ModelState);
         }
 
-        // Check schedule existence
-        Pgy4RotationSchedule? foundSchedule =
-            await context.Pgy4RotationSchedules.FirstOrDefaultAsync(
-                (s) => s.Pgy4RotationScheduleId == scheduleId
-            );
-
-        if (foundSchedule == null)
-        {
-            return NotFound("Schedule not found!");
-        }
-
-        // Check Resident existence
-        Resident? foundResident = await context.Residents.FirstOrDefaultAsync(
-            (r) => r.ResidentId == deleteRequest.ResidentId
-        );
-
-        if (foundResident == null)
-        {
-            return NotFound("Resident not found!");
-        }
-
-        if (foundResident.GraduateYr != 3)
-        {
-            ModelState.AddModelError(
-                "Non-PGY3 Resident",
-                "The resident ID passed in is not a PGY3 resident"
-            );
-            return BadRequest(ModelState);
-        }
-
         // Delete from DB
         Pgy4RotationScheduleOverride? existingOverride =
             await context.Pgy4RotationScheduleOverrides.FirstOrDefaultAsync(

@@ -3,7 +3,7 @@ using MedicalDemo.Models.DTO.Pgy4Scheduling;
 
 namespace MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator.Constraints;
 
-public interface IConstraint
+public interface IRotationConstraint
 {
     Pgy4ConstraintType ConstraintType { get; }
 

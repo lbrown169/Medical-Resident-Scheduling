@@ -4,7 +4,7 @@ using MedicalDemo.Models.DTO.Pgy4Scheduling;
 
 namespace MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator.Constraints;
 
-public class HasChiefRotationConstraint : IConstraint
+public class HasChiefRotationConstraint : IRotationConstraint
 {
     public int Weight => 1;
 
@@ -170,7 +170,7 @@ public class HasChiefRotationConstraint : IConstraint
                             new()
                             {
                                 Message = errorMessage,
-                                CalendarMonthIndex = calendarMonth,
+                                MonthIndex = calendarMonth,
                                 Resident = resident,
                             }
                         );
@@ -190,7 +190,7 @@ public class HasChiefRotationConstraint : IConstraint
                             new()
                             {
                                 Message = errorMessage,
-                                CalendarMonthIndex = calendarMonth,
+                                MonthIndex = calendarMonth,
                                 Resident = resident,
                             }
                         );
@@ -212,7 +212,7 @@ public class HasChiefRotationConstraint : IConstraint
                             new()
                             {
                                 Message = errorMessage,
-                                CalendarMonthIndex = calendarMonth,
+                                MonthIndex = calendarMonth,
                                 Resident = resident,
                             }
                         );

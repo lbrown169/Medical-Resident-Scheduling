@@ -113,8 +113,8 @@ public class Pgy4RotationScheduleConverter(
                     ? residentConverter.CreateResidentResponseFromResident(foundResident)
                     : null,
             AcademicMonthIndex =
-                error.CalendarMonthIndex != null
-                    ? MonthOfYearExtensions.FromAcademicIndex((int)error.CalendarMonthIndex, true)
+                error.MonthIndex != null
+                    ? ((MonthOfYear)error.MonthIndex).ToAcademicIndex() // Explicit conversion here to convert MonthOfYear? to MonthOfYear
                     : null,
         };
     }
