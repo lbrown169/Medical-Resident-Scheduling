@@ -135,7 +135,7 @@ public class SchedulerService
             attempt++;
             try
             {
-                ResidentData residentData = await LoadResidentData(year, semester);
+                ResidentData residentData = await LoadAllResidentData(year, semester);
 
                 int looseFactor = 6 + Math.Min(18, attempt / 10 * 2);
 
@@ -225,8 +225,7 @@ public class SchedulerService
             "Failed after to generate a viable schedule. Try again.", null);
     }
 
-#pragma warning disable IDE0060
-    private async Task<ResidentData> LoadResidentData(int year, Semester semester, bool includeDates = false)
+    public async Task<ResidentData> LoadAllResidentData(int year, Semester semester, IEnumerable<Guid>? existingSchedule = null)
     {
         int academicYear = semester == Semester.Fall ? year : year - 1;
         int pgyDiff = academicYear - DateTime.Now.AcademicYear;
@@ -241,19 +240,19 @@ public class SchedulerService
 
         List<Date> dates = [];
 
-        if (includeDates)
+        if (existingSchedule != null)
         {
+            IQueryable<Guid> scheduleIds = existingSchedule.AsQueryable();
             dates = await _context.Dates
                 .Where(d =>
-                    d.Schedule.Status == ScheduleStatus.Published
-                    && d.Schedule.Year == year
+                    scheduleIds.Contains(d.Schedule.ScheduleId)
                 )
                 .ToListAsync();
         }
 
         List<Pgy1Dto> pgy1s = residents
             .Where(r => r.GraduateYr + pgyDiff == 1)
-            .Select(r => _mapper.MapToPGY1DTO(
+            .Select(r => _mapper.MapToPgy1Dto(
                 r,
                 rotations.Where(rot => rot.ResidentId == r.ResidentId),
                 vacations.Where(v => v.ResidentId == r.ResidentId).ToList(),
@@ -261,7 +260,7 @@ public class SchedulerService
 
         List<Pgy2Dto> pgy2s = residents
             .Where(r => r.GraduateYr + pgyDiff == 2)
-            .Select(r => _mapper.MapToPGY2DTO(
+            .Select(r => _mapper.MapToPgy2Dto(
                 r,
                 rotations.Where(rot => rot.ResidentId == r.ResidentId),
                 vacations.Where(v => v.ResidentId == r.ResidentId).ToList(),
@@ -269,11 +268,48 @@ public class SchedulerService
 
         List<Pgy3Dto> pgy3s = residents
             .Where(r => r.GraduateYr + pgyDiff == 3)
-            .Select(r => _mapper.MapToPGY3DTO(r,
+            .Select(r => _mapper.MapToPgy3Dto(r,
                 vacations.Where(v => v.ResidentId == r.ResidentId).ToList(),
                 dates)).ToList();
 
         return new ResidentData { PGY1s = pgy1s, PGY2s = pgy2s, PGY3s = pgy3s };
     }
-#pragma warning restore IDE0060
+
+    public async Task<ResidentDto?> LoadResidentData(int year, Semester semester, string residentId, Guid scheduleId)
+    {
+        int academicYear = semester == Semester.Fall ? year : year - 1;
+        int pgyDiff = academicYear - DateTime.Now.AcademicYear;
+
+        Resident? resident = await _context.Residents.FindAsync(residentId);
+
+        if (resident == null)
+        {
+            return null;
+        }
+
+        List<Rotation> rotations = await _context.Rotations
+            .Include(r => r.RotationType)
+            .Where(r => r.AcademicYear == academicYear && r.ResidentId == residentId)
+            .ToListAsync();
+        List<Vacation> vacations = await _context.Vacations
+            .Where(v => v.Status == "Approved").ToListAsync();
+
+        List<Date> dates = await _context.Dates
+            .Where(d => d.ResidentId == residentId && d.Schedule.ScheduleId == scheduleId
+            )
+            .ToListAsync();
+
+        return (resident.GraduateYr + pgyDiff) switch
+        {
+            1 => _mapper.MapToPgy1Dto(resident,
+                rotations.Where(rot => rot.ResidentId == resident.ResidentId),
+                vacations.Where(v => v.ResidentId == resident.ResidentId).ToList(), dates),
+            2 => _mapper.MapToPgy2Dto(resident,
+                rotations.Where(rot => rot.ResidentId == resident.ResidentId),
+                vacations.Where(v => v.ResidentId == resident.ResidentId).ToList(), dates),
+            3 => _mapper.MapToPgy3Dto(resident,
+                vacations.Where(v => v.ResidentId == resident.ResidentId).ToList(), dates),
+            _ => null
+        };
+    }
 }
