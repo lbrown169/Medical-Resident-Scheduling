@@ -118,7 +118,9 @@ public class RotationPrefRequestConverter(RotationTypeConverter rotationTypeConv
             Requester = new()
             {
                 ResidentId = requestModel.Resident.ResidentId,
-                ChiefType = requestModel.Resident.ChiefType
+                ChiefType = requestModel.Resident.ChiefType,
+                FirstName = requestModel.Resident.FirstName,
+                LastName = requestModel.Resident.LastName
             },
             Priorities = AlgorithmPriorities,
             Alternatives = AlgorithmAlternatives,
