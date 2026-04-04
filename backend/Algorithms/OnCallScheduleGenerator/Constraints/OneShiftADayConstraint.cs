@@ -1,8 +1,7 @@
-using MedicalDemo.Interfaces;
 using MedicalDemo.Models;
 using MedicalDemo.Models.DTO.Scheduling;
 
-namespace MedicalDemo.Constraints;
+namespace MedicalDemo.Algorithms.OnCallScheduleGenerator.Constraints;
 
 public class OneShiftADayConstraint : ICallShiftConstraint
 {

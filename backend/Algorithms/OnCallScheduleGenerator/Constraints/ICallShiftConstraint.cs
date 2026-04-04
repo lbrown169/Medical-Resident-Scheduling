@@ -1,7 +1,7 @@
 using MedicalDemo.Models;
 using MedicalDemo.Models.DTO.Scheduling;
 
-namespace MedicalDemo.Interfaces;
+namespace MedicalDemo.Algorithms.OnCallScheduleGenerator.Constraints;
 
 public interface ICallShiftConstraint
 {

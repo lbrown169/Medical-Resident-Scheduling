@@ -1,10 +1,9 @@
 using MedicalDemo.Enums;
 using MedicalDemo.Extensions;
-using MedicalDemo.Interfaces;
 using MedicalDemo.Models;
 using MedicalDemo.Models.DTO.Scheduling;
 
-namespace MedicalDemo.Constraints;
+namespace MedicalDemo.Algorithms.OnCallScheduleGenerator.Constraints;
 
 public class ShiftMatchesPGYDateConstraint : ICallShiftConstraint
 {

@@ -1,4 +1,5 @@
 using MedicalDemo.Algorithms.OnCallScheduleGenerator;
+using MedicalDemo.Algorithms.OnCallScheduleGenerator.Constraints;
 using MedicalDemo.Enums;
 using MedicalDemo.Extensions;
 using MedicalDemo.Interfaces;
