@@ -4,7 +4,7 @@ using MedicalDemo.Models.DTO.Pgy4Scheduling;
 
 namespace MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator.Constraints;
 
-public class OneIopForenCommAddictPerMonthConstraint : IConstraint
+public class OneIopForenCommAddictPerMonthConstraint : IRotationConstraint
 {
     public int Weight => 0;
 

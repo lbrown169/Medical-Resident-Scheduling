@@ -115,7 +115,7 @@ public class Pgy4RotationScheduleService(
             ),
         ];
 
-        IConstraint[] constraints =
+        IRotationConstraint[] constraints =
         [
             hasChiefRotationConstraint,
             inpatientConsultInJulyAndJanConstraint,
@@ -209,7 +209,7 @@ public class Pgy4RotationScheduleService(
 
     public List<Pgy4ConstraintViolation> GetConstraintViolations(Pgy4ScheduleData scheduleData)
     {
-        IConstraint[] constraints =
+        IRotationConstraint[] constraints =
         [
             hasChiefRotationConstraint,
             inpatientConsultInJulyAndJanConstraint,
@@ -218,7 +218,7 @@ public class Pgy4RotationScheduleService(
         ];
 
         List<Pgy4ConstraintViolation> violations = [];
-        foreach (IConstraint constraint in constraints)
+        foreach (IRotationConstraint constraint in constraints)
         {
             violations.Add(
                 constraint.GetRotationScheduleConstraintViolations(scheduleData.Schedule)
