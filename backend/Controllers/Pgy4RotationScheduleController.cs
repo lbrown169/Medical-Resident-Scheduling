@@ -1,3 +1,4 @@
+using System.Text;
 using MedicalDemo.Converters;
 using MedicalDemo.Extensions;
 using MedicalDemo.Models.DTO.Pgy4Scheduling;
@@ -337,6 +338,21 @@ public class Pgy4RotationScheduleController(
                 residentRotations
             );
         return Ok(response);
+    }
+
+    [HttpGet("export/{id}")]
+    public async Task<ActionResult> ExportScheduleById([FromRoute] Guid id)
+    {
+        Pgy4RotationSchedule? foundSchedule = await pgy4RotationScheduleService.GetScheduleById(id);
+
+        if (foundSchedule == null)
+        {
+            return NotFound();
+        }
+
+        byte[] csvBytes = Encoding.UTF8.GetBytes(pgy4RotationScheduleService.ExportScheduleCSVString(foundSchedule));
+
+        return File(csvBytes, "text/csv", $"exported-schedule-{id}.csv");
     }
 
     [HttpGet("{scheduleId}/constraint-errors")]
