@@ -25,6 +25,8 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    networks:
+      - coolify
 
   backend:
     build: ./backend
@@ -42,8 +44,15 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    ports:
-      - "5109:5109"
+    networks:
+      - coolify
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.psycall-staging-backend.rule=Host(`backend.staging.psycall.net`)"
+      - "traefik.http.routers.psycall-staging-backend.entrypoints=websecure"
+      - "traefik.http.routers.psycall-staging-backend.tls=true"
+      - "traefik.http.routers.psycall-staging-backend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.psycall-staging-backend.loadbalancer.server.port=5109"
 
   frontend:
     build: ./frontend
@@ -54,8 +63,19 @@ services:
       NEXT_PUBLIC_API_URL: "https://backend.staging.psycall.net"
     depends_on:
       - backend
-    ports:
-      - "3000:3000"
+    networks:
+      - coolify
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.psycall-staging-frontend.rule=Host(`staging.psycall.net`)"
+      - "traefik.http.routers.psycall-staging-frontend.entrypoints=websecure"
+      - "traefik.http.routers.psycall-staging-frontend.tls=true"
+      - "traefik.http.routers.psycall-staging-frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.psycall-staging-frontend.loadbalancer.server.port=3000"
 
 volumes:
   staging_db_data:
+
+networks:
+  coolify:
+    external: true
