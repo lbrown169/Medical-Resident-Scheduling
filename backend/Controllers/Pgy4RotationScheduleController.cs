@@ -236,6 +236,27 @@ public class Pgy4RotationScheduleController(
         return Ok(response);
     }
 
+    [HttpPatch("unpublish")]
+    public async Task<ActionResult> UnpublishSchedule()
+    {
+        int scheduleYear = pgy4RotationScheduleService.GetAcademicYear();
+
+        Pgy4RotationSchedule? foundPublishedSchedule =
+            await context.Pgy4RotationSchedules.FirstOrDefaultAsync(
+                (schedule) => schedule.Year == scheduleYear
+            );
+
+        if (foundPublishedSchedule == null)
+        {
+            return NotFound("No schedule has been published.");
+        }
+
+        foundPublishedSchedule.IsPublished = false;
+        await context.SaveChangesAsync();
+
+        return Ok();
+    }
+
     [HttpGet("published")]
     public async Task<ActionResult<Pgy4RotationScheduleResponse>> GetPublishedSchedule()
     {
