@@ -218,12 +218,17 @@ public class Pgy4RotationScheduleController(
             return BadRequest(ModelState);
         }
 
-        Pgy4RotationSchedule? existingPublishedSchedule =
-            await context.Pgy4RotationSchedules.FirstOrDefaultAsync(
+        // Set all existing published schedule for current to be unpublished
+        List<Pgy4RotationSchedule> existingPublishedSchedules =
+            await context.Pgy4RotationSchedules.Where(
                 (schedule) => schedule.Year == scheduleYear && schedule.IsPublished
-            );
+            ).ToListAsync();
 
-        existingPublishedSchedule?.IsPublished = false;
+        foreach (Pgy4RotationSchedule publishedSchedule in existingPublishedSchedules)
+        {
+            publishedSchedule.IsPublished = false;
+        }
+
         scheduleToBePublished.IsPublished = true;
 
         await context.SaveChangesAsync();
@@ -241,17 +246,21 @@ public class Pgy4RotationScheduleController(
     {
         int scheduleYear = pgy4RotationScheduleService.GetAcademicYear();
 
-        Pgy4RotationSchedule? foundPublishedSchedule =
-            await context.Pgy4RotationSchedules.FirstOrDefaultAsync(
+        List<Pgy4RotationSchedule> existingPublishedSchedules =
+            await context.Pgy4RotationSchedules.Where(
                 (schedule) => schedule.Year == scheduleYear && schedule.IsPublished
-            );
+            ).ToListAsync();
 
-        if (foundPublishedSchedule == null)
+        if (existingPublishedSchedules.Count == 0)
         {
             return NotFound("No schedule has been published.");
         }
 
-        foundPublishedSchedule.IsPublished = false;
+        foreach (Pgy4RotationSchedule publishedSchedule in existingPublishedSchedules)
+        {
+            publishedSchedule.IsPublished = false;
+        }
+
         await context.SaveChangesAsync();
 
         return Ok();
