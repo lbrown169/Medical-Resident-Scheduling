@@ -39,17 +39,17 @@ public class RotationPrefRequestSubmissionWindowController(
             request.AvailableDate.Year,
             request.AvailableDate.Month,
             request.AvailableDate.Day,
-            0,
-            0,
-            0
+            request.AvailableDate.Hour,
+            request.AvailableDate.Minute,
+            request.AvailableDate.Second
         );
         DateTime adjustedDueDate = new(
             request.DueDate.Year,
             request.DueDate.Month,
             request.DueDate.Day,
-            0,
-            0,
-            0
+            request.DueDate.Hour,
+            request.DueDate.Minute,
+            request.DueDate.Second
         );
 
         request.AvailableDate = adjustedAvailableDate;
@@ -138,16 +138,7 @@ public class RotationPrefRequestSubmissionWindowController(
 
     private bool ValidateDueDate(DateTime availableDate, DateTime dueDate, int academicYear)
     {
-        availableDate = new DateTime(
-            availableDate.Year,
-            availableDate.Month,
-            availableDate.Day,
-            0,
-            0,
-            0
-        );
-        dueDate = new DateTime(dueDate.Year, dueDate.Month, dueDate.Day, 0, 0, 0);
-
+        
         int dueDateYear = dueDate.Year;
         int dueDateMonth = dueDate.Month;
         bool hasError = false;

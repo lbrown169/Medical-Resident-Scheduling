@@ -197,24 +197,12 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
   const [windowAvailableDate, setWindowAvailableDate] = useState<string>("");
   const [windowDueDate, setWindowDueDate] = useState<string>("");
   const [savingWindow, setSavingWindow] = useState(false);
-  const [windowSaveError, setWindowSaveError] = useState<string | null>(null);
   const currentYear = new Date().getFullYear();
   const selectedYear = currentYear;
 
   let deadline = null;
   if (windowDueDate) {
-    deadline = parseLocalDate(windowDueDate);
-    deadline = new Date(
-      Date.UTC(
-        deadline.getFullYear(),
-        deadline.getMonth(),
-        deadline.getDate() + 1,
-        0,
-        0,
-        0,
-        0,
-      ),
-    );
+    deadline = new Date(windowDueDate);
   }
 
   // Schedule state
@@ -348,6 +336,16 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
     (resident) => resident.pgyLevel === 3 || resident.pgyLevel === "3",
   );
 
+  // Helper to convert to UTC String
+  const toLocalInputValue = (utcString) => {
+    if (!utcString) return "";
+
+    const date = new Date(utcString);
+    const pad = (n) => String(n).padStart(2, "0");
+
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  };
+
   // Submission tracking
   const submittedResidentIds = new Set(submissions.map((s) => s.resident.resident_id));
   const submittedCount = submittedResidentIds.size;
@@ -406,10 +404,12 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
         );
         if (!res.ok) return;
         const data = await res.json();
-        // Splice iso strings
-        if (data.availableDate)
-          setWindowAvailableDate(data.availableDate.slice(0, 10));
-        if (data.dueDate) setWindowDueDate(data.dueDate.slice(0, 10));
+        if (data.availableDate) {
+          setWindowAvailableDate(new Date(data.availableDate + "Z").toISOString());
+        }
+        if (data.dueDate) {
+          setWindowDueDate(new Date(data.dueDate + "Z").toISOString());
+        }
       } catch {
         // Stay empty
       }
@@ -595,7 +595,6 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 
   const handleSaveSubmissionWindow = async () => {
     setSavingWindow(true);
-    setWindowSaveError(null);
     try {
       const res = await fetch(
         `${config.apiUrl}/api/rotation-request-submission-window`,
@@ -609,11 +608,16 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
         },
       );
       if (!res.ok) {
+        let errorMessage = "Error unknown. Try again later."
         const err = await res.json();
-        const messages = Object.values(err.errors ?? {})
-          .flat()
-          .join(" ");
-        setWindowSaveError(messages || "Failed to save submission window.");
+        errorMessage = Object.values(err).flat().join(" ") || errorMessage;
+
+        toast({
+          variant: "destructive",
+          title: "Error Saving Dates",
+          description: errorMessage,
+        });
+
         return;
       }
       toast({
@@ -622,7 +626,11 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
         description: "Submission window updated.",
       });
     } catch {
-      setWindowSaveError("Failed to save submission window.");
+      toast({
+          variant: "destructive",
+          title: "Error Saving Dates",
+          description: "Error unknown. Try again later.",
+        });
     } finally {
       setSavingWindow(false);
     }
@@ -873,22 +881,32 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
               />
             )}
             {/* Footer - Buttons at the bottom */}
-            <div className="flex justify-end gap-2 pt-4">
+            <div className="flex justify-between gap-2 pt-4">
               <Button
-                disabled
-                variant="outline"
-                className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm lg:text-base"
+                onClick={() => setShowRotationFormModal(true)}
+                disabled={showRotationFormModal == true}
+                className="py-2 flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700"
               >
-                <Save className="h-4 w-4" />
-                <span>Save</span>
+                <ClipboardList className="h-4 w-4" />
+                Manage Resident Rotation Form
               </Button>
-              <Button
-                disabled
-                className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-green-500 text-white hover:bg-green-600"
-              >
-                <Download className="h-4 w-4" />
-                <span>Export</span>
-              </Button>
+              <div className="flex justify-end gap-2">
+                <Button
+                  disabled
+                  variant="outline"
+                  className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm lg:text-base"
+                >
+                  <Save className="h-4 w-4" />
+                  <span>Save</span>
+                </Button>
+                <Button
+                  disabled
+                  className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-green-500 text-white hover:bg-green-600"
+                >
+                  <Download className="h-4 w-4" />
+                  <span>Export</span>
+                </Button>
+              </div>
             </div>
           </Card>
         )}
@@ -993,58 +1011,48 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 
         {activeTab === "configure" && (
           <Card className="p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-4 mb-6 sm:mb-8 border border-gray-200 dark:border-gray-800">
-            <h2 className="text-lg sm:text-xl font-bold">Settings</h2>
+            <h2 className="text-lg sm:text-xl font-bold">Configure</h2>
             {/*Form Availabity Selection */}
-            <div className="grid grid-cols-2 items-start sm:items-end gap-6">
-              <div>
-                <label className="flex items-center text-sm font-semibold gap-2 mb-2">
-                  Available Date
-                </label>
-                <input
-                  type="date"
-                  className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
-                  value={windowAvailableDate}
-                  onChange={(e) => setWindowAvailableDate(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="flex items-center text-sm font-semibold gap-2 mb-2">
-                  Due Date
-                </label>
-                <input
-                  type="date"
-                  className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
-                  value={windowDueDate}
-                  onChange={(e) => setWindowDueDate(e.target.value)}
-                  min={windowAvailableDate}
-                />
-              </div>
-              {windowSaveError && (
-                <p className="col-span-2 text-sm text-red-600 dark:text-red-400">
-                  {windowSaveError}
-                </p>
-              )}
-              <div className="flex flex-row gap-2">
-                <Button
-                  onClick={handleSaveSubmissionWindow}
-                  disabled={
-                    savingWindow || !windowAvailableDate || !windowDueDate
-                  }
-                  className="py-2 flex items-center justify-center gap-2 bg-green-600 text-white hover:bg-green-700"
-                >
-                  {savingWindow ? "Saving..." : "Save Window"}
-                </Button>
-                <Button
-                  onClick={() => setShowRotationFormModal(true)}
-                  disabled={showRotationFormModal == true}
-                  className="py-2 flex items-center justify-center gap-2 bg-blue-500 text-white hover:bg-blue-600"
-                >
-                  <ClipboardList className="h-4 w-4" />
-                  Create Rotation Form
-                </Button>
-              </div>
-            </div>
 
+              <div className="grid grid-cols-2 items-start sm:items-end gap-6">
+                <div>
+                  <label className="flex items-center text-sm font-semibold gap-2 mb-2">
+                    Available Date
+                  </label>
+                  <input
+                    type="datetime-local"
+                    className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                    value={toLocalInputValue(windowAvailableDate)}
+                    onChange={(e) => setWindowAvailableDate(new Date(e.target.value).toISOString())}
+                  />
+                </div>
+                <div>
+                  <label className="flex items-center text-sm font-semibold gap-2 mb-2">
+                    Due Date
+                  </label>
+                  <input
+                    type="datetime-local"
+                    className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
+                    value={toLocalInputValue(windowDueDate)}
+                    onChange={(e) => setWindowDueDate(new Date(e.target.value).toISOString())}
+                    min={windowAvailableDate}
+                  />
+                </div>
+                <div>
+                  <Button
+                    onClick={handleSaveSubmissionWindow}
+                    disabled={
+                      savingWindow || !windowAvailableDate || !windowDueDate
+                    }
+                    className="py-2 flex items-center justify-center gap-2 mb-1 bg-blue-600 text-white hover:bg-blue-700"
+                  >
+                    {savingWindow ? "Saving..." : "Publish Dates"}
+                  </Button>
+                </div>
+                
+              
+              </div>
+              
             <h2 className="text-lg sm:text-xl font-bold mb-4">
               Chief Selection
             </h2>
