@@ -111,7 +111,6 @@ public class Pgy4RotationScheduleController(
         {
             UnsubmittedResidentsResponse errorResponse = new()
             {
-                Message = "Unsubmitted Resident Requests",
                 UnsubmittedResidents =
                 [
                     .. unsubmittedResidents.Select(
