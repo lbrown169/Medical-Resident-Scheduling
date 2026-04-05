@@ -1,4 +1,4 @@
-name: Check .editorconfig Compliance
+name: Run Constraint Tests
 
 on:
     push:
@@ -11,22 +11,23 @@ on:
             - "MedicalTests/**"
 
 jobs:
-    editorconfig-check:
-        name: Verify .editorconfig Formatting
+    test:
         runs-on: ubuntu-latest
 
         steps:
-            - name: Checkout code
+            - name: Checkout repository
               uses: actions/checkout@v4
 
-            - name: Setup .NET SDK
+            - name: Setup .NET 10
               uses: actions/setup-dotnet@v4
               with:
-                  dotnet-version: "8.0.x" # adjust to your project’s version
+                  dotnet-version: "10.0.x"
 
             - name: Restore dependencies
               run: dotnet restore
 
-            - name: Verify Backend formatting
-              run: |
-                  dotnet format MedicalDemo.slnx --verify-no-changes --severity error
+            - name: Build
+              run: dotnet build --no-restore --configuration Release
+
+            - name: Run constraint tests
+              run: dotnet test MedicalTests/MedicalTests.csproj --no-build --configuration Release --verbosity normal
