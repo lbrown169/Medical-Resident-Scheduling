@@ -5,7 +5,6 @@ import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { ConfirmDialog } from "../../../components/ui/confirm-dialog";
 import { CalendarX, Send, Check, X, Shield, Users, Repeat, Search } from "lucide-react";
-import { differenceInCalendarDays, parseISO } from 'date-fns';
 import { config } from '../../../config';
 import { toast } from "../../../lib/use-toast";
 import { VacationResponse } from "@/lib/models/VacationResponse";
@@ -243,7 +242,7 @@ function groupRequests(requests: Request[]) {
 
   const groupedMap = new Map<string, Request[]>();
   for (const req of requests) {
-    const key = `${req.firstName} ${req.lastName}||${req.reason}||${req.halfDay ?? ''}`;
+    const key = req.groupId || req.id;
     if (!groupedMap.has(key)) groupedMap.set(key, []);
     groupedMap.get(key)!.push(req);
   }
@@ -253,35 +252,21 @@ function groupRequests(requests: Request[]) {
     const sorted = entries.sort((a, b) =>
       new Date(a.startDate || "").getTime() - new Date(b.startDate || "").getTime()
     );
-
-    let i = 0;
-    while (i < sorted.length) {
-      const current = sorted[i];
-      const start = current.startDate!;
-      let end = current.endDate!;
-      let j = i + 1;
-      while (
-        j < sorted.length &&
-        differenceInCalendarDays(parseISO(sorted[j].startDate!), parseISO(end)) <= 1
-      ) {
-        end = sorted[j].endDate!;
-        j++;
-      }
-      result.push({
-        id: current.id,
-        residentId: current.residentId,
-        firstName: current.firstName,
-        lastName: current.lastName,
-        reason: current.reason,
-        halfDay: current.halfDay ?? null,
-        status: current.status,
-        startDate: start,
-        endDate: end,
-        groupId: current.groupId,
-        details: current.details,
-      });
-      i = j;
-    }
+    const first = sorted[0];
+    const last = sorted[sorted.length - 1];
+    result.push({
+      id: first.id,
+      residentId: first.residentId,
+      firstName: first.firstName,
+      lastName: first.lastName,
+      reason: first.reason,
+      halfDay: first.halfDay ?? null,
+      status: first.status,
+      startDate: first.startDate,
+      endDate: last.endDate,
+      groupId: first.groupId,
+      details: first.details,
+    });
   }
 
   result.sort((a, b) =>

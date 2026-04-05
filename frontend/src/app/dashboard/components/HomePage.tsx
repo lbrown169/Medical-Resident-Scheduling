@@ -46,7 +46,6 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
   onNavigateToSchedule,
   userId,
   calendarEvents,
-  onRefreshCalendar,
   isAdmin,
 }) => {
   const [dashboardData, setDashboardData] = useState<DashboardData>({
