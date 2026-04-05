@@ -15,7 +15,6 @@ public static class WebApplicationExtensions
                 app.UseSwaggerUI();
             }
 
-            app.UseHttpsRedirection();
             app.UseRouting();
             app.ApplyCorsPolicy();
             app.MapControllers();
