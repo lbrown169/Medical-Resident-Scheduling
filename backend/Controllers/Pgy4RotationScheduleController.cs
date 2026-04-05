@@ -220,7 +220,7 @@ public class Pgy4RotationScheduleController(
 
         Pgy4RotationSchedule? existingPublishedSchedule =
             await context.Pgy4RotationSchedules.FirstOrDefaultAsync(
-                (schedule) => schedule.Year == scheduleYear
+                (schedule) => schedule.Year == scheduleYear && schedule.IsPublished
             );
 
         existingPublishedSchedule?.IsPublished = false;
@@ -243,7 +243,7 @@ public class Pgy4RotationScheduleController(
 
         Pgy4RotationSchedule? foundPublishedSchedule =
             await context.Pgy4RotationSchedules.FirstOrDefaultAsync(
-                (schedule) => schedule.Year == scheduleYear
+                (schedule) => schedule.Year == scheduleYear && schedule.IsPublished
             );
 
         if (foundPublishedSchedule == null)
