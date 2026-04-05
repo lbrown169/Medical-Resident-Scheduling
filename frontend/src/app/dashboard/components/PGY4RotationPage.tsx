@@ -951,25 +951,44 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
     }
   };
 
+  const [publishingSchedule, setPublishingSchedule] = useState(false);
+
   const handlePublish = async () => {
     if (!selectedScheduleId) return;
+    const isCurrentlyPublished = selectedSchedule?.isPublished ?? false;
     try {
+      setPublishingSchedule(true);
       setScheduleError(null);
-      const res = await fetch(
-        `${config.apiUrl}/api/pgy4-rotation-schedule/publish/${selectedScheduleId}`,
-        { method: "POST" },
-      );
-      if (!res.ok) throw new Error("Failed to publish schedule");
-      // Update local state so the published marker reflects immediately
+
+      // Call correct url based on published status
+      const url = isCurrentlyPublished
+        ? `${config.apiUrl}/api/pgy4-rotation-schedule/unpublish`
+        : `${config.apiUrl}/api/pgy4-rotation-schedule/publish/${selectedScheduleId}`;
+
+      const res = await fetch(url, { method: "PATCH" });
+
+      if (!res.ok) throw new Error(isCurrentlyPublished ? "Failed to unpublish schedule" : "Failed to publish schedule");
+
       setSchedules((prev) =>
         prev.map((s) => ({
           ...s,
-          isPublished: s.pgy4RotationScheduleId === selectedScheduleId,
+          isPublished: !isCurrentlyPublished
+            ? s.pgy4RotationScheduleId === selectedScheduleId
+            : s.pgy4RotationScheduleId === selectedScheduleId
+              ? false
+              : s.isPublished,
         })),
       );
+      toast({
+        variant: "success",
+        title: isCurrentlyPublished ? "Unpublished" : "Published",
+        description: isCurrentlyPublished ? "Schedule has been unpublished." : "Schedule is now live.",
+      });
     } catch (err) {
       console.error(err);
-      setScheduleError("Failed to publish schedule.");
+      setScheduleError(isCurrentlyPublished ? "Failed to unpublish schedule." : "Failed to publish schedule.");
+    } finally {
+      setPublishingSchedule(false);
     }
   };
 
@@ -1274,10 +1293,20 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                     </select>
                     <Button
                       onClick={handlePublish}
-                      disabled={selectedSchedule?.isPublished}
-                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm px-3 py-2"
+                      disabled={publishingSchedule}
+                      className={`text-white text-xs sm:text-sm px-3 py-2 ${
+                        selectedSchedule?.isPublished
+                          ? "bg-green-600 hover:bg-red-600"
+                          : "bg-blue-600 hover:bg-blue-700"
+                      }`}
                     >
-                      {selectedSchedule?.isPublished ? "Published" : "Publish"}
+                      {publishingSchedule
+                        ? selectedSchedule?.isPublished
+                          ? "Unpublishing..."
+                          : "Publishing..."
+                        : selectedSchedule?.isPublished
+                          ? "Unpublish"
+                          : "Publish"}
                     </Button>
                   </>
                 )}
