@@ -196,7 +196,7 @@ public class Pgy4RotationScheduleController(
         return NoContent();
     }
 
-    [HttpPost("publish/{id}")]
+    [HttpPatch("publish/{id}")]
     public async Task<ActionResult> PublishSchedule([FromRoute] Guid id)
     {
         int scheduleYear = pgy4RotationScheduleService.GetAcademicYear();
@@ -218,12 +218,18 @@ public class Pgy4RotationScheduleController(
             return BadRequest(ModelState);
         }
 
-        Pgy4RotationSchedule? existingPublishedSchedule =
-            await context.Pgy4RotationSchedules.FirstOrDefaultAsync(
-                (schedule) => schedule.Year == scheduleYear
-            );
+        // Set all existing published schedule for current to be unpublished
+        List<Pgy4RotationSchedule> existingPublishedSchedules = await context
+            .Pgy4RotationSchedules.Where(
+                (schedule) => schedule.Year == scheduleYear && schedule.IsPublished
+            )
+            .ToListAsync();
 
-        existingPublishedSchedule?.IsPublished = false;
+        foreach (Pgy4RotationSchedule publishedSchedule in existingPublishedSchedules)
+        {
+            publishedSchedule.IsPublished = false;
+        }
+
         scheduleToBePublished.IsPublished = true;
 
         await context.SaveChangesAsync();
@@ -234,6 +240,32 @@ public class Pgy4RotationScheduleController(
             );
 
         return Ok(response);
+    }
+
+    [HttpPatch("unpublish")]
+    public async Task<ActionResult> UnpublishSchedule()
+    {
+        int scheduleYear = pgy4RotationScheduleService.GetAcademicYear();
+
+        List<Pgy4RotationSchedule> existingPublishedSchedules = await context
+            .Pgy4RotationSchedules.Where(
+                (schedule) => schedule.Year == scheduleYear && schedule.IsPublished
+            )
+            .ToListAsync();
+
+        if (existingPublishedSchedules.Count == 0)
+        {
+            return NotFound("No schedule has been published.");
+        }
+
+        foreach (Pgy4RotationSchedule publishedSchedule in existingPublishedSchedules)
+        {
+            publishedSchedule.IsPublished = false;
+        }
+
+        await context.SaveChangesAsync();
+
+        return Ok();
     }
 
     [HttpGet("published")]
