@@ -55,7 +55,10 @@ services:
       - "traefik.http.services.psycall-staging-backend.loadbalancer.server.port=5109"
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        - NEXT_PUBLIC_API_URL=https://backend.staging.psycall.net
     container_name: psycall-staging-frontend
     restart: always
     environment:
