@@ -9,12 +9,12 @@ public class Pgy4RotationScheduleGenerator
     private Random seededRandom = null!;
 
     private AlgorithmRotationPrefRequest[] requests = null!;
-    private IConstraint[] constraints = null!;
+    private IRotationConstraint[] constraints = null!;
 
     private Dictionary<AlgorithmResident, Pgy4RotationTypeEnum?[]> rotationSchedule = []; // Generated schedule
     private readonly int totalMonths = 12;
 
-    private IConstraint[] requiredConstraints = null!;
+    private IRotationConstraint[] requiredConstraints = null!;
 
     // Parameters
     private const double PER_MONTH_DIVERSITY_PENALTY = 1; // Penalty score applied when a rotation is used more often for all the months
@@ -52,7 +52,7 @@ public class Pgy4RotationScheduleGenerator
             return new()
             {
                 Schedule = rotationSchedule.ToDictionary(
-                    kvp => kvp.Key.ResidentId,
+                    kvp => kvp.Key,
                     kvp => kvp.Value.Cast<Pgy4RotationTypeEnum>().ToArray()
                 ),
             };
@@ -61,7 +61,7 @@ public class Pgy4RotationScheduleGenerator
 
     public void Initialize(
         AlgorithmRotationPrefRequest[] requests,
-        IConstraint[] constraints,
+        IRotationConstraint[] constraints,
         int seed
     )
     {
@@ -72,7 +72,7 @@ public class Pgy4RotationScheduleGenerator
 
         this.requests = RandomizeRequestOrder(requests);
         this.constraints = constraints;
-        requiredConstraints = new IConstraint[this.constraints.Length];
+        requiredConstraints = new IRotationConstraint[this.constraints.Length];
 
         // Initialize rotation schedule
         foreach (AlgorithmRotationPrefRequest request in this.requests)
@@ -207,7 +207,7 @@ public class Pgy4RotationScheduleGenerator
 
         for (int i = 0; i < numRequiredConstraints; i++)
         {
-            IConstraint constraint = requiredConstraints[i];
+            IRotationConstraint constraint = requiredConstraints[i];
 
             constraint.GetJumpPosition(
                 rotationSchedule,
@@ -252,7 +252,7 @@ public class Pgy4RotationScheduleGenerator
     )
     {
         AlgorithmResident resident = requests[requestIndex].Requester;
-        foreach (IConstraint constraintRule in constraints)
+        foreach (IRotationConstraint constraintRule in constraints)
         {
             if (constraintRule.IsValidAssignment(rotationSchedule, resident, month, rotationType))
             {
@@ -355,7 +355,7 @@ public class Pgy4RotationScheduleGenerator
     private Pgy4RotationTypeEnum[] GetPreferredRotationTypeEnum(
         AlgorithmRotationPrefRequest request,
         int month,
-        IConstraint[] requiredConstraints,
+        IRotationConstraint[] requiredConstraints,
         out int numRequiredConstraints
     )
     {
@@ -367,7 +367,7 @@ public class Pgy4RotationScheduleGenerator
         bool requiredConstraintRotationsFound = false;
         numRequiredConstraints = 0;
 
-        foreach (IConstraint constraintRule in constraints)
+        foreach (IRotationConstraint constraintRule in constraints)
         {
             HashSet<Pgy4RotationTypeEnum> requiredRotations =
                 constraintRule.GetRequiredRotationByConstraint(
@@ -394,7 +394,7 @@ public class Pgy4RotationScheduleGenerator
         allowedRotations = [.. Enum.GetValues<Pgy4RotationTypeEnum>()];
         //  Remove any rotations that the constraints does not allow
 
-        foreach (IConstraint constraintRule in constraints)
+        foreach (IRotationConstraint constraintRule in constraints)
         {
             HashSet<Pgy4RotationTypeEnum> blockedRotations =
                 constraintRule.GetBlockedRotationByConstraint(

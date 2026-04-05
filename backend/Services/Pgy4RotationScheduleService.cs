@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Text;
 using MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator;
 using MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator.Constraints;
@@ -15,7 +14,11 @@ public class Pgy4RotationScheduleService(
     MedicalContext context,
     RotationConverter rotationConverter,
     RotationPrefRequestConverter rotationPrefRequestConverter,
-    Pgy4RotationScheduleGenerator scheduleGenerator
+    Pgy4RotationScheduleGenerator scheduleGenerator,
+    HasChiefRotationConstraint hasChiefRotationConstraint,
+    InpatientConsultInJulyAndJanConstraint inpatientConsultInJulyAndJanConstraint,
+    Min2ConsultsInpatientConstraint min2ConsultsInpatientConstraint,
+    OneIopForenCommAddictPerMonthConstraint oneIopForenCommAddictPerMonthConstraint
 )
 {
     private readonly MedicalContext context = context;
@@ -23,6 +26,15 @@ public class Pgy4RotationScheduleService(
     private readonly RotationPrefRequestConverter rotationPrefRequestConverter =
         rotationPrefRequestConverter;
     private readonly Pgy4RotationScheduleGenerator scheduleGenerator = scheduleGenerator;
+
+    private readonly HasChiefRotationConstraint hasChiefRotationConstraint =
+        hasChiefRotationConstraint;
+    private readonly InpatientConsultInJulyAndJanConstraint inpatientConsultInJulyAndJanConstraint =
+        inpatientConsultInJulyAndJanConstraint;
+    private readonly Min2ConsultsInpatientConstraint min2ConsultsInpatientConstraint =
+        min2ConsultsInpatientConstraint;
+    private readonly OneIopForenCommAddictPerMonthConstraint oneIopForenCommAddictPerMonthConstraint =
+        oneIopForenCommAddictPerMonthConstraint;
 
     public int[] GenerateSeeds(int count)
     {
@@ -48,7 +60,12 @@ public class Pgy4RotationScheduleService(
 
         List<Rotation> rotationsToAdd = [];
 
-        foreach (KeyValuePair<string, Pgy4RotationTypeEnum[]> kvp in generatedSchedule.Schedule)
+        foreach (
+            KeyValuePair<
+                AlgorithmResident,
+                Pgy4RotationTypeEnum[]
+            > kvp in generatedSchedule.Schedule
+        )
         {
             Guid newRotationId = Guid.NewGuid();
 
@@ -63,12 +80,12 @@ public class Pgy4RotationScheduleService(
                 RotationType currentRotationType = allRotationTypesDictionary[rotationName];
 
                 Rotation newRotation = rotationConverter.CreateRotationFromResidentAndType(
-                    kvp.Key,
+                    kvp.Key.ResidentId,
                     currentRotationType,
                     newScheduleId,
                     newRotationId,
                     academicYear,
-                    (MonthOfYear)calenderMonthIndex
+                    calenderMonthIndex
                 );
                 rotationsToAdd.Add(newRotation);
             }
@@ -98,13 +115,13 @@ public class Pgy4RotationScheduleService(
                 rotationPrefRequestConverter.CreateAlgorithmSchedulePrefRequestFromModel
             ),
         ];
-        // Populate constraints
-        IConstraint[] constraints =
+
+        IRotationConstraint[] constraints =
         [
-            new HasChiefRotationConstraint(),
-            new InpatientConsultInJulyAndJanConstraint(),
-            new Min2ConsultsInpatientConstraint(),
-            new OneIopForenCommAddictPerMonthConstraint(),
+            hasChiefRotationConstraint,
+            inpatientConsultInJulyAndJanConstraint,
+            min2ConsultsInpatientConstraint,
+            oneIopForenCommAddictPerMonthConstraint,
         ];
 
         // Generate schedule
@@ -220,5 +237,26 @@ public class Pgy4RotationScheduleService(
         }
 
         return builder.ToString();
+    }
+
+    public List<Pgy4ConstraintViolation> GetConstraintViolations(Pgy4ScheduleData scheduleData)
+    {
+        IRotationConstraint[] constraints =
+        [
+            hasChiefRotationConstraint,
+            inpatientConsultInJulyAndJanConstraint,
+            min2ConsultsInpatientConstraint,
+            oneIopForenCommAddictPerMonthConstraint,
+        ];
+
+        List<Pgy4ConstraintViolation> violations = [];
+        foreach (IRotationConstraint constraint in constraints)
+        {
+            violations.Add(
+                constraint.GetRotationScheduleConstraintViolations(scheduleData.Schedule)
+            );
+        }
+
+        return violations;
     }
 }

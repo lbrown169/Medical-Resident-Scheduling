@@ -1,16 +1,16 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
-import { Dialog } from "../../../components/ui/dialog";
 import { ConfirmDialog } from "../../../components/ui/confirm-dialog";
 import { CalendarDays, CalendarX, Send, Check, X, Shield, Users, Repeat } from "lucide-react";
 import { differenceInCalendarDays, parseISO } from 'date-fns';
 import { config } from '../../../config';
 import { toast } from "../../../lib/use-toast";
-import { useMemo } from "react";
 import { VacationResponse } from "@/lib/models/VacationResponse";
+
+// Interfaces
 
 interface AdminPageProps {
   residents: { id: string; name: string; email: string; pgyLevel: number | string; hospitalRole?: number; hours: number }[];
@@ -29,6 +29,7 @@ interface AdminPageProps {
   handleDeleteUser: (user: { id: string; first_name: string; last_name: string; email: string; role: string }) => void;
   latestVersion?: string;
   userId: string;
+  onRefreshResidents?: () => void;
 }
 
 interface Request {
@@ -70,7 +71,18 @@ interface Announcement {
   createdAt?: string;
 }
 
-// Modal component
+// Shared helpers
+
+function formatDate(dateStr: string) {
+  if (!dateStr) return 'N/A';
+  const date = new Date(dateStr);
+  date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+  if (isNaN(date.getTime())) return 'N/A';
+  return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
+}
+
+// Modal
+
 function Modal({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: React.ReactNode }) {
   if (!open) return null;
   return (
@@ -84,55 +96,207 @@ function Modal({ open, onClose, title, children }: { open: boolean; onClose: () 
   );
 }
 
-const AdminPage: React.FC<AdminPageProps> = ({
-  residents,
-  handleApproveRequest,
-  handleDenyRequest,
-  userInvitations,
-  inviteEmail,
-  setInviteEmail,
-  handleSendInvite,
-  handleResendInvite,
-  // inviteRole and setInviteRole are not currently used but kept for future functionality
-  // inviteRole,
-  // setInviteRole,
-  users,
-  handleDeleteUser,
-  userId,
-}) => {
-  console.log('AdminPage props - users:', users);
-  console.log('AdminPage props - users length:', users.length);
+// AnnouncementForm
 
-  const [showRequestsModal, setShowRequestsModal] = useState(false);
-  const [showInvitationsModal, setShowInvitationsModal] = useState(false);
-  const [myTimeOffRequests, setMyTimeOffRequests] = useState<Request[]>([]);
-  console.log("RAW REQUESTS:", myTimeOffRequests);
-  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; user: { id: string; first_name: string; last_name: string; email: string; role: string } | null }>({ open: false, user: null });
-  const [swapHistory, setSwapHistory] = useState<SwapRequest[]>([]);
-  const [activeTab, setActiveTab] = useState<'swaps' | 'requests' | 'users' | 'residents' | 'announcements'>('swaps');
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [announcementText, setAnnouncementText] = useState('');
+const AnnouncementForm: React.FC<{ userId: string; onPosted: () => void }> = ({ userId, onPosted }) => {
+  const [text, setText] = useState('');
   const [posting, setPosting] = useState(false);
-  const [announcementError, setAnnouncementError] = useState<string | null>(null);
-  const [showAnnouncementConfirm, setShowAnnouncementConfirm] = useState(false);
-  const [deletingAnnouncement, setDeletingAnnouncement] = useState<string | null>(null);
-  const [switchingRole, setSwitchingRole] = useState<string | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleConfirm = async () => {
+    setPosting(true);
+    setError(null);
+    try {
+      const res = await fetch(`${config.apiUrl}/api/announcements`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, authorId: userId }),
+      });
+      if (!res.ok) throw new Error();
+      setText('');
+      onPosted();
+    } catch {
+      setError('Could not post announcement. Please try again.');
+    } finally {
+      setPosting(false);
+    }
+  };
+
+  return (
+    <>
+      <form onSubmit={e => { e.preventDefault(); setShowConfirm(true); }} className="flex flex-col gap-4 mb-6">
+        <textarea
+          className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100"
+          placeholder="Write a new announcement..."
+          value={text}
+          onChange={e => setText(e.target.value)}
+          rows={3}
+          disabled={posting}
+        />
+        <Button type="submit" disabled={posting || !text.trim()} className="self-end px-6 py-2">
+          {posting ? 'Posting...' : 'Post Announcement'}
+        </Button>
+      </form>
+      <ConfirmDialog
+        open={showConfirm}
+        onOpenChange={setShowConfirm}
+        title="Post this announcement?"
+        message={text}
+        confirmText="Post"
+        cancelText="Cancel"
+        onConfirm={handleConfirm}
+        loading={posting}
+      />
+      {error && <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">{error}</div>}
+    </>
+  );
+};
+
+// SwapHistoryTab
+
+interface SwapHistoryTabProps {
+  idToName: Record<string, string>;
+  onPendingCountChange: (count: number) => void;
+}
+
+const SwapHistoryTab: React.FC<SwapHistoryTabProps> = ({ idToName, onPendingCountChange }) => {
+  const [swapHistory, setSwapHistory] = useState<SwapRequest[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Ping backend API
-    fetch(`${config.apiUrl}/api/rotations`, { method: 'GET' })
+    setLoading(true);
+    fetch(`${config.apiUrl}/api/swaprequests`)
       .then(res => {
-        // Backend status check - keeping the logic but not storing the result
-        if (!res.ok) {
-          console.warn('Backend is offline');
-        }
+        if (!res.ok) throw new Error();
+        return res.json();
       })
-      .catch(() => {
-        console.warn('Backend is offline');
-      });
-  }, []);
+      .then((data: SwapRequest[]) => {
+        setSwapHistory(data);
+        onPendingCountChange(data.filter(s => s.status.id === 0).length);
+      })
+      .catch(() => setSwapHistory([]))
+      .finally(() => setLoading(false));
+  }, [onPendingCountChange]);
 
-  const fetchVacations = () => {
+  return (
+    <Card className="p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-4 mb-6 sm:mb-8 border border-gray-200 dark:border-gray-800">
+      <h2 className="text-lg sm:text-xl font-bold mb-4">Swap Call History</h2>
+      <div className="overflow-x-auto max-h-96 overflow-y-auto w-full">
+        <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-gray-100 dark:bg-neutral-800">
+            <tr>
+              <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+              <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requester</th>
+              <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requestee</th>
+              <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Partner</th>
+              <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+              <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
+            {loading ? (
+              <tr>
+                <td colSpan={6} className="px-6 py-4 text-center text-gray-400 italic">Loading...</td>
+              </tr>
+            ) : swapHistory.length > 0 ? (
+              swapHistory.map((swap, idx) => (
+                <tr key={swap.swapRequestId || idx} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
+                  <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.requesterDate ? formatDate(swap.requesterDate) : ''}</td>
+                  <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                    {idToName[swap.requesterId] || `Resident ${swap.requesterId}`}
+                  </td>
+                  <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                    {idToName[swap.requesteeId] || `Resident ${swap.requesteeId}`}
+                  </td>
+                  <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.requesteeDate ? formatDate(swap.requesteeDate) : ''}</td>
+                  <td className="px-1 sm:px-3 py-3 sm:py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs break-all">{swap.details || '-'}</td>
+                  <td className={`px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm font-semibold ${
+                    swap.status.id === 1 ? 'text-green-600' : swap.status.id === 2 ? 'text-red-600' : 'text-yellow-600'
+                  }`}>
+                    {swap.status.description}
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={6} className="px-6 py-4 text-center text-gray-500 italic">No swap call history found.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </Card>
+  );
+};
+
+// VacationRequestsTab
+
+interface VacationRequestsTabProps {
+  handleApproveRequest: (id: string) => void;
+  handleDenyRequest: (id: string) => void;
+  onPendingCountChange: (count: number) => void;
+}
+
+function groupRequests(requests: Request[]) {
+  if (!requests || requests.length === 0) return [];
+
+  const groupedMap = new Map<string, Request[]>();
+  for (const req of requests) {
+    const key = `${req.firstName} ${req.lastName}||${req.reason}||${req.halfDay ?? ''}`;
+    if (!groupedMap.has(key)) groupedMap.set(key, []);
+    groupedMap.get(key)!.push(req);
+  }
+
+  const result = [];
+  for (const [, entries] of groupedMap.entries()) {
+    const sorted = entries.sort((a, b) =>
+      new Date(a.startDate || "").getTime() - new Date(b.startDate || "").getTime()
+    );
+
+    let i = 0;
+    while (i < sorted.length) {
+      const current = sorted[i];
+      const start = current.startDate!;
+      let end = current.endDate!;
+      let j = i + 1;
+      while (
+        j < sorted.length &&
+        differenceInCalendarDays(parseISO(sorted[j].startDate!), parseISO(end)) <= 1
+      ) {
+        end = sorted[j].endDate!;
+        j++;
+      }
+      result.push({
+        id: current.id,
+        residentId: current.residentId,
+        firstName: current.firstName,
+        lastName: current.lastName,
+        reason: current.reason,
+        halfDay: current.halfDay ?? null,
+        status: current.status,
+        startDate: start,
+        endDate: end,
+        groupId: current.groupId,
+        details: current.details,
+      });
+      i = j;
+    }
+  }
+
+  result.sort((a, b) =>
+    new Date(a.startDate || "").getTime() - new Date(b.startDate || "").getTime()
+  );
+  return result;
+}
+
+const VacationRequestsTab: React.FC<VacationRequestsTabProps> = ({ handleApproveRequest, handleDenyRequest, onPendingCountChange }) => {
+  const [requests, setRequests] = useState<Request[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+
+  const fetchVacations = useCallback(() => {
+    setLoading(true);
     fetch(`${config.apiUrl}/api/vacations`)
       .then(res => res.json())
       .then((data) => {
@@ -159,39 +323,35 @@ const AdminPage: React.FC<AdminPageProps> = ({
           status: vac.status,
           residentId: vac.residentId,
           details: vac.details,
-          groupId: vac.groupId
+          groupId: vac.groupId,
         }));
-        setMyTimeOffRequests(mapped);
-      });
-  };
-
-  useEffect(() => {
-    fetchVacations();
+        setRequests(mapped);
+      })
+      .finally(() => setLoading(false));
   }, []);
 
-  const handleClearAllRequests = async () => {
-    const vacationIds = myTimeOffRequests.map(request => request.id);
+  useEffect(() => { fetchVacations(); }, [fetchVacations]);
 
+  const groupedRequests = useMemo(() => groupRequests(requests), [requests]);
+
+  useEffect(() => {
+    onPendingCountChange(groupedRequests.filter(r => r.status === 'Pending').length);
+  }, [groupedRequests, onPendingCountChange]);
+
+  const handleClearAllRequests = async () => {
+    const vacationIds = requests.map(r => r.id);
     if (vacationIds.length === 0) {
-      toast({
-        title: 'No requests to clear',
-        description: 'There are no vacation requests to delete.',
-      });
+      toast({ title: 'No requests to clear', description: 'There are no vacation requests to delete.' });
       return;
     }
-
     try {
       const response = await fetch(`${config.apiUrl}/api/vacations`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(vacationIds),
       });
-
       if (response.ok) {
         const result = await response.json();
-
         if (result.notDeleted && result.notDeleted.length > 0) {
           toast({
             title: 'Partial success',
@@ -199,251 +359,17 @@ const AdminPage: React.FC<AdminPageProps> = ({
             variant: 'destructive',
           });
         } else {
-          toast({
-            title: 'Success',
-            description: 'All vacation requests have been cleared.',
-          });
+          toast({ title: 'Success', description: 'All vacation requests have been cleared.' });
         }
-
-        // Refresh the vacation requests list
         fetchVacations();
       } else {
-        toast({
-          title: 'Error',
-          description: 'Failed to clear vacation requests.',
-          variant: 'destructive',
-        });
+        toast({ title: 'Error', description: 'Failed to clear vacation requests.', variant: 'destructive' });
       }
-    } catch (error) {
-      console.error('Error clearing vacation requests:', error);
-      toast({
-        title: 'Error',
-        description: 'An error occurred while clearing requests.',
-        variant: 'destructive',
-      });
+    } catch {
+      toast({ title: 'Error', description: 'An error occurred while clearing requests.', variant: 'destructive' });
     }
   };
 
-  useEffect(() => {
-    fetch(`${config.apiUrl}/api/swaprequests`)
-      .then(res => {
-        console.log('Swap requests API response status:', res.status);
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-        }
-        return res.json();
-      })
-      .then((data) => {
-        console.log('Swap history data:', data);
-        console.log('Swap history data length:', data.length);
-        setSwapHistory(data);
-      })
-      .catch(error => {
-        console.error('Error fetching swap history:', error);
-        setSwapHistory([]);
-      });
-  }, []);
-
-  // Refetch swapHistory when switching to the swaps tab
-  useEffect(() => {
-    if (activeTab === 'swaps') {
-      console.log('Switching to swaps tab, fetching data...');
-      fetch(`${config.apiUrl}/api/swaprequests`)
-        .then(res => {
-          console.log('Swap requests API response status (tab switch):', res.status);
-          if (!res.ok) {
-            throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-          }
-          return res.json();
-        })
-        .then((data) => {
-          console.log('Swap history data (tab switch):', data);
-          console.log('Swap history data length (tab switch):', data.length);
-          setSwapHistory(data);
-        })
-        .catch(error => {
-          console.error('Error fetching swap history (tab switch):', error);
-          setSwapHistory([]);
-        });
-    }
-  }, [activeTab]);
-
-  // Local copy of residents for optimistic update
-  const [residentRows, setResidentRows] = useState(residents);
-  useEffect(() => setResidentRows(residents), [residents]);
-
-  const [savingPGY, setSavingPGY] = useState<Record<string, boolean>>({});
-  // Updates the PGY year when selected by administrators on the Resident Info tab
-  const handleUpdatePGY = async (residentId: string, newPGY: number) => {
-    setSavingPGY(prev => ({ ...prev, [residentId]: true }));
-    // Optimistic update
-    setResidentRows(prev => prev.map(r => r.id === residentId ? { ...r, pgyLevel: newPGY } : r));
-
-    try {
-      // Update with existing data but new phone number
-      const res= await fetch(`${config.apiUrl}/api/residents/${residentId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          graduate_yr: newPGY,
-        })
-      });
-
-      if (!res.ok) {
-        const msg = await res.text();
-        throw new Error(msg || 'Failed to update PGY');
-      }
-
-      toast({
-        title: 'PGY updated',
-        description: `Resident set to PGY ${newPGY}.`,
-        variant: 'success',
-      });
-    } catch (error) {
-      // Roll back on error
-      setResidentRows(prev => prev.map(r => r.id === residentId ? { ...r, pgyLevel: residents.find(x => x.id === residentId)?.pgyLevel ?? r.pgyLevel } : r));
-      toast({
-        title: 'Update failed',
-        description: error?.message || 'Could not update PGY.',
-        variant: 'destructive',
-      });
-    } finally {
-      setSavingPGY(prev => ({ ...prev, [residentId]: false }));
-    }
-  };
-
-
-  // Fetch announcements when switching to the announcements tab
-  useEffect(() => {
-    if (activeTab === 'announcements') {
-      fetch(`${config.apiUrl}/api/announcements`)
-        .then(res => {
-          if (!res.ok) throw new Error('Failed to fetch');
-          return res.json();
-        })
-        .then(setAnnouncements)
-        .catch(() => setAnnouncementError('Could not load announcements. Backend may not be ready.'));
-    }
-  }, [activeTab]);
-
-
-  // Group vacation requests by resident and reason into date ranges
-  function groupRequests(requests: Request[]) {
-    if (!requests || requests.length === 0) return [];
-
-    const groupedMap = new Map<string, Request[]>();
-
-    for (const req of requests) {
-      const key = `${req.firstName} ${req.lastName}||${req.reason}||${req.halfDay ?? ''}`;
-      if (!groupedMap.has(key)) {
-        groupedMap.set(key, []);
-      }
-      groupedMap.get(key)!.push(req);
-    }
-
-    const result = [];
-
-    for (const [, entries] of groupedMap.entries()) {
-      const sorted = entries.sort((a, b) =>
-        new Date(a.startDate || "").getTime() - new Date(b.startDate || "").getTime()
-      );
-
-      let i = 0;
-      while (i < sorted.length) {
-        const current = sorted[i];
-        const start = current.startDate!;
-        let end = current.endDate!;
-
-        let j = i + 1;
-        while (
-          j < sorted.length &&
-          differenceInCalendarDays(parseISO(sorted[j].startDate!), parseISO(end)) <= 1
-        ) {
-          end = sorted[j].endDate!;
-          j++;
-        }
-
-        result.push({
-          id: current.id,
-          residentId: current.residentId,
-          firstName: current.firstName,
-          lastName: current.lastName,
-          reason: current.reason,
-          halfDay: current.halfDay ?? null,
-          status: current.status,
-          startDate: start,
-          endDate: end,
-          groupId: current.groupId,
-          details: current.details,
-        });
-
-
-        i = j;
-      }
-    }
-
-    result.sort((a, b) =>
-      new Date(a.startDate || "").getTime() - new Date(b.startDate || "").getTime()
-    );
-
-    return result;
-  }
-
-
-
-  const groupedRequests = groupRequests(myTimeOffRequests);
-  console.log("Grouped requests:", groupedRequests);
-
-  // Create a mapping from resident ID to name
-  const idToName = useMemo(() => {
-    console.log('Creating idToName mapping with users:', users);
-    console.log('Users array length:', users.length);
-    console.log('First few users:', users.slice(0, 3));
-
-    const mapping: { [key: string]: string } = {};
-    users.forEach(user => {
-      console.log('Processing user:', user);
-      mapping[user.id] = `${user.first_name} ${user.last_name}`;
-    });
-    console.log('Final idToName mapping:', mapping);
-    return mapping;
-  }, [users]);
-
-  // Fallback mapping using residents data if users is empty
-  const fallbackIdToName = useMemo(() => {
-    console.log('Creating fallback mapping, users length:', users.length);
-    if (users.length === 0) {
-      // This is a temporary fallback - we'll need to pass residents data to AdminPage
-      return {
-        'LLU6249': 'Felix Hernandez Perez',
-        'FVO3464': 'Alexis Shahidi'
-      };
-    }
-    return {};
-  }, [users]);
-
-  const finalIdToName = users.length > 0 ? idToName : fallbackIdToName;
-  console.log('Final mapping being used:', finalIdToName);
-
-  const pendingSwapsCount = swapHistory.filter(s => s.status.id === 0).length;
-  console.log('swapHistory array:', swapHistory);
-  console.log('pendingSwapsCount:', pendingSwapsCount);
-  const pendingRequestsCount = groupedRequests.filter(r => r.status === 'Pending').length;
-
-
-  // Helper to format a date as MM/DD/YYYY
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return 'N/A';
-    // Apply timezone offset to keep date local (same as calendar)
-    const date = new Date(dateStr);
-    date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
-    if (isNaN(date.getTime())) return 'N/A';
-    return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
-  };
-
-  // Helper to get date or date range
   const getRequestDate = (request: Request) => {
     if (request.startDate && request.endDate) {
       return request.startDate === request.endDate
@@ -453,18 +379,135 @@ const AdminPage: React.FC<AdminPageProps> = ({
     return 'N/A';
   };
 
-
-  // Helper to get resident name
   const getResidentName = (request: Request) => {
-    if (request.firstName && request.lastName) {
-      return `${request.firstName} ${request.lastName}`;
-    }
+    if (request.firstName && request.lastName) return `${request.firstName} ${request.lastName}`;
     return 'N/A';
   };
 
-  const handleDeleteUserWithConfirm = (user: { id: string; first_name: string; last_name: string; email: string; role: string }) => {
-    setConfirmDelete({ open: true, user });
-  };
+  const requestsTable = (
+    <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
+      <thead className="bg-gray-100 dark:bg-neutral-800">
+        <tr>
+          <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Range</th>
+          <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resident</th>
+          <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+          <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+          <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+          <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+        </tr>
+      </thead>
+      <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
+        {loading ? (
+          <tr>
+            <td colSpan={6} className="px-6 py-4 text-center text-gray-400 italic">Loading...</td>
+          </tr>
+        ) : groupedRequests.length > 0 ? (
+          groupedRequests.map((request: Request, idx: number) => (
+            <tr key={request.id || `${request.startDate || request.date || ''}-${getResidentName(request)}-${idx}`}
+              className="hover:bg-gray-50 dark:hover:bg-neutral-800">
+              <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{getRequestDate(request)}</td>
+              <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{getResidentName(request)}</td>
+              <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                {request.reason}{request.halfDay === "A" ? " (AM)" : request.halfDay === "P" ? " (PM)" : ""}
+              </td>
+              <td className="px-2 sm:px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs break-all">{request.details || '-'}</td>
+              <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{request.status}</td>
+              <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                {request.status === "Pending" && (
+                  <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
+                    <ConfirmDialog
+                      triggerText={<><Check className="h-4 w-4 mr-1" /> Approve</>}
+                      className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md border border-green-600 text-green-600 hover:bg-green-500 hover:text-white bg-transparent shadow-none"
+                      title="Approve this request?"
+                      message={`Approve time off for ${request.firstName} ${request.lastName}?`}
+                      confirmText="Approve"
+                      cancelText="Cancel"
+                      onConfirm={async () => { await Promise.resolve(handleApproveRequest(request.groupId || '')); fetchVacations(); }}
+                    />
+                    <ConfirmDialog
+                      triggerText={<><X className="h-4 w-4 mr-1" /> Deny</>}
+                      className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md border border-red-600 text-red-600 hover:bg-red-500 hover:text-white bg-transparent shadow-none"
+                      title="Deny this request?"
+                      message={`Deny time off for ${request.firstName} ${request.lastName}?`}
+                      confirmText="Deny"
+                      cancelText="Cancel"
+                      onConfirm={async () => { await Promise.resolve(handleDenyRequest(request.groupId || '')); fetchVacations(); }}
+                    />
+                  </div>
+                )}
+              </td>
+            </tr>
+          ))
+        ) : (
+          <tr>
+            <td colSpan={6} className="px-6 py-4 text-center text-gray-500 italic">No time off requests found.</td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  );
+
+  return (
+    <>
+      <Card className="p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-4 mb-6 sm:mb-8 border border-gray-200 dark:border-gray-800">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+          <h2 className="text-lg sm:text-xl font-bold">Time Off Requests</h2>
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex items-center gap-2 px-1 sm:px-6 py-1 sm:py-3 text-xs sm:text-sm lg:text-base"
+              onClick={() => setShowModal(true)}>
+              <CalendarDays className="h-4 w-4" />
+              <span>View All</span>
+            </Button>
+            <ConfirmDialog
+              triggerText={<><X className="h-4 w-4" /><span>Clear</span></>}
+              title="Clear all vacation requests?"
+              message="This action cannot be undone."
+              confirmText="Clear"
+              cancelText="Cancel"
+              onConfirm={handleClearAllRequests}
+              variant="danger"
+            />
+          </div>
+        </div>
+        <div className="overflow-x-auto max-h-96 overflow-y-auto w-full">
+          {requestsTable}
+        </div>
+      </Card>
+      <Modal open={showModal} onClose={() => setShowModal(false)} title="All Time Off Requests">
+        <div className="overflow-x-auto">{requestsTable}</div>
+      </Modal>
+    </>
+  );
+};
+
+// UserManagementTab
+
+type UserRecord = { id: string; first_name: string; last_name: string; email: string; role: string };
+
+interface UserManagementTabProps {
+  users: UserRecord[];
+  userInvitations: { id: string; email: string; status: "Pending" | "Member" | "Not Invited"; }[];
+  inviteEmail: string;
+  setInviteEmail: (value: string) => void;
+  handleSendInvite: () => void;
+  handleResendInvite: (id: string) => void;
+  handleDeleteUser: (user: UserRecord) => void;
+}
+
+const UserManagementTab: React.FC<UserManagementTabProps> = ({
+  users,
+  userInvitations,
+  inviteEmail,
+  setInviteEmail,
+  handleSendInvite,
+  handleResendInvite,
+  handleDeleteUser,
+}) => {
+  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; user: UserRecord | null }>({ open: false, user: null });
+  const [switchingRole, setSwitchingRole] = useState<string | null>(null);
+  const [showInvitationsModal, setShowInvitationsModal] = useState(false);
+
+  const handleDeleteUserWithConfirm = (user: UserRecord) => setConfirmDelete({ open: true, user });
   const handleConfirmDelete = () => {
     if (confirmDelete.user) {
       handleDeleteUser(confirmDelete.user);
@@ -474,96 +517,333 @@ const AdminPage: React.FC<AdminPageProps> = ({
   };
   const handleCancelDelete = () => setConfirmDelete({ open: false, user: null });
 
-  const handlePostAnnouncement = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setShowAnnouncementConfirm(true);
-  };
-  const handleConfirmPostAnnouncement = async () => {
-    setPosting(true);
-    setAnnouncementError(null);
-    setShowAnnouncementConfirm(false);
-    try {
-      const res = await fetch(`${config.apiUrl}/api/announcements`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: announcementText,
-          authorId: userId
-        }),
-      });
-      if (!res.ok) throw new Error('Failed to post');
-      setAnnouncementText('');
-      // Refetch announcements
-      const data = await fetch(`${config.apiUrl}/api/announcements`).then(r => r.json());
-      setAnnouncements(data);
-    } catch {
-      setAnnouncementError('Could not post announcement. Backend may not be ready.');
-    } finally {
-      setPosting(false);
-    }
-  };
-
-  const handleDeleteAnnouncement = async (announcementId: string) => {
-    setDeletingAnnouncement(announcementId);
-    setAnnouncementError(null);
-    try {
-      const res = await fetch(`${config.apiUrl}/api/announcements/${announcementId}`, {
-        method: 'DELETE',
-      });
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`Failed to delete: ${res.status} ${errorText}`);
-      }
-      // Refetch announcements
-      const data = await fetch(`${config.apiUrl}/api/announcements`).then(r => r.json());
-      setAnnouncements(data);
-    } catch (error) {
-      console.error('Delete announcement error:', error);
-      setAnnouncementError(`Could not delete announcement: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
-      setDeletingAnnouncement(null);
-    }
-  };
-
-  const handleSwitchRole = async (user: { id: string; first_name: string; last_name: string; email: string; role: string }, newRole: string) => {
-    // Don't do anything if the role hasn't actually changed
+  const handleSwitchRole = async (user: UserRecord, newRole: string) => {
     if (user.role === newRole) return;
-
     setSwitchingRole(user.id);
     try {
       const endpoint = user.role === 'admin' ? 'Residents/demote-admin' : 'Admins/promote-resident';
       const response = await fetch(`${config.apiUrl}/api/${endpoint}/${user.id}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       });
-
       if (response.ok) {
-        toast({
-          title: "Role Updated",
-          description: `${user.first_name} ${user.last_name} has been switched to ${newRole}.`,
-          variant: "success"
-        });
-        // Refresh the page to update the user list
+        toast({ title: "Role Updated", description: `${user.first_name} ${user.last_name} has been switched to ${newRole}.`, variant: "success" });
         window.location.reload();
       } else {
         const error = await response.text();
-        toast({
-          title: "Error",
-          description: error || "Failed to switch user role.",
-          variant: "destructive"
-        });
+        toast({ title: "Error", description: error || "Failed to switch user role.", variant: "destructive" });
       }
-    } catch (error) {
-      console.error('Error switching user role:', error);
-      toast({
-        title: "Error",
-        description: "Failed to switch user role. Please try again.",
-        variant: "destructive"
-      });
+    } catch {
+      toast({ title: "Error", description: "Failed to switch user role. Please try again.", variant: "destructive" });
     } finally {
       setSwitchingRole(null);
     }
   };
+
+  const invitationsTable = (
+    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+      <thead className="bg-gray-100 dark:bg-neutral-800">
+        <tr>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+        </tr>
+      </thead>
+      <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
+        {userInvitations.length > 0 ? (
+          userInvitations.map((invite) => (
+            <tr key={invite.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
+              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{invite.email}</td>
+              <td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold ${invite.status === "Pending" ? "text-yellow-600" : invite.status === "Member" ? "text-green-600" : "text-gray-500"}`}>
+                {invite.status}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                {invite.status === "Pending" && (
+                  <Button variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-500 hover:text-white" onClick={() => handleResendInvite(invite.id || '')}>
+                    Resend
+                  </Button>
+                )}
+              </td>
+            </tr>
+          ))
+        ) : (
+          <tr>
+            <td colSpan={3} className="px-6 py-4 text-center text-gray-500 italic">No pending invitations.</td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  );
+
+  return (
+    <>
+      <Card className="p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-8 mb-8 border border-gray-200 dark:border-gray-800">
+        {/* User Invitations Section */}
+        <div>
+          <h2 className="text-xl font-bold mb-2">User Invitations</h2>
+          <div className="flex flex-col sm:flex-row gap-4 mb-4">
+            <input
+              type="email"
+              placeholder="Enter resident email address"
+              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+            />
+            <Button onClick={handleSendInvite} className="py-2 flex items-center justify-center gap-2">
+              <Send className="h-5 w-5" />
+              <span>Send Invitation</span>
+            </Button>
+          </div>
+          <div className="overflow-x-auto max-h-60 overflow-y-auto mb-6">
+            {invitationsTable}
+          </div>
+        </div>
+
+        {/* User Management Table Section */}
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold">User Management</h2>
+          </div>
+          <div className="overflow-x-auto max-h-96 overflow-y-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-100 dark:bg-neutral-800">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
+                {users.length > 0 ? (
+                  [...users].sort((a, b) => a.first_name.localeCompare(b.first_name) || a.last_name.localeCompare(b.last_name)).map((user) => (
+                    <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{user.first_name} {user.last_name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{user.email}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        <select
+                          value={user.role}
+                          onChange={(e) => handleSwitchRole(user, e.target.value)}
+                          disabled={switchingRole === user.id}
+                          className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="resident">{switchingRole === user.id ? 'Switching...' : 'Resident'}</option>
+                          <option value="admin">{switchingRole === user.id ? 'Switching...' : 'Admin'}</option>
+                        </select>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white" onClick={() => handleDeleteUserWithConfirm(user)}>
+                          Delete
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-4 text-center text-gray-500 italic">No users found.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </Card>
+
+      <Modal open={showInvitationsModal} onClose={() => setShowInvitationsModal(false)} title="All User Invitations">
+        <div className="overflow-x-auto">{invitationsTable}</div>
+      </Modal>
+
+      <Modal open={confirmDelete.open} onClose={handleCancelDelete} title="Confirm Delete">
+        <div className="space-y-4">
+          <p>Are you sure you want to delete {confirmDelete.user?.first_name} {confirmDelete.user?.last_name}?</p>
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" onClick={handleCancelDelete}>Cancel</Button>
+            <Button className="bg-red-600 text-white hover:bg-red-700" onClick={handleConfirmDelete}>Delete</Button>
+          </div>
+        </div>
+      </Modal>
+    </>
+  );
+};
+
+// ResidentInfoTab
+
+interface ResidentInfoTabProps {
+  residents: { id: string; name: string; email: string; pgyLevel: number | string; hospitalRole?: number; hours: number }[];
+  onRefreshResidents?: () => void;
+}
+
+const ResidentInfoTab: React.FC<ResidentInfoTabProps> = ({ residents, onRefreshResidents }) => {
+  const [residentRows, setResidentRows] = useState(residents);
+  useEffect(() => setResidentRows(residents), [residents]);
+
+  const sortedResidentRows = useMemo(
+    () => [...residentRows].sort((a, b) => a.name.localeCompare(b.name)),
+    [residentRows]
+  );
+
+  const [savingPGY, setSavingPGY] = useState<Record<string, boolean>>({});
+
+  const handleUpdatePGY = async (residentId: string, newPGY: number) => {
+    setSavingPGY(prev => ({ ...prev, [residentId]: true }));
+    setResidentRows(prev => prev.map(r => r.id === residentId ? { ...r, pgyLevel: newPGY } : r));
+    try {
+      const res = await fetch(`${config.apiUrl}/api/residents/${residentId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ graduate_yr: newPGY }),
+      });
+      if (!res.ok) {
+        const msg = await res.text();
+        throw new Error(msg || 'Failed to update PGY');
+      }
+      toast({ title: 'PGY updated', description: `Resident set to PGY ${newPGY}.`, variant: 'success' });
+      onRefreshResidents?.();
+    } catch (error) {
+      setResidentRows(prev => prev.map(r => r.id === residentId ? { ...r, pgyLevel: residents.find(x => x.id === residentId)?.pgyLevel ?? r.pgyLevel } : r));
+      toast({ title: 'Update failed', description: (error as Error)?.message || 'Could not update PGY.', variant: 'destructive' });
+    } finally {
+      setSavingPGY(prev => ({ ...prev, [residentId]: false }));
+    }
+  };
+
+  return (
+    <Card className="p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-1 mb-8 border border-gray-200 dark:border-gray-800">
+      <div className="flex flex-row justify-between items-center mb-4 gap-2">
+        <h2 className="text-lg sm:text-xl font-bold">Resident Information</h2>
+        <ConfirmDialog
+          triggerText={<><Users className="h-4 w-4" /><span>Promote Residents</span></>}
+          title="Promote all residents?"
+          message="This will increase all PGY levels by 1."
+          confirmText="Promote"
+          cancelText="Cancel"
+          onConfirm={async () => {
+            try {
+              const res = await fetch(`${config.apiUrl}/api/residents/promote-pgy`, { method: 'POST' });
+              if (!res.ok) throw new Error();
+              toast({ title: 'Residents promoted', description: 'All PGY levels have been increased by 1.', variant: 'success' });
+              onRefreshResidents?.();
+            } catch {
+              toast({ title: 'Promotion failed', description: 'Could not promote residents. Please try again.', variant: 'destructive' });
+            }
+          }}
+        />
+      </div>
+      <div className="overflow-x-auto max-h-96 overflow-y-auto w-full">
+        <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-gray-100 dark:bg-neutral-800">
+            <tr>
+              <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resident</th>
+              <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+              <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current PGY Status</th>
+              <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hours Scheduled This Semester</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
+            {sortedResidentRows.length > 0 ? (
+              sortedResidentRows.map((resident) => (
+                <tr key={resident.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
+                  <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{resident.name}</td>
+                  <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{resident.email}</td>
+                  <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    <select
+                      value={resident.pgyLevel ?? ''}
+                      onChange={(e) => handleUpdatePGY(resident.id, Number(e.target.value))}
+                      disabled={!!savingPGY[resident.id]}
+                      className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                    >
+                      {[0, 1, 2, 3, 4].map(n => (
+                        <option key={n} value={n}>PGY {n}</option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{resident.hours}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={4} className="px-6 py-4 text-center text-gray-500 italic">No residents found.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </Card>
+  );
+};
+
+// AdminPage
+
+const AdminPage: React.FC<AdminPageProps> = ({
+  residents,
+  handleApproveRequest,
+  handleDenyRequest,
+  userInvitations,
+  inviteEmail,
+  setInviteEmail,
+  handleSendInvite,
+  handleResendInvite,
+  users,
+  handleDeleteUser,
+  userId,
+  onRefreshResidents,
+}) => {
+  const [activeTab, setActiveTab] = useState<'swaps' | 'requests' | 'users' | 'residents' | 'announcements'>('swaps');
+  const [pendingSwapsCount, setPendingSwapsCount] = useState(0);
+  const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [deletingAnnouncement, setDeletingAnnouncement] = useState<string | null>(null);
+
+  const idToName = useMemo(() => {
+    const mapping: Record<string, string> = {};
+    users.forEach(user => { mapping[user.id] = `${user.first_name} ${user.last_name}`; });
+    return mapping;
+  }, [users]);
+
+  useEffect(() => {
+    fetch(`${config.apiUrl}/api/swaprequests`)
+      .then(res => res.ok ? res.json() : [])
+      .then((data: SwapRequest[]) => setPendingSwapsCount(data.filter(s => s.status.id === 0).length))
+      .catch(() => {});
+    fetch(`${config.apiUrl}/api/vacations`)
+      .then(res => res.ok ? res.json() : [])
+      .then((data: { status: string; groupId: string }[]) => {
+        const pendingGroups = new Set(data.filter(v => v.status === 'Pending').map(v => v.groupId));
+        setPendingRequestsCount(pendingGroups.size);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'announcements') {
+      fetch(`${config.apiUrl}/api/announcements`)
+        .then(res => res.ok ? res.json() : [])
+        .then(setAnnouncements)
+        .catch(() => {});
+    }
+  }, [activeTab]);
+
+  const refreshAnnouncements = async () => {
+    const data = await fetch(`${config.apiUrl}/api/announcements`).then(r => r.json());
+    setAnnouncements(data);
+  };
+
+  const handleDeleteAnnouncement = async (announcementId: string) => {
+    setDeletingAnnouncement(announcementId);
+    try {
+      const res = await fetch(`${config.apiUrl}/api/announcements/${announcementId}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error();
+      const data = await fetch(`${config.apiUrl}/api/announcements`).then(r => r.json());
+      setAnnouncements(data);
+    } catch {
+      toast({ title: 'Could not delete announcement', variant: 'destructive' });
+    } finally {
+      setDeletingAnnouncement(null);
+    }
+  };
+
+  const handlePendingSwapsChange = useCallback((count: number) => setPendingSwapsCount(count), []);
+  const handlePendingRequestsChange = useCallback((count: number) => setPendingRequestsCount(count), []);
 
   return (
     <div className="w-full pt-4 h-[calc(100vh-4rem)] flex flex-col items-center px-4 md:pl-8">
@@ -639,390 +919,39 @@ const AdminPage: React.FC<AdminPageProps> = ({
           Announcements
         </Button>
       </div>
+
       {/* Tab Content */}
       <div className="w-full">
         {activeTab === 'swaps' && (
-          <Card className="p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-4 mb-6 sm:mb-8 border border-gray-200 dark:border-gray-800">
-            <h2 className="text-lg sm:text-xl font-bold mb-4">Swap Call History</h2>
-            <div className="overflow-x-auto max-h-96 overflow-y-auto w-full">
-              <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-100 dark:bg-neutral-800">
-                  <tr>
-                    <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                    <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requester</th>
-                    <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requestee</th>
-                    <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Partner</th>
-                    <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
-                    <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
-                  {swapHistory.length > 0 ? (
-                    swapHistory.map((swap, idx) => {
-                      console.log('Rendering swap:', swap);
-                      console.log('swap.RequesterId:', swap.requesterId);
-                      console.log('swap.RequesteeId:', swap.requesteeId);
-                      console.log('finalIdToName[swap.RequesterId]:', finalIdToName[swap.requesterId]);
-                      console.log('finalIdToName[swap.RequesteeId]:', finalIdToName[swap.requesteeId]);
-
-                      return (
-                        <tr key={swap.swapRequestId || idx} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
-                          <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.requesterDate ? formatDate(swap.requesterDate) : ''}</td>
-                          <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                            {finalIdToName[swap.requesterId] || `Resident ${swap.requesterId}`}
-                          </td>
-                          <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                            {finalIdToName[swap.requesteeId] || `Resident ${swap.requesteeId}`}
-                          </td>
-                          <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.requesteeDate ? formatDate(swap.requesteeDate) : ''}</td>
-                          <td className="px-1 sm:px-3 py-3 sm:py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs break-all">{swap.details || '-'}</td>
-                          <td className={`px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm font-semibold ${swap.status.id === 1 ? 'text-green-600' :
-                            swap.status.id === 2 ? 'text-red-600' :
-                              'text-yellow-600'
-                            }`}>
-                            {swap.status.description}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  ) : (
-                    <tr>
-                      <td colSpan={6} className="px-6 py-4 text-center text-gray-500 italic">No swap call history found.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </Card>
+          <SwapHistoryTab idToName={idToName} onPendingCountChange={handlePendingSwapsChange} />
         )}
         {activeTab === 'requests' && (
-          <Card className="p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-4 mb-6 sm:mb-8 border border-gray-200 dark:border-gray-800">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
-              <h2 className="text-lg sm:text-xl font-bold">Time Off Requests</h2>
-              <div className="flex gap-2">
-                <Button variant="outline" className="flex items-center gap-2 px-1 sm:px-6 py-1 sm:py-3 text-xs sm:text-sm lg:text-base"
-                  onClick={() => setShowRequestsModal(true)}>
-                  <CalendarDays className="h-4 w-4" />
-                  <span>View All</span>
-                </Button>
-                <ConfirmDialog
-                  triggerText={
-                    <>
-                      <X className="h-4 w-4" />
-                      <span>Clear</span>
-                    </>
-                  }
-                  title="Clear all vacation requests?"
-                  message="This action cannot be undone."
-                  confirmText="Clear"
-                  cancelText="Cancel"
-                  onConfirm={handleClearAllRequests}
-                  variant="danger"
-                />
-              </div>
-            </div>
-            <div className="overflow-x-auto max-h-96 overflow-y-auto w-full">
-              <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-100 dark:bg-neutral-800">
-                  <tr>
-                    <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Range</th>
-                    <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resident</th>
-                    <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
-                    <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
-                    <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
-                  {groupedRequests.length > 0 ? (
-                    groupedRequests.map((request: Request, idx: number) => (
-                      <tr key={request.id || `${request.startDate || request.date || ''}-${getResidentName(request)}-${idx}`}
-                        className="hover:bg-gray-50 dark:hover:bg-neutral-800">
-                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{getRequestDate(request)}</td>
-                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{getResidentName(request)}</td>
-                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          {request.reason}{request.halfDay === "A" ? " (AM)" : request.halfDay === "P" ? " (PM)" : ""}
-                        </td>
-                        <td className="px-2 sm:px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs break-all">{request.details || '-'}</td>
-                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{request.status}</td>
-                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          {request.status === "Pending" && (
-                            <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
-                              <Button variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-500 hover:text-white w-full sm:w-auto" onClick={() => handleApproveRequest(request.groupId || '')}>
-                                <Check className="h-4 w-4 mr-2" /> Approve
-                              </Button>
-                              <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white w-full sm:w-auto" onClick={() => handleDenyRequest(request.groupId || '')}>
-                                <X className="h-4 w-4 mr-2" /> Deny
-                              </Button>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={6} className="px-6 py-4 text-center text-gray-500 italic">No time off requests found.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </Card>
+          <VacationRequestsTab
+            handleApproveRequest={handleApproveRequest}
+            handleDenyRequest={handleDenyRequest}
+            onPendingCountChange={handlePendingRequestsChange}
+          />
         )}
         {activeTab === 'users' && (
-          <Card className="p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-8 mb-8 border border-gray-200 dark:border-gray-800">
-            {/* User Invitations Section */}
-            <div>
-              <h2 className="text-xl font-bold mb-2">User Invitations</h2>
-              <div className="flex flex-col sm:flex-row gap-4 mb-4">
-                <input
-                  type="email"
-                  placeholder="Enter resident email address"
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                />
-                <Button onClick={handleSendInvite} className="py-2 flex items-center justify-center gap-2">
-                  <Send className="h-5 w-5" />
-                  <span>Send Invitation</span>
-                </Button>
-              </div>
-              <div className="overflow-x-auto max-h-60 overflow-y-auto mb-6">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead className="bg-gray-100 dark:bg-neutral-800">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
-                    {userInvitations.length > 0 ? (
-                      userInvitations.map((invite) => (
-                        <tr key={invite.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{invite.email}</td>
-                          <td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold ${invite.status === "Pending" ? "text-yellow-600" : invite.status === "Member" ? "text-green-600" : "text-gray-500"}`}>
-                            {invite.status}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            {invite.status === "Pending" && (
-                              <Button variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-500 hover:text-white" onClick={() => handleResendInvite(invite.id || '')}>
-                                Resend
-                              </Button>
-                            )}
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={3} className="px-6 py-4 text-center text-gray-500 italic">No pending invitations.</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            {/* User Management Table Section */}
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">User Management</h2>
-              </div>
-              <div className="overflow-x-auto max-h-96 overflow-y-auto">
-                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                  <thead className="bg-gray-100 dark:bg-neutral-800">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
-                    {users.length > 0 ? (
-                      users.map((user) => (
-                        <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{user.first_name} {user.last_name}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{user.email}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            <select
-                              value={user.role}
-                              onChange={(e) => handleSwitchRole(user, e.target.value)}
-                              disabled={switchingRole === user.id}
-                              className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                              <option value="resident">{switchingRole === user.id ? 'Switching...' : 'Resident'}</option>
-                              <option value="admin">{switchingRole === user.id ? 'Switching...' : 'Admin'}</option>
-                            </select>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white" onClick={() => handleDeleteUserWithConfirm(user)}>
-                              Delete
-                            </Button>
-                          </td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan={4} className="px-6 py-4 text-center text-gray-500 italic">No users found.</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </Card>
+          <UserManagementTab
+            users={users}
+            userInvitations={userInvitations}
+            inviteEmail={inviteEmail}
+            setInviteEmail={setInviteEmail}
+            handleSendInvite={handleSendInvite}
+            handleResendInvite={handleResendInvite}
+            handleDeleteUser={handleDeleteUser}
+          />
         )}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         {activeTab === 'residents' && (
-          <Card className="p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-1 mb-8 border border-gray-200 dark:border-gray-800">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-start mb-4 gap-2">
-              <h2 className="text-lg sm:text-xl font-bold">Resident Information</h2>
-              <div className="flex flex-col items-start gap-2 sm:items-end">
-                <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                  {/*<Button variant="outline" size="sm" className="flex items-center gap-2 cursor-pointer"
-                    onClick={() => { } }> */}{/* Change to a dropdown menu of years */}{/*
-                    <CalendarDays className="h-4 w-4" />
-                    */}{/* Name will reflect selected schedule name */}{/* <span>Current Year</span>
-                  </Button>*/}
-                  <CalendarDays className="h-4 w-4" /> Show hours from:
-                  <select
-                    value="Current Year"
-                    className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                  >
-                    <option value="Current Year">Current Year</option>
-                    <option value="2024-2025">2026</option>
-                  </select>
-                </div>
-                <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-700 dark:text-gray-300">
-                  <input
-                    type="checkbox"
-                    defaultChecked
-                    className="w-3 h-3 accent-blue-600 rounded border-gray-300 dark:border-gray-600 cursor-pointer"
-                    /* Implement function checked={ } 
-                    onChange={(e) => setIncludeUnscheduled(e.target.checked)} */
-                  />
-                  Include unscheduled residents
-                </label>
-              </div>
-            </div>
-            <div className="overflow-x-auto max-h-96 overflow-y-auto w-full">
-              <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-100 dark:bg-neutral-800">
-                  <tr>
-                    <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resident</th>
-                    <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                    <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current PGY Status</th>
-                    <th className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hours Scheduled</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
-                  {residentRows.length > 0 ? (
-                    [...residentRows]
-                    .sort((a, b) => a.name.localeCompare(b.name))
-                    .map((resident) => (
-                      <tr key={resident.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
-                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{resident.name}</td>
-                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{resident.email}</td>
-                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                          <select
-                            value={resident.pgyLevel ?? 1}
-                            onChange={(e) => handleUpdatePGY(resident.id, Number(e.target.value))}
-                            disabled={!!savingPGY[resident.id]}
-                            className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                          >
-                            {[1, 2, 3, 4].map(n => (
-                              <option key={n} value={n}>PGY {n}</option>
-                            ))}
-                          </select>
-                        </td>
-                        <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{resident.hours}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={4} className="px-6 py-4 text-center text-gray-500 italic">No residents found.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </Card>
+          <ResidentInfoTab residents={residents} onRefreshResidents={onRefreshResidents} />
         )}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         {activeTab === 'announcements' && (
           <Card className="p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-8 mb-8 border border-gray-200 dark:border-gray-800">
             <h2 className="text-xl font-bold mb-4">Announcements</h2>
-            <form onSubmit={handlePostAnnouncement} className="flex flex-col gap-4 mb-6">
-              <textarea
-                className="w-full p-3 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100"
-                placeholder="Write a new announcement..."
-                value={announcementText}
-                onChange={e => setAnnouncementText(e.target.value)}
-                rows={3}
-                disabled={posting}
-              />
-              <Button type="submit" disabled={posting || !announcementText.trim()} className="self-end px-6 py-2">
-                {posting ? 'Posting...' : 'Post Announcement'}
-              </Button>
-            </form>
-            <Dialog open={showAnnouncementConfirm} onOpenChange={setShowAnnouncementConfirm}>
-              <div className="max-w-md w-full bg-white dark:bg-neutral-900 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
-                <div className="text-lg font-semibold mb-4">Are you sure you want to post this announcement?</div>
-                <div className="my-4 p-3 bg-gray-100 dark:bg-neutral-800 rounded text-gray-900 dark:text-gray-100">
-                  {announcementText}
-                </div>
-                <div className="flex justify-end gap-2 mt-6">
-                  <Button variant="outline" onClick={() => setShowAnnouncementConfirm(false)}>Cancel</Button>
-                  <Button onClick={handleConfirmPostAnnouncement} disabled={posting} className="bg-blue-600 text-white">Yes, Post</Button>
-                </div>
-              </div>
-            </Dialog>
-            {announcementError && (
-              <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                {announcementError}
-              </div>
-            )}
+            <AnnouncementForm userId={userId} onPosted={refreshAnnouncements} />
             <div className="flex flex-col gap-4">
-              {announcements.length === 0 && !announcementError && (
+              {announcements.length === 0 && (
                 <div className="text-gray-500">No announcements yet.</div>
               )}
               {announcements.map((a, idx) => (
@@ -1048,123 +977,8 @@ const AdminPage: React.FC<AdminPageProps> = ({
           </Card>
         )}
       </div>
-
-      {/* Modals for View All */}
-      <Modal
-        open={showRequestsModal}
-        onClose={() => setShowRequestsModal(false)}
-        title="All Time Off Requests"
-      >
-        <div className="overflow-x-auto">
-          {/* Copy the full requests table here */}
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-100 dark:bg-neutral-800">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Range</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resident</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
-              {groupedRequests.length > 0 ? (
-                groupedRequests.map((request: Request, idx: number) => (
-                  <tr key={request.id || `${request.startDate || request.date || ''}-${getResidentName(request)}-${idx}`}
-                    className="hover:bg-gray-50 dark:hover:bg-neutral-800">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{getRequestDate(request)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{getResidentName(request)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {request.reason}{request.halfDay === "A" ? " (AM)" : request.halfDay === "P" ? " (PM)" : ""}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs break-all">{request.details || '-'}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{request.status}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      {request.status === "Pending" && (
-                        <div className="flex items-center space-x-2">
-                          <Button variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-500 hover:text-white" onClick={() => handleApproveRequest(request.groupId || '')}>
-                            <Check className="h-4 w-4 mr-2" /> Approve
-                          </Button>
-                          <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white" onClick={() => handleDenyRequest(request.groupId || '')}>
-                            <X className="h-4 w-4 mr-2" /> Deny
-                          </Button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={7} className="px-6 py-4 text-center text-gray-500 italic">No time off requests found.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Modal>
-
-      <Modal
-        open={showInvitationsModal}
-        onClose={() => setShowInvitationsModal(false)}
-        title="All User Invitations"
-      >
-        <div className="overflow-x-auto">
-          {/* Copy the full invitations table here */}
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-100 dark:bg-neutral-800">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
-              {userInvitations.length > 0 ? (
-                userInvitations.map((invite) => (
-                  <tr key={invite.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{invite.email}</td>
-                    <td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold ${invite.status === "Pending" ? "text-yellow-600" : invite.status === "Member" ? "text-green-600" : "text-gray-500"}`}>
-                      {invite.status}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      {invite.status === "Pending" && (
-                        <Button variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-500 hover:text-white" onClick={() => handleResendInvite(invite.id || '')}>
-                          Resend
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={3} className="px-6 py-4 text-center text-gray-500 italic">No pending invitations.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Modal>
-
-      {/* Add spacing between User Invitations and User Management */}
-      <div className="my-4" />
-
-      {/* User Management */}
-      {/* This section is now part of the tab content, so it's removed from here */}
-
-      <Modal open={confirmDelete.open} onClose={handleCancelDelete} title="Confirm Delete">
-        <div className="space-y-4">
-          <p>Are you sure you want to delete {confirmDelete.user?.first_name} {confirmDelete.user?.last_name}?</p>
-          <div className="flex gap-2 justify-end">
-            <Button variant="outline" onClick={handleCancelDelete}>Cancel</Button>
-            <Button className="bg-red-600 text-white hover:bg-red-700" onClick={handleConfirmDelete}>Delete</Button>
-          </div>
-        </div>
-      </Modal>
-
-
     </div>
-  )
-}
+  );
+};
 
-export default AdminPage; 
+export default AdminPage;

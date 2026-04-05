@@ -25,7 +25,7 @@ using (IServiceScope scope = app.Services.CreateScope())
     MedicalContext db
         = scope.ServiceProvider.GetRequiredService<MedicalContext>();
 
-    if (app.Environment.IsDevelopment())
+    if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
     {
         db.Database.Migrate();
         DatabaseSeeder seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();

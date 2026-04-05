@@ -9,7 +9,7 @@ namespace MedicalDemo.Models.Entities
 
         public int AcademicYear { get; set; }
 
-        public MonthOfYear AcademicMonthIndex { get; set; }
+        public MonthOfYear RotationMonthOfYear { get; set; }
 
         [ForeignKey(nameof(Pgy4RotationSchedule))]
         public Guid? Pgy4RotationScheduleId { get; set; }

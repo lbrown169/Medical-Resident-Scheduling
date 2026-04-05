@@ -18,7 +18,7 @@ public class RotationConverter(RotationTypeConverter rotationTypeConverter)
             ScheduleId = rotation.Pgy4RotationScheduleId,
             Month = rotation.Month,
             AcademicYear = rotation.AcademicYear,
-            AcademicMonthIndex = rotation.AcademicMonthIndex.ToAcademicIndex(),
+            AcademicMonthIndex = rotation.RotationMonthOfYear.ToAcademicIndex(),
             PgyYear = rotation.PgyYear,
             RotationType = rotationTypeConverter.CreateRotationTypeResponse(rotation.RotationType),
         };
@@ -30,20 +30,22 @@ public class RotationConverter(RotationTypeConverter rotationTypeConverter)
         Guid scheduleId,
         Guid rotationId,
         int academicYear,
-        MonthOfYear calendarMonthIndex
+        int monthIndex
     )
     {
+        MonthOfYear monthEnum = MonthOfYearExtensions.FromCalendarIndex(monthIndex, false);
+
         return new()
         {
             RotationId = rotationId,
             Pgy4RotationScheduleId = scheduleId,
             ResidentId = residentId,
             AcademicYear = academicYear,
-            AcademicMonthIndex = (MonthOfYear)calendarMonthIndex.ToAcademicIndex(),
-            Month = calendarMonthIndex.GetDisplayName(),
+            RotationMonthOfYear = monthEnum,
+            Month = monthEnum.GetDisplayName(),
             PgyYear = 4,
             RotationType = rotationType,
-            RotationTypeId = rotationType.RotationTypeId
+            RotationTypeId = rotationType.RotationTypeId,
         };
     }
 }

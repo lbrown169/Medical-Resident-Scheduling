@@ -3,20 +3,20 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using MedicalDemo.Algorithms.OnCallScheduleGenerator;
+using MedicalDemo.Algorithms.OnCallScheduleGenerator.Constraints;
 using MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator;
+using MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator.Constraints;
 using MedicalDemo.Converters;
 using MedicalDemo.Interfaces;
-using MedicalDemo.Models;
 using MedicalDemo.Models.Entities;
 using MedicalDemo.Services;
 using MedicalDemo.Services.EmailSendServices;
 using Microsoft.EntityFrameworkCore;
 using NLog;
-using NLog.Extensions.Logging;
 using NLog.Web;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
-namespace MedicalDemo;
+namespace MedicalDemo.Extensions;
 
 public static class WebApplicationBuilderExtensions
 {
@@ -58,6 +58,20 @@ public static class WebApplicationBuilderExtensions
         builder.Services.AddScoped<RotationTypeConverter>();
         builder.Services.AddScoped<RotationConverter>();
         builder.Services.AddScoped<RotationPrefSubmissionWindowConverter>();
+        builder.Services.AddScoped<Pgy4RotationScheduleOverrideConverter>();
+
+        // Pgy4 schedule constraints
+        builder.Services.AddScoped<HasChiefRotationConstraint>();
+        builder.Services.AddScoped<InpatientConsultInJulyAndJanConstraint>();
+        builder.Services.AddScoped<Min2ConsultsInpatientConstraint>();
+        builder.Services.AddScoped<OneIopForenCommAddictPerMonthConstraint>();
+
+        // Constraints
+        builder.Services.AddScoped<ICallShiftConstraint, NoConsecutiveShiftConstraint>();
+        builder.Services.AddScoped<ICallShiftConstraint, NotOnVacationConstraint>();
+        builder.Services.AddScoped<ICallShiftConstraint, OneShiftADayConstraint>();
+        builder.Services.AddScoped<ICallShiftConstraint, ShiftMatchesPgyDateConstraint>();
+        builder.Services.AddScoped<ICallShiftConstraint, ShiftMatchesRotationConstraint>();
 
         // Email
         if (builder.Environment.IsDevelopment())
@@ -78,14 +92,14 @@ public static class WebApplicationBuilderExtensions
                     = builder.Configuration.GetValue<string>("Mailgun:ApiKey");
                 string? domain
                     = builder.Configuration.GetValue<string>("Mailgun:Domain");
-                if (apiKey == null || domain == null)
+                if (string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(domain))
                 {
                     apiKey = Environment
                         .GetEnvironmentVariable("MailgunApiKey");
                     domain = Environment
                         .GetEnvironmentVariable("MailgunDomain");
 
-                    if (apiKey == null || domain == null)
+                    if (string.IsNullOrEmpty(apiKey) || string.IsNullOrEmpty(domain))
                     {
                         throw new Exception(
                             "Mailgun API key/domain was not set, but HTTP client was created"
@@ -104,7 +118,7 @@ public static class WebApplicationBuilderExtensions
             });
 
         bool hasLoggedConnectionString = false;
-        builder.Services.AddDbContext<MedicalContext>((sp, options) =>
+        builder.Services.AddDbContextFactory<MedicalContext>((sp, options) =>
         {
             string? mySqlConnectionString = Environment.GetEnvironmentVariable(
                     "DB_CONNECTION_STRING");
@@ -127,13 +141,21 @@ public static class WebApplicationBuilderExtensions
 
             if (!hasLoggedConnectionString)
             {
-                logger.LogInformation("Connecting to {mySqlConnectionString}",
-                    mySqlConnectionString);
-                hasLoggedConnectionString = true;
+                logger.LogInformation("Connecting to database");
             }
 
-            options.UseMySql(mySqlConnectionString,
-                ServerVersion.AutoDetect(mySqlConnectionString));
+            options.UseMySql(
+                mySqlConnectionString,
+                new MySqlServerVersion(new Version(8, 0, 36)),
+                mySqlOptions =>
+                {
+                    mySqlOptions.EnableRetryOnFailure(
+                        maxRetryCount: 10,
+                        maxRetryDelay: TimeSpan.FromSeconds(5),
+                        errorNumbersToAdd: null
+                    );
+                }
+            );
         });
 
         return builder;
@@ -157,7 +179,7 @@ public static class WebApplicationBuilderExtensions
             IConfigurationSection sentrySection = builder.Configuration.GetSection("Sentry");
             string? sentryDsn =
                 sentrySection.GetValue<string>("Dsn") ??
-                Environment.GetEnvironmentVariable("SentryDsn");
+                Environment.GetEnvironmentVariable("SENTRY_DSN");
 
             if (string.IsNullOrEmpty(sentryDsn))
             {
@@ -185,19 +207,7 @@ public static class WebApplicationBuilderExtensions
 
         // Add CORS configuration
         builder.Services.AddCors(options =>
-        {
-            options.AddPolicy("AllowFrontend", policy =>
-            {
-                policy.SetIsOriginAllowed(origin =>
-                        origin.StartsWith("https://psycall.net") ||
-                        origin.StartsWith("https://www.psycall.net") ||
-                        origin.StartsWith("https://backend.psycall.net") ||
-                        origin.StartsWith("http://localhost"))
-                    .AllowAnyMethod()
-                    .AllowAnyHeader()
-                    .AllowCredentials();
-            });
-        });
+            CorsPolicyConfigurationService.AddDefaultCorsPolicy(options, builder.Configuration));
 
         string port = Environment.GetEnvironmentVariable("BACKEND_PORT") ??
                       "5109";
