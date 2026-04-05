@@ -354,7 +354,10 @@ function PendingChangesPanel({
   onRevertOne,
 }: {
   overrides: Pgy4RotationScheduleOverrideSummary[];
-  onRevertOne: (residentId: string, academicMonthIndex: number) => Promise<void>;
+  onRevertOne: (
+    residentId: string,
+    academicMonthIndex: number,
+  ) => Promise<void>;
 }) {
   const [expanded, setExpanded] = useState(true);
   const [revertingKey, setRevertingKey] = useState<string | null>(null);
@@ -381,7 +384,9 @@ function PendingChangesPanel({
           <Save className="h-4 w-4 text-yellow-600 dark:text-yellow-400 shrink-0" />
           <span className="text-sm font-semibold text-yellow-700 dark:text-yellow-400">
             {overrides.length} pending change{overrides.length !== 1 ? "s" : ""}{" "}
-            <span className="font-normal text-yellow-500">— not yet applied</span>
+            <span className="font-normal text-yellow-500">
+              — not yet applied
+            </span>
           </span>
         </div>
         {expanded ? (
@@ -407,13 +412,18 @@ function PendingChangesPanel({
                   </span>
                   <span className="text-yellow-500 shrink-0">·</span>
                   <span className="shrink-0 text-xs bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400 rounded px-1.5 py-0.5">
-                    {ACADEMIC_MONTHS[o.academicMonthIndex] ?? `Month ${o.academicMonthIndex}`}
+                    {ACADEMIC_MONTHS[o.academicMonthIndex] ??
+                      `Month ${o.academicMonthIndex}`}
                   </span>
                   <span className="text-yellow-500 shrink-0">→</span>
-                  <span className="font-medium truncate">{o.overrideRotation.rotationName}</span>
+                  <span className="font-medium truncate">
+                    {o.overrideRotation.rotationName}
+                  </span>
                 </div>
                 <button
-                  onClick={() => handleRevert(o.resident.resident_id, o.academicMonthIndex)}
+                  onClick={() =>
+                    handleRevert(o.resident.resident_id, o.academicMonthIndex)
+                  }
                   disabled={isReverting}
                   className="shrink-0 flex items-center gap-1 text-xs px-2 py-1 rounded border border-yellow-400 dark:border-yellow-600 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-200 dark:hover:bg-yellow-800/40 disabled:opacity-50 transition-colors"
                 >
@@ -483,7 +493,9 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 
   // Whether there are any staged overrides for this schedule
   const [hasPendingOverrides, setHasPendingOverrides] = useState(false);
-  const [pendingOverrides, setPendingOverrides] = useState<Pgy4RotationScheduleOverrideSummary[]>([]);
+  const [pendingOverrides, setPendingOverrides] = useState<
+    Pgy4RotationScheduleOverrideSummary[]
+  >([]);
   const [applyingOverrides, setApplyingOverrides] = useState(false);
   const [discardingOverrides, setDiscardingOverrides] = useState(false);
 
@@ -685,7 +697,10 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
    * Revert a staged override (just one)
    * Lets admib revert changes individually
    */
-  const handleRevertSingleOverride = async (residentId: string, academicMonthIndex: number) => {
+  const handleRevertSingleOverride = async (
+    residentId: string,
+    academicMonthIndex: number,
+  ) => {
     if (!selectedScheduleId) return;
     try {
       const res = await fetch(
@@ -829,9 +844,13 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
   );
 
   // Submission tracking
-  const submittedResidentIds = new Set(submissions.map((s) => s.resident.resident_id));
+  const submittedResidentIds = new Set(
+    submissions.map((s) => s.resident.resident_id),
+  );
   const submittedCount = submittedResidentIds.size;
-  const missingCount = PGY3Residents.filter((r) => !submittedResidentIds.has(r.id)).length;
+  const missingCount = PGY3Residents.filter(
+    (r) => !submittedResidentIds.has(r.id),
+  ).length;
 
   // Load schedules and rotation types on mount
   useEffect(() => {
@@ -967,7 +986,12 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 
       const res = await fetch(url, { method: "PATCH" });
 
-      if (!res.ok) throw new Error(isCurrentlyPublished ? "Failed to unpublish schedule" : "Failed to publish schedule");
+      if (!res.ok)
+        throw new Error(
+          isCurrentlyPublished
+            ? "Failed to unpublish schedule"
+            : "Failed to publish schedule",
+        );
 
       setSchedules((prev) =>
         prev.map((s) => ({
@@ -982,11 +1006,17 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
       toast({
         variant: "success",
         title: isCurrentlyPublished ? "Unpublished" : "Published",
-        description: isCurrentlyPublished ? "Schedule has been unpublished." : "Schedule is now live.",
+        description: isCurrentlyPublished
+          ? "Schedule has been unpublished."
+          : "Schedule is now live.",
       });
     } catch (err) {
       console.error(err);
-      setScheduleError(isCurrentlyPublished ? "Failed to unpublish schedule." : "Failed to publish schedule.");
+      setScheduleError(
+        isCurrentlyPublished
+          ? "Failed to unpublish schedule."
+          : "Failed to publish schedule.",
+      );
     } finally {
       setPublishingSchedule(false);
     }
