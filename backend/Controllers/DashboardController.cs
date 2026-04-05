@@ -243,7 +243,7 @@ public class DashboardController : ControllerBase
                 {
                     Id = announcement.AnnouncementId.ToString(),
                     Message = announcement.Message ?? "",
-                    Date = announcement.CreatedAt.ToString("MM/dd/yyyy")
+                    Date = DateTime.SpecifyKind(announcement.CreatedAt, DateTimeKind.Utc).ToLocalTime().ToString("MM/dd/yyyy")
                 });
             }
 
