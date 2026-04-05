@@ -38,18 +38,14 @@ public class SwapRequestConverter
             Status = new SwapRequestStatusResponse(swapRequest.Status),
             CreatedAt = swapRequest.CreatedAt,
             UpdatedAt = swapRequest.UpdatedAt,
+            IsRead = swapRequest.IsRead,
             Details = swapRequest.Details,
         };
     }
 
-    public void UpdateSwapRequestFromSwapRequestUpdateRequest(SwapRequest swapRequest,
-        SwapRequestUpdateRequest updateRequest)
+    public void UpdateSwapRequestFromSwapRequestUpdates(SwapRequest swapRequest,
+        UpdateSwapRequest updates)
     {
-        swapRequest.RequesterId = updateRequest.RequesterId ?? swapRequest.RequesterId;
-        swapRequest.RequesteeId = updateRequest.RequesteeId ?? swapRequest.RequesteeId;
-        swapRequest.RequesterDate = updateRequest.RequesterDate ?? swapRequest.RequesterDate;
-        swapRequest.RequesteeDate = updateRequest.RequesteeDate ?? swapRequest.RequesteeDate;
-        swapRequest.Details = updateRequest.Details ?? swapRequest.Details;
-        swapRequest.UpdatedAt = DateTime.Now;
+        swapRequest.IsRead = updates.IsRead ?? swapRequest.IsRead;
     }
 }

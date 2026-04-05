@@ -4,18 +4,16 @@ on:
     push:
         paths:
             - "backend/**"
+            - "MedicalTests/**"
     pull_request:
         paths:
             - "backend/**"
+            - "MedicalTests/**"
 
 jobs:
     editorconfig-check:
         name: Verify .editorconfig Formatting
         runs-on: ubuntu-latest
-
-        defaults:
-            run:
-                working-directory: backend
 
         steps:
             - name: Checkout code
@@ -29,6 +27,6 @@ jobs:
             - name: Restore dependencies
               run: dotnet restore
 
-            - name: Verify formatting
+            - name: Verify Backend formatting
               run: |
-                  dotnet format MedicalDemo.sln --verify-no-changes --severity error
+                  dotnet format MedicalDemo.slnx --verify-no-changes --severity error

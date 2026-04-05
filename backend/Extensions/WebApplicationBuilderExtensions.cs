@@ -3,7 +3,9 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using MedicalDemo.Algorithms.OnCallScheduleGenerator;
+using MedicalDemo.Algorithms.OnCallScheduleGenerator.Constraints;
 using MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator;
+using MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator.Constraints;
 using MedicalDemo.Converters;
 using MedicalDemo.Interfaces;
 using MedicalDemo.Models;
@@ -57,6 +59,21 @@ public static class WebApplicationBuilderExtensions
         builder.Services.AddScoped<RotationPrefRequestConverter>();
         builder.Services.AddScoped<RotationTypeConverter>();
         builder.Services.AddScoped<RotationConverter>();
+        builder.Services.AddScoped<RotationPrefSubmissionWindowConverter>();
+        builder.Services.AddScoped<Pgy4RotationScheduleOverrideConverter>();
+
+        // Pgy4 schedule constraints
+        builder.Services.AddScoped<HasChiefRotationConstraint>();
+        builder.Services.AddScoped<InpatientConsultInJulyAndJanConstraint>();
+        builder.Services.AddScoped<Min2ConsultsInpatientConstraint>();
+        builder.Services.AddScoped<OneIopForenCommAddictPerMonthConstraint>();
+
+        // Constraints
+        builder.Services.AddScoped<ICallShiftConstraint, NoConsecutiveShiftConstraint>();
+        builder.Services.AddScoped<ICallShiftConstraint, NotOnVacationConstraint>();
+        builder.Services.AddScoped<ICallShiftConstraint, OneShiftADayConstraint>();
+        builder.Services.AddScoped<ICallShiftConstraint, ShiftMatchesPgyDateConstraint>();
+        builder.Services.AddScoped<ICallShiftConstraint, ShiftMatchesRotationConstraint>();
 
         // Email
         if (builder.Environment.IsDevelopment())

@@ -1,5 +1,7 @@
 using System.Globalization;
+using MedicalDemo.Converters;
 using MedicalDemo.Enums;
+using MedicalDemo.Extensions;
 using MedicalDemo.Models;
 using MedicalDemo.Models.DTO.Scheduling;
 using MedicalDemo.Models.Entities;
@@ -9,13 +11,15 @@ namespace MedicalDemo.Services;
 public class SchedulingMapperService
 {
     private readonly MedicalContext _context;
+    private readonly RotationTypeConverter _rotationTypeConverter;
 
-    public SchedulingMapperService(MedicalContext context)
+    public SchedulingMapperService(MedicalContext context, RotationTypeConverter rotationTypeConverter)
     {
         _context = context;
+        _rotationTypeConverter = rotationTypeConverter;
     }
 
-    public Pgy1Dto MapToPGY1DTO(Resident resident, IList<HospitalRole> rotations,
+    public Pgy1Dto MapToPgy1Dto(Resident resident, IEnumerable<Rotation> rotations,
         List<Vacation> vacations,
         List<Date> dates)
     {
@@ -32,18 +36,14 @@ public class SchedulingMapperService
             MorningVacationRequests = [.. days[PartOfDay.Morning]],
             AfternoonVacationRequests = [.. days[PartOfDay.Afternoon]],
             CommitedWorkDays = [.. committedDates],
-            InTraining = resident.GraduateYr == 1
+            InTraining = resident.GraduateYr == 1,
+            RolePerMonth = BuildHospitalRoles(rotations)
         };
-
-        for (int i = 0; i < rotations.Count; i++)
-        {
-            dto.RolePerMonth[i] = rotations[i];
-        }
 
         return dto;
     }
 
-    public Pgy2Dto MapToPGY2DTO(Resident resident, IList<HospitalRole> rotations,
+    public Pgy2Dto MapToPgy2Dto(Resident resident, IEnumerable<Rotation> rotations,
         List<Vacation> vacations,
         List<Date> dates)
     {
@@ -60,18 +60,14 @@ public class SchedulingMapperService
             MorningVacationRequests = [.. days[PartOfDay.Morning]],
             AfternoonVacationRequests = [.. days[PartOfDay.Afternoon]],
             CommitedWorkDays = [.. committedDates],
-            InTraining = resident.GraduateYr == 2
+            InTraining = resident.GraduateYr == 2,
+            RolePerMonth = BuildHospitalRoles(rotations)
         };
-
-        for (int i = 0; i < rotations.Count; i++)
-        {
-            dto.RolePerMonth[i] = rotations[i];
-        }
 
         return dto;
     }
 
-    public Pgy3Dto MapToPGY3DTO(Resident resident, List<Vacation> vacations,
+    public Pgy3Dto MapToPgy3Dto(Resident resident, List<Vacation> vacations,
         List<Date> dates)
     {
         List<DateOnly> committedDates = dates
@@ -112,5 +108,17 @@ public class SchedulingMapperService
         }
 
         return days;
+    }
+
+    private HospitalRole[] BuildHospitalRoles(IEnumerable<Rotation> rotations)
+    {
+        HospitalRole[] hospitalRoles = Enumerable.Repeat(HospitalRole.Unassigned, 12).ToArray();
+        foreach (Rotation rotation in rotations)
+        {
+            RotationType type = rotation.RotationType;
+            hospitalRoles[rotation.RotationMonthOfYear.ToAcademicIndex()] = _rotationTypeConverter.CreateHospitalRoleFromRotationType(type);
+        }
+
+        return hospitalRoles;
     }
 }

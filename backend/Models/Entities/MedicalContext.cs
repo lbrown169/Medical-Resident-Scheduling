@@ -28,6 +28,8 @@ namespace MedicalDemo.Models.Entities
         public virtual DbSet<RotationType> RotationTypes { get; set; } = null!;
         public virtual DbSet<RotationPrefRequest> RotationPrefRequests { get; set; } = null!;
         public virtual DbSet<Pgy4RotationSchedule> Pgy4RotationSchedules { get; set; } = null!;
+        public virtual DbSet<RotationPrefSubmissionWindow> RotationPrefRequestSubmissionWindows { get; set; } = null!;
+        public virtual DbSet<Pgy4RotationScheduleOverride> Pgy4RotationScheduleOverrides { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -65,6 +67,11 @@ namespace MedicalDemo.Models.Entities
                 entity.Property(e => e.PhoneNum)
                     .HasMaxLength(15)
                     .HasColumnName("phone_num");
+
+                entity.Property(e => e.Role)
+                    .HasColumnName("role")
+                    .HasColumnType("int")
+                    .HasDefaultValue(AdminRole.Admin); ;
             });
 
             modelBuilder.Entity<Announcement>(entity =>
@@ -214,9 +221,7 @@ namespace MedicalDemo.Models.Entities
 
                 entity.Property(e => e.GraduateYr)
                     .HasColumnName("graduate_yr")
-                    .HasDefaultValueSql("'1'");
-
-                entity.Property(e => e.HospitalRoleProfile).HasColumnName("hospital_role_profile");
+                    .HasDefaultValueSql(null);
 
                 entity.Property(e => e.LastName)
                     .HasMaxLength(45)
@@ -246,11 +251,11 @@ namespace MedicalDemo.Models.Entities
             {
                 entity.ToTable("rotations");
 
-                entity.HasKey((e) => new { e.RotationId, e.AcademicMonthIndex });
+                entity.HasKey((e) => new { e.RotationId, e.RotationMonthOfYear });
 
                 entity.HasIndex(e => e.ResidentId, "resident_id_rotation_idx");
 
-                entity.HasIndex(e => new { e.RotationId, e.AcademicMonthIndex }, "rotation_id_month_Unique")
+                entity.HasIndex(e => new { e.RotationId, e.RotationMonthOfYear }, "rotation_id_month_Unique")
                     .IsUnique();
 
                 entity.Property(e => e.RotationId)
@@ -268,17 +273,14 @@ namespace MedicalDemo.Models.Entities
                     .HasMaxLength(45)
                     .HasColumnName("month");
 
-                entity.Property(e => e.AcademicMonthIndex)
+                entity.Property(e => e.RotationMonthOfYear)
                     .HasConversion<int>()
                     .HasColumnType("int");
 
                 entity.Property(e => e.ResidentId)
                     .HasMaxLength(15)
-                    .HasColumnName("resident_id");
-
-                entity.Property(e => e.Rotation1)
-                    .HasMaxLength(45)
-                    .HasColumnName("rotation");
+                    .HasColumnName("resident_id")
+                    .HasDefaultValue(null);
 
                 entity.HasOne(d => d.Resident)
                     .WithMany(p => p.Rotations)
@@ -320,6 +322,44 @@ namespace MedicalDemo.Models.Entities
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
+            modelBuilder.Entity<Pgy4RotationScheduleOverride>(entity =>
+            {
+                entity.Property(e => e.Pgy4RotationScheduleOverrideId)
+                    .HasColumnType("binary(16)")
+                    .HasConversion(
+                        v => v.ToByteArray(),
+                        v => new Guid(v)
+                    );
+
+                entity.Property(e => e.Pgy4RotationScheduleId)
+                    .HasColumnType("binary(16)")
+                    .HasConversion(
+                        v => v.ToByteArray(),
+                        v => new Guid(v)
+                    );
+
+                entity.Property(e => e.RotationTypeOverrideId)
+                    .HasColumnType("binary(16)")
+                    .HasConversion(
+                        v => v.ToByteArray(),
+                        v => new Guid(v)
+                    );
+
+                entity.Property(e => e.RotationMonthOfYearOverride)
+                    .HasConversion<int>()
+                    .HasColumnType("int");
+
+                entity.HasOne(d => d.Pgy4RotationSchedule)
+                    .WithMany(d => d.Overrides)
+                    .HasForeignKey(d => d.Pgy4RotationScheduleId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(d => d.Resident)
+                    .WithMany()
+                    .HasForeignKey(d => d.ResidentOverrideId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
             modelBuilder.Entity<SwapRequest>(entity =>
             {
                 entity.HasKey(e => e.SwapRequestId)
@@ -346,7 +386,7 @@ namespace MedicalDemo.Models.Entities
                     .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                 entity.Property(e => e.Details)
-                    .HasMaxLength(150)
+                    .HasMaxLength(255)
                     .HasColumnName("details");
 
                 entity.Property(e => e.RequesteeDate).HasColumnName("requestee_date");
@@ -364,6 +404,10 @@ namespace MedicalDemo.Models.Entities
                 entity.Property(e => e.ScheduleId)
                     .HasColumnType("binary(16)")
                     .HasColumnName("schedule_swap_id");
+
+                entity.Property(e => e.IsRead)
+                    .HasColumnName("is_read")
+                    .HasDefaultValue(false);
 
                 entity.Property(e => e.Status)
                     .HasColumnType("int")

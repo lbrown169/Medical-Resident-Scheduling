@@ -1,3 +1,4 @@
+using MedicalDemo.Enums;
 namespace MedicalDemo.Models.Entities
 {
     public partial class Admin
@@ -13,6 +14,7 @@ namespace MedicalDemo.Models.Entities
         public string Email { get; set; } = null!;
         public string Password { get; set; } = null!;
         public string PhoneNum { get; set; } = null!;
+        public AdminRole Role { get; set; } = AdminRole.Admin;
 
         public virtual ICollection<Announcement> Announcements { get; set; }
     }
