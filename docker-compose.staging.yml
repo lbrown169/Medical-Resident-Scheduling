@@ -1,0 +1,70 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: psycall-staging-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: psycalldb
+      MYSQL_USER: psycalluser
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - staging_db_data:/var/lib/mysql
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-uroot",
+          "-p$MYSQL_ROOT_PASSWORD",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - coolify
+
+  backend:
+    build: ./backend
+    container_name: psycall-staging-backend
+    restart: always
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Staging"
+      SENTRY_DSN: ""
+      DB_CONNECTION_STRING: "Server=db;Port=3306;Database=psycalldb;User=psycalluser;Password=${MYSQL_PASSWORD};"
+      FROM_EMAIL: ${FROM_EMAIL}
+      FROM_NAME: ${FROM_NAME}
+      MailgunApiKey: ${MailgunApiKey}
+      MailgunDomain: ${MailgunDomain}
+      MailgunFromEmail: ${MailgunFromEmail}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - coolify
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        - NEXT_PUBLIC_API_URL=https://staging.psycall.net
+    container_name: psycall-staging-frontend
+    restart: always
+    environment:
+      NODE_ENV: "production"
+      NEXT_PUBLIC_API_URL: "https://staging.psycall.net"
+    depends_on:
+      - backend
+    networks:
+      - coolify
+
+volumes:
+  staging_db_data:
+
+networks:
+  coolify:
+    external: true

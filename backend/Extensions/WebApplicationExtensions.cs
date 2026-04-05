@@ -1,19 +1,28 @@
+using MedicalDemo.Services;
+
 namespace MedicalDemo.Extensions;
 
 public static class WebApplicationExtensions
 {
-    public static void ConfigureControllers(this WebApplication app)
+    extension(WebApplication app)
     {
-        // Configure the HTTP request pipeline.
-        if (app.Environment.IsDevelopment())
+        public void ConfigureControllers()
         {
-            app.UseSwagger();
-            app.UseSwaggerUI();
+            // Configure the HTTP request pipeline.
+            if (app.Environment.IsDevelopment() || app.Environment.IsStaging())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
+
+            app.UseRouting();
+            app.ApplyCorsPolicy();
+            app.MapControllers();
         }
 
-        app.UseHttpsRedirection();
-        app.UseRouting();
-        app.UseCors("AllowFrontend");
-        app.MapControllers();
+        public void ApplyCorsPolicy()
+        {
+            CorsPolicyConfigurationService.ApplyDefaultCorsPolicy(app);
+        }
     }
 }
