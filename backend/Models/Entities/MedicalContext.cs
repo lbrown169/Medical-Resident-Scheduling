@@ -29,6 +29,7 @@ namespace MedicalDemo.Models.Entities
         public virtual DbSet<RotationPrefRequest> RotationPrefRequests { get; set; } = null!;
         public virtual DbSet<Pgy4RotationSchedule> Pgy4RotationSchedules { get; set; } = null!;
         public virtual DbSet<RotationPrefSubmissionWindow> RotationPrefRequestSubmissionWindows { get; set; } = null!;
+        public virtual DbSet<Pgy4RotationScheduleOverride> Pgy4RotationScheduleOverrides { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -250,11 +251,11 @@ namespace MedicalDemo.Models.Entities
             {
                 entity.ToTable("rotations");
 
-                entity.HasKey((e) => new { e.RotationId, e.AcademicMonthIndex });
+                entity.HasKey((e) => new { e.RotationId, e.RotationMonthOfYear });
 
                 entity.HasIndex(e => e.ResidentId, "resident_id_rotation_idx");
 
-                entity.HasIndex(e => new { e.RotationId, e.AcademicMonthIndex }, "rotation_id_month_Unique")
+                entity.HasIndex(e => new { e.RotationId, e.RotationMonthOfYear }, "rotation_id_month_Unique")
                     .IsUnique();
 
                 entity.Property(e => e.RotationId)
@@ -272,7 +273,7 @@ namespace MedicalDemo.Models.Entities
                     .HasMaxLength(45)
                     .HasColumnName("month");
 
-                entity.Property(e => e.AcademicMonthIndex)
+                entity.Property(e => e.RotationMonthOfYear)
                     .HasConversion<int>()
                     .HasColumnType("int");
 
@@ -318,6 +319,44 @@ namespace MedicalDemo.Models.Entities
                 entity.HasMany(e => e.Rotations)
                     .WithOne()
                     .HasForeignKey(e => e.Pgy4RotationScheduleId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<Pgy4RotationScheduleOverride>(entity =>
+            {
+                entity.Property(e => e.Pgy4RotationScheduleOverrideId)
+                    .HasColumnType("binary(16)")
+                    .HasConversion(
+                        v => v.ToByteArray(),
+                        v => new Guid(v)
+                    );
+
+                entity.Property(e => e.Pgy4RotationScheduleId)
+                    .HasColumnType("binary(16)")
+                    .HasConversion(
+                        v => v.ToByteArray(),
+                        v => new Guid(v)
+                    );
+
+                entity.Property(e => e.RotationTypeOverrideId)
+                    .HasColumnType("binary(16)")
+                    .HasConversion(
+                        v => v.ToByteArray(),
+                        v => new Guid(v)
+                    );
+
+                entity.Property(e => e.RotationMonthOfYearOverride)
+                    .HasConversion<int>()
+                    .HasColumnType("int");
+
+                entity.HasOne(d => d.Pgy4RotationSchedule)
+                    .WithMany(d => d.Overrides)
+                    .HasForeignKey(d => d.Pgy4RotationScheduleId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(d => d.Resident)
+                    .WithMany()
+                    .HasForeignKey(d => d.ResidentOverrideId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 

@@ -19,7 +19,7 @@ public class SchedulingMapperService
         _rotationTypeConverter = rotationTypeConverter;
     }
 
-    public Pgy1Dto MapToPGY1DTO(Resident resident, IEnumerable<Rotation> rotations,
+    public Pgy1Dto MapToPgy1Dto(Resident resident, IEnumerable<Rotation> rotations,
         List<Vacation> vacations,
         List<Date> dates)
     {
@@ -43,7 +43,7 @@ public class SchedulingMapperService
         return dto;
     }
 
-    public Pgy2Dto MapToPGY2DTO(Resident resident, IEnumerable<Rotation> rotations,
+    public Pgy2Dto MapToPgy2Dto(Resident resident, IEnumerable<Rotation> rotations,
         List<Vacation> vacations,
         List<Date> dates)
     {
@@ -67,7 +67,7 @@ public class SchedulingMapperService
         return dto;
     }
 
-    public Pgy3Dto MapToPGY3DTO(Resident resident, List<Vacation> vacations,
+    public Pgy3Dto MapToPgy3Dto(Resident resident, List<Vacation> vacations,
         List<Date> dates)
     {
         List<DateOnly> committedDates = dates
@@ -116,7 +116,7 @@ public class SchedulingMapperService
         foreach (Rotation rotation in rotations)
         {
             RotationType type = rotation.RotationType;
-            hospitalRoles[rotation.AcademicMonthIndex.ToAcademicIndex()] = _rotationTypeConverter.CreateHospitalRoleFromRotationType(type);
+            hospitalRoles[rotation.RotationMonthOfYear.ToAcademicIndex()] = _rotationTypeConverter.CreateHospitalRoleFromRotationType(type);
         }
 
         return hospitalRoles;

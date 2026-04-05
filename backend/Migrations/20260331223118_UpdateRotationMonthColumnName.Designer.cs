@@ -3,6 +3,7 @@ using System;
 using MedicalDemo.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MedicalDemo.Migrations
 {
     [DbContext(typeof(MedicalContext))]
-    partial class MedicalContextModelSnapshot : ModelSnapshot
+    [Migration("20260331223118_UpdateRotationMonthColumnName")]
+    partial class UpdateRotationMonthColumnName
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -222,38 +224,6 @@ namespace MedicalDemo.Migrations
                     b.HasKey("Pgy4RotationScheduleId");
 
                     b.ToTable("pgy4_rotation_schedule");
-                });
-
-            modelBuilder.Entity("MedicalDemo.Models.Entities.Pgy4RotationScheduleOverride", b =>
-                {
-                    b.Property<byte[]>("Pgy4RotationScheduleOverrideId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("binary(16)");
-
-                    b.Property<byte[]>("Pgy4RotationScheduleId")
-                        .IsRequired()
-                        .HasColumnType("binary(16)");
-
-                    b.Property<string>("ResidentOverrideId")
-                        .IsRequired()
-                        .HasColumnType("varchar(15)");
-
-                    b.Property<int>("RotationMonthOfYearOverride")
-                        .HasColumnType("int");
-
-                    b.Property<byte[]>("RotationTypeOverrideId")
-                        .IsRequired()
-                        .HasColumnType("binary(16)");
-
-                    b.HasKey("Pgy4RotationScheduleOverrideId");
-
-                    b.HasIndex("Pgy4RotationScheduleId");
-
-                    b.HasIndex("ResidentOverrideId");
-
-                    b.HasIndex("RotationTypeOverrideId");
-
-                    b.ToTable("pgy4_rotation_schedule_override");
                 });
 
             modelBuilder.Entity("MedicalDemo.Models.Entities.Resident", b =>
@@ -977,33 +947,6 @@ namespace MedicalDemo.Migrations
                     b.Navigation("Schedule");
                 });
 
-            modelBuilder.Entity("MedicalDemo.Models.Entities.Pgy4RotationScheduleOverride", b =>
-                {
-                    b.HasOne("MedicalDemo.Models.Entities.Pgy4RotationSchedule", "Pgy4RotationSchedule")
-                        .WithMany("Overrides")
-                        .HasForeignKey("Pgy4RotationScheduleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("MedicalDemo.Models.Entities.Resident", "Resident")
-                        .WithMany()
-                        .HasForeignKey("ResidentOverrideId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("MedicalDemo.Models.Entities.RotationType", "RotationType")
-                        .WithMany()
-                        .HasForeignKey("RotationTypeOverrideId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Pgy4RotationSchedule");
-
-                    b.Navigation("Resident");
-
-                    b.Navigation("RotationType");
-                });
-
             modelBuilder.Entity("MedicalDemo.Models.Entities.Rotation", b =>
                 {
                     b.HasOne("MedicalDemo.Models.Entities.Pgy4RotationSchedule", null)
@@ -1179,8 +1122,6 @@ namespace MedicalDemo.Migrations
 
             modelBuilder.Entity("MedicalDemo.Models.Entities.Pgy4RotationSchedule", b =>
                 {
-                    b.Navigation("Overrides");
-
                     b.Navigation("Rotations");
                 });
 

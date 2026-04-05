@@ -16,6 +16,15 @@ public static class QueryableExtensions
                 .ThenInclude((r) => r.Resident);
     }
 
+    public static IQueryable<Pgy4RotationSchedule> IncludeOverrides(
+        this IQueryable<Pgy4RotationSchedule> scheduleDbSet
+    )
+    {
+        return scheduleDbSet
+            .Include(s => s.Overrides)
+                .ThenInclude(o => o.RotationType);
+    }
+
     public static IQueryable<RotationPrefRequest> IncludeAllRotationPrefRequestProperties(
         this DbSet<RotationPrefRequest> rotationPrefRequestDbSet
     )

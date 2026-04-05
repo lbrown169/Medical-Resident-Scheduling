@@ -3,6 +3,7 @@ using System;
 using MedicalDemo.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,10 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MedicalDemo.Migrations
 {
     [DbContext(typeof(MedicalContext))]
-    partial class MedicalContextModelSnapshot : ModelSnapshot
+    [Migration("20260227015430_CreatePgy4RotationScheduleOverrideTable")]
+    partial class CreatePgy4RotationScheduleOverrideTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -58,12 +60,6 @@ namespace MedicalDemo.Migrations
                         .HasMaxLength(15)
                         .HasColumnType("varchar(15)")
                         .HasColumnName("phone_num");
-
-                    b.Property<int>("Role")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(1)
-                        .HasColumnName("role");
 
                     b.HasKey("AdminId");
 
@@ -230,6 +226,9 @@ namespace MedicalDemo.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("binary(16)");
 
+                    b.Property<int>("AcademicMonthIndexOverride")
+                        .HasColumnType("int");
+
                     b.Property<byte[]>("Pgy4RotationScheduleId")
                         .IsRequired()
                         .HasColumnType("binary(16)");
@@ -237,9 +236,6 @@ namespace MedicalDemo.Migrations
                     b.Property<string>("ResidentOverrideId")
                         .IsRequired()
                         .HasColumnType("varchar(15)");
-
-                    b.Property<int>("RotationMonthOfYearOverride")
-                        .HasColumnType("int");
 
                     b.Property<byte[]>("RotationTypeOverrideId")
                         .IsRequired()
@@ -284,9 +280,15 @@ namespace MedicalDemo.Migrations
                         .HasColumnType("varchar(45)")
                         .HasColumnName("first_name");
 
-                    b.Property<int?>("GraduateYr")
+                    b.Property<int>("GraduateYr")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int")
-                        .HasColumnName("graduate_yr");
+                        .HasColumnName("graduate_yr")
+                        .HasDefaultValueSql("'1'");
+
+                    b.Property<int?>("HospitalRoleProfile")
+                        .HasColumnType("int")
+                        .HasColumnName("hospital_role_profile");
 
                     b.Property<string>("LastName")
                         .IsRequired()
@@ -332,13 +334,11 @@ namespace MedicalDemo.Migrations
             modelBuilder.Entity("MedicalDemo.Models.Entities.Rotation", b =>
                 {
                     b.Property<byte[]>("RotationId")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("binary(16)")
                         .HasColumnName("rotation_id");
 
-                    b.Property<int>("RotationMonthOfYear")
-                        .HasColumnType("int");
-
-                    b.Property<int>("AcademicYear")
+                    b.Property<int>("AcademicMonthIndex")
                         .HasColumnType("int");
 
                     b.Property<string>("Month")
@@ -354,15 +354,22 @@ namespace MedicalDemo.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("ResidentId")
+                        .IsRequired()
                         .HasMaxLength(15)
                         .HasColumnType("varchar(15)")
                         .HasColumnName("resident_id");
+
+                    b.Property<string>("Rotation1")
+                        .IsRequired()
+                        .HasMaxLength(45)
+                        .HasColumnType("varchar(45)")
+                        .HasColumnName("rotation");
 
                     b.Property<byte[]>("RotationTypeId")
                         .IsRequired()
                         .HasColumnType("binary(16)");
 
-                    b.HasKey("RotationId", "RotationMonthOfYear");
+                    b.HasKey("RotationId");
 
                     b.HasIndex("Pgy4RotationScheduleId");
 
@@ -370,7 +377,7 @@ namespace MedicalDemo.Migrations
 
                     b.HasIndex(new[] { "ResidentId" }, "resident_id_rotation_idx");
 
-                    b.HasIndex(new[] { "RotationId", "RotationMonthOfYear" }, "rotation_id_month_Unique")
+                    b.HasIndex(new[] { "RotationId" }, "rotation_id_UNIQUE")
                         .IsUnique();
 
                     b.ToTable("rotations", (string)null);
@@ -469,22 +476,6 @@ namespace MedicalDemo.Migrations
                     b.HasIndex("ThirdPriorityId");
 
                     b.ToTable("rotation_pref_request");
-                });
-
-            modelBuilder.Entity("MedicalDemo.Models.Entities.RotationPrefSubmissionWindow", b =>
-                {
-                    b.Property<int>("AcademicYear")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("AvailableDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime?>("DueDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.HasKey("AcademicYear");
-
-                    b.ToTable("rotation_pref_request_submission_window");
                 });
 
             modelBuilder.Entity("MedicalDemo.Models.Entities.RotationType", b =>
@@ -785,16 +776,15 @@ namespace MedicalDemo.Migrations
                         .HasColumnType("binary(16)")
                         .HasColumnName("schedule_id");
 
+                    b.Property<int>("GeneratedYear")
+                        .HasColumnType("int");
+
                     b.Property<int>("Semester")
                         .HasColumnType("int");
 
                     b.Property<int>("Status")
                         .HasColumnType("int")
                         .HasColumnName("status");
-
-                    b.Property<int>("Year")
-                        .HasColumnType("int")
-                        .HasColumnName("GeneratedYear");
 
                     b.HasKey("ScheduleId");
 
@@ -819,15 +809,9 @@ namespace MedicalDemo.Migrations
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("Details")
-                        .HasMaxLength(255)
-                        .HasColumnType("varchar(255)")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)")
                         .HasColumnName("details");
-
-                    b.Property<bool>("IsRead")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("tinyint(1)")
-                        .HasDefaultValue(false)
-                        .HasColumnName("is_read");
 
                     b.Property<DateOnly>("RequesteeDate")
                         .HasColumnType("date")
@@ -1014,6 +998,8 @@ namespace MedicalDemo.Migrations
                     b.HasOne("MedicalDemo.Models.Entities.Resident", "Resident")
                         .WithMany("Rotations")
                         .HasForeignKey("ResidentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
                         .HasConstraintName("resident_id_rotation");
 
                     b.HasOne("MedicalDemo.Models.Entities.RotationType", "RotationType")
