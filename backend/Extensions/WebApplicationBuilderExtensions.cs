@@ -8,17 +8,15 @@ using MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator;
 using MedicalDemo.Algorithms.Pgy4RotationScheduleGenerator.Constraints;
 using MedicalDemo.Converters;
 using MedicalDemo.Interfaces;
-using MedicalDemo.Models;
 using MedicalDemo.Models.Entities;
 using MedicalDemo.Services;
 using MedicalDemo.Services.EmailSendServices;
 using Microsoft.EntityFrameworkCore;
 using NLog;
-using NLog.Extensions.Logging;
 using NLog.Web;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
-namespace MedicalDemo;
+namespace MedicalDemo.Extensions;
 
 public static class WebApplicationBuilderExtensions
 {
@@ -120,7 +118,7 @@ public static class WebApplicationBuilderExtensions
             });
 
         bool hasLoggedConnectionString = false;
-        builder.Services.AddDbContext<MedicalContext>((sp, options) =>
+        builder.Services.AddDbContextFactory<MedicalContext>((sp, options) =>
         {
             string? mySqlConnectionString = Environment.GetEnvironmentVariable(
                     "DB_CONNECTION_STRING");
@@ -208,22 +206,7 @@ public static class WebApplicationBuilderExtensions
         builder.Services.AddSwaggerGen();
 
         // Add CORS configuration
-        builder.Services.AddCors(options =>
-        {
-            options.AddPolicy("AllowFrontend", policy =>
-            {
-                policy.SetIsOriginAllowed(origin =>
-                        origin.StartsWith("https://psycall.net") ||
-                        origin.StartsWith("https://www.psycall.net") ||
-                        origin.StartsWith("https://backend.psycall.net") ||
-                        origin.StartsWith("https://staging.psycall.net") ||
-                        origin.StartsWith("https://backend.staging.psycall.net") ||
-                        origin.StartsWith("http://localhost"))
-                    .AllowAnyMethod()
-                    .AllowAnyHeader()
-                    .AllowCredentials();
-            });
-        });
+        builder.Services.AddCors(CorsPolicyConfigurationService.AddAllCorsPolicy);
 
         string port = Environment.GetEnvironmentVariable("BACKEND_PORT") ??
                       "5109";
