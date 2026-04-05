@@ -53,6 +53,7 @@ services:
       - "traefik.http.routers.psycall-staging-backend.tls=true"
       - "traefik.http.routers.psycall-staging-backend.tls.certresolver=letsencrypt"
       - "traefik.http.services.psycall-staging-backend.loadbalancer.server.port=5109"
+      - "traefik.http.services.psycall-staging-backend.loadbalancer.server.scheme=http"
 
   frontend:
     build:
