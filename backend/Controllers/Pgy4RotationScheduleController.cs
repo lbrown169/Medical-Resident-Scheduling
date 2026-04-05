@@ -196,7 +196,7 @@ public class Pgy4RotationScheduleController(
         return NoContent();
     }
 
-    [HttpPost("publish/{id}")]
+    [HttpPatch("publish/{id}")]
     public async Task<ActionResult> PublishSchedule([FromRoute] Guid id)
     {
         int scheduleYear = pgy4RotationScheduleService.GetAcademicYear();
@@ -219,10 +219,11 @@ public class Pgy4RotationScheduleController(
         }
 
         // Set all existing published schedule for current to be unpublished
-        List<Pgy4RotationSchedule> existingPublishedSchedules =
-            await context.Pgy4RotationSchedules.Where(
+        List<Pgy4RotationSchedule> existingPublishedSchedules = await context
+            .Pgy4RotationSchedules.Where(
                 (schedule) => schedule.Year == scheduleYear && schedule.IsPublished
-            ).ToListAsync();
+            )
+            .ToListAsync();
 
         foreach (Pgy4RotationSchedule publishedSchedule in existingPublishedSchedules)
         {
@@ -246,10 +247,11 @@ public class Pgy4RotationScheduleController(
     {
         int scheduleYear = pgy4RotationScheduleService.GetAcademicYear();
 
-        List<Pgy4RotationSchedule> existingPublishedSchedules =
-            await context.Pgy4RotationSchedules.Where(
+        List<Pgy4RotationSchedule> existingPublishedSchedules = await context
+            .Pgy4RotationSchedules.Where(
                 (schedule) => schedule.Year == scheduleYear && schedule.IsPublished
-            ).ToListAsync();
+            )
+            .ToListAsync();
 
         if (existingPublishedSchedules.Count == 0)
         {
