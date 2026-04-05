@@ -206,7 +206,8 @@ public static class WebApplicationBuilderExtensions
         builder.Services.AddSwaggerGen();
 
         // Add CORS configuration
-        builder.Services.AddCors(CorsPolicyConfigurationService.AddAllCorsPolicy);
+        builder.Services.AddCors(options =>
+            CorsPolicyConfigurationService.AddDefaultCorsPolicy(options, builder.Configuration));
 
         string port = Environment.GetEnvironmentVariable("BACKEND_PORT") ??
                       "5109";

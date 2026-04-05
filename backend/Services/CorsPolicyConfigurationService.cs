@@ -4,50 +4,23 @@ namespace MedicalDemo.Services;
 
 public static class CorsPolicyConfigurationService
 {
-    private const string DEVELOPMENT_CORS_POLICY_NAME = "AllowFrontendDevelopment";
-    private const string STAGING_CORS_POLICY_NAME = "AllowFrontendStaging";
-    private const string PRODUCTION_CORS_POLICY_NAME = "AllowFrontendProduction";
+    private const string CORS_CONFIGURATION_SECTION_NAME = "Cors";
+    private const string ALLOWED_ORIGINS_CONFIGURATION_SECTION_NAME = "AllowedOrigins";
 
-    private static readonly string[] DevelopmentOrigins = ["http://localhost"];
-    private static readonly string[] StagingOrigins = ["https://staging.psycall.net", "https://backend.staging.psycall.net"];
-    private static readonly string[] ProductionOrigins = ["https://psycall.net", "https://backend.psycall.net"];
+    private const string DEFAULT_CORS_POLICY_NAME = "DefaultCorsPolicy";
 
-    public static void AddAllCorsPolicy(CorsOptions options)
+    public static void AddDefaultCorsPolicy(CorsOptions options, IConfiguration configuration)
     {
-        AddDevelopmentCorsPolicy(options);
-        AddStagingCorsPolicy(options);
-        AddProductionCorsPolicy(options);
+        IConfigurationSection corsSection = configuration.GetSection(CORS_CONFIGURATION_SECTION_NAME);
+        IConfiguration originSection = corsSection.GetSection(ALLOWED_ORIGINS_CONFIGURATION_SECTION_NAME);
+        List<string> defaultOrigins = originSection.Get<List<string>>() ?? [];
+
+        AddCorsPolicy(options, DEFAULT_CORS_POLICY_NAME, defaultOrigins);
     }
 
-    public static void AddDevelopmentCorsPolicy(CorsOptions options)
+    public static void ApplyDefaultCorsPolicy(WebApplication app)
     {
-        AddCorsPolicy(options, DEVELOPMENT_CORS_POLICY_NAME, DevelopmentOrigins);
-    }
-
-    public static void AddStagingCorsPolicy(CorsOptions options)
-    {
-        AddCorsPolicy(options, STAGING_CORS_POLICY_NAME, StagingOrigins);
-    }
-
-    public static void AddProductionCorsPolicy(CorsOptions options)
-    {
-        AddCorsPolicy(options, PRODUCTION_CORS_POLICY_NAME, ProductionOrigins);
-    }
-
-    public static void ApplyCorsPolicy(WebApplication app)
-    {
-        if (app.Environment.IsProduction())
-        {
-            app.UseCors(PRODUCTION_CORS_POLICY_NAME);
-        }
-        else if (app.Environment.IsStaging())
-        {
-            app.UseCors(STAGING_CORS_POLICY_NAME);
-        }
-        else
-        {
-            app.UseCors(DEVELOPMENT_CORS_POLICY_NAME);
-        }
+        app.UseCors(DEFAULT_CORS_POLICY_NAME);
     }
 
     private static void AddCorsPolicy(CorsOptions options, string policyName, IEnumerable<string> origins)

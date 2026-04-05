@@ -23,7 +23,7 @@ public static class WebApplicationExtensions
 
         public void ApplyCorsPolicy()
         {
-            CorsPolicyConfigurationService.ApplyCorsPolicy(app);
+            CorsPolicyConfigurationService.ApplyDefaultCorsPolicy(app);
         }
     }
 }
