@@ -46,15 +46,6 @@ services:
         condition: service_healthy
     networks:
       - coolify
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.psycall-staging-backend.rule=Host(`staging.psycall.net`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.psycall-staging-backend.priority=20"
-      - "traefik.http.routers.psycall-staging-backend.entrypoints=websecure"
-      - "traefik.http.routers.psycall-staging-backend.tls=true"
-      - "traefik.http.routers.psycall-staging-backend.tls.certresolver=letsencrypt"
-      - "traefik.http.services.psycall-staging-backend.loadbalancer.server.port=5109"
-      - "traefik.http.services.psycall-staging-backend.loadbalancer.server.scheme=http"
 
   frontend:
     build:
@@ -70,14 +61,6 @@ services:
       - backend
     networks:
       - coolify
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.psycall-staging-frontend.rule=Host(`staging.psycall.net`) && !PathPrefix(`/api`)"
-      - "traefik.http.routers.psycall-staging-frontend.priority=15"
-      - "traefik.http.routers.psycall-staging-frontend.entrypoints=websecure"
-      - "traefik.http.routers.psycall-staging-frontend.tls=true"
-      - "traefik.http.routers.psycall-staging-frontend.tls.certresolver=letsencrypt"
-      - "traefik.http.services.psycall-staging-frontend.loadbalancer.server.port=3000"
 
 volumes:
   staging_db_data:
