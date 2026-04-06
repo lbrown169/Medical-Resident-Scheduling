@@ -624,7 +624,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
         });
         return;
       }
-      // Response is the schedule with overrides baked in — update display
+      // Response is the schedule with overrides baked in, update the visible schedule
       const updated: Pgy4RotationScheduleResponse = await res.json();
       setSchedules((prev) =>
         prev.map((s) =>
@@ -695,7 +695,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 
   /**
    * Revert a staged override (just one)
-   * Lets admib revert changes individually
+   * Lets admin revert changes individually
    */
   const handleRevertSingleOverride = async (
     residentId: string,
