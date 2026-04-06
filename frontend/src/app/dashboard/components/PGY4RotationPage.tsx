@@ -1486,9 +1486,12 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 
               {/* Export */}
               <Button
-                disabled
-                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium 
-                          bg-green-600 hover:bg-green-700 text-white 
+                disabled={!selectedScheduleId}
+                onClick={() => {
+                  window.open(`${config.apiUrl}/api/pgy4-rotation-schedule/export/${selectedScheduleId}`, "_blank");
+                }}
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium
+                          bg-green-600 hover:bg-green-700 text-white
                           disabled:opacity-40"
               >
                 <Download className="h-4 w-4" />
