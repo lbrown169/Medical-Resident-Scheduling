@@ -57,6 +57,7 @@ interface SwapRequest {
   status: SwapRequestStatus;
   createdAt: string;
   updatedAt: string;
+  isRead: boolean;
   details?: string;
 }
 
@@ -179,9 +180,91 @@ const SwapHistoryTab: React.FC<SwapHistoryTabProps> = ({ idToName, onPendingCoun
       .finally(() => setLoading(false));
   }, [onPendingCountChange]);
 
+  const handleClearReadSwaps = async () => {
+    /*const vacationIds = requests.map(r => r.id);
+    if (vacationIds.length === 0) {
+      toast({ title: 'No requests to clear', description: 'There are no vacation requests to delete.' });
+      return;
+    }
+    try {
+      const response = await fetch(`${config.apiUrl}/api/vacations`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(vacationIds),
+      });
+      if (response.ok) {
+        const result = await response.json();
+        if (result.notDeleted && result.notDeleted.length > 0) {
+          toast({
+            title: 'Partial success',
+            description: `${vacationIds.length - result.notDeleted.length} requests cleared. ${result.notDeleted.length} failed to delete.`,
+            variant: 'destructive',
+          });
+        } else {
+          toast({ title: 'Success', description: 'All vacation requests have been cleared.' });
+        }
+        fetchVacations();
+      } else {
+        toast({ title: 'Error', description: 'Failed to clear vacation requests.', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Error', description: 'An error occurred while clearing requests.', variant: 'destructive' });
+    }*/
+  };
+
+  const handleMarkAsRead = async (swapId: string) => {
+    try {
+      const response = await fetch(`${config.apiUrl}/api/SwapRequests/${swapId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          isRead: true,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || "Failed to mark swap request as read.");
+      }
+
+      setSwapHistory((prev) =>
+        prev.map((swap) =>
+          swap.swapRequestId === swapId
+            ? { ...swap, isRead: true }
+            : swap
+        )
+      );
+    } catch (err) {
+      console.error("Error marking swap as read:", err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: err instanceof Error ? err.message : "Failed to mark as read.",
+      });
+    }
+  }
+
+  const orderedSwapHistory = [
+    ...swapHistory.filter((swap) => !swap.isRead),
+    ...swapHistory.filter((swap) => swap.isRead),
+  ];
+
   return (
     <Card className="p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-4 mb-6 sm:mb-8 border border-gray-200 dark:border-gray-800">
-      <h2 className="text-lg sm:text-xl font-bold mb-4">Swap Call History</h2>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+        <h2 className="text-lg sm:text-xl font-bold mb-4">Swap Call History</h2>
+        <ConfirmDialog
+          triggerText={<><X className="h-4 w-4" /><span>Clear</span></>}
+          title="Clear all read swap requests?"
+          message="Requests not marked as READ will not be cleared. This action cannot be undone."
+          confirmText="Clear"
+          cancelText="Cancel"
+          onConfirm={handleClearReadSwaps}
+          variant="danger"
+          />
+      </div>
       <div className="overflow-x-auto max-h-96 overflow-y-auto w-full">
         <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead className="bg-gray-100 dark:bg-neutral-800">
@@ -199,29 +282,40 @@ const SwapHistoryTab: React.FC<SwapHistoryTabProps> = ({ idToName, onPendingCoun
               <tr>
                 <td colSpan={6} className="px-6 py-4 text-center text-gray-400 italic">Loading...</td>
               </tr>
-            ) : swapHistory.length > 0 ? (
-              swapHistory.map((swap, idx) => (
-                <tr key={swap.swapRequestId || idx} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
-                  <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.requesterDate ? formatDate(swap.requesterDate) : ''}</td>
-                  <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                    {idToName[swap.requesterId] || `Resident ${swap.requesterId}`}
-                  </td>
-                  <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                    {idToName[swap.requesteeId] || `Resident ${swap.requesteeId}`}
-                  </td>
-                  <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.requesteeDate ? formatDate(swap.requesteeDate) : ''}</td>
-                  <td className="px-1 sm:px-3 py-3 sm:py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs break-all">{swap.details || '-'}</td>
-                  <td className={`px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm font-semibold ${
-                    swap.status.id === 1 ? 'text-green-600' : swap.status.id === 2 ? 'text-red-600' : 'text-yellow-600'
-                  }`}>
-                    {swap.status.description}
-                  </td>
+            ) : orderedSwapHistory.length > 0 ? (
+                orderedSwapHistory.map((swap, idx) => (
+                  <tr key={swap.swapRequestId || idx} className={`${!swap.isRead ? 'bg-yellow-50 dark:bg-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-900/40' : 'hover:bg-gray-50 dark:hover:bg-neutral-800'}`}>
+                    <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.requesterDate ? formatDate(swap.requesterDate) : ''}</td>
+                    <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                      {idToName[swap.requesterId] || `Resident ${swap.requesterId}`}
+                    </td>
+                    <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                      {idToName[swap.requesteeId] || `Resident ${swap.requesteeId}`}
+                    </td>
+                    <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.requesteeDate ? formatDate(swap.requesteeDate) : ''}</td>
+                    <td className="px-1 sm:px-3 py-3 sm:py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs break-all">{swap.details || '-'}</td>
+                    <td className={`px-1 sm:px-1 py-3 sm:py-4 whitespace-nowrap text-sm font-semibold ${
+                      swap.status.id === 1 ? 'text-green-600' : swap.status.id === 2 ? 'text-red-600' : 'text-yellow-600'
+                      }`}>
+                      <div className="flex items-center justify-between w-full">
+                        {`${swap.status.description} `}
+                        {!swap.isRead ? (
+                          <Button variant="outline" size="sm" className="mr-2 text-blue-600 border-blue-600 hover:bg-blue-500 hover:text-white cursor-pointer" onClick={() => handleMarkAsRead(swap.swapRequestId) }>
+                            <Check className="h-3 w-3 mr-1" /> Mark as Read
+                          </Button>
+                        ) : (
+                          <Button variant="outline" size="sm" className="mr-2 text-slate-600 hover:text-slate-600 border-slate-600" onClick={() => (/*Possible future implementation of marking as unread*/ "")}>
+                            Read
+                          </Button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className="px-6 py-4 text-center text-gray-500 italic">No swap call history found.</td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={6} className="px-6 py-4 text-center text-gray-500 italic">No swap call history found.</td>
-              </tr>
             )}
           </tbody>
         </table>
