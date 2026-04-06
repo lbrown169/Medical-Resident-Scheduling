@@ -15,7 +15,8 @@ namespace MedicalDemo.Controllers;
 public class RotationPrefRequestController(
     MedicalContext context,
     RotationPrefRequestConverter rotationPrefRequestConverter,
-    Pgy4RotationScheduleService pgy4RotationScheduleService
+    Pgy4RotationScheduleService pgy4RotationScheduleService,
+    ResidentConverter residentConverter
 ) : ControllerBase
 {
     private readonly MedicalContext context = context;
@@ -23,6 +24,7 @@ public class RotationPrefRequestController(
         rotationPrefRequestConverter;
     private readonly Pgy4RotationScheduleService pgy4RotationScheduleService =
         pgy4RotationScheduleService;
+    private readonly ResidentConverter residentConverter = residentConverter;
 
     // GET: api/rotation-pref-requests/{id}
     [HttpGet("{id}")]
@@ -249,6 +251,25 @@ public class RotationPrefRequestController(
         await context.SaveChangesAsync();
 
         return NoContent();
+    }
+
+    [HttpGet("resident/unsubmitted")]
+    public async Task<ActionResult<UnsubmittedResidentsResponse>> GetAllUnsubmittedResidents()
+    {
+        List<Resident> unsubmittedResidents =
+            await pgy4RotationScheduleService.ValidateAllPrefRequestSubmitted();
+
+        UnsubmittedResidentsResponse errorResponse = new()
+        {
+            UnsubmittedResidents =
+            [
+                .. unsubmittedResidents.Select(
+                    residentConverter.CreateResidentResponseFromResident
+                ),
+            ],
+        };
+
+        return Ok(errorResponse);
     }
 
     private async Task<List<Guid>> ValidateRotationTypeExistence(List<Guid> rotationTypeIds)

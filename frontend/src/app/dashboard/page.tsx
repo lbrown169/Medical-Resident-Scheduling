@@ -12,9 +12,11 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarTrigger,
+  SidebarGroupLabel,
+  SidebarSeparator,
 } from "../../components/ui/sidebar";
 import { SidebarUserCard } from "./components/SidebarUserCard";
-import { Repeat, CalendarDays, CalendarX, UserCheck, Shield, Settings, Home, LogOut, User as UserIcon, ChevronDown, Moon, Sun, LayoutList, CalendarRange } from "lucide-react";
+import { Repeat, CalendarDays, CalendarX, UserCheck, Shield, Settings, Home, LogOut, User as UserIcon, ChevronDown, Moon, Sun, ClipboardList, CalendarRange, Calendar1, LayoutList } from "lucide-react";
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { useRouter } from "next/navigation";
 import { toast } from '../../lib/use-toast';
@@ -35,11 +37,15 @@ import SwapCallsPage from "./components/SwapCallsPage";
 import RequestOffPage from "./components/RequestOffPage";
 import CheckSchedulePage from "./components/CheckSchedulePage";
 import AdminPage from "./components/AdminPage";
+import PGY3RotationFormPage from "./components/PGY3RotationFormPage";
+import PGY4RotationPage from "./components/PGY4RotationPage";
+import PGY4SchedulePage from "../dashboard/pgy4-schedule/page";
 import SchedulesPage from "./components/SchedulesPage";
 import PGY12RotationPage from "./components/PGY12RotationPage";
 
 import MobileHeader from "./components/MobileHeader";
 import MobileUserMenu from "./components/MobileUserMenu";
+
 import { VacationResponse } from "@/lib/models/VacationResponse";
 import { CallType } from "@/lib/models/CallType";
 import { DateResponse } from "@/lib/models/DateResponse";
@@ -59,6 +65,7 @@ interface Resident {
   phone_number?: string;
   hospital_role_profile?: number;
   total_hours: number;
+  chief_type: string;
 }
 
 interface Admin {
@@ -87,7 +94,10 @@ const menuItems: MenuItem[] = [
   { title: "Request Off", icon: <CalendarX className="w-6 h-6 mr-3" /> },
   { title: "Check My Schedule", icon: <UserCheck className="w-6 h-6 mr-3" /> },
   { title: "Admin", icon: <Shield className="w-6 h-6 mr-3" /> },
-  { title: "Settings", icon: <Settings className="w-6 h-6 mr-3" /> },
+  { title: "PGY-4 Form", icon: <ClipboardList className="w-6 h-6 mr-3" /> },
+  { title: "PGY-4 Schedule", icon: <Calendar1 className="w-6 h-6 mr-3" /> },
+  { title: "Dashboard", icon: <CalendarRange className="w-6 h-6 mr-3" /> },
+  { title: "Settings", icon: <Settings className="w-6 h-6 mr-3" /> }
 ];
 
 const leaveReasons: { id: string; name: string; halfDay?: string }[] = [
@@ -318,8 +328,6 @@ function Dashboard() {
       const response = await fetch(`${config.apiUrl}/api/dates/published`);
       if (response.ok) {
         const dates = await response.json() as DateResponse[];
-        console.log(dates)
-
         const events = dates.map((date: DateResponse) => {
           // Only show the resident's name on the calendar
           const fullName = date.firstName && date.lastName
@@ -581,7 +589,6 @@ function Dashboard() {
   };
 
   const handleApproveRequest = async (groupId: string) => {
-    console.log("Approving groupId:", groupId);
     try {
 
       const response = await fetch(`${config.apiUrl}/api/vacations/group/${groupId}/status/approve`, {
@@ -650,22 +657,6 @@ function Dashboard() {
   
 
   const handleSubmitSwap = async () => {
-    console.log('handleSubmitSwap called');
-    if (!selectedResident) {
-      console.log('Validation failed: selectedResident is missing');
-    }
-    if (!selectedShift) {
-      console.log('Validation failed: selectedShift is missing');
-    }
-    if (!yourShiftDate) {
-      console.log('Validation failed: yourShiftDate is missing');
-    }
-    if (!partnerShiftDate) {
-      console.log('Validation failed: partnerShiftDate is missing');
-    }
-    if (!partnerShift) {
-      console.log('Validation failed: partnerShift is missing');
-    }
     if (!selectedResident || !selectedShift || !yourShiftDate || !partnerShiftDate || !partnerShift) {
       toast({
         variant: "destructive",
@@ -702,7 +693,6 @@ function Dashboard() {
         RequesteeDate: partnerShiftDate,
         Details: swapDescription.trim()
       };
-      console.log('Submitting swapRequest:', swapRequest);
       const response = await fetch(`${config.apiUrl}/api/swaprequests`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1112,6 +1102,45 @@ case "Home":
         }
         return <PGY12RotationPage />;
 
+      case "PGY-4 Form":
+        return (
+          <PGY3RotationFormPage
+            userId={user?.id || ""}
+            userPGY={currentUserPGY || 0}
+          />
+        );
+      
+      case "PGY-4 Schedule":
+        // Only PGY-4 residents can view this page
+        if (currentUserPGY !== 4) {
+          return (
+            <div className="w-full pt-4 flex flex-col items-center">
+              <h1 className="text-2xl font-bold mb-6">Access Denied</h1>
+              <p className="text-center text-gray-600 dark:text-gray-400">
+                This page is only accessible to PGY-4 residents.
+              </p>
+            </div>
+          );
+        }
+        return <PGY4SchedulePage />;
+      
+      case "Dashboard":
+        if (!isAdmin) {
+          return (
+            <div className="w-full pt-4 flex flex-col items-center">
+              <h1 className="text-2xl font-bold mb-6">Access Denied</h1>
+              <p className="text-center text-gray-600 dark:text-gray-400">
+                You do not have permission to access the PGY-4 admin panel.
+              </p>
+            </div>
+          );
+        }
+        return (
+          <PGY4RotationPage
+          residents={residents.map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}`, email: r.email, pgyLevel: r.graduate_yr, chiefType: r.chief_type }))}
+          />
+        );
+
       default:
         return null;
     }
@@ -1178,6 +1207,10 @@ case "Home":
   // Computed values
   const displayName = user ? `${user.firstName} ${user.lastName}` : "John Doe";
   const displayEmail = user?.email || "john.doe@email.com";
+  
+  // Get current user's PGY level
+  const currentUserPGY = residents.find(r => r.resident_id === user?.id)?.graduate_yr;
+  
   const filteredMenuItems = menuItems.filter(item => {
     if (item.title === "Admin") return false; //hide admin option
     if (item.title === "Request Off") return !isAdmin; // residents only
@@ -1185,8 +1218,36 @@ case "Home":
     if (item.title === "Swap Calls") return !isAdmin; // residents only
     if (item.title === "Schedules") return isAdmin; // admin only
     if (item.title === "Rotations") return isAdmin; // admin only
+    if (item.title === "PGY-4 Form") return currentUserPGY === 3; // pgy3 resident only
+    if (item.title === "PGY-4 Schedule") return currentUserPGY === 4; // pgy4 resident only
+    if (item.title === "Dashboard") return isAdmin; // admin only
     return true;
   });
+
+  const sidebarGroups = [
+    {
+      label: null,      // title for sidebar group header
+      showLabel: false, // only shows if true, menu items will show regardless
+      items: ["Home"],  // all menu items must be in a group 
+    },
+    {
+      label: "PGY 1-3 Residents",
+      showLabel: isAdmin,
+      items: ["Calendar", "Request Off", "Check My Schedule", "Swap Calls", "Schedules", "Rotations"],
+    },
+    {
+      label: "PGY 4 Residents",
+      showLabel: isAdmin,
+      items: ["PGY-4 Form", "PGY-4 Schedule", "Dashboard"],
+    },
+    {
+      label: null,
+      showLabel: false,
+      items: ["Settings"],
+    },
+  ];
+
+  
 
   const [inviteRole, setInviteRole] = useState<string>("resident");
 
@@ -1213,36 +1274,56 @@ case "Home":
           {/* Sidebar Navigation - Desktop only */}
           <div className="hidden md:block">
             {selected !== "Calendar" && (
-              <Sidebar>
+              <Sidebar className="z-50">
                 <SidebarHeader>
                   <div className="flex items-center justify-center py-2">
                     <span className="text-3xl font-bold tracking-wide">PSYCALL</span>
                   </div>
                 </SidebarHeader>
                 <SidebarContent>
-                  <SidebarGroup>
-                    <SidebarGroupContent>
-                      <SidebarMenu>
-                        {filteredMenuItems.map((item) => (
-                          <SidebarMenuItem key={item.title}>
-                            <SidebarMenuButton asChild>
-                              <span
-                                className={`flex items-center text-xl cursor-pointer rounded-lg px-2 py-1 transition-colors ${
-                                  selected === item.title
-                                    ? "font-bold text-gray-800 dark:text-gray-200 bg-gray-300 dark:bg-gray-700"
-                                    : "hover:bg-gray-900 dark:hover:bg-gray-700"
-                                }`}
-                                onClick={() => setSelected(item.title)}
-                              >
-                                {item.icon}
-                                {item.title}
-                              </span>
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        ))}
-                      </SidebarMenu>
-                    </SidebarGroupContent>
-                  </SidebarGroup>
+                  {sidebarGroups.map((group, i) => {
+                    const visibleItems = filteredMenuItems.filter(item =>
+                      group.items.includes(item.title)
+                    );
+
+                    const showGroup = visibleItems.length > 0 || (group.showLabel && group.label);
+                    if (!showGroup) return null;
+
+                    return (
+                      <SidebarGroup key={i}>
+                        {group.label && group.showLabel && (
+                          <>
+                            <SidebarSeparator />
+                            <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+                          </>
+                        )}
+                        {!group.showLabel && i > 0 && visibleItems.length > 0 && (
+                          <SidebarSeparator />
+                        )}
+                        <SidebarGroupContent>
+                          <SidebarMenu>
+                            {visibleItems.map((item) => (
+                              <SidebarMenuItem key={item.title}>
+                                <SidebarMenuButton asChild>
+                                  <span
+                                    className={`flex items-center text-xl cursor-pointer rounded-lg px-2 py-1 transition-colors ${
+                                      selected === item.title
+                                        ? "font-bold text-gray-800 dark:text-gray-200 bg-gray-300 dark:bg-gray-700"
+                                        : "hover:bg-gray-900 dark:hover:bg-gray-700"
+                                    }`}
+                                    onClick={() => setSelected(item.title)}
+                                  >
+                                    {item.icon}
+                                    {item.title}
+                                  </span>
+                                </SidebarMenuButton>
+                              </SidebarMenuItem>
+                            ))}
+                          </SidebarMenu>
+                        </SidebarGroupContent>
+                      </SidebarGroup>
+                    );
+                  })}
                 </SidebarContent>
                 <SidebarFooter>
                   <DropdownMenu>
@@ -1271,7 +1352,7 @@ case "Home":
                         <Moon className="h-4 w-4" />
                         <span>Dark</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem 
+                      <DropdownMenuItem
                         className="flex items-center gap-2 text-red-600 focus:text-red-600"
                         onClick={handleLogout}
                       >
