@@ -71,6 +71,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
   const [addDay, setAddDay] = useState<Date | null>(null);
   const [formData, setFormData] = useState({ residentId: "", shiftDate: "", callType: -1, hours: "" });
   const [callTypeOptions, setCallTypeOptions] = useState<CallType[]>([]);
+  const [pgyOffset, setPgyOffset] = useState(0);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   // Single state drives all three confirm dialogs
@@ -98,6 +99,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
       ? (scheduleSemester === "Spring" ? scheduleYear - 1 : scheduleYear)
       : currentAcademicYear();
     const pgyOffset = scheduleAcademicYear - currentAcademicYear();
+    setPgyOffset(pgyOffset);
 
     setLoading(true);
     try {
@@ -453,7 +455,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
             <option value="">Select a Resident</option>
             {sortedResidents.filter(r => r.resident_id !== excludeResidentId).map(r => (
               <option key={r.resident_id} value={r.resident_id}>
-                {r.first_name} {r.last_name}
+                {r.first_name} {r.last_name} (PGY{r.graduate_yr + pgyOffset})
               </option>
             ))}
           </select>
