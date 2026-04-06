@@ -181,35 +181,57 @@ const SwapHistoryTab: React.FC<SwapHistoryTabProps> = ({ idToName, onPendingCoun
   }, [onPendingCountChange]);
 
   const handleClearReadSwaps = async () => {
-    /*const vacationIds = requests.map(r => r.id);
-    if (vacationIds.length === 0) {
-      toast({ title: 'No requests to clear', description: 'There are no vacation requests to delete.' });
+    const readSwapIds = swapHistory.filter((swap) => swap.isRead).map((swap) => swap.swapRequestId);
+
+    if (readSwapIds.length === 0) {
+      toast({
+        title: "No swaps to clear",
+        description: "There are no read swap requests to delete.",
+      });
       return;
     }
+
     try {
-      const response = await fetch(`${config.apiUrl}/api/vacations`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(vacationIds),
+      const response = await fetch(`${config.apiUrl}/api/SwapRequests`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(readSwapIds),
       });
+
       if (response.ok) {
         const result = await response.json();
+
         if (result.notDeleted && result.notDeleted.length > 0) {
           toast({
-            title: 'Partial success',
-            description: `${vacationIds.length - result.notDeleted.length} requests cleared. ${result.notDeleted.length} failed to delete.`,
-            variant: 'destructive',
+            title: "Partial success",
+            description: `${readSwapIds.length - result.notDeleted.length} swaps cleared. ${result.notDeleted.length} failed to delete.`,
+            variant: "destructive",
           });
         } else {
-          toast({ title: 'Success', description: 'All vacation requests have been cleared.' });
+          toast({
+            title: "Success",
+            description: "All read swap requests have been cleared.",
+          });
         }
-        fetchVacations();
+
+        setSwapHistory((prev) =>
+          prev.filter((swap) => !swap.isRead)
+        );
+
       } else {
-        toast({ title: 'Error', description: 'Failed to clear vacation requests.', variant: 'destructive' });
+        toast({
+          title: "Error",
+          description: "Failed to clear swap requests.",
+          variant: "destructive",
+        });
       }
     } catch {
-      toast({ title: 'Error', description: 'An error occurred while clearing requests.', variant: 'destructive' });
-    }*/
+      toast({
+        title: "Error",
+        description: "An error occurred while clearing swaps.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleMarkAsRead = async (swapId: string) => {
