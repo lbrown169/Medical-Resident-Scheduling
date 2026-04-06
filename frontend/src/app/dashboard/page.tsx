@@ -1008,7 +1008,7 @@ case "Home":
             partnerShift={partnerShift}
             userShiftEvents={userShiftEvents}
             partnerShiftEvents={partnerShiftEvents}
-            onSelectUserShift={(date, callType) => { setYourShiftDate(date); setSelectedShift(callType); }}
+            onSelectUserShift={(date, callType) => { setYourShiftDate(date); setSelectedShift(callType); setPartnerShiftDate(""); setPartnerShift(""); }}
             onSelectPartnerShift={(date, callType) => { setPartnerShiftDate(date); setPartnerShift(callType); }}
             description={swapDescription}
             setDescription={setSwapDescription}
