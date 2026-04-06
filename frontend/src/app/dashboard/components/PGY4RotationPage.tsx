@@ -952,6 +952,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
   const handleDelete = async () => {
     if (!selectedScheduleId) return;
     try {
+      setDeletingSchedule(true);
       const res = await fetch(
         `${config.apiUrl}/api/pgy4-rotation-schedule/${selectedScheduleId}`,
         { method: "DELETE" },
@@ -965,10 +966,13 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
     } catch (err) {
       console.error(err);
       setScheduleError("Failed to delete schedule.");
+    } finally {
+      setDeletingSchedule(false);
     }
   };
 
   const [publishingSchedule, setPublishingSchedule] = useState(false);
+  const [deletingSchedule, setDeletingSchedule] = useState(false);
 
   const handlePublish = async () => {
     if (!selectedScheduleId) return;
@@ -1109,6 +1113,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
   const handleRotationFormSuccess = async () => {
     const resident = PGY3Residents.find((r) => r.id === formOverrideResidentId);
     setShowRotationFormModal(false);
+    setFormOverrideResidentId(null);
     const refreshRes = await fetch(
       `${config.apiUrl}/api/rotation-pref-request`,
     );
@@ -1268,7 +1273,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
               confirmText="Delete"
               cancelText="Cancel"
               onConfirm={handleDelete}
-              loading={false}
+              loading={deletingSchedule}
               variant="danger"
             />
           </div>
@@ -1402,9 +1407,6 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                     }
 
                     setHasPendingOverrides(true);
-
-                    // Re-fetch with overrides so the table reflects the staged change
-                    await fetchScheduleWithOverrides(selectedScheduleId);
 
                     // Sync override list for the pending changes panel
                     await syncOverrideState(selectedScheduleId);
@@ -1698,7 +1700,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                   ) : (
                     <tr>
                       <td
-                        colSpan={4}
+                        colSpan={2}
                         className="px-6 py-4 text-center text-gray-500 italic"
                       >
                         No PGY-3 residents found.
