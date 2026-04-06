@@ -164,6 +164,7 @@ interface SwapHistoryTabProps {
 const SwapHistoryTab: React.FC<SwapHistoryTabProps> = ({ idToName, onPendingCountChange }) => {
   const [swapHistory, setSwapHistory] = useState<SwapRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [warnReadId, setWarnReadId] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -232,6 +233,10 @@ const SwapHistoryTab: React.FC<SwapHistoryTabProps> = ({ idToName, onPendingCoun
         variant: "destructive",
       });
     }
+  };
+
+  const handleWarnMarkAsRead = (swapId: string) => {
+    setWarnReadId(swapId);
   };
 
   const handleMarkAsRead = async (swapId: string) => {
@@ -322,9 +327,33 @@ const SwapHistoryTab: React.FC<SwapHistoryTabProps> = ({ idToName, onPendingCoun
                       <div className="flex items-center justify-between w-full">
                         {`${swap.status.description} `}
                         {!swap.isRead ? (
-                          <Button variant="outline" size="sm" className="mr-2 text-blue-600 border-blue-600 hover:bg-blue-500 hover:text-white cursor-pointer" onClick={() => handleMarkAsRead(swap.swapRequestId) }>
-                            <Check className="h-3 w-3 mr-1" /> Mark as Read
-                          </Button>
+                          <>
+                            <Button variant="outline" size="sm" className="mr-2 text-blue-600 border-blue-600 hover:bg-blue-500 hover:text-white cursor-pointer" onClick={() => {
+                              if (swap.status.id === 0) {
+                                handleWarnMarkAsRead(swap.swapRequestId)
+                              } else {
+                                handleMarkAsRead(swap.swapRequestId)
+                              }
+                            }}>
+                              <Check className="h-3 w-3 mr-1" /> Mark as Read
+                            </Button>
+                            <ConfirmDialog
+                              open={!!warnReadId}
+                              onOpenChange={(open) => {
+                                if (!open) setWarnReadId(null);
+                              }}
+                              title="Mark pending request as read?"
+                              message="This swap request is still pending. Marking it as read makes it possible to delete. Mark as read anyway?"
+                              confirmText="Mark as Read"
+                              cancelText="Cancel"
+                              onConfirm={async () => {
+                                if (warnReadId) {
+                                  await handleMarkAsRead(warnReadId);
+                                  setWarnReadId(null);
+                                }
+                              }}
+                              />
+                          </>
                         ) : (
                           <Button variant="outline" size="sm" className="mr-2 text-slate-600 hover:text-slate-600 border-slate-600" onClick={() => (/*Possible future implementation of marking as unread*/ "")}>
                             Read
