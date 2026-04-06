@@ -169,7 +169,7 @@ export default function PGY4SchedulePage() {
                   Published Schedule
                 </h2>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Academic year {schedule.year} – {schedule.year + 1}
+                  Academic year {schedule.year} - {schedule.year + 1}
                 </p>
               </div>
             </div>
