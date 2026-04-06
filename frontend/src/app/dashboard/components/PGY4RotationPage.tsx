@@ -734,6 +734,9 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
   const [showRotationFormModal, setShowRotationFormModal] = useState(false);
   const [submissions, setSubmissions] = useState<RotationPrefResponse[]>([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
+  const [unsubmittedResidents, setUnsubmittedResidents] = useState<
+    { first_name: string; last_name: string }[]
+  >([]);
 
   // State for viewing a resident's submission
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
@@ -844,13 +847,8 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
   );
 
   // Submission tracking
-  const submittedResidentIds = new Set(
-    submissions.map((s) => s.resident.resident_id),
-  );
-  const submittedCount = submittedResidentIds.size;
-  const missingCount = PGY3Residents.filter(
-    (r) => !submittedResidentIds.has(r.id),
-  ).length;
+  const submittedCount = submissions.length;
+  const missingCount = unsubmittedResidents.length;
 
   // Load schedules and rotation types on mount
   useEffect(() => {
@@ -1042,6 +1040,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
       if (!data.ok) throw new Error("Failed to fetch submissions");
       const json: RotationPrefRequestsListResponse = await data.json();
       setSubmissions(json.rotationPrefRequests ?? []);
+      await fetchUnsubmittedResidents();
 
       toast({
         variant: "success",
@@ -1082,6 +1081,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
       if (!data.ok) throw new Error("Failed to fetch submissions");
       const json: RotationPrefRequestsListResponse = await data.json();
       setSubmissions(json.rotationPrefRequests ?? []);
+      await fetchUnsubmittedResidents();
 
       if (failed.length > 0) {
         toast({
@@ -1115,6 +1115,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
     if (!refreshRes.ok) return;
     const json: RotationPrefRequestsListResponse = await refreshRes.json();
     setSubmissions(json.rotationPrefRequests ?? []);
+    await fetchUnsubmittedResidents();
     toast({
       variant: "success",
       title: "Submitted",
@@ -1157,6 +1158,19 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
     }
   };
 
+  const fetchUnsubmittedResidents = useCallback(async () => {
+    try {
+      const res = await fetch(
+        `${config.apiUrl}/api/rotation-pref-request/resident/unsubmitted`,
+      );
+      if (!res.ok) return;
+      const data: UnsubmittedResidentsResponse = await res.json();
+      setUnsubmittedResidents(data.unsubmittedResidents ?? []);
+    } catch (err) {
+      console.error("Failed to fetch unsubmitted residents", err);
+    }
+  }, []);
+
   useEffect(() => {
     const loadSubmissions = async () => {
       try {
@@ -1177,7 +1191,8 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
     };
 
     loadSubmissions();
-  }, []);
+    fetchUnsubmittedResidents();
+  }, [fetchUnsubmittedResidents]);
 
   return (
     <div className="w-full pt-4 h-[calc(100vh-4rem)] flex flex-col items-center px-4 md:pl-8">
