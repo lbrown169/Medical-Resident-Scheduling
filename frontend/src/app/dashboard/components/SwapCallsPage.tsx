@@ -51,6 +51,10 @@ function formatDate(dateStr: string, opts: Intl.DateTimeFormatOptions) {
   return new Date(Number(year), Number(month) - 1, Number(day)).toLocaleDateString('en-US', opts);
 }
 
+function academicYearOf(date: Date): number {
+  return date.getMonth() >= 6 ? date.getFullYear() : date.getFullYear() - 1;
+}
+
 function eventToOption(e: CalendarEvent): { value: string; label: string } {
   const dateStr = e.start instanceof Date
     ? e.start.toISOString().split('T')[0]
@@ -325,31 +329,41 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
             </div>
 
             {/* Partner's Shift */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-primary" />
-                <label htmlFor="partner-shift" className="text-sm font-semibold text-foreground">Partner&apos;s Shift</label>
-              </div>
-              <select
-                id="partner-shift"
-                className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors appearance-none cursor-pointer disabled:opacity-50"
-                value={partnerShiftValue}
-                onChange={(e) => handleSelect(e.target.value, onSelectPartnerShift)}
-                disabled={!selectedResident || partnerShiftEvents.length === 0}
-              >
-                <option value="" disabled>
-                  {!selectedResident
-                    ? 'Select a partner first'
-                    : partnerShiftEvents.length === 0
-                    ? 'No upcoming shifts found'
-                    : "Select partner's shift"}
-                </option>
-                {partnerShiftEvents.map((e, i) => {
-                  const opt = eventToOption(e);
-                  return <option key={i} value={opt.value}>{opt.label}</option>;
-                })}
-              </select>
-            </div>
+            {(() => {
+              const userShiftAcademicYear = yourShiftDate
+                ? academicYearOf(new Date(yourShiftDate))
+                : null;
+              const filteredPartnerEvents = userShiftAcademicYear !== null
+                ? partnerShiftEvents.filter(e => academicYearOf(e.start instanceof Date ? e.start : new Date(e.start)) === userShiftAcademicYear)
+                : partnerShiftEvents;
+              return (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-primary" />
+                    <label htmlFor="partner-shift" className="text-sm font-semibold text-foreground">Partner&apos;s Shift</label>
+                  </div>
+                  <select
+                    id="partner-shift"
+                    className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors appearance-none cursor-pointer disabled:opacity-50"
+                    value={partnerShiftValue}
+                    onChange={(e) => handleSelect(e.target.value, onSelectPartnerShift)}
+                    disabled={!selectedResident || filteredPartnerEvents.length === 0}
+                  >
+                    <option value="" disabled>
+                      {!selectedResident
+                        ? 'Select a partner first'
+                        : filteredPartnerEvents.length === 0
+                        ? 'No upcoming shifts found'
+                        : "Select partner's shift"}
+                    </option>
+                    {filteredPartnerEvents.map((e, i) => {
+                      const opt = eventToOption(e);
+                      return <option key={i} value={opt.value}>{opt.label}</option>;
+                    })}
+                  </select>
+                </div>
+              );
+            })()}
             {/* Additional Details */}
             <div className="space-y-2">
               <div className="flex items-center gap-2">
@@ -385,12 +399,14 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                     <span className="text-muted-foreground">Your Shift:</span>
                     <span className="font-medium text-foreground">
                       {formatDate(yourShiftDate, { month: 'short', day: 'numeric' })} — {selectedShift}
+                      {(() => { const pgy = userShiftEvents.find(e => eventToOption(e).value === userShiftValue)?.extendedProps?.pgyLevel; return pgy != null ? <span className="text-muted-foreground font-normal"> · PGY{pgy}</span> : null; })()}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Partner&apos;s Shift:</span>
                     <span className="font-medium text-foreground">
                       {formatDate(partnerShiftDate, { month: 'short', day: 'numeric' })} — {partnerShift}
+                      {(() => { const pgy = partnerShiftEvents.find(e => eventToOption(e).value === partnerShiftValue)?.extendedProps?.pgyLevel; return pgy != null ? <span className="text-muted-foreground font-normal"> · PGY{pgy}</span> : null; })()}
                     </span>
                   </div>
                   <div className="flex justify-between">

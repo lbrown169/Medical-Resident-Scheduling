@@ -161,7 +161,7 @@ public class DashboardController : ControllerBase
                     Type = "swap_pending",
                     Message =
                         $"Swap request from {requesterName} for {swap.RequesterDate:MM/dd/yyyy} (your shift: {swap.RequesteeDate:MM/dd/yyyy})",
-                    Date = swap.CreatedAt.ToString("MM/dd/yyyy")
+                    Date = new DateTimeOffset(swap.CreatedAt, TimeSpan.Zero).ToString("o")
                 });
             }
 
@@ -195,7 +195,7 @@ public class DashboardController : ControllerBase
                         ? "swap_approved"
                         : "swap_denied",
                     Message = message,
-                    Date = swap.UpdatedAt.ToString("MM/dd/yyyy")
+                    Date = new DateTimeOffset(swap.UpdatedAt, TimeSpan.Zero).ToString("o")
                 });
             }
 
@@ -226,7 +226,7 @@ public class DashboardController : ControllerBase
                     Id = swap.SwapRequestId + "-as-approver",
                     Type = "swap_approved",
                     Message = message,
-                    Date = swap.UpdatedAt.ToString("MM/dd/yyyy")
+                    Date = new DateTimeOffset(swap.UpdatedAt, TimeSpan.Zero).ToString("o")
                 });
             }
 
@@ -243,7 +243,7 @@ public class DashboardController : ControllerBase
                 {
                     Id = announcement.AnnouncementId.ToString(),
                     Message = announcement.Message ?? "",
-                    Date = announcement.CreatedAt.ToString("MM/dd/yyyy")
+                    Date = new DateTimeOffset(announcement.CreatedAt, TimeSpan.Zero).ToString("o")
                 });
             }
 

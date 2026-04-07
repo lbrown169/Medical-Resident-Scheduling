@@ -18,8 +18,8 @@ public class SwapRequestConverter
             RequesterDate = createRequest.RequesterDate,
             RequesteeDate = createRequest.RequesteeDate,
             Status = RequestStatus.Pending,
-            CreatedAt = DateTime.Now,
-            UpdatedAt = DateTime.Now,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
             Details = createRequest.Details,
         };
     }
@@ -36,8 +36,8 @@ public class SwapRequestConverter
             RequesterDate = swapRequest.RequesterDate,
             RequesteeDate = swapRequest.RequesteeDate,
             Status = new SwapRequestStatusResponse(swapRequest.Status),
-            CreatedAt = swapRequest.CreatedAt,
-            UpdatedAt = swapRequest.UpdatedAt,
+            CreatedAt = new DateTimeOffset(swapRequest.CreatedAt, TimeSpan.Zero),
+            UpdatedAt = new DateTimeOffset(swapRequest.UpdatedAt, TimeSpan.Zero),
             IsRead = swapRequest.IsRead,
             Details = swapRequest.Details,
         };

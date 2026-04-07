@@ -607,7 +607,7 @@ function Dashboard() {
       toast({
         variant: "success",
         title: "Request Approved",
-        description: `Vacation request group ${groupId} has been approved.`,
+        description: "The vacation request has been approved.",
       });
   
       fetchMyTimeOffRequests();
@@ -640,7 +640,7 @@ function Dashboard() {
       toast({
         variant: "destructive",
         title: "Request Denied",
-        description: `Vacation request group ${groupId} has been denied.`,
+        description: "The vacation request has been denied.",
       });
   
       fetchMyTimeOffRequests();
@@ -662,18 +662,6 @@ function Dashboard() {
         variant: "destructive",
         title: "Error",
         description: "Please select both residents, both shifts, and both dates.",
-      });
-      return;
-    }
-
-    // Check PGY level
-    const myPGY = residents.find(r => r.resident_id === user?.id)?.graduate_yr;
-    const partnerPGY = residents.find(r => r.resident_id === selectedResident)?.graduate_yr;
-    if (myPGY !== partnerPGY) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Both residents must be the same PGY level.",
       });
       return;
     }
@@ -999,8 +987,7 @@ case "Home":
         );
 
       case "Swap Calls": {
-        const myPGY = residents.find(r => r.resident_id === user?.id)?.graduate_yr;
-        const pgyMatchedResidents = residents.filter(r => r.graduate_yr === myPGY && r.resident_id !== user?.id)
+        const pgyMatchedResidents = residents.filter(r => r.resident_id !== user?.id)
           .map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}` }));
         const now = new Date(); now.setHours(0, 0, 0, 0);
         const filterShiftEvents = (residentId: string) =>
@@ -1021,7 +1008,7 @@ case "Home":
             partnerShift={partnerShift}
             userShiftEvents={userShiftEvents}
             partnerShiftEvents={partnerShiftEvents}
-            onSelectUserShift={(date, callType) => { setYourShiftDate(date); setSelectedShift(callType); }}
+            onSelectUserShift={(date, callType) => { setYourShiftDate(date); setSelectedShift(callType); setPartnerShiftDate(""); setPartnerShift(""); }}
             onSelectPartnerShift={(date, callType) => { setPartnerShiftDate(date); setPartnerShift(callType); }}
             description={swapDescription}
             setDescription={setSwapDescription}
