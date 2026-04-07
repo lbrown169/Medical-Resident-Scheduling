@@ -36,14 +36,14 @@ public class SwapRequestsController : ControllerBase
                 .CreateSwapRequestFromSwapRequestCreateRequest(
                     swapCreateRequest);
 
-        string? message = await ValidateSwapRequestAndAssignScheduleId(swapRequest);
+        SwapRequestValidateResponse validationResult = await ValidateSwapRequestAndAssignScheduleId(swapRequest);
 
-        if (message != null)
+        if (validationResult.Success == false)
         {
             return BadRequest(new GenericResponse
             {
                 Success = false,
-                Message = message
+                Message = validationResult.Message
             });
         }
 
@@ -237,7 +237,7 @@ public class SwapRequestsController : ControllerBase
         return Ok(_swapRequestConverter.CreateSwapRequestResponseFromSwapRequest(swap));
     }
 
-    private async Task<string?> ValidateSwapRequestAndAssignScheduleId(SwapRequest swapRequest)
+    private async Task<SwapRequestValidateResponse> ValidateSwapRequestAndAssignScheduleId(SwapRequest swapRequest)
     {
         // Fetch residents
         Resident? requester =
@@ -247,7 +247,10 @@ public class SwapRequestsController : ControllerBase
 
         if (requester == null || requestee == null)
         {
-            return "Requester or requestee not found.";
+            return new SwapRequestValidateResponse()
+            {
+                Success = false, Message = "Requester or requestee not found."
+            };
         }
 
         // Fetch dates
@@ -265,39 +268,49 @@ public class SwapRequestsController : ControllerBase
                 d.Schedule.Status == ScheduleStatus.Published);
         if (requesterDate == null || requesteeDate == null)
         {
-            return "Could not find both shift dates for the swap.";
+            return new SwapRequestValidateResponse()
+                { Success = false, Message = "Could not find both shift dates for the swap." };
         }
 
         // Check shift type
         if (requesterDate.CallType != requesteeDate.CallType)
         {
-            return
-                "Both shifts must be the same type (e.g., Sunday with Sunday, Saturday with Saturday, Short with Short).";
+            return new SwapRequestValidateResponse()
+            { Success = false,
+                Message = "Both shifts must be the same type (e.g., Sunday with Sunday, Saturday with Saturday, Short with Short)."};
         }
 
         if (requesterDate.ScheduleId != requesteeDate.ScheduleId)
         {
-            return "Both shifts must belong to the same schedule.";
+            return new SwapRequestValidateResponse()
+            { Success = false,
+                Message =  "Both shifts must belong to the same schedule."};
         }
 
         // evaluate rule violations if swap occurs
         ViolationResult RequesterViolationResult = await _ruleViolationService.EvaluateConstraints(requesteeDate.ScheduleId, requester.ResidentId, requesteeDate.ShiftDate, false);
         ViolationResult RequesteeViolationResult = await _ruleViolationService.EvaluateConstraints(requesterDate.ScheduleId, requestee.ResidentId, requesterDate.ShiftDate, false);
-        ViolationResultResponse RequesterViolationResponse = new ViolationResultResponse(RequesterViolationResult);
-        ViolationResultResponse RequesteeViolationResponse = new ViolationResultResponse(RequesterViolationResult);
 
-        if (RequesteeViolationResult.IsViolation)
-        {
-            return $"Swap will result in rule violation(s) for requestee: {RequesteeViolationResponse}";
-        }
+        ViolationResultResponse RequesterViolationResponse = new ViolationResultResponse(RequesterViolationResult, false);
+        ViolationResultResponse RequesteeViolationResponse = new ViolationResultResponse(RequesteeViolationResult, false);
 
-        if (RequesteeViolationResult.IsViolation)
+        List<ViolationResultResponse> combinedViolationResponse
+            = new List<ViolationResultResponse>();
+        combinedViolationResponse.Add(RequesterViolationResponse);
+        combinedViolationResponse.Add(RequesteeViolationResponse);
+
+        if (RequesterViolationResult.IsViolation || RequesteeViolationResult.IsViolation)
         {
-            return $"Swap will result in rule violation(s) for requester: {RequesterViolationResponse}";
+            return (new SwapRequestValidateResponse
+            {
+                Success = false,
+                Message = "Swap will result in rule violation(s) for requestee or requester",
+                violationResults = combinedViolationResponse
+            });
         }
 
         swapRequest.ScheduleId = requesterDate.ScheduleId;
 
-        return null;
+        return new SwapRequestValidateResponse(){Success = true, Message = "Swap successfully executed."};
     }
 }

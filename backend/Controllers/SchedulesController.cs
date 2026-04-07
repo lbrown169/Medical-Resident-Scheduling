@@ -94,20 +94,8 @@ public class SchedulesController : ControllerBase
         }
 
         ViolationResult violationResult = await _ruleViolationService.EvaluateConstraints(id, residentId, date, false);
-        ViolationResultResponse response = new ViolationResultResponse(violationResult);
+        ViolationResultResponse response = new ViolationResultResponse(violationResult, adminOverride);
 
-        // if violation is overridable but have no adminOverride priviledges -> not allowed
-        if (violationResult.IsViolation)
-        {
-            if (violationResult.IsOverridable == true && adminOverride)
-            {
-                response.IsAllowed = true;
-            }
-            else
-            {
-                response.IsAllowed = false;
-            }
-        }
         return Ok(response);
     }
 

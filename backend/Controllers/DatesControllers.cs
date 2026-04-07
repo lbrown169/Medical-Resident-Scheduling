@@ -218,11 +218,11 @@ public class DatesController : ControllerBase
 
         // evaluate rule violations of update
         ViolationResult violationResult = await _ruleViolationService.EvaluateConstraints(existingDate.ScheduleId, resident.ResidentId, updatedDate.ShiftDate ?? existingDate.ShiftDate, isDateOnlyUpdate);
-        ViolationResultResponse response = new(violationResult);
+        ViolationResultResponse response = new(violationResult, adminOverride);
 
         if (violationResult.IsViolation)
         {
-            if (violationResult.IsOverridable == true && !adminOverride)
+            if (response.IsAllowed == false)
             {
                 return BadRequest(new
                 {
