@@ -172,8 +172,8 @@ public class DatesController : ControllerBase
     // PUT: api/dates/{id}
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateDate(Guid id,
-        [FromBody] DateUpdateRequest updatedDate,
-        [FromBody] bool adminOverride)
+        [FromQuery] DateUpdateRequest updatedDate,
+        [FromQuery] bool adminOverride)
     {
         Date? existingDate = await _context.Dates.Include(d => d.Resident).FirstOrDefaultAsync(d => d.DateId == id);
         if (existingDate == null)

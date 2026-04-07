@@ -76,9 +76,8 @@ public class SchedulesController : ControllerBase
     }
 
     // GET: api/schedules/{id}/check
-    [HttpGet("{id}/check")]
-    public async Task<IActionResult> CheckScheduleViolations(
-        [FromQuery] Guid id,
+    [HttpGet("{id}/checkViolations")]
+    public async Task<IActionResult> CheckScheduleViolations(Guid id,
         [FromQuery] string residentId,
         [FromQuery] DateOnly date,
         [FromQuery] bool adminOverride)
