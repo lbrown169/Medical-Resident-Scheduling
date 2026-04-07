@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { ConfirmDialog } from "../../../components/ui/confirm-dialog";
-import { CalendarX, Send, Check, X, Shield, Users, Repeat, Search } from "lucide-react";
+import { CalendarX, Send, Check, X, Shield, Users, Repeat, Search, Trash2 } from "lucide-react";
 import { config } from '../../../config';
 import { toast } from "../../../lib/use-toast";
 import { VacationResponse } from "@/lib/models/VacationResponse";
@@ -185,7 +185,7 @@ const SwapHistoryTab: React.FC<SwapHistoryTabProps> = ({ idToName, onPendingCoun
 
     if (readSwapIds.length === 0) {
       toast({
-        title: "No swaps to clear",
+        title: "No swaps to delete",
         description: "There are no read swap requests to delete.",
       });
       return;
@@ -204,13 +204,13 @@ const SwapHistoryTab: React.FC<SwapHistoryTabProps> = ({ idToName, onPendingCoun
         if (result.notDeleted && result.notDeleted.length > 0) {
           toast({
             title: "Partial success",
-            description: `${readSwapIds.length - result.notDeleted.length} swaps cleared. ${result.notDeleted.length} failed to delete.`,
+            description: `${readSwapIds.length - result.notDeleted.length} swaps deleted. ${result.notDeleted.length} failed to delete.`,
             variant: "destructive",
           });
         } else {
           toast({
             title: "Success",
-            description: "All read swap requests have been cleared.",
+            description: "All read swap requests have been deleted.",
           });
         }
 
@@ -221,14 +221,14 @@ const SwapHistoryTab: React.FC<SwapHistoryTabProps> = ({ idToName, onPendingCoun
       } else {
         toast({
           title: "Error",
-          description: "Failed to clear swap requests.",
+          description: "Failed to delete swap requests.",
           variant: "destructive",
         });
       }
     } catch {
       toast({
         title: "Error",
-        description: "An error occurred while clearing swaps.",
+        description: "An error occurred while deleting swaps.",
         variant: "destructive",
       });
     }
@@ -290,10 +290,10 @@ const SwapHistoryTab: React.FC<SwapHistoryTabProps> = ({ idToName, onPendingCoun
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
         <h2 className="text-lg sm:text-xl font-bold mb-4">Swap Call History</h2>
         <ConfirmDialog
-          triggerText={<><X className="h-4 w-4" /><span>Clear</span></>}
-          title="Clear all read swap requests?"
-          message="Requests not marked as READ will not be cleared. This action cannot be undone."
-          confirmText="Clear"
+          triggerText={<><Trash2 className="h-4 w-4" /><span>Delete Requests</span></>}
+          title="Delete all read swap requests?"
+          message="Unread requests will not be deleted. This action cannot be undone."
+          confirmText="Delete"
           cancelText="Cancel"
           onConfirm={handleClearReadSwaps}
           variant="danger"
@@ -478,7 +478,7 @@ const VacationRequestsTab: React.FC<VacationRequestsTabProps> = ({ handleApprove
   const handleClearAllRequests = async () => {
     const vacationIds = requests.filter(r => r.status !== 'Pending').map(r => r.id);
     if (vacationIds.length === 0) {
-      toast({ title: 'No requests to clear', description: 'There are no vacation requests to delete.' });
+      toast({ title: 'No requests to delete', description: 'There are no vacation requests to delete.' });
       return;
     }
     try {
@@ -492,18 +492,18 @@ const VacationRequestsTab: React.FC<VacationRequestsTabProps> = ({ handleApprove
         if (result.notDeleted && result.notDeleted.length > 0) {
           toast({
             title: 'Partial success',
-            description: `${vacationIds.length - result.notDeleted.length} requests cleared. ${result.notDeleted.length} failed to delete.`,
+            description: `${vacationIds.length - result.notDeleted.length} requests deleted. ${result.notDeleted.length} failed to delete.`,
             variant: 'destructive',
           });
         } else {
-          toast({ title: 'Success', description: 'All vacation requests have been cleared.' });
+          toast({ title: 'Success', description: 'All vacation requests have been deleted.' });
         }
         fetchVacations();
       } else {
-        toast({ title: 'Error', description: 'Failed to clear vacation requests.', variant: 'destructive' });
+        toast({ title: 'Error', description: 'Failed to delete vacation requests.', variant: 'destructive' });
       }
     } catch {
-      toast({ title: 'Error', description: 'An error occurred while clearing requests.', variant: 'destructive' });
+      toast({ title: 'Error', description: 'An error occurred while deleting requests.', variant: 'destructive' });
     }
   };
 
@@ -596,10 +596,10 @@ const VacationRequestsTab: React.FC<VacationRequestsTabProps> = ({ handleApprove
               <span>Search</span>
             </Button>
             <ConfirmDialog
-              triggerText={<><X className="h-4 w-4" /><span>Clear</span></>}
-              title="Clear all vacation requests?"
-              message="This action cannot be undone. Pending requests will not be deleted."
-              confirmText="Clear"
+              triggerText={<><Trash2 className="h-4 w-4" /><span>Delete Requests</span></>}
+              title="Delete all vacation requests?"
+              message="Pending requests will not be deleted. This action cannot be undone."
+              confirmText="Delete"
               cancelText="Cancel"
               onConfirm={handleClearAllRequests}
               variant="danger"
@@ -816,7 +816,7 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white" onClick={() => handleDeleteUserWithConfirm(user)}>
-                          Delete
+                          <Trash2 className="h-4 w-4 mr-1 inline" />Delete
                         </Button>
                       </td>
                     </tr>
@@ -1151,7 +1151,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
                       onClick={() => handleDeleteAnnouncement(a.announcementId)}
                       disabled={deletingAnnouncement === a.announcementId}
                     >
-                      {deletingAnnouncement === a.announcementId ? 'Deleting...' : 'Delete'}
+                      <Trash2 className="h-4 w-4 mr-1 inline" />{deletingAnnouncement === a.announcementId ? 'Deleting...' : 'Delete'}
                     </Button>
                   </div>
                 </div>
