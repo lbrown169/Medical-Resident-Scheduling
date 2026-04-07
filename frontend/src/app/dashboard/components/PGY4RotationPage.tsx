@@ -1,7 +1,7 @@
 "use client";
 
 import { config } from "../../../config";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
@@ -21,6 +21,10 @@ import {
   X,
   ClipboardList,
   ChevronDown,
+  ChevronUp,
+  AlertTriangle,
+  CheckCircle2,
+  Loader2,
 } from "lucide-react";
 import RotationForm from "./RotationForm";
 
@@ -120,6 +124,62 @@ interface RotationTypesListResponse {
   rotationTypes: RotationTypeApiResponse[];
 }
 
+// Override types
+interface Pgy4RotationScheduleOverrideSummary {
+  resident: {
+    resident_id: string;
+    first_name: string;
+    last_name: string;
+  };
+  overrideRotation: {
+    rotationTypeId: string;
+    rotationName: string;
+  };
+  academicMonthIndex: number;
+}
+
+interface Pgy4RotationScheduleOverrideListResponse {
+  count: number;
+  overrides: Pgy4RotationScheduleOverrideSummary[];
+}
+
+// Constraint Violation types
+
+interface ConstraintErrorResponse {
+  message: string;
+  resident?: {
+    resident_id: string;
+    first_name: string;
+    last_name: string;
+  };
+  academicMonthIndex?: number;
+}
+
+interface ConstraintViolationResponse {
+  constraintViolated: string;
+  errors: ConstraintErrorResponse[];
+}
+
+interface ConstraintViolationsListResponse {
+  schedule: Pgy4RotationScheduleResponse;
+  violations: ConstraintViolationResponse[];
+}
+
+const ACADEMIC_MONTHS = [
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+];
+
 // Passed into RotationScheduleTable as colorMap
 const rotationColorMap: Record<string, string> = {
   "Inpatient Psy": "#8b5cf6",
@@ -134,7 +194,6 @@ const rotationColorMap: Record<string, string> = {
   Forensic: "#ef4444",
   CLC: "#ec4899",
   Chief: "#4b5563",
-  Unassigned: "#6b7280",
 };
 
 // Passed into RotationScheduleTable as displayNames
@@ -187,6 +246,203 @@ function Modal({
   );
 }
 
+// Constraint Violations Panel
+function ConstraintViolationsPanel({
+  violations,
+  loading,
+}: {
+  violations: ConstraintViolationResponse[];
+  loading: boolean;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  const totalErrors = violations.reduce((sum, v) => sum + v.errors.length, 0);
+  const hasViolations = violations.length > 0;
+
+  // If there are issues we auto open this panel
+  useEffect(() => {
+    if (hasViolations) setExpanded(true);
+  }, [hasViolations]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 px-4 py-3 rounded-lg border border-border bg-background text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+        <span>Checking constraint violations…</span>
+      </div>
+    );
+  }
+
+  if (!hasViolations) {
+    return (
+      <div className="flex items-center gap-2 px-4 py-3 rounded-lg border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/30 text-sm text-green-700 dark:text-green-400">
+        <CheckCircle2 className="h-4 w-4 shrink-0" />
+        <span className="font-medium">No constraint violations detected</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/20 overflow-hidden">
+      {/* Header (expands and collapses so it isn't too annoying if they want to keep the violations present) */}
+      <button
+        onClick={() => setExpanded((prev) => !prev)}
+        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-red-100/50 dark:hover:bg-red-900/20 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400 shrink-0" />
+          <span className="text-sm font-semibold text-red-700 dark:text-red-400">
+            {violations.length} constraint violation
+            {violations.length !== 1 ? "s" : ""}{" "}
+            <span className="font-normal text-red-500 dark:text-red-500">
+              ({totalErrors} error{totalErrors !== 1 ? "s" : ""} total)
+            </span>
+          </span>
+        </div>
+        {expanded ? (
+          <ChevronUp className="h-4 w-4 text-red-500 shrink-0" />
+        ) : (
+          <ChevronDown className="h-4 w-4 text-red-500 shrink-0" />
+        )}
+      </button>
+
+      {/* Expanded detail */}
+      {expanded && (
+        <div className="border-t border-red-200 dark:border-red-800 divide-y divide-red-100 dark:divide-red-900 max-h-72 overflow-y-auto">
+          {violations.map((violation, vi) => (
+            <div key={vi} className="px-4 py-3">
+              {/* Constraint name */}
+              <p className="text-xs font-bold uppercase tracking-wide text-red-600 dark:text-red-400 mb-2">
+                {violation.constraintViolated}
+              </p>
+              {/* Individual errors */}
+              <ul className="space-y-1.5">
+                {violation.errors.map((err, ei) => (
+                  <li
+                    key={ei}
+                    className="flex flex-col sm:flex-row sm:items-center gap-1 text-sm text-red-700 dark:text-red-300"
+                  >
+                    <span className="shrink-0 inline-block w-1.5 h-1.5 rounded-full bg-red-400 mt-1 sm:mt-0 self-start sm:self-auto" />
+                    <span className="flex-1">{err.message}</span>
+                    {/* Resident badge */}
+                    {err.resident && (
+                      <span className="text-xs bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 rounded px-1.5 py-0.5 whitespace-nowrap shrink-0">
+                        {err.resident.first_name} {err.resident.last_name}
+                      </span>
+                    )}
+                    {/* Month badge */}
+                    {err.academicMonthIndex != null && (
+                      <span className="text-xs bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 rounded px-1.5 py-0.5 whitespace-nowrap shrink-0">
+                        {ACADEMIC_MONTHS[err.academicMonthIndex] ??
+                          `Month ${err.academicMonthIndex}`}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Pending Changes Panel
+function PendingChangesPanel({
+  overrides,
+  onRevertOne,
+}: {
+  overrides: Pgy4RotationScheduleOverrideSummary[];
+  onRevertOne: (
+    residentId: string,
+    academicMonthIndex: number,
+  ) => Promise<void>;
+}) {
+  const [expanded, setExpanded] = useState(true);
+  const [revertingKey, setRevertingKey] = useState<string | null>(null);
+
+  if (overrides.length === 0) return null;
+
+  const handleRevert = async (residentId: string, monthIndex: number) => {
+    const key = `${residentId}-${monthIndex}`;
+    setRevertingKey(key);
+    try {
+      await onRevertOne(residentId, monthIndex);
+    } finally {
+      setRevertingKey(null);
+    }
+  };
+
+  return (
+    <div className="rounded-lg border border-yellow-200 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-950/20 overflow-hidden">
+      <button
+        onClick={() => setExpanded((prev) => !prev)}
+        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-yellow-100/50 dark:hover:bg-yellow-900/20 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <Save className="h-4 w-4 text-yellow-600 dark:text-yellow-400 shrink-0" />
+          <span className="text-sm font-semibold text-yellow-700 dark:text-yellow-400">
+            {overrides.length} pending change{overrides.length !== 1 ? "s" : ""}{" "}
+            <span className="font-normal text-yellow-500">
+              — not yet applied
+            </span>
+          </span>
+        </div>
+        {expanded ? (
+          <ChevronUp className="h-4 w-4 text-yellow-500 shrink-0" />
+        ) : (
+          <ChevronDown className="h-4 w-4 text-yellow-500 shrink-0" />
+        )}
+      </button>
+
+      {expanded && (
+        <div className="border-t border-yellow-200 dark:border-yellow-700 divide-y divide-yellow-100 dark:divide-yellow-900 max-h-60 overflow-y-auto">
+          {overrides.map((o) => {
+            const key = `${o.resident.resident_id}-${o.academicMonthIndex}`;
+            const isReverting = revertingKey === key;
+            return (
+              <div
+                key={key}
+                className="flex items-center justify-between px-4 py-2.5 gap-3"
+              >
+                <div className="flex items-center gap-2 text-sm text-yellow-800 dark:text-yellow-300 flex-1 min-w-0">
+                  <span className="font-medium shrink-0">
+                    {o.resident.first_name} {o.resident.last_name}
+                  </span>
+                  <span className="text-yellow-500 shrink-0">·</span>
+                  <span className="shrink-0 text-xs bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400 rounded px-1.5 py-0.5">
+                    {ACADEMIC_MONTHS[o.academicMonthIndex] ??
+                      `Month ${o.academicMonthIndex}`}
+                  </span>
+                  <span className="text-yellow-500 shrink-0">→</span>
+                  <span className="font-medium truncate">
+                    {o.overrideRotation.rotationName}
+                  </span>
+                </div>
+                <button
+                  onClick={() =>
+                    handleRevert(o.resident.resident_id, o.academicMonthIndex)
+                  }
+                  disabled={isReverting}
+                  className="shrink-0 flex items-center gap-1 text-xs px-2 py-1 rounded border border-yellow-400 dark:border-yellow-600 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-200 dark:hover:bg-yellow-800/40 disabled:opacity-50 transition-colors"
+                >
+                  {isReverting ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <X className="h-3 w-3" />
+                  )}
+                  Revert
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
   residents,
 }) => {
@@ -233,12 +489,254 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
     schedules.find((s) => s.pgy4RotationScheduleId === selectedScheduleId) ??
     null;
 
-  // State for viewing form creation
-  const [showRotationFormModal, setShowRotationFormModal] = useState(false);
+  // Pending changes state
 
-  // Submission
+  // Whether there are any staged overrides for this schedule
+  const [hasPendingOverrides, setHasPendingOverrides] = useState(false);
+  const [pendingOverrides, setPendingOverrides] = useState<
+    Pgy4RotationScheduleOverrideSummary[]
+  >([]);
+  const [applyingOverrides, setApplyingOverrides] = useState(false);
+  const [discardingOverrides, setDiscardingOverrides] = useState(false);
+
+  // Constraint violations state
+
+  const [constraintViolations, setConstraintViolations] = useState<
+    ConstraintViolationResponse[]
+  >([]);
+  const [loadingViolations, setLoadingViolations] = useState(false);
+
+  const fetchConstraintErrors = useCallback(async (scheduleId: string) => {
+    if (!scheduleId) return;
+    try {
+      setLoadingViolations(true);
+      const res = await fetch(
+        `${config.apiUrl}/api/pgy4-rotation-schedule/${scheduleId}/constraint-errors`,
+      );
+      if (!res.ok) {
+        setConstraintViolations([]);
+        return;
+      }
+      const data: ConstraintViolationsListResponse = await res.json();
+      setConstraintViolations(data.violations ?? []);
+    } catch (err) {
+      console.error("Failed to fetch constraint errors:", err);
+      setConstraintViolations([]);
+    } finally {
+      setLoadingViolations(false);
+    }
+  }, []);
+
+  // Check for violations when the schedule changes
+  const fetchScheduleWithOverrides = useCallback(async (scheduleId: string) => {
+    const res = await fetch(
+      `${config.apiUrl}/api/pgy4-rotation-schedule/${scheduleId}?applyOverrides=true`,
+    );
+    if (!res.ok) return;
+    const updated: Pgy4RotationScheduleResponse = await res.json();
+    setSchedules((prev) =>
+      prev.map((s) =>
+        s.pgy4RotationScheduleId === scheduleId
+          ? { ...s, schedule: updated.schedule }
+          : s,
+      ),
+    );
+  }, []);
+
+  /**
+   * Get the raw schedule without overrides on a discard
+   */
+  const fetchScheduleWithoutOverrides = useCallback(
+    async (scheduleId: string) => {
+      const res = await fetch(
+        `${config.apiUrl}/api/pgy4-rotation-schedule/${scheduleId}`,
+      );
+      if (!res.ok) return;
+      const updated: Pgy4RotationScheduleResponse = await res.json();
+      setSchedules((prev) =>
+        prev.map((s) =>
+          s.pgy4RotationScheduleId === scheduleId
+            ? { ...s, schedule: updated.schedule }
+            : s,
+        ),
+      );
+    },
+    [],
+  );
+
+  /**
+   * Sync with previous sessions overrides
+   */
+  const syncOverrideState = useCallback(
+    async (scheduleId: string) => {
+      if (!scheduleId) {
+        setHasPendingOverrides(false);
+        return;
+      }
+      try {
+        const res = await fetch(
+          `${config.apiUrl}/api/pgy4-rotation-schedule-override/${scheduleId}`,
+        );
+        if (!res.ok) {
+          setHasPendingOverrides(false);
+          return;
+        }
+        const data: Pgy4RotationScheduleOverrideListResponse = await res.json();
+        const hasAny = (data.count ?? 0) > 0;
+        setHasPendingOverrides(hasAny);
+        setPendingOverrides(data.overrides ?? []);
+        if (hasAny) await fetchScheduleWithOverrides(scheduleId);
+      } catch (err) {
+        console.error("Failed to sync override state:", err);
+        setHasPendingOverrides(false);
+      }
+    },
+    [fetchScheduleWithOverrides],
+  );
+
+  // Check violation + override count when schedule changes
+  useEffect(() => {
+    if (selectedScheduleId) {
+      syncOverrideState(selectedScheduleId);
+      fetchConstraintErrors(selectedScheduleId);
+    } else {
+      setConstraintViolations([]);
+      setHasPendingOverrides(false);
+    }
+  }, [selectedScheduleId, syncOverrideState, fetchConstraintErrors]);
+
+  /**
+   * Commit staged overrides
+   */
+  const handleApplyOverrides = async () => {
+    if (!selectedScheduleId || !hasPendingOverrides) return;
+    try {
+      setApplyingOverrides(true);
+      const res = await fetch(
+        `${config.apiUrl}/api/pgy4-rotation-schedule-override/${selectedScheduleId}/apply-overrides`,
+        { method: "PUT" },
+      );
+      if (!res.ok) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to apply changes.",
+        });
+        return;
+      }
+      // Response is the schedule with overrides baked in, update the visible schedule
+      const updated: Pgy4RotationScheduleResponse = await res.json();
+      setSchedules((prev) =>
+        prev.map((s) =>
+          s.pgy4RotationScheduleId === selectedScheduleId
+            ? { ...s, schedule: updated.schedule }
+            : s,
+        ),
+      );
+      setHasPendingOverrides(false);
+      setPendingOverrides([]);
+      await fetchConstraintErrors(selectedScheduleId);
+      toast({
+        variant: "success",
+        title: "Applied",
+        description: "All changes have been saved.",
+      });
+    } catch (err) {
+      console.error("Failed to apply overrides:", err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to apply changes.",
+      });
+    } finally {
+      setApplyingOverrides(false);
+    }
+  };
+
+  /**
+   * Wipe all staged overrides on a discard
+   */
+  const handleDiscardOverrides = async () => {
+    if (!selectedScheduleId || !hasPendingOverrides) return;
+    try {
+      setDiscardingOverrides(true);
+      const res = await fetch(
+        `${config.apiUrl}/api/pgy4-rotation-schedule-override/${selectedScheduleId}/all`,
+        { method: "DELETE" },
+      );
+      if (!res.ok) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to discard changes.",
+        });
+        return;
+      }
+      await fetchScheduleWithoutOverrides(selectedScheduleId);
+      setHasPendingOverrides(false);
+      setPendingOverrides([]);
+      await fetchConstraintErrors(selectedScheduleId);
+      toast({
+        variant: "success",
+        title: "Discarded",
+        description: "All pending changes discarded.",
+      });
+    } catch (err) {
+      console.error("Failed to discard overrides:", err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to discard changes.",
+      });
+    } finally {
+      setDiscardingOverrides(false);
+    }
+  };
+
+  /**
+   * Revert a staged override (just one)
+   * Lets admin revert changes individually
+   */
+  const handleRevertSingleOverride = async (
+    residentId: string,
+    academicMonthIndex: number,
+  ) => {
+    if (!selectedScheduleId) return;
+    try {
+      const res = await fetch(
+        `${config.apiUrl}/api/pgy4-rotation-schedule-override/${selectedScheduleId}`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ residentId, academicMonthIndex }),
+        },
+      );
+      if (!res.ok) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to revert change.",
+        });
+        return;
+      }
+      // Sync override list and schedule preview
+      await syncOverrideState(selectedScheduleId);
+      await fetchConstraintErrors(selectedScheduleId);
+    } catch {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to revert change.",
+      });
+    }
+  };
+
+  const [showRotationFormModal, setShowRotationFormModal] = useState(false);
   const [submissions, setSubmissions] = useState<RotationPrefResponse[]>([]);
   const [loadingSubmissions, setLoadingSubmissions] = useState(false);
+  const [unsubmittedResidents, setUnsubmittedResidents] = useState<
+    { first_name: string; last_name: string }[]
+  >([]);
 
   // State for viewing a resident's submission
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
@@ -349,9 +847,8 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
   );
 
   // Submission tracking
-  const submittedResidentIds = new Set(submissions.map((s) => s.resident.resident_id));
-  const submittedCount = submittedResidentIds.size;
-  const missingCount = PGY3Residents.filter((r) => !submittedResidentIds.has(r.id)).length;
+  const submittedCount = submissions.length;
+  const missingCount = unsubmittedResidents.length;
 
   // Load schedules and rotation types on mount
   useEffect(() => {
@@ -455,6 +952,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
   const handleDelete = async () => {
     if (!selectedScheduleId) return;
     try {
+      setDeletingSchedule(true);
       const res = await fetch(
         `${config.apiUrl}/api/pgy4-rotation-schedule/${selectedScheduleId}`,
         { method: "DELETE" },
@@ -468,28 +966,61 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
     } catch (err) {
       console.error(err);
       setScheduleError("Failed to delete schedule.");
+    } finally {
+      setDeletingSchedule(false);
     }
   };
 
+  const [publishingSchedule, setPublishingSchedule] = useState(false);
+  const [deletingSchedule, setDeletingSchedule] = useState(false);
+
   const handlePublish = async () => {
     if (!selectedScheduleId) return;
+    const isCurrentlyPublished = selectedSchedule?.isPublished ?? false;
     try {
+      setPublishingSchedule(true);
       setScheduleError(null);
-      const res = await fetch(
-        `${config.apiUrl}/api/pgy4-rotation-schedule/publish/${selectedScheduleId}`,
-        { method: "POST" },
-      );
-      if (!res.ok) throw new Error("Failed to publish schedule");
-      // Update local state so the published marker reflects immediately
+
+      // Call correct url based on published status
+      const url = isCurrentlyPublished
+        ? `${config.apiUrl}/api/pgy4-rotation-schedule/unpublish`
+        : `${config.apiUrl}/api/pgy4-rotation-schedule/publish/${selectedScheduleId}`;
+
+      const res = await fetch(url, { method: "PATCH" });
+
+      if (!res.ok)
+        throw new Error(
+          isCurrentlyPublished
+            ? "Failed to unpublish schedule"
+            : "Failed to publish schedule",
+        );
+
       setSchedules((prev) =>
         prev.map((s) => ({
           ...s,
-          isPublished: s.pgy4RotationScheduleId === selectedScheduleId,
+          isPublished: !isCurrentlyPublished
+            ? s.pgy4RotationScheduleId === selectedScheduleId
+            : s.pgy4RotationScheduleId === selectedScheduleId
+              ? false
+              : s.isPublished,
         })),
       );
+      toast({
+        variant: "success",
+        title: isCurrentlyPublished ? "Unpublished" : "Published",
+        description: isCurrentlyPublished
+          ? "Schedule has been unpublished."
+          : "Schedule is now live.",
+      });
     } catch (err) {
       console.error(err);
-      setScheduleError("Failed to publish schedule.");
+      setScheduleError(
+        isCurrentlyPublished
+          ? "Failed to unpublish schedule."
+          : "Failed to publish schedule.",
+      );
+    } finally {
+      setPublishingSchedule(false);
     }
   };
 
@@ -513,6 +1044,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
       if (!data.ok) throw new Error("Failed to fetch submissions");
       const json: RotationPrefRequestsListResponse = await data.json();
       setSubmissions(json.rotationPrefRequests ?? []);
+      await fetchUnsubmittedResidents();
 
       toast({
         variant: "success",
@@ -553,6 +1085,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
       if (!data.ok) throw new Error("Failed to fetch submissions");
       const json: RotationPrefRequestsListResponse = await data.json();
       setSubmissions(json.rotationPrefRequests ?? []);
+      await fetchUnsubmittedResidents();
 
       if (failed.length > 0) {
         toast({
@@ -580,12 +1113,14 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
   const handleRotationFormSuccess = async () => {
     const resident = PGY3Residents.find((r) => r.id === formOverrideResidentId);
     setShowRotationFormModal(false);
+    setFormOverrideResidentId(null);
     const refreshRes = await fetch(
       `${config.apiUrl}/api/rotation-pref-request`,
     );
     if (!refreshRes.ok) return;
     const json: RotationPrefRequestsListResponse = await refreshRes.json();
     setSubmissions(json.rotationPrefRequests ?? []);
+    await fetchUnsubmittedResidents();
     toast({
       variant: "success",
       title: "Submitted",
@@ -628,6 +1163,19 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
     }
   };
 
+  const fetchUnsubmittedResidents = useCallback(async () => {
+    try {
+      const res = await fetch(
+        `${config.apiUrl}/api/rotation-pref-request/resident/unsubmitted`,
+      );
+      if (!res.ok) return;
+      const data: UnsubmittedResidentsResponse = await res.json();
+      setUnsubmittedResidents(data.unsubmittedResidents ?? []);
+    } catch (err) {
+      console.error("Failed to fetch unsubmitted residents", err);
+    }
+  }, []);
+
   useEffect(() => {
     const loadSubmissions = async () => {
       try {
@@ -648,7 +1196,8 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
     };
 
     loadSubmissions();
-  }, []);
+    fetchUnsubmittedResidents();
+  }, [fetchUnsubmittedResidents]);
 
   return (
     <div className="w-full pt-4 h-[calc(100vh-4rem)] flex flex-col items-center px-4 md:pl-8">
@@ -724,7 +1273,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
               confirmText="Delete"
               cancelText="Cancel"
               onConfirm={handleDelete}
-              loading={false}
+              loading={deletingSchedule}
               variant="danger"
             />
           </div>
@@ -794,10 +1343,20 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                     </select>
                     <Button
                       onClick={handlePublish}
-                      disabled={selectedSchedule?.isPublished}
-                      className="bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm px-3 py-2"
+                      disabled={publishingSchedule}
+                      className={`text-white text-xs sm:text-sm px-3 py-2 ${
+                        selectedSchedule?.isPublished
+                          ? "bg-green-600 hover:bg-red-600"
+                          : "bg-blue-600 hover:bg-blue-700"
+                      }`}
                     >
-                      {selectedSchedule?.isPublished ? "Published" : "Publish"}
+                      {publishingSchedule
+                        ? selectedSchedule?.isPublished
+                          ? "Unpublishing..."
+                          : "Publishing..."
+                        : selectedSchedule?.isPublished
+                          ? "Unpublish"
+                          : "Publish"}
                     </Button>
                   </>
                 )}
@@ -815,76 +1374,125 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                 rotationTypes={rotationTypeNames}
                 emptyMessage='No rotations found. Use the "Generate Schedule" button above to create a rotation schedule.'
                 allowResidentReassignment={false}
-
-                // !!! THIS WORKS FOR UPDATING FOR NOW. OVERRIDE AND CONSTRAIN VALIDATION ISNT IN YET BUT SOON.
-                onRotationChange={async (residentId, monthIndex, newRotationTypeId) => {
-                  // Find rotation entry for the resident and month combo
-                  const residentSchedule = selectedSchedule?.schedule.find(
-                    (s) => s.resident.resident_id === residentId
-                  );
-                  const rotation = residentSchedule?.rotations.find(
-                    (r) => r.academicMonthIndex === monthIndex
-                  );
-                  if (!rotation) return;
+                onRotationChange={async (
+                  residentId,
+                  monthIndex,
+                  newRotationTypeId,
+                ) => {
+                  if (!selectedScheduleId) return;
 
                   try {
                     const res = await fetch(
-                      `${config.apiUrl}/api/rotations/${rotation.rotationId}/${monthIndex}`,
+                      `${config.apiUrl}/api/pgy4-rotation-schedule-override/${selectedScheduleId}`,
                       {
-                        method: "PATCH",
+                        method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ rotationTypeId: newRotationTypeId }),
-                      }
+                        body: JSON.stringify({
+                          residentId,
+                          newRotationTypeId,
+                          academicMonthIndex: monthIndex,
+                        }),
+                      },
                     );
 
                     if (!res.ok) {
                       const err = await res.json();
-                      toast({ variant: "destructive", title: "Error", description: err?.message ?? "Failed to update rotation." });
+                      toast({
+                        variant: "destructive",
+                        title: "Error",
+                        description:
+                          err?.message ?? "Failed to stage rotation change.",
+                      });
                       return;
                     }
 
-                    // Update optimistically
-                    const newRotationType = rotationTypeNames.find((rt) => rt.id === newRotationTypeId);
-                    setSchedules((prev) =>
-                      prev.map((s) => {
-                        if (s.pgy4RotationScheduleId !== selectedScheduleId) return s;
-                        return {
-                          ...s,
-                          schedule: s.schedule.map((rs) => {
-                            if (rs.resident.resident_id !== residentId) return rs;
-                            return {
-                              ...rs,
-                              rotations: rs.rotations.map((r) =>
-                                r.academicMonthIndex === monthIndex
-                                  ? { ...r, rotationType: { rotationTypeId: newRotationTypeId, rotationName: newRotationType?.name ?? r.rotationType.rotationName } }
-                                  : r
-                              ),
-                            };
-                          }),
-                        };
-                      })
-                    );
+                    setHasPendingOverrides(true);
 
-                    toast({ variant: "success", title: "Updated", description: "Rotation updated." });
+                    // Sync override list for the pending changes panel
+                    await syncOverrideState(selectedScheduleId);
+
+                    // Re-validate — backend applies overrides before checking constraints
+                    await fetchConstraintErrors(selectedScheduleId);
                   } catch {
-                    toast({ variant: "destructive", title: "Error", description: "Failed to update rotation." });
+                    toast({
+                      variant: "destructive",
+                      title: "Error",
+                      description: "Failed to stage rotation change.",
+                    });
                   }
                 }}
               />
             )}
-            {/* Footer - Buttons at the bottom */}
+
+            {/* Constraint Violations Panel */}
+            {!loadingSchedules && selectedSchedule && (
+              <ConstraintViolationsPanel
+                violations={constraintViolations}
+                loading={loadingViolations}
+              />
+            )}
+
+            {/* Pending Changes Panel */}
+            {!loadingSchedules && selectedSchedule && (
+              <PendingChangesPanel
+                overrides={pendingOverrides}
+                onRevertOne={handleRevertSingleOverride}
+              />
+            )}
+
+            {/* Footer */}
             <div className="flex justify-end gap-2 pt-4">
+              {/* Discard */}
               <Button
-                disabled
                 variant="outline"
-                className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 text-xs sm:text-sm lg:text-base"
+                disabled={
+                  !hasPendingOverrides ||
+                  discardingOverrides ||
+                  applyingOverrides
+                }
+                onClick={handleDiscardOverrides}
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium
+                          border-red-500 text-red-600
+                          hover:bg-red-500 hover:text-white
+                          disabled:opacity-40"
               >
-                <Save className="h-4 w-4" />
-                <span>Save</span>
+                {discardingOverrides ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <X className="h-4 w-4" />
+                )}
+                <span>Discard</span>
               </Button>
+
+              {/* Apply */}
               <Button
-                disabled
-                className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-green-500 text-white hover:bg-green-600"
+                disabled={
+                  !hasPendingOverrides ||
+                  applyingOverrides ||
+                  discardingOverrides
+                }
+                onClick={handleApplyOverrides}
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium
+                          bg-blue-600 hover:bg-blue-700 text-white
+                          disabled:opacity-40"
+              >
+                {applyingOverrides ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                <span>Apply</span>
+              </Button>
+
+              {/* Export */}
+              <Button
+                disabled={!selectedScheduleId}
+                onClick={() => {
+                  window.open(`${config.apiUrl}/api/pgy4-rotation-schedule/export/${selectedScheduleId}`, "_blank");
+                }}
+                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium
+                          bg-green-600 hover:bg-green-700 text-white
+                          disabled:opacity-40"
               >
                 <Download className="h-4 w-4" />
                 <span>Export</span>
@@ -962,7 +1570,9 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                             size="sm"
                             className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white"
                             onClick={() => {
-                              setDeleteTargetId(submission.rotationPrefRequestId);
+                              setDeleteTargetId(
+                                submission.rotationPrefRequestId,
+                              );
                               setDeleteDialogOpen(true);
                             }}
                             disabled={
@@ -1093,7 +1703,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                   ) : (
                     <tr>
                       <td
-                        colSpan={4}
+                        colSpan={2}
                         className="px-6 py-4 text-center text-gray-500 italic"
                       >
                         No PGY-3 residents found.

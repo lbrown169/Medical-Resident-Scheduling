@@ -4,8 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { ConfirmDialog } from "../../../components/ui/confirm-dialog";
-import { CalendarDays, CalendarX, Send, Check, X, Shield, Users, Repeat } from "lucide-react";
-import { differenceInCalendarDays, parseISO } from 'date-fns';
+import { CalendarX, Send, Check, X, Shield, Users, Repeat, Search } from "lucide-react";
 import { config } from '../../../config';
 import { toast } from "../../../lib/use-toast";
 import { VacationResponse } from "@/lib/models/VacationResponse";
@@ -388,7 +387,7 @@ function groupRequests(requests: Request[]) {
 
   const groupedMap = new Map<string, Request[]>();
   for (const req of requests) {
-    const key = `${req.firstName} ${req.lastName}||${req.reason}||${req.halfDay ?? ''}`;
+    const key = req.groupId || req.id;
     if (!groupedMap.has(key)) groupedMap.set(key, []);
     groupedMap.get(key)!.push(req);
   }
@@ -398,35 +397,21 @@ function groupRequests(requests: Request[]) {
     const sorted = entries.sort((a, b) =>
       new Date(a.startDate || "").getTime() - new Date(b.startDate || "").getTime()
     );
-
-    let i = 0;
-    while (i < sorted.length) {
-      const current = sorted[i];
-      const start = current.startDate!;
-      let end = current.endDate!;
-      let j = i + 1;
-      while (
-        j < sorted.length &&
-        differenceInCalendarDays(parseISO(sorted[j].startDate!), parseISO(end)) <= 1
-      ) {
-        end = sorted[j].endDate!;
-        j++;
-      }
-      result.push({
-        id: current.id,
-        residentId: current.residentId,
-        firstName: current.firstName,
-        lastName: current.lastName,
-        reason: current.reason,
-        halfDay: current.halfDay ?? null,
-        status: current.status,
-        startDate: start,
-        endDate: end,
-        groupId: current.groupId,
-        details: current.details,
-      });
-      i = j;
-    }
+    const first = sorted[0];
+    const last = sorted[sorted.length - 1];
+    result.push({
+      id: first.id,
+      residentId: first.residentId,
+      firstName: first.firstName,
+      lastName: first.lastName,
+      reason: first.reason,
+      halfDay: first.halfDay ?? null,
+      status: first.status,
+      startDate: first.startDate,
+      endDate: last.endDate,
+      groupId: first.groupId,
+      details: first.details,
+    });
   }
 
   result.sort((a, b) =>
@@ -438,7 +423,8 @@ function groupRequests(requests: Request[]) {
 const VacationRequestsTab: React.FC<VacationRequestsTabProps> = ({ handleApproveRequest, handleDenyRequest, onPendingCountChange }) => {
   const [requests, setRequests] = useState<Request[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [searchDate, setSearchDate] = useState('');
 
   const fetchVacations = useCallback(() => {
     setLoading(true);
@@ -484,7 +470,7 @@ const VacationRequestsTab: React.FC<VacationRequestsTabProps> = ({ handleApprove
   }, [groupedRequests, onPendingCountChange]);
 
   const handleClearAllRequests = async () => {
-    const vacationIds = requests.map(r => r.id);
+    const vacationIds = requests.filter(r => r.status !== 'Pending').map(r => r.id);
     if (vacationIds.length === 0) {
       toast({ title: 'No requests to clear', description: 'There are no vacation requests to delete.' });
       return;
@@ -599,14 +585,14 @@ const VacationRequestsTab: React.FC<VacationRequestsTabProps> = ({ handleApprove
           <h2 className="text-lg sm:text-xl font-bold">Time Off Requests</h2>
           <div className="flex gap-2">
             <Button variant="outline" className="flex items-center gap-2 px-1 sm:px-6 py-1 sm:py-3 text-xs sm:text-sm lg:text-base"
-              onClick={() => setShowModal(true)}>
-              <CalendarDays className="h-4 w-4" />
-              <span>View All</span>
+              onClick={() => setShowSearchModal(true)}>
+              <Search className="h-4 w-4" />
+              <span>Search</span>
             </Button>
             <ConfirmDialog
               triggerText={<><X className="h-4 w-4" /><span>Clear</span></>}
               title="Clear all vacation requests?"
-              message="This action cannot be undone."
+              message="This action cannot be undone. Pending requests will not be deleted."
               confirmText="Clear"
               cancelText="Cancel"
               onConfirm={handleClearAllRequests}
@@ -618,8 +604,54 @@ const VacationRequestsTab: React.FC<VacationRequestsTabProps> = ({ handleApprove
           {requestsTable}
         </div>
       </Card>
-      <Modal open={showModal} onClose={() => setShowModal(false)} title="All Time Off Requests">
-        <div className="overflow-x-auto">{requestsTable}</div>
+      <Modal open={showSearchModal} onClose={() => { setShowSearchModal(false); setSearchDate(''); }} title="Search Date">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">Select date:</label>
+            <input
+              type="date"
+              value={searchDate}
+              onChange={e => setSearchDate(e.target.value)}
+              className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100"
+            />
+          </div>
+          {searchDate && (() => {
+            const selected = new Date(searchDate);
+            selected.setMinutes(selected.getMinutes() + selected.getTimezoneOffset());
+            const matched = requests.filter(r => {
+              const start = new Date(r.startDate || r.date || '');
+              start.setMinutes(start.getMinutes() + start.getTimezoneOffset());
+              const end = new Date(r.endDate || r.date || '');
+              end.setMinutes(end.getMinutes() + end.getTimezoneOffset());
+              return selected >= start && selected <= end;
+            });
+            return matched.length === 0 ? (
+              <p className="text-sm text-green-600 font-medium">No requests found for this date.</p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <p className="text-sm text-gray-500">{matched.length} request{matched.length !== 1 ? 's' : ''} found:</p>
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-100 dark:bg-neutral-800">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Resident</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Reason</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
+                    {matched.map((r, i) => (
+                      <tr key={`${r.residentId}-${i}`} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
+                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{r.firstName} {r.lastName}</td>
+                        <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{r.reason}{r.halfDay === 'A' ? ' (AM)' : r.halfDay === 'P' ? ' (PM)' : ''}</td>
+                        <td className={`px-4 py-3 text-sm font-medium ${r.status === 'Pending' ? 'text-yellow-600' : r.status === 'Denied' ? 'text-red-600' : 'text-green-600'}`}>{r.status}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })()}
+        </div>
       </Modal>
     </>
   );
