@@ -68,7 +68,7 @@ public class RuleViolationService
         return (true, null, resident);
     }
 
-    public async Task<ViolationResult> EvaluateConstraints(Guid scheduleId, string residentId, DateOnly date)
+    public async Task<ViolationResult> EvaluateConstraints(Guid scheduleId, string residentId, DateOnly date, bool? isUpdateForSameResident = null)
     {
         //validate schedule
         Schedule? schedule = await _context.Schedules.FindAsync(scheduleId);
@@ -88,6 +88,11 @@ public class RuleViolationService
         // check through all constrains for any rule violations
         foreach (ICallShiftConstraint constraint in _constraints)
         {
+            // if updating date for same resident, bypass OneShiftADayConstraint
+            if (isUpdateForSameResident == true && constraint.ToString() == "OneShiftADayConstraint")
+            {
+                continue;
+            }
             ConstraintResult result = constraint.Evaluate(residentInfo, date);
             if (result.IsViolated)
             {

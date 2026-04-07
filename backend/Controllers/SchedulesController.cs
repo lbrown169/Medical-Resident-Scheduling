@@ -1,3 +1,5 @@
+//testing
+using System.Text.Json;
 using MedicalDemo.Converters;
 using MedicalDemo.Enums;
 using MedicalDemo.Extensions;
@@ -6,9 +8,9 @@ using MedicalDemo.Models.DTO;
 using MedicalDemo.Models.DTO.Requests;
 using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.Entities;
+using MedicalDemo.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-
 // Adjust namespace based on your project
 
 namespace MedicalDemo.Controllers;
@@ -20,12 +22,14 @@ public class SchedulesController : ControllerBase
     private readonly ILogger<SchedulesController> _logger;
     private readonly MedicalContext _context;
     private readonly ScheduleConverter _scheduleConverter;
+    private readonly RuleViolationService _ruleViolationService;
 
-    public SchedulesController(ILogger<SchedulesController> logger, MedicalContext context, ScheduleConverter scheduleConverter)
+    public SchedulesController(ILogger<SchedulesController> logger, MedicalContext context, ScheduleConverter scheduleConverter, RuleViolationService ruleViolationService)
     {
         _logger = logger;
         _context = context;
         _scheduleConverter = scheduleConverter;
+        _ruleViolationService = ruleViolationService;
     }
 
     // GET: api/schedules/
@@ -69,6 +73,40 @@ public class SchedulesController : ControllerBase
             .ToList();
 
         return Ok(scheduleResponses);
+    }
+
+    // GET: api/schedules/{id}/check
+    [HttpGet("{id}/check")]
+    public async Task<IActionResult> CheckScheduleViolations(
+        [FromQuery] Guid id,
+        [FromQuery] string residentId,
+        [FromQuery] DateOnly date,
+        [FromQuery] bool adminOverride)
+    {
+        Schedule? existingSchedule = await _context.Schedules.FindAsync(id);
+        if (existingSchedule == null)
+        {
+            return NotFound();
+        }
+
+        if (string.IsNullOrEmpty(residentId))
+        {
+            return BadRequest();
+        }
+
+        ViolationResult violationResult = await _ruleViolationService.EvaluateConstraints(id, residentId, date, false);
+        ViolationResultResponse response = new ViolationResultResponse(violationResult);
+
+        // if violation is overridable but have no adminOverride priviledges -> not allowed
+        if (violationResult.IsOverridable == true && adminOverride)
+        {
+            response.IsAllowed = true;
+        }
+        else
+        {
+            response.IsAllowed = false;
+        }
+        return Ok(response);
     }
 
     // PUT: api/schedules/{id}
