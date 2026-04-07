@@ -113,7 +113,10 @@ export default function PGY4SchedulePage() {
         </div>
         <div className="flex gap-3 print:hidden">
           <Button
-            disabled
+            disabled={!schedule}
+            onClick={() => {
+              window.open(`${config.apiUrl}/api/pgy4-rotation-schedule/export/${schedule!.pgy4RotationScheduleId}`, "_blank");
+            }}
             className="py-2 flex items-center justify-center gap-2 bg-green-500 text-white hover:bg-green-600"
           >
             <Download className="h-4 w-4" />
