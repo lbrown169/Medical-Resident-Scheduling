@@ -272,9 +272,17 @@ const SwapHistoryTab: React.FC<SwapHistoryTabProps> = ({ idToName, onPendingCoun
     }
   }
 
+  const sortSwaps = (swaps: typeof swapHistory) =>
+    [...swaps].sort((a, b) => {
+      const pendingA = a.status.id === 0 ? 0 : 1;
+      const pendingB = b.status.id === 0 ? 0 : 1;
+      if (pendingA !== pendingB) return pendingA - pendingB;
+      return new Date(a.requesterDate || "").getTime() - new Date(b.requesterDate || "").getTime();
+    });
+
   const orderedSwapHistory = [
-    ...swapHistory.filter((swap) => !swap.isRead),
-    ...swapHistory.filter((swap) => swap.isRead),
+    ...sortSwaps(swapHistory.filter((swap) => !swap.isRead)),
+    ...sortSwaps(swapHistory.filter((swap) => swap.isRead)),
   ];
 
   return (
@@ -301,12 +309,13 @@ const SwapHistoryTab: React.FC<SwapHistoryTabProps> = ({ idToName, onPendingCoun
               <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Partner</th>
               <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
               <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-6 py-4 text-center text-gray-400 italic">Loading...</td>
+                <td colSpan={7} className="px-6 py-4 text-center text-gray-400 italic">Loading...</td>
               </tr>
             ) : orderedSwapHistory.length > 0 ? (
                 orderedSwapHistory.map((swap, idx) => (
@@ -323,32 +332,26 @@ const SwapHistoryTab: React.FC<SwapHistoryTabProps> = ({ idToName, onPendingCoun
                     <td className={`px-1 sm:px-1 py-3 sm:py-4 whitespace-nowrap text-sm font-semibold ${
                       swap.status.id === 1 ? 'text-green-600' : swap.status.id === 2 ? 'text-red-600' : 'text-yellow-600'
                       }`}>
-                      <div className="flex items-center justify-between w-full">
-                        {`${swap.status.description} `}
-                        {!swap.isRead ? (
-                          <>
-                            <Button variant="outline" size="sm" className="mr-2 text-blue-600 border-blue-600 hover:bg-blue-500 hover:text-white cursor-pointer" onClick={() => {
-                              if (swap.status.id === 0) {
-                                handleWarnMarkAsRead(swap.swapRequestId)
-                              } else {
-                                handleMarkAsRead(swap.swapRequestId)
-                              }
-                            }}>
-                              <Check className="h-3 w-3 mr-1" /> Mark as Read
-                            </Button>
-                          </>
-                        ) : (
-                          <Button variant="outline" size="sm" className="mr-2 text-slate-600 hover:text-slate-600 border-slate-600" onClick={() => (/*Possible future implementation of marking as unread*/ "")}>
-                            Read
-                          </Button>
-                        )}
-                      </div>
+                      {`${swap.status.description}`}
+                    </td>
+                    <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm">
+                      {!swap.isRead ? (
+                        <Button className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md border border-blue-600 text-blue-600 hover:bg-blue-500 hover:text-white bg-transparent shadow-none cursor-pointer" onClick={() => {
+                          if (swap.status.id === 0) {
+                            handleWarnMarkAsRead(swap.swapRequestId)
+                          } else {
+                            handleMarkAsRead(swap.swapRequestId)
+                          }
+                        }}>
+                          <Check className="h-3 w-3 mr-1" /> Mark as Read
+                        </Button>
+                      ) : null}
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-6 py-4 text-center text-gray-500 italic">No swap call history found.</td>
+                  <td colSpan={7} className="px-6 py-4 text-center text-gray-500 italic">No swap call history found.</td>
                 </tr>
             )}
           </tbody>
@@ -414,9 +417,12 @@ function groupRequests(requests: Request[]) {
     });
   }
 
-  result.sort((a, b) =>
-    new Date(a.startDate || "").getTime() - new Date(b.startDate || "").getTime()
-  );
+  result.sort((a, b) => {
+    const pendingA = a.status === "Pending" ? 0 : 1;
+    const pendingB = b.status === "Pending" ? 0 : 1;
+    if (pendingA !== pendingB) return pendingA - pendingB;
+    return new Date(a.startDate || "").getTime() - new Date(b.startDate || "").getTime();
+  });
   return result;
 }
 
@@ -535,7 +541,7 @@ const VacationRequestsTab: React.FC<VacationRequestsTabProps> = ({ handleApprove
         ) : groupedRequests.length > 0 ? (
           groupedRequests.map((request: Request, idx: number) => (
             <tr key={request.id || `${request.startDate || request.date || ''}-${getResidentName(request)}-${idx}`}
-              className="hover:bg-gray-50 dark:hover:bg-neutral-800">
+              className={`${request.status === 'Pending' ? 'bg-yellow-50 dark:bg-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-900/40' : 'hover:bg-gray-50 dark:hover:bg-neutral-800'}`}>
               <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{getRequestDate(request)}</td>
               <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{getResidentName(request)}</td>
               <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
