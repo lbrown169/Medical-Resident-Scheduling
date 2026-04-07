@@ -13,7 +13,7 @@ public class ViolationResultResponse
         IsOverridable = result.IsOverridable;
         Violations = result.Violations;
         // if violation is overridable but have no adminOverride priviledges -> not allowed
-        IsAllowed = !IsViolation ||(adminOverride && IsOverridable == true);
+        IsAllowed = !IsViolation || (adminOverride && IsOverridable == true);
     }
 
     public ViolationResultResponse() { }

@@ -1,4 +1,4 @@
-﻿namespace MedicalDemo.Models.DTO.Responses;
+namespace MedicalDemo.Models.DTO.Responses;
 
 public class SwapRequestValidateResponse : GenericResponse
 {

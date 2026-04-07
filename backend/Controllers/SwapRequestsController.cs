@@ -269,22 +269,26 @@ public class SwapRequestsController : ControllerBase
         if (requesterDate == null || requesteeDate == null)
         {
             return new SwapRequestValidateResponse()
-                { Success = false, Message = "Could not find both shift dates for the swap." };
+            { Success = false, Message = "Could not find both shift dates for the swap." };
         }
 
         // Check shift type
         if (requesterDate.CallType != requesteeDate.CallType)
         {
             return new SwapRequestValidateResponse()
-            { Success = false,
-                Message = "Both shifts must be the same type (e.g., Sunday with Sunday, Saturday with Saturday, Short with Short)."};
+            {
+                Success = false,
+                Message = "Both shifts must be the same type (e.g., Sunday with Sunday, Saturday with Saturday, Short with Short)."
+            };
         }
 
         if (requesterDate.ScheduleId != requesteeDate.ScheduleId)
         {
             return new SwapRequestValidateResponse()
-            { Success = false,
-                Message =  "Both shifts must belong to the same schedule."};
+            {
+                Success = false,
+                Message = "Both shifts must belong to the same schedule."
+            };
         }
 
         // evaluate rule violations if swap occurs
@@ -311,6 +315,6 @@ public class SwapRequestsController : ControllerBase
 
         swapRequest.ScheduleId = requesterDate.ScheduleId;
 
-        return new SwapRequestValidateResponse(){Success = true, Message = "Swap successfully executed."};
+        return new SwapRequestValidateResponse() { Success = true, Message = "Swap successfully executed." };
     }
 }
