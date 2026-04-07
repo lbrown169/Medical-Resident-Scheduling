@@ -98,13 +98,16 @@ public class SchedulesController : ControllerBase
         ViolationResultResponse response = new ViolationResultResponse(violationResult);
 
         // if violation is overridable but have no adminOverride priviledges -> not allowed
-        if (violationResult.IsOverridable == true && adminOverride)
+        if (violationResult.IsViolation)
         {
-            response.IsAllowed = true;
-        }
-        else
-        {
-            response.IsAllowed = false;
+            if (violationResult.IsOverridable == true && adminOverride)
+            {
+                response.IsAllowed = true;
+            }
+            else
+            {
+                response.IsAllowed = false;
+            }
         }
         return Ok(response);
     }

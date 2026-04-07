@@ -4,6 +4,7 @@ using MedicalDemo.Models;
 using MedicalDemo.Models.DTO.Requests;
 using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.Entities;
+using MedicalDemo.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,11 +17,13 @@ public class SwapRequestsController : ControllerBase
 {
     private readonly MedicalContext _context;
     private readonly SwapRequestConverter _swapRequestConverter;
+    private readonly RuleViolationService _ruleViolationService;
 
-    public SwapRequestsController(MedicalContext context, SwapRequestConverter swapRequestConverter)
+    public SwapRequestsController(MedicalContext context, SwapRequestConverter swapRequestConverter, RuleViolationService ruleViolationService)
     {
         _context = context;
         _swapRequestConverter = swapRequestConverter;
+        _ruleViolationService = ruleViolationService;
     }
 
     // POST: api/swaprequests
@@ -276,6 +279,22 @@ public class SwapRequestsController : ControllerBase
         {
             return "Both shifts must belong to the same schedule.";
         }
+
+        // evaluate rule violations if swap occurs
+        ViolationResult RequesterViolationResult = await _ruleViolationService.EvaluateConstraints(requesteeDate.ScheduleId, requester.ResidentId, requesteeDate.ShiftDate, false);
+        ViolationResult RequesteeViolationResult = await _ruleViolationService.EvaluateConstraints(requesterDate.ScheduleId, requestee.ResidentId, requesterDate.ShiftDate, false);
+
+        if (RequesteeViolationResult.IsViolation)
+        {
+            return "Swap will result in rule violation(s) for requestee";
+        }
+
+        if (RequesteeViolationResult.IsViolation)
+        {
+            return "Swap will result in rule violation(s) for requester";
+        }
+
+        //ViolationResultResponse response = new(violationResult);
 
         swapRequest.ScheduleId = requesterDate.ScheduleId;
 

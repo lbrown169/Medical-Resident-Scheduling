@@ -172,7 +172,8 @@ public class DatesController : ControllerBase
     // PUT: api/dates/{id}
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateDate(Guid id,
-        [FromBody] DateUpdateRequest updatedDate)
+        [FromBody] DateUpdateRequest updatedDate,
+        [FromBody] bool adminOverride)
     {
         Date? existingDate = await _context.Dates.Include(d => d.Resident).FirstOrDefaultAsync(d => d.DateId == id);
         if (existingDate == null)
@@ -180,10 +181,14 @@ public class DatesController : ControllerBase
             return NotFound();
         }
 
+        bool isDateOnlyUpdate = updatedDate.ShiftDate.HasValue && existingDate.ShiftDate != updatedDate.ShiftDate;
+
         // Update fields
         _dateConverter.UpdateDateFromDateUpdateRequest(existingDate, updatedDate);
 
-        Resident? resident = await _context.Residents.FirstOrDefaultAsync(r => r.ResidentId == existingDate.ResidentId);
+        Resident? resident
+            = await _context.Residents.FirstOrDefaultAsync(r =>
+                r.ResidentId == existingDate.ResidentId);
         if (resident?.GraduateYr == null)
         {
             return BadRequest();
@@ -208,6 +213,33 @@ public class DatesController : ControllerBase
             if (updatedDate.Hours is not null)
             {
                 existingDate.Hours = updatedDate.Hours.Value;
+            }
+        }
+
+        // evaluate rule violations of update
+        ViolationResult violationResult = await _ruleViolationService.EvaluateConstraints(existingDate.ScheduleId, resident.ResidentId, updatedDate.ShiftDate ?? existingDate.ShiftDate, isDateOnlyUpdate);
+        ViolationResultResponse response = new(violationResult);
+
+        if (violationResult.IsViolation)
+        {
+            if (violationResult.IsOverridable == true && !adminOverride)
+            {
+                return BadRequest(new
+                {
+                    Success = false,
+                    message = "Unable to update the date: Constraint violations without adminOverride privileges.",
+                    violationResultResponse = response
+                });
+            }
+
+            if (violationResult.IsOverridable == false)
+            {
+                return BadRequest(new
+                {
+                    Success = false,
+                    message = "Unable to update the date: Constraint violations cannot be overriden.",
+                    violationResultResponse = response
+                });
             }
         }
 
