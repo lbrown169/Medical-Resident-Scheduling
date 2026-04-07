@@ -283,18 +283,18 @@ public class SwapRequestsController : ControllerBase
         // evaluate rule violations if swap occurs
         ViolationResult RequesterViolationResult = await _ruleViolationService.EvaluateConstraints(requesteeDate.ScheduleId, requester.ResidentId, requesteeDate.ShiftDate, false);
         ViolationResult RequesteeViolationResult = await _ruleViolationService.EvaluateConstraints(requesterDate.ScheduleId, requestee.ResidentId, requesterDate.ShiftDate, false);
+        ViolationResultResponse RequesterViolationResponse = new ViolationResultResponse(RequesterViolationResult);
+        ViolationResultResponse RequesteeViolationResponse = new ViolationResultResponse(RequesterViolationResult);
 
         if (RequesteeViolationResult.IsViolation)
         {
-            return "Swap will result in rule violation(s) for requestee";
+            return $"Swap will result in rule violation(s) for requestee: {RequesteeViolationResponse}";
         }
 
         if (RequesteeViolationResult.IsViolation)
         {
-            return "Swap will result in rule violation(s) for requester";
+            return $"Swap will result in rule violation(s) for requester: {RequesterViolationResponse}";
         }
-
-        //ViolationResultResponse response = new(violationResult);
 
         swapRequest.ScheduleId = requesterDate.ScheduleId;
 
