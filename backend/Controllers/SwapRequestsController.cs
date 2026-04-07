@@ -123,9 +123,9 @@ public class SwapRequestsController : ControllerBase
     public async Task<IActionResult> DeleteAllSwapRequests(
         [FromBody] List<Guid> swapRequestIds)
     {
-        // Fetch all swap requests
+        // Fetch all swap requests that are marked as read
         List<SwapRequest> swapRequestsToDelete = await _context.SwapRequests
-            .Where(s => swapRequestIds.Contains(s.SwapRequestId))
+            .Where(s => swapRequestIds.Contains(s.SwapRequestId) && s.IsRead)
         .ToListAsync();
 
         // Find which IDs were not found (don't exist/pending status)
