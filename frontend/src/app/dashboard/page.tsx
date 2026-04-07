@@ -987,13 +987,23 @@ case "Home":
         );
 
       case "Swap Calls": {
-        const pgyMatchedResidents = residents.filter(r => r.resident_id !== user?.id)
-          .map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}` }));
         const now = new Date(); now.setHours(0, 0, 0, 0);
         const filterShiftEvents = (residentId: string) =>
           calendarEvents
             .filter(e => (e.extendedProps?.residentId || "").trim() === residentId.trim() && new Date(e.start) >= now)
             .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+        const swapAcademicYearOf = (date: Date) => date.getMonth() >= 6 ? date.getFullYear() : date.getFullYear() - 1;
+        const selectedShiftYear = yourShiftDate ? swapAcademicYearOf(new Date(yourShiftDate)) : null;
+        const pgyMatchedResidents = residents
+          .filter(r => r.resident_id !== user?.id)
+          .filter(r => {
+            const shifts = filterShiftEvents(r.resident_id);
+            if (selectedShiftYear !== null) {
+              return shifts.some(e => swapAcademicYearOf(e.start instanceof Date ? e.start : new Date(e.start)) === selectedShiftYear);
+            }
+            return shifts.length > 0;
+          })
+          .map(r => ({ id: r.resident_id, name: `${r.first_name} ${r.last_name}` }));
         const userShiftEvents = user?.id ? filterShiftEvents(user.id) : [];
         const partnerShiftEvents = selectedResident ? filterShiftEvents(selectedResident) : [];
         return (
