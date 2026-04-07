@@ -336,22 +336,6 @@ const SwapHistoryTab: React.FC<SwapHistoryTabProps> = ({ idToName, onPendingCoun
                             }}>
                               <Check className="h-3 w-3 mr-1" /> Mark as Read
                             </Button>
-                            <ConfirmDialog
-                              open={!!warnReadId}
-                              onOpenChange={(open) => {
-                                if (!open) setWarnReadId(null);
-                              }}
-                              title="Mark pending request as read?"
-                              message="This swap request is still pending. Marking it as read makes it possible to delete. Mark as read anyway?"
-                              confirmText="Mark as Read"
-                              cancelText="Cancel"
-                              onConfirm={async () => {
-                                if (warnReadId) {
-                                  await handleMarkAsRead(warnReadId);
-                                  setWarnReadId(null);
-                                }
-                              }}
-                              />
                           </>
                         ) : (
                           <Button variant="outline" size="sm" className="mr-2 text-slate-600 hover:text-slate-600 border-slate-600" onClick={() => (/*Possible future implementation of marking as unread*/ "")}>
@@ -370,6 +354,22 @@ const SwapHistoryTab: React.FC<SwapHistoryTabProps> = ({ idToName, onPendingCoun
           </tbody>
         </table>
       </div>
+      <ConfirmDialog
+        open={!!warnReadId}
+        onOpenChange={(open) => {
+          if (!open) setWarnReadId(null);
+        }}
+        title="Mark pending request as read?"
+        message="This swap request is still pending. Marking it as read makes it possible to delete. Mark as read anyway?"
+        confirmText="Mark as Read"
+        cancelText="Cancel"
+        onConfirm={async () => {
+          if (warnReadId) {
+            await handleMarkAsRead(warnReadId);
+            setWarnReadId(null);
+          }
+        }}
+      />
     </Card>
   );
 };
