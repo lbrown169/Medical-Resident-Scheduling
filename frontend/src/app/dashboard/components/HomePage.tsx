@@ -5,6 +5,12 @@ import { CalendarX, Clock, UserCheck, RotateCcw, Repeat, CalendarCheck, Bell, Us
 import { config } from "../../../config";
 import { CalendarEvent } from "@/lib/models/CalendarEvent";
 
+function formatUtcDate(dateStr: string): string {
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
+}
+
 interface HomeProps {
   displayName: string;
   rotation: string | null;
@@ -241,7 +247,7 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
                       </div>
                       <div className="flex-1">
                         <p className="text-sm font-medium">{activity.message}</p>
-                        <p className="text-xs text-muted-foreground">Received: {activity.date}</p>
+                        <p className="text-xs text-muted-foreground">Received: {formatUtcDate(activity.date)}</p>
                       </div>
                     </div>
                   ))}
@@ -268,7 +274,7 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
                 dashboardData.teamUpdates.map((update) => (
                   <div key={update.id} className="p-3 bg-muted/50 rounded-lg">
                     <p className="text-sm font-medium mb-1">{update.message}</p>
-                    <p className="text-xs text-muted-foreground">{update.date}</p>
+                    <p className="text-xs text-muted-foreground">{formatUtcDate(update.date)}</p>
                   </div>
                 ))
               ) : (
