@@ -178,6 +178,8 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
       setEditMode("view");
       setAddDay(null);
       setConfirmDialog(null);
+      setFormData({ residentId: "", shiftDate: "", callType: -1, hours: "" });
+      setCallTypeOptions([]);
     }
   }, [open]);
 
@@ -293,10 +295,10 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
   const openEditMode = () => {
     if (!selectedEvent) return;
     setFormData({
-      residentId: "",
+      residentId: selectedEvent.extendedProps?.residentId ?? "",
       shiftDate: toDateInputValue(selectedEvent.start),
-      callType: -1,
-      hours: "",
+      callType: selectedEvent.extendedProps?.callTypeId ?? -1,
+      hours: String(selectedEvent.extendedProps?.hours ?? ""),
     });
     setEditMode("edit");
   };
