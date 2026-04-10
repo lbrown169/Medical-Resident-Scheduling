@@ -4,8 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { ConfirmDialog } from "../../../components/ui/confirm-dialog";
-import { CalendarDays, CalendarX, Send, Check, X, Shield, Users, Repeat } from "lucide-react";
-import { differenceInCalendarDays, parseISO } from 'date-fns';
+import { CalendarX, Send, Check, X, Shield, Users, Repeat, Search, Trash2 } from "lucide-react";
 import { config } from '../../../config';
 import { toast } from "../../../lib/use-toast";
 import { VacationResponse } from "@/lib/models/VacationResponse";
@@ -57,6 +56,7 @@ interface SwapRequest {
   status: SwapRequestStatus;
   createdAt: string;
   updatedAt: string;
+  isRead: boolean;
   details?: string;
 }
 
@@ -163,6 +163,7 @@ interface SwapHistoryTabProps {
 const SwapHistoryTab: React.FC<SwapHistoryTabProps> = ({ idToName, onPendingCountChange }) => {
   const [swapHistory, setSwapHistory] = useState<SwapRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [warnReadId, setWarnReadId] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -179,9 +180,125 @@ const SwapHistoryTab: React.FC<SwapHistoryTabProps> = ({ idToName, onPendingCoun
       .finally(() => setLoading(false));
   }, [onPendingCountChange]);
 
+  const handleClearReadSwaps = async () => {
+    const readSwapIds = swapHistory.filter((swap) => swap.isRead).map((swap) => swap.swapRequestId);
+
+    if (readSwapIds.length === 0) {
+      toast({
+        title: "No swaps to delete",
+        description: "There are no read swap requests to delete.",
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch(`${config.apiUrl}/api/SwapRequests`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(readSwapIds),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+
+        if (result.notDeleted && result.notDeleted.length > 0) {
+          toast({
+            title: "Partial success",
+            description: `${readSwapIds.length - result.notDeleted.length} swaps deleted. ${result.notDeleted.length} failed to delete.`,
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Success",
+            description: "All read swap requests have been deleted.",
+          });
+        }
+
+        setSwapHistory((prev) =>
+          prev.filter((swap) => !swap.isRead)
+        );
+
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to delete swap requests.",
+          variant: "destructive",
+        });
+      }
+    } catch {
+      toast({
+        title: "Error",
+        description: "An error occurred while deleting swaps.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleWarnMarkAsRead = (swapId: string) => {
+    setWarnReadId(swapId);
+  };
+
+  const handleMarkAsRead = async (swapId: string) => {
+    try {
+      const response = await fetch(`${config.apiUrl}/api/SwapRequests/${swapId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          isRead: true,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || "Failed to mark swap request as read.");
+      }
+
+      setSwapHistory((prev) =>
+        prev.map((swap) =>
+          swap.swapRequestId === swapId
+            ? { ...swap, isRead: true }
+            : swap
+        )
+      );
+    } catch (err) {
+      console.error("Error marking swap as read:", err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: err instanceof Error ? err.message : "Failed to mark as read.",
+      });
+    }
+  }
+
+  const sortSwaps = (swaps: typeof swapHistory) =>
+    [...swaps].sort((a, b) => {
+      const pendingA = a.status.id === 0 ? 0 : 1;
+      const pendingB = b.status.id === 0 ? 0 : 1;
+      if (pendingA !== pendingB) return pendingA - pendingB;
+      return new Date(a.requesterDate || "").getTime() - new Date(b.requesterDate || "").getTime();
+    });
+
+  const orderedSwapHistory = [
+    ...sortSwaps(swapHistory.filter((swap) => !swap.isRead)),
+    ...sortSwaps(swapHistory.filter((swap) => swap.isRead)),
+  ];
+
   return (
     <Card className="p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-4 mb-6 sm:mb-8 border border-gray-200 dark:border-gray-800">
-      <h2 className="text-lg sm:text-xl font-bold mb-4">Swap Call History</h2>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
+        <h2 className="text-lg sm:text-xl font-bold mb-4">Swap Call History</h2>
+        <ConfirmDialog
+          triggerText={<><Trash2 className="h-4 w-4" /><span>Delete Requests</span></>}
+          title="Delete all read swap requests?"
+          message="Unread requests will not be deleted. This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+          onConfirm={handleClearReadSwaps}
+          variant="danger"
+          />
+      </div>
       <div className="overflow-x-auto max-h-96 overflow-y-auto w-full">
         <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead className="bg-gray-100 dark:bg-neutral-800">
@@ -192,40 +309,70 @@ const SwapHistoryTab: React.FC<SwapHistoryTabProps> = ({ idToName, onPendingCoun
               <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Partner</th>
               <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
               <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
             {loading ? (
               <tr>
-                <td colSpan={6} className="px-6 py-4 text-center text-gray-400 italic">Loading...</td>
+                <td colSpan={7} className="px-6 py-4 text-center text-gray-400 italic">Loading...</td>
               </tr>
-            ) : swapHistory.length > 0 ? (
-              swapHistory.map((swap, idx) => (
-                <tr key={swap.swapRequestId || idx} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
-                  <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.requesterDate ? formatDate(swap.requesterDate) : ''}</td>
-                  <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                    {idToName[swap.requesterId] || `Resident ${swap.requesterId}`}
-                  </td>
-                  <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                    {idToName[swap.requesteeId] || `Resident ${swap.requesteeId}`}
-                  </td>
-                  <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.requesteeDate ? formatDate(swap.requesteeDate) : ''}</td>
-                  <td className="px-1 sm:px-3 py-3 sm:py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs break-all">{swap.details || '-'}</td>
-                  <td className={`px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm font-semibold ${
-                    swap.status.id === 1 ? 'text-green-600' : swap.status.id === 2 ? 'text-red-600' : 'text-yellow-600'
-                  }`}>
-                    {swap.status.description}
-                  </td>
+            ) : orderedSwapHistory.length > 0 ? (
+                orderedSwapHistory.map((swap, idx) => (
+                  <tr key={swap.swapRequestId || idx} className={`${!swap.isRead ? 'bg-yellow-50 dark:bg-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-900/40' : 'hover:bg-gray-50 dark:hover:bg-neutral-800'}`}>
+                    <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.requesterDate ? formatDate(swap.requesterDate) : ''}</td>
+                    <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                      {idToName[swap.requesterId] || `Resident ${swap.requesterId}`}
+                    </td>
+                    <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                      {idToName[swap.requesteeId] || `Resident ${swap.requesteeId}`}
+                    </td>
+                    <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{swap.requesteeDate ? formatDate(swap.requesteeDate) : ''}</td>
+                    <td className="px-1 sm:px-3 py-3 sm:py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs break-all">{swap.details || '-'}</td>
+                    <td className={`px-1 sm:px-1 py-3 sm:py-4 whitespace-nowrap text-sm font-semibold ${
+                      swap.status.id === 1 ? 'text-green-600' : swap.status.id === 2 ? 'text-red-600' : 'text-yellow-600'
+                      }`}>
+                      {`${swap.status.description}`}
+                    </td>
+                    <td className="px-1 sm:px-3 py-3 sm:py-4 whitespace-nowrap text-sm">
+                      {!swap.isRead ? (
+                        <Button className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md border border-blue-600 text-blue-600 hover:bg-blue-500 hover:text-white bg-transparent shadow-none cursor-pointer" onClick={() => {
+                          if (swap.status.id === 0) {
+                            handleWarnMarkAsRead(swap.swapRequestId)
+                          } else {
+                            handleMarkAsRead(swap.swapRequestId)
+                          }
+                        }}>
+                          <Check className="h-3 w-3 mr-1" /> Mark as Read
+                        </Button>
+                      ) : null}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={7} className="px-6 py-4 text-center text-gray-500 italic">No swap call history found.</td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={6} className="px-6 py-4 text-center text-gray-500 italic">No swap call history found.</td>
-              </tr>
             )}
           </tbody>
         </table>
       </div>
+      <ConfirmDialog
+        open={!!warnReadId}
+        onOpenChange={(open) => {
+          if (!open) setWarnReadId(null);
+        }}
+        title="Mark pending request as read?"
+        message="This swap request is still pending. Marking it as read makes it possible to delete. Mark as read anyway?"
+        confirmText="Mark as Read"
+        cancelText="Cancel"
+        onConfirm={async () => {
+          if (warnReadId) {
+            await handleMarkAsRead(warnReadId);
+            setWarnReadId(null);
+          }
+        }}
+      />
     </Card>
   );
 };
@@ -243,7 +390,7 @@ function groupRequests(requests: Request[]) {
 
   const groupedMap = new Map<string, Request[]>();
   for (const req of requests) {
-    const key = `${req.firstName} ${req.lastName}||${req.reason}||${req.halfDay ?? ''}`;
+    const key = req.groupId || req.id;
     if (!groupedMap.has(key)) groupedMap.set(key, []);
     groupedMap.get(key)!.push(req);
   }
@@ -253,47 +400,37 @@ function groupRequests(requests: Request[]) {
     const sorted = entries.sort((a, b) =>
       new Date(a.startDate || "").getTime() - new Date(b.startDate || "").getTime()
     );
-
-    let i = 0;
-    while (i < sorted.length) {
-      const current = sorted[i];
-      const start = current.startDate!;
-      let end = current.endDate!;
-      let j = i + 1;
-      while (
-        j < sorted.length &&
-        differenceInCalendarDays(parseISO(sorted[j].startDate!), parseISO(end)) <= 1
-      ) {
-        end = sorted[j].endDate!;
-        j++;
-      }
-      result.push({
-        id: current.id,
-        residentId: current.residentId,
-        firstName: current.firstName,
-        lastName: current.lastName,
-        reason: current.reason,
-        halfDay: current.halfDay ?? null,
-        status: current.status,
-        startDate: start,
-        endDate: end,
-        groupId: current.groupId,
-        details: current.details,
-      });
-      i = j;
-    }
+    const first = sorted[0];
+    const last = sorted[sorted.length - 1];
+    result.push({
+      id: first.id,
+      residentId: first.residentId,
+      firstName: first.firstName,
+      lastName: first.lastName,
+      reason: first.reason,
+      halfDay: first.halfDay ?? null,
+      status: first.status,
+      startDate: first.startDate,
+      endDate: last.endDate,
+      groupId: first.groupId,
+      details: first.details,
+    });
   }
 
-  result.sort((a, b) =>
-    new Date(a.startDate || "").getTime() - new Date(b.startDate || "").getTime()
-  );
+  result.sort((a, b) => {
+    const pendingA = a.status === "Pending" ? 0 : 1;
+    const pendingB = b.status === "Pending" ? 0 : 1;
+    if (pendingA !== pendingB) return pendingA - pendingB;
+    return new Date(a.startDate || "").getTime() - new Date(b.startDate || "").getTime();
+  });
   return result;
 }
 
 const VacationRequestsTab: React.FC<VacationRequestsTabProps> = ({ handleApproveRequest, handleDenyRequest, onPendingCountChange }) => {
   const [requests, setRequests] = useState<Request[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [searchDate, setSearchDate] = useState('');
 
   const fetchVacations = useCallback(() => {
     setLoading(true);
@@ -339,9 +476,9 @@ const VacationRequestsTab: React.FC<VacationRequestsTabProps> = ({ handleApprove
   }, [groupedRequests, onPendingCountChange]);
 
   const handleClearAllRequests = async () => {
-    const vacationIds = requests.map(r => r.id);
+    const vacationIds = requests.filter(r => r.status !== 'Pending').map(r => r.id);
     if (vacationIds.length === 0) {
-      toast({ title: 'No requests to clear', description: 'There are no vacation requests to delete.' });
+      toast({ title: 'No requests to delete', description: 'There are no vacation requests to delete.' });
       return;
     }
     try {
@@ -355,18 +492,18 @@ const VacationRequestsTab: React.FC<VacationRequestsTabProps> = ({ handleApprove
         if (result.notDeleted && result.notDeleted.length > 0) {
           toast({
             title: 'Partial success',
-            description: `${vacationIds.length - result.notDeleted.length} requests cleared. ${result.notDeleted.length} failed to delete.`,
+            description: `${vacationIds.length - result.notDeleted.length} requests deleted. ${result.notDeleted.length} failed to delete.`,
             variant: 'destructive',
           });
         } else {
-          toast({ title: 'Success', description: 'All vacation requests have been cleared.' });
+          toast({ title: 'Success', description: 'All vacation requests have been deleted.' });
         }
         fetchVacations();
       } else {
-        toast({ title: 'Error', description: 'Failed to clear vacation requests.', variant: 'destructive' });
+        toast({ title: 'Error', description: 'Failed to delete vacation requests.', variant: 'destructive' });
       }
     } catch {
-      toast({ title: 'Error', description: 'An error occurred while clearing requests.', variant: 'destructive' });
+      toast({ title: 'Error', description: 'An error occurred while deleting requests.', variant: 'destructive' });
     }
   };
 
@@ -404,7 +541,7 @@ const VacationRequestsTab: React.FC<VacationRequestsTabProps> = ({ handleApprove
         ) : groupedRequests.length > 0 ? (
           groupedRequests.map((request: Request, idx: number) => (
             <tr key={request.id || `${request.startDate || request.date || ''}-${getResidentName(request)}-${idx}`}
-              className="hover:bg-gray-50 dark:hover:bg-neutral-800">
+              className={`${request.status === 'Pending' ? 'bg-yellow-50 dark:bg-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-900/40' : 'hover:bg-gray-50 dark:hover:bg-neutral-800'}`}>
               <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{getRequestDate(request)}</td>
               <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{getResidentName(request)}</td>
               <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
@@ -454,15 +591,15 @@ const VacationRequestsTab: React.FC<VacationRequestsTabProps> = ({ handleApprove
           <h2 className="text-lg sm:text-xl font-bold">Time Off Requests</h2>
           <div className="flex gap-2">
             <Button variant="outline" className="flex items-center gap-2 px-1 sm:px-6 py-1 sm:py-3 text-xs sm:text-sm lg:text-base"
-              onClick={() => setShowModal(true)}>
-              <CalendarDays className="h-4 w-4" />
-              <span>View All</span>
+              onClick={() => setShowSearchModal(true)}>
+              <Search className="h-4 w-4" />
+              <span>Search</span>
             </Button>
             <ConfirmDialog
-              triggerText={<><X className="h-4 w-4" /><span>Clear</span></>}
-              title="Clear all vacation requests?"
-              message="This action cannot be undone."
-              confirmText="Clear"
+              triggerText={<><Trash2 className="h-4 w-4" /><span>Delete Requests</span></>}
+              title="Delete all vacation requests?"
+              message="Pending requests will not be deleted. This action cannot be undone."
+              confirmText="Delete"
               cancelText="Cancel"
               onConfirm={handleClearAllRequests}
               variant="danger"
@@ -473,8 +610,54 @@ const VacationRequestsTab: React.FC<VacationRequestsTabProps> = ({ handleApprove
           {requestsTable}
         </div>
       </Card>
-      <Modal open={showModal} onClose={() => setShowModal(false)} title="All Time Off Requests">
-        <div className="overflow-x-auto">{requestsTable}</div>
+      <Modal open={showSearchModal} onClose={() => { setShowSearchModal(false); setSearchDate(''); }} title="Search Date">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">Select date:</label>
+            <input
+              type="date"
+              value={searchDate}
+              onChange={e => setSearchDate(e.target.value)}
+              className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100"
+            />
+          </div>
+          {searchDate && (() => {
+            const selected = new Date(searchDate);
+            selected.setMinutes(selected.getMinutes() + selected.getTimezoneOffset());
+            const matched = requests.filter(r => {
+              const start = new Date(r.startDate || r.date || '');
+              start.setMinutes(start.getMinutes() + start.getTimezoneOffset());
+              const end = new Date(r.endDate || r.date || '');
+              end.setMinutes(end.getMinutes() + end.getTimezoneOffset());
+              return selected >= start && selected <= end;
+            });
+            return matched.length === 0 ? (
+              <p className="text-sm text-green-600 font-medium">No requests found for this date.</p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <p className="text-sm text-gray-500">{matched.length} request{matched.length !== 1 ? 's' : ''} found:</p>
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-100 dark:bg-neutral-800">
+                    <tr>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Resident</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Reason</th>
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200 dark:bg-neutral-900 dark:divide-gray-700">
+                    {matched.map((r, i) => (
+                      <tr key={`${r.residentId}-${i}`} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
+                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">{r.firstName} {r.lastName}</td>
+                        <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{r.reason}{r.halfDay === 'A' ? ' (AM)' : r.halfDay === 'P' ? ' (PM)' : ''}</td>
+                        <td className={`px-4 py-3 text-sm font-medium ${r.status === 'Pending' ? 'text-yellow-600' : r.status === 'Denied' ? 'text-red-600' : 'text-green-600'}`}>{r.status}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })()}
+        </div>
       </Modal>
     </>
   );
@@ -633,7 +816,7 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white" onClick={() => handleDeleteUserWithConfirm(user)}>
-                          Delete
+                          <Trash2 className="h-4 w-4 mr-1 inline" />Delete
                         </Button>
                       </td>
                     </tr>
@@ -968,7 +1151,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
                       onClick={() => handleDeleteAnnouncement(a.announcementId)}
                       disabled={deletingAnnouncement === a.announcementId}
                     >
-                      {deletingAnnouncement === a.announcementId ? 'Deleting...' : 'Delete'}
+                      <Trash2 className="h-4 w-4 mr-1 inline" />{deletingAnnouncement === a.announcementId ? 'Deleting...' : 'Delete'}
                     </Button>
                   </div>
                 </div>

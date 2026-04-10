@@ -9,8 +9,8 @@ public class SwapRequestResponse
     public required DateOnly RequesterDate { get; set; }
     public required DateOnly RequesteeDate { get; set; }
     public required SwapRequestStatusResponse Status { get; set; }
-    public required DateTime CreatedAt { get; set; }
-    public required DateTime UpdatedAt { get; set; }
+    public required DateTimeOffset CreatedAt { get; set; }
+    public required DateTimeOffset UpdatedAt { get; set; }
     public required bool IsRead { get; set; }
     public required string? Details { get; set; }
 }

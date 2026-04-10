@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
-import { ConfirmDialog } from "../../../components/ui/confirm-dialog";
-import { Calendar, CalendarX, Clock, UserCheck, RotateCcw, Repeat, CalendarCheck, Bell, Users } from "lucide-react";
+import { CalendarX, Clock, UserCheck, RotateCcw, Repeat, CalendarCheck, Bell, Users } from "lucide-react";
 import { config } from "../../../config";
-import { toast } from "../../../lib/use-toast";
 import { CalendarEvent } from "@/lib/models/CalendarEvent";
+
+function formatUtcDate(dateStr: string): string {
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric', year: 'numeric' });
+}
 
 interface HomeProps {
   displayName: string;
@@ -48,7 +52,6 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
   onNavigateToSchedule,
   userId,
   calendarEvents,
-  onRefreshCalendar,
   isAdmin,
 }) => {
   const [dashboardData, setDashboardData] = useState<DashboardData>({
@@ -58,9 +61,6 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
     teamUpdates: []
   });
   const [loading, setLoading] = useState(true);
-  const [denyModalOpen, setDenyModalOpen] = useState(false);
-  const [pendingDenyId, setPendingDenyId] = useState<string | null>(null);
-  const [actionLoading, setActionLoading] = useState(false);
 
   const upcomingShifts = useMemo(() => {
     if (!calendarEvents?.length) return dashboardData.upcomingShifts;
@@ -83,68 +83,6 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
       }));
   }, [calendarEvents, userId, dashboardData.upcomingShifts]);
 
-  const refreshDashboard = async () => {
-    setLoading(true);
-    try {
-      const dashboardResponse = await fetch(`${config.apiUrl}/api/dashboard/resident/${userId}`);
-      if (dashboardResponse.ok) {
-        const data = await dashboardResponse.json();
-        setDashboardData({
-          monthlyHours: data.monthlyHours,
-          upcomingShifts: data.upcomingShifts,
-          recentActivity: data.recentActivity,
-          teamUpdates: data.teamUpdates
-        });
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleApprove = async (swapId: string) => {
-    setActionLoading(true);
-    try {
-      const response = await fetch(`${config.apiUrl}/api/swaprequests/${swapId}/approve`, { method: "POST" });
-      if (response.ok) {
-        toast({
-          title: "Swap Approved",
-          description: "The swap request has been approved successfully.",
-          variant: "success"
-        });
-      }
-      
-      await refreshDashboard();
-      if (onRefreshCalendar) onRefreshCalendar();
-    } catch (error) {
-      console.error('Error approving swap:', error);
-      toast({
-        title: "Error",
-        description: "Failed to approve swap request.",
-        variant: "destructive"
-      });
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleDeny = (swapId: string) => {
-    setPendingDenyId(swapId);
-    setDenyModalOpen(true);
-  };
-
-  const submitDeny = async () => {
-    if (!pendingDenyId) return;
-    setActionLoading(true);
-    try {
-      await fetch(`${config.apiUrl}/api/swaprequests/${pendingDenyId}/deny`, { method: "POST" });
-      setDenyModalOpen(false);
-      setPendingDenyId(null);
-      await refreshDashboard();
-      if (onRefreshCalendar) onRefreshCalendar();
-    } finally {
-      setActionLoading(false);
-    }
-  };
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -193,7 +131,7 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
   }
 
   const filteredRecentActivity = dashboardData.recentActivity.filter(
-    (activity) => activity.type.startsWith('swap')
+    (activity) => activity.type === 'swap_pending'
   );
 
   return (
@@ -301,30 +239,25 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
             </h2>
             <div className="space-y-3 flex-1">
               {filteredRecentActivity.length > 0 ? (
-                filteredRecentActivity.map((activity) => (
-                  <div key={activity.id} className={`flex items-start gap-3 p-3 rounded-lg ${activity.type === 'swap_approved' ? 'bg-green-100 dark:bg-green-950/40' : activity.type === 'swap_denied' ? 'bg-red-100 dark:bg-red-950/40' : 'bg-muted/50'}`}>
-                    <div className="p-2 bg-primary/10 rounded-full">
-                      {activity.type.startsWith('swap') ? (
+                <>
+                  {filteredRecentActivity.map((activity) => (
+                    <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                      <div className="p-2 bg-primary/10 rounded-full">
                         <RotateCcw className="h-4 w-4 text-primary" />
-                      ) : (
-                        <Calendar className="h-4 w-4 text-primary" />
-                      )}
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{activity.message}</p>
+                        <p className="text-xs text-muted-foreground">Received: {formatUtcDate(activity.date)}</p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{activity.message}</p>
-                      <p className="text-xs text-muted-foreground">{activity.date}</p>
-                      {activity.type === 'swap_pending' && (
-                        <div className="flex gap-2 mt-2">
-                          <Button size="sm" disabled={actionLoading} onClick={() => handleApprove(activity.id)} className="bg-green-600 text-white hover:bg-green-700">Approve</Button>
-                          <Button size="sm" disabled={actionLoading} onClick={() => handleDeny(activity.id)} className="bg-red-600 text-white hover:bg-red-700">Deny</Button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))
+                  ))}
+                  <Button size="sm" variant="outline" onClick={onNavigateToSwapCalls} className="w-full mt-2">
+                    Respond in Swap Calls
+                  </Button>
+                </>
               ) : (
                 <div className="flex-1 flex items-center justify-center">
-                  <p className="text-muted-foreground text-center">No swap notifications</p>
+                  <p className="text-muted-foreground text-center">No pending swap requests</p>
                 </div>
               )}
             </div>
@@ -341,7 +274,7 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
                 dashboardData.teamUpdates.map((update) => (
                   <div key={update.id} className="p-3 bg-muted/50 rounded-lg">
                     <p className="text-sm font-medium mb-1">{update.message}</p>
-                    <p className="text-xs text-muted-foreground">{update.date}</p>
+                    <p className="text-xs text-muted-foreground">{formatUtcDate(update.date)}</p>
                   </div>
                 ))
               ) : (
@@ -354,17 +287,6 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
         </div>
       </div>
 
-      {/* Deny Reason Modal */}
-      <ConfirmDialog
-        open={denyModalOpen}
-        onOpenChange={setDenyModalOpen}
-        title="Deny swap?"
-        message={`Are you sure you want to deny this swap request? This action cannot be undone.`}
-        confirmText="Deny"
-        cancelText="Cancel"
-        onConfirm={submitDeny}
-        variant="danger"
-      />
     </div>
   );
 };

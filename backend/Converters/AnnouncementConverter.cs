@@ -1,4 +1,3 @@
-using System.Globalization;
 using MedicalDemo.Models.DTO.Requests;
 using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.Entities;
@@ -29,7 +28,7 @@ public class AnnouncementConverter
         {
             announcementId = announcement.AnnouncementId.ToString(),
             message = announcement.Message,
-            createdAt = announcement.CreatedAt.ToString(CultureInfo.InvariantCulture),
+            createdAt = new DateTimeOffset(announcement.CreatedAt, TimeSpan.Zero).ToString("o"),
         };
     }
 
