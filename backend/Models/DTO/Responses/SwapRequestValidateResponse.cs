@@ -2,5 +2,6 @@ namespace MedicalDemo.Models.DTO.Responses;
 
 public class SwapRequestValidateResponse : GenericResponse
 {
-    public List<ViolationResultResponse>? violationResults { get; set; }
+    public ViolationResultResponse? RequesterViolationResults { get; set; }
+    public ViolationResultResponse? RequesteeViolationResults { get; set; }
 }

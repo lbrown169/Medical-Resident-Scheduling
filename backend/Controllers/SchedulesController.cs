@@ -75,26 +75,25 @@ public class SchedulesController : ControllerBase
         return Ok(scheduleResponses);
     }
 
-    // GET: api/schedules/{id}/check
-    [HttpGet("{id}/checkViolations")]
-    public async Task<IActionResult> CheckScheduleViolations(Guid id,
-        [FromQuery] string residentId,
-        [FromQuery] DateOnly date,
-        [FromQuery] bool adminOverride)
+    // POST: api/schedules/new/validate
+    [HttpPost("new/validate")]
+    public async Task<IActionResult> ValidateScheduleViolations(
+        [FromBody] DateCreateRequest dateCreateRequest)
     {
-        Schedule? existingSchedule = await _context.Schedules.FindAsync(id);
+        Schedule? existingSchedule = await _context.Schedules.FindAsync(dateCreateRequest.ScheduleId);
         if (existingSchedule == null)
         {
             return NotFound();
         }
 
-        if (string.IsNullOrEmpty(residentId))
+        if (string.IsNullOrEmpty(dateCreateRequest.ResidentId))
         {
             return BadRequest();
         }
 
-        ViolationResult violationResult = await _ruleViolationService.EvaluateConstraints(id, residentId, date, false);
-        ViolationResultResponse response = new ViolationResultResponse(violationResult, adminOverride);
+        ViolationResult violationResult = await _ruleViolationService.EvaluateConstraints(dateCreateRequest.ScheduleId, dateCreateRequest.ResidentId, dateCreateRequest.ShiftDate, false);
+        // adminOverride
+        ViolationResultResponse response = new ViolationResultResponse(violationResult);
 
         return Ok(response);
     }

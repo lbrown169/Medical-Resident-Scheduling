@@ -20,4 +20,6 @@ public class OneShiftADayConstraint : ICallShiftConstraint
     {
         return resident.WorkDays.Contains(curDay);
     }
+
+    public bool IsApplicable(bool isDateUpdate, bool isResidentUpdate) => isDateUpdate || isResidentUpdate;
 }

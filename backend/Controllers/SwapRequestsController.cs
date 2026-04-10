@@ -36,15 +36,11 @@ public class SwapRequestsController : ControllerBase
                 .CreateSwapRequestFromSwapRequestCreateRequest(
                     swapCreateRequest);
 
-        SwapRequestValidateResponse validationResult = await ValidateSwapRequestAndAssignScheduleId(swapRequest);
+        SwapRequestValidateResponse swapRequestValidationResult = await ValidateSwapRequestAndAssignScheduleId(swapRequest);
 
-        if (validationResult.Success == false)
+        if (!swapRequestValidationResult.Success)
         {
-            return BadRequest(new GenericResponse
-            {
-                Success = false,
-                Message = validationResult.Message
-            });
+            return BadRequest(swapRequestValidationResult);
         }
 
         _context.SwapRequests.Add(swapRequest);
@@ -292,29 +288,25 @@ public class SwapRequestsController : ControllerBase
         }
 
         // evaluate rule violations if swap occurs
-        ViolationResult RequesterViolationResult = await _ruleViolationService.EvaluateConstraints(requesteeDate.ScheduleId, requester.ResidentId, requesteeDate.ShiftDate, false);
-        ViolationResult RequesteeViolationResult = await _ruleViolationService.EvaluateConstraints(requesterDate.ScheduleId, requestee.ResidentId, requesterDate.ShiftDate, false);
+        ViolationResult requesterViolationResult = await _ruleViolationService.EvaluateConstraints(requesteeDate.ScheduleId, requester.ResidentId, requesteeDate.ShiftDate);
+        ViolationResult requesteeViolationResult = await _ruleViolationService.EvaluateConstraints(requesterDate.ScheduleId, requestee.ResidentId, requesterDate.ShiftDate);
 
-        ViolationResultResponse RequesterViolationResponse = new ViolationResultResponse(RequesterViolationResult, false);
-        ViolationResultResponse RequesteeViolationResponse = new ViolationResultResponse(RequesteeViolationResult, false);
+        ViolationResultResponse requesterViolationResponse = new ViolationResultResponse(requesterViolationResult);
+        ViolationResultResponse requesteeViolationResponse = new ViolationResultResponse(requesteeViolationResult);
 
-        List<ViolationResultResponse> combinedViolationResponse
-            = new List<ViolationResultResponse>();
-        combinedViolationResponse.Add(RequesterViolationResponse);
-        combinedViolationResponse.Add(RequesteeViolationResponse);
-
-        if (RequesterViolationResult.IsViolation || RequesteeViolationResult.IsViolation)
+        if (requesterViolationResponse.IsViolation || requesteeViolationResponse.IsViolation)
         {
             return (new SwapRequestValidateResponse
             {
                 Success = false,
                 Message = "Swap will result in rule violation(s) for requestee or requester",
-                violationResults = combinedViolationResponse
+                RequesterViolationResults = requesterViolationResponse,
+                RequesteeViolationResults = requesteeViolationResponse
             });
         }
 
         swapRequest.ScheduleId = requesterDate.ScheduleId;
 
-        return new SwapRequestValidateResponse() { Success = true, Message = "Swap successfully executed." };
+        return new SwapRequestValidateResponse() { Success = true };
     }
 }

@@ -76,6 +76,33 @@ public class DatesController : ControllerBase
             date.Hours = request.Hours.Value;
         }
 
+        // evaluate rule violations, adminOverride is true -> only admin create dates
+        ViolationResult violationResult = await _ruleViolationService.EvaluateConstraints(request.ScheduleId, resident.ResidentId, date.ShiftDate);
+        ViolationResultResponse response = new(violationResult, true);
+
+        if (violationResult.IsViolation)
+        {
+            if (!response.IsAllowed)
+            {
+                return Conflict(new DateUpdateResponse()
+                {
+                    Success = false,
+                    Message = "Unable to create the date: Constraint violations without adminOverride privileges.",
+                    ViolationResultResponse = response
+                });
+            }
+
+            if (violationResult.IsOverridable == false)
+            {
+                return Conflict(new DateUpdateResponse()
+                {
+                    Success = false,
+                    Message = "Unable to create the date: Constraint violations cannot be overriden.",
+                    ViolationResultResponse = response
+                });
+            }
+        }
+
         _context.Dates.Add(date);
         await _context.SaveChangesAsync();
 
@@ -169,11 +196,11 @@ public class DatesController : ControllerBase
         return Ok(publishedDates);
     }
 
-    // PUT: api/dates/{id}
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateDate(Guid id,
-        [FromQuery] DateUpdateRequest updatedDate,
-        [FromQuery] bool adminOverride)
+    // POST /api/dates/{id}/validate
+    [HttpPost("{id}/validate")]
+    public async Task<ActionResult> ValidateDateUpdateViolations(
+        Guid id,
+        [FromBody] DateUpdateRequest dateUpdateRequest)
     {
         Date? existingDate = await _context.Dates.Include(d => d.Resident).FirstOrDefaultAsync(d => d.DateId == id);
         if (existingDate == null)
@@ -181,6 +208,84 @@ public class DatesController : ControllerBase
             return NotFound();
         }
 
+        bool isResidentUpdate = !string.IsNullOrEmpty(dateUpdateRequest.ResidentId) && dateUpdateRequest.ResidentId == existingDate.ResidentId;
+        bool isDateOnlyUpdate = dateUpdateRequest.ShiftDate.HasValue && existingDate.ShiftDate != dateUpdateRequest.ShiftDate;
+
+        // Update fields
+        _dateConverter.UpdateDateFromDateUpdateRequest(existingDate, dateUpdateRequest);
+
+        Resident? resident
+            = await _context.Residents.FirstOrDefaultAsync(r =>
+                r.ResidentId == existingDate.ResidentId);
+        if (resident?.GraduateYr == null)
+        {
+            return BadRequest();
+        }
+
+        if (dateUpdateRequest.CallType is not null and not CallShiftType.Custom)
+        {
+            if (CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(existingDate.ShiftDate, resident.GraduateYr.Value) is
+                not { } shiftType)
+            {
+                return BadRequest(new GenericResponse
+                {
+                    Success = false,
+                    Message = "Shift is not valid for given resident year"
+                });
+            }
+
+            existingDate.Hours = dateUpdateRequest.Hours ?? shiftType.GetHours();
+        }
+        else
+        {
+            if (dateUpdateRequest.Hours is not null)
+            {
+                existingDate.Hours = dateUpdateRequest.Hours.Value;
+            }
+        }
+
+        // evaluate rule violations of update
+        ViolationResult violationResult = await _ruleViolationService.EvaluateConstraints(existingDate.ScheduleId, resident.ResidentId, existingDate.ShiftDate, isDateOnlyUpdate, isResidentUpdate);
+        ViolationResultResponse response = new(violationResult, dateUpdateRequest.adminOverride);
+
+        if (violationResult.IsViolation)
+        {
+            if (!response.IsAllowed)
+            {
+                return Conflict(new DateUpdateResponse()
+                {
+                    Success = false,
+                    Message = "Unable to update the date: Constraint violations without adminOverride privileges.",
+                    ViolationResultResponse = response
+                });
+            }
+
+            if (violationResult.IsOverridable == false)
+            {
+                return Conflict(new DateUpdateResponse()
+                {
+                    Success = false,
+                    Message = "Unable to update the date: Constraint violations cannot be overriden.",
+                    ViolationResultResponse = response
+                });
+            }
+        }
+
+        return Ok(new DateUpdateResponse() { Success = true });
+    }
+
+    // PUT: api/dates/{id}
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateDate(Guid id,
+        [FromQuery] DateUpdateRequest updatedDate)
+    {
+        Date? existingDate = await _context.Dates.Include(d => d.Resident).FirstOrDefaultAsync(d => d.DateId == id);
+        if (existingDate == null)
+        {
+            return NotFound();
+        }
+
+        bool isResidentUpdate = !string.IsNullOrEmpty(updatedDate.ResidentId) && updatedDate.ResidentId == existingDate.ResidentId;
         bool isDateOnlyUpdate = updatedDate.ShiftDate.HasValue && existingDate.ShiftDate != updatedDate.ShiftDate;
 
         // Update fields
@@ -217,28 +322,28 @@ public class DatesController : ControllerBase
         }
 
         // evaluate rule violations of update
-        ViolationResult violationResult = await _ruleViolationService.EvaluateConstraints(existingDate.ScheduleId, resident.ResidentId, updatedDate.ShiftDate ?? existingDate.ShiftDate, isDateOnlyUpdate);
-        ViolationResultResponse response = new(violationResult, adminOverride);
+        ViolationResult violationResult = await _ruleViolationService.EvaluateConstraints(existingDate.ScheduleId, resident.ResidentId, existingDate.ShiftDate, isDateOnlyUpdate, isResidentUpdate);
+        ViolationResultResponse response = new(violationResult, updatedDate.adminOverride);
 
         if (violationResult.IsViolation)
         {
-            if (response.IsAllowed == false)
+            if (!response.IsAllowed)
             {
-                return BadRequest(new
+                return Conflict(new DateUpdateResponse()
                 {
                     Success = false,
-                    message = "Unable to update the date: Constraint violations without adminOverride privileges.",
-                    violationResultResponse = response
+                    Message = "Unable to update the date: Constraint violations without adminOverride privileges.",
+                    ViolationResultResponse = response
                 });
             }
 
             if (violationResult.IsOverridable == false)
             {
-                return BadRequest(new
+                return Conflict(new DateUpdateResponse()
                 {
                     Success = false,
-                    message = "Unable to update the date: Constraint violations cannot be overriden.",
-                    violationResultResponse = response
+                    Message = "Unable to update the date: Constraint violations cannot be overriden.",
+                    ViolationResultResponse = response
                 });
             }
         }
