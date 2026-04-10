@@ -287,8 +287,34 @@ public class SwapRequestsController : ControllerBase
         }
 
         // evaluate rule violations if swap occurs
-        ViolationResult requesterViolationResult = await _ruleViolationService.EvaluateConstraints(requesteeDate.ScheduleId, requester.ResidentId, requesteeDate.ShiftDate);
-        ViolationResult requesteeViolationResult = await _ruleViolationService.EvaluateConstraints(requesterDate.ScheduleId, requestee.ResidentId, requesterDate.ShiftDate);
+        (bool requesterSuccess, string requesterError, ViolationResult? requesterViolationResult) = await _ruleViolationService.EvaluateConstraints(requesteeDate.ScheduleId, requester.ResidentId, requesteeDate.ShiftDate);
+        (bool requesteeSuccess, string requesteeError, ViolationResult? requesteeViolationResult) = await _ruleViolationService.EvaluateConstraints(requesterDate.ScheduleId, requestee.ResidentId, requesterDate.ShiftDate);
+
+        if (!requesterSuccess || !requesteeSuccess)
+        {
+            return new SwapRequestValidateResponse()
+            {
+                Requester = new RequesterValidationResult
+                {
+                    Success = requesterSuccess,
+                    Message = requesterError,
+                },
+                Requestee = new RequesteeValidationResult
+                {
+                    Success = requesteeSuccess,
+                    Message = requesteeError,
+                }
+            };
+        }
+
+        if (requesterViolationResult == null || requesteeViolationResult == null)
+        {
+            return new SwapRequestValidateResponse()
+            {
+                Success = false,
+                Message = "Unable to pass list of violations."
+            };
+        }
 
         ViolationResultResponse requesterViolationResponse = new ViolationResultResponse(requesterViolationResult);
         ViolationResultResponse requesteeViolationResponse = new ViolationResultResponse(requesteeViolationResult);
@@ -299,8 +325,8 @@ public class SwapRequestsController : ControllerBase
             {
                 Success = false,
                 Message = "Swap will result in rule violation(s) for requestee or requester",
-                RequesterViolationResults = requesterViolationResponse,
-                RequesteeViolationResults = requesteeViolationResponse
+                Requester = new RequesterValidationResult { Success = true, Message = null, ViolationResults = requesterViolationResponse },
+                Requestee = new RequesteeValidationResult { Success = true, Message = null, ViolationResults = requesteeViolationResponse }
             });
         }
 

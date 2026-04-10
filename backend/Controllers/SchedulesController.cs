@@ -91,9 +91,26 @@ public class SchedulesController : ControllerBase
             return BadRequest();
         }
 
-        ViolationResult violationResult = await _ruleViolationService.EvaluateConstraints(dateCreateRequest.ScheduleId, dateCreateRequest.ResidentId, dateCreateRequest.ShiftDate, false);
-        // adminOverride
-        ViolationResultResponse response = new ViolationResultResponse(violationResult);
+        (bool success, string? error, ViolationResult? violationResult) = await _ruleViolationService.EvaluateConstraints(dateCreateRequest.ScheduleId, dateCreateRequest.ResidentId, dateCreateRequest.ShiftDate, false);
+        if (!success)
+        {
+            return BadRequest(new GenericResponse
+            {
+                Success = success,
+                Message = error
+            });
+        }
+
+        if (violationResult == null)
+        {
+            return Conflict(new GenericResponse
+            {
+                Success = success,
+                Message = "Unable to pass list of violations."
+            });
+        }
+
+        ViolationResultResponse response = new ViolationResultResponse(violationResult, true);
 
         return Ok(response);
     }

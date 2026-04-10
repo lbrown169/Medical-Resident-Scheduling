@@ -77,7 +77,25 @@ public class DatesController : ControllerBase
         }
 
         // evaluate rule violations, adminOverride is true -> only admin create dates
-        ViolationResult violationResult = await _ruleViolationService.EvaluateConstraints(request.ScheduleId, resident.ResidentId, date.ShiftDate);
+        (bool success, string? error, ViolationResult? violationResult) = await _ruleViolationService.EvaluateConstraints(request.ScheduleId, resident.ResidentId, date.ShiftDate);
+        if (!success)
+        {
+            return BadRequest(new GenericResponse
+            {
+                Success = success,
+                Message = error
+            });
+        }
+
+        if (violationResult == null)
+        {
+            return Conflict(new GenericResponse
+            {
+                Success = success,
+                Message = "Unable to pass list of violations."
+            });
+        }
+
         ViolationResultResponse response = new(violationResult, true);
 
         if (violationResult.IsViolation)
@@ -245,7 +263,25 @@ public class DatesController : ControllerBase
         }
 
         // evaluate rule violations of update
-        ViolationResult violationResult = await _ruleViolationService.EvaluateConstraints(existingDate.ScheduleId, resident.ResidentId, existingDate.ShiftDate, isDateOnlyUpdate, isResidentUpdate);
+        (bool success, string? error, ViolationResult? violationResult) = await _ruleViolationService.EvaluateConstraints(existingDate.ScheduleId, resident.ResidentId, existingDate.ShiftDate, isDateOnlyUpdate, isResidentUpdate);
+        if (!success)
+        {
+            return BadRequest(new GenericResponse
+            {
+                Success = success,
+                Message = error
+            });
+        }
+
+        if (violationResult == null)
+        {
+            return Conflict(new GenericResponse
+            {
+                Success = success,
+                Message = "Unable to pass list of violations."
+            });
+        }
+
         ViolationResultResponse response = new(violationResult, dateUpdateRequest.adminOverride);
 
         if (violationResult.IsViolation)
@@ -322,7 +358,25 @@ public class DatesController : ControllerBase
         }
 
         // evaluate rule violations of update
-        ViolationResult violationResult = await _ruleViolationService.EvaluateConstraints(existingDate.ScheduleId, resident.ResidentId, existingDate.ShiftDate, isDateOnlyUpdate, isResidentUpdate);
+        (bool success, string? error, ViolationResult? violationResult) = await _ruleViolationService.EvaluateConstraints(existingDate.ScheduleId, resident.ResidentId, existingDate.ShiftDate, isDateOnlyUpdate, isResidentUpdate);
+        if (!success)
+        {
+            return BadRequest(new GenericResponse
+            {
+                Success = success,
+                Message = error
+            });
+        }
+
+        if (violationResult == null)
+        {
+            return Conflict(new GenericResponse
+            {
+                Success = success,
+                Message = "Unable to pass list of violations."
+            });
+        }
+
         ViolationResultResponse response = new(violationResult, updatedDate.adminOverride);
 
         if (violationResult.IsViolation)
