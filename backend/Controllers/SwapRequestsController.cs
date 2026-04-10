@@ -294,6 +294,8 @@ public class SwapRequestsController : ControllerBase
         {
             return new SwapRequestValidateResponse()
             {
+                Success = false,
+                Message = "Unable to retrieve Requester/Requestee data to validate SwapRequest.",
                 Requester = new RequesterValidationResult
                 {
                     Success = requesterSuccess,
@@ -324,7 +326,7 @@ public class SwapRequestsController : ControllerBase
             return (new SwapRequestValidateResponse
             {
                 Success = false,
-                Message = "Swap will result in rule violation(s) for requestee or requester",
+                Message = "SwapRequest will result in rule violation(s) for requestee or requester",
                 Requester = new RequesterValidationResult { Success = true, Message = null, ViolationResults = requesterViolationResponse },
                 Requestee = new RequesteeValidationResult { Success = true, Message = null, ViolationResults = requesteeViolationResponse }
             });
