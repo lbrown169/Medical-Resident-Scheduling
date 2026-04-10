@@ -337,7 +337,7 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                   </div>
                   <select
                     id="partner-shift"
-                    className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors appearance-none cursor-pointer disabled:opacity-50"
+                    className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     value={partnerShiftValue}
                     onChange={(e) => handleSelect(e.target.value, onSelectPartnerShift)}
                     disabled={!selectedResident || filteredPartnerEvents.length === 0}
@@ -427,8 +427,8 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
               <>
                 <Button
                   onClick={handleInitialSubmit}
-                  className="w-full py-2.5 text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200"
                   disabled={!isFormValid}
+                  className="w-full py-2.5 text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer disabled:cursor-not-allowed"
                 >
                   <Send className="h-4 w-4" />
                   <span>Submit Swap Request</span>
@@ -462,10 +462,10 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button onClick={() => setShowConfirmation(false)} variant="outline" className="flex-1 py-2.5 text-sm">
+                  <Button onClick={() => setShowConfirmation(false)} variant="outline" className="flex-1 py-2.5 text-sm cursor-pointer">
                     Cancel
                   </Button>
-                  <Button onClick={handleConfirmSubmit} className="flex-1 py-2.5 text-sm font-semibold flex items-center justify-center gap-2">
+                  <Button onClick={handleConfirmSubmit} className="flex-1 py-2.5 text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer">
                     <Send className="h-4 w-4" />
                     Confirm & Send
                   </Button>
