@@ -177,6 +177,13 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
           description: "The swap request has been approved successfully.",
           variant: "success"
         });
+      } else {
+        const body = await response.json().catch(() => null);
+        toast({
+          title: "Could not approve swap",
+          description: body?.message ?? "Failed to approve swap request.",
+          variant: "destructive"
+        });
       }
     } catch (error) {
       console.error('Error approving swap:', error);

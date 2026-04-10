@@ -160,7 +160,7 @@ public class DashboardController : ControllerBase
                     Id = swap.SwapRequestId.ToString(),
                     Type = "swap_pending",
                     Message =
-                        $"Swap request from {requesterName} for {swap.RequesterDate:MM/dd/yyyy} (your shift: {swap.RequesteeDate:MM/dd/yyyy})",
+                        $"New swap request from {requesterName} received",
                     Date = new DateTimeOffset(swap.CreatedAt, TimeSpan.Zero).ToString("o")
                 });
             }
@@ -186,8 +186,8 @@ public class DashboardController : ControllerBase
                         ? requesteeMap[swap.RequesteeId]
                         : swap.RequesteeId;
                 string message = swap.Status == RequestStatus.Approved
-                    ? $"Your swap request for {swap.RequesterDate:MM/dd/yyyy} (with {requesteeName}) was approved."
-                    : $"Your swap request for {swap.RequesterDate:MM/dd/yyyy} (with {requesteeName}) was denied.";
+                    ? $"Your swap request with {requesteeName} was approved."
+                    : $"Your swap request with {requesteeName} was denied.";
                 dashboardData.RecentActivity.Add(new DashboardDataResponse.Activity
                 {
                     Id = swap.SwapRequestId.ToString(),
@@ -220,7 +220,7 @@ public class DashboardController : ControllerBase
                         ? approvedRequesterMap[swap.RequesterId]
                         : swap.RequesterId;
                 string message
-                    = $"You swapped your shift on {swap.RequesteeDate:MM/dd/yyyy} with {requesterName}.";
+                    = $"You approved a swap request from {requesterName}.";
                 dashboardData.RecentActivity.Add(new DashboardDataResponse.Activity
                 {
                     Id = swap.SwapRequestId + "-as-approver",
