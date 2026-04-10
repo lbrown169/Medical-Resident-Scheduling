@@ -8,6 +8,7 @@ import { toast } from "../../../lib/use-toast";
 import { Calendar, Users, FileText, Repeat, Send, ArrowRightLeft, AlertTriangle, CornerDownRight } from "lucide-react";
 import { CalendarEvent } from "@/lib/models/CalendarEvent";
 import { ConfirmDialog } from "../../../components/ui/confirm-dialog";
+import { SwapRequest } from "@/lib/models/SwapRequest";
 
 interface SwapCallsPageProps {
   userId: string;
@@ -27,23 +28,6 @@ interface SwapCallsPageProps {
   setDescription: (value: string) => void;
 }
 
-type SwapRequestStatus = {
-  id: number;
-  description: string;
-};
-
-type ApiSwaps = {
-  swapRequestId: string;
-  scheduleId: string;
-  requesterId: string;
-  requesteeId: string;
-  requesterDate: string;
-  requesteeDate: string;
-  status: SwapRequestStatus;
-  createdAt: string;
-  updatedAt: string;
-  details?: string | null;
-};
 
 function formatDate(dateStr: string, opts: Intl.DateTimeFormatOptions) {
   if (!dateStr) return '';
@@ -87,8 +71,8 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
   const isFormValid = yourShiftDate && partnerShiftDate && selectedResident && selectedShift && partnerShift;
 
   const [loadingSwaps, setLoadingSwaps] = useState(false);
-  const [swapRequests, setSwapRequests] = useState<ApiSwaps[]>([]);
-  const [pendingSwapRequests, setPendingSwapRequests] = useState<ApiSwaps[]>([]);
+  const [swapRequests, setSwapRequests] = useState<SwapRequest[]>([]);
+  const [pendingSwapRequests, setPendingSwapRequests] = useState<SwapRequest[]>([]);
   const [errorSwaps, setErrorSwaps] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -126,9 +110,9 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
           throw new Error(txt || `HTTP ${bRes.status}`);
         }
 
-        const data: ApiSwaps[] = await res.json();
-        const bData: ApiSwaps[] = await bRes.json();
-        const combinedData: ApiSwaps[] = [...data, ...bData];
+        const data: SwapRequest[] = await res.json();
+        const bData: SwapRequest[] = await bRes.json();
+        const combinedData: SwapRequest[] = [...data, ...bData];
 
         if (!abort) {
           const arr = Array.isArray(combinedData) ? combinedData : [combinedData];

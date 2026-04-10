@@ -8,6 +8,8 @@ import { CalendarX, Send, Check, X, Shield, Users, Repeat, Search, Trash2 } from
 import { config } from '../../../config';
 import { toast } from "../../../lib/use-toast";
 import { VacationResponse } from "@/lib/models/VacationResponse";
+import { SwapRequest } from "@/lib/models/SwapRequest";
+import { Announcement } from "@/lib/models/Announcement";
 
 // Interfaces
 
@@ -44,31 +46,6 @@ interface Request {
   residentId?: string;
   details?: string;
   groupId: string;
-}
-
-interface SwapRequest {
-  swapRequestId: string;
-  scheduleId: string;
-  requesterId: string;
-  requesteeId: string;
-  requesterDate: string;
-  requesteeDate: string;
-  status: SwapRequestStatus;
-  createdAt: string;
-  updatedAt: string;
-  isRead: boolean;
-  details?: string;
-}
-
-interface SwapRequestStatus {
-  id: number;
-  description: string;
-}
-
-interface Announcement {
-  announcementId: string;
-  message: string;
-  createdAt?: string;
 }
 
 // Shared helpers
