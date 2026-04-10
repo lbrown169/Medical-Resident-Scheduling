@@ -274,14 +274,14 @@ export const RotationScheduleTable: React.FC<RotationScheduleTableProps> = ({
                   <td className="px-3 py-2 whitespace-nowrap font-medium text-gray-900 dark:text-gray-100 sticky left-0 bg-white dark:bg-neutral-900 truncate" style={{ fontSize: "clamp(9px, 0.8vw, 14px)" }}>
                     {allowResidentReassignment && residentList.length > 0 ? (
                       <select
-                        className=" font-medium bg-transparent border-b border-dotted border-gray-400 focus:outline-none cursor-pointer"
+                        className=" font-medium bg-transparent text-gray-900 dark:text-gray-100 border-b border-dotted border-gray-400 dark:border-gray-600 focus:outline-none cursor-pointer"
                         value={resident.resident_id}
                         onChange={(e) => {
                           const rotation = rotations[0];
                           if (rotation) onResidentChange?.(rotation.rotationId, e.target.value);
                         }}
                       >
-                        {residentList.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+                        {residentList.map((r) => <option className="bg-white dark:bg-neutral-900 text-black dark:text-white" key={r.id} value={r.id}>{r.name}</option>)}
                       </select>
                     ) : (
                       shortName
