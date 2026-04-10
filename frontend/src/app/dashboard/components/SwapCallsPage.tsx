@@ -177,6 +177,8 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
     }, 500);
   };
 
+  const [approveModalOpen, setApproveModalOpen] = useState(false);
+  const [pendingApproveId, setPendingApproveId] = useState<string | null>(null);
   const [denyModalOpen, setDenyModalOpen] = useState(false);
   const [pendingDenyId, setPendingDenyId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
@@ -563,7 +565,7 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                             <StatusPill status={swap.status.description} />
 
                             <div className="flex gap-2 mt-auto">
-                              <Button size="sm" disabled={actionLoading} onClick={() => handleApprove(swap.swapRequestId)} className="bg-green-600 text-white hover:bg-green-700 cursor-pointer">Approve</Button>
+                              <Button size="sm" disabled={actionLoading} onClick={() => { setPendingApproveId(swap.swapRequestId); setApproveModalOpen(true); }} className="bg-green-600 text-white hover:bg-green-700 cursor-pointer">Approve</Button>
                               <Button size="sm" disabled={actionLoading} onClick={() => handleDeny(swap.swapRequestId)} className="bg-red-600 text-white hover:bg-red-700 cursor-pointer">Deny</Button>
                             </div>
                           </div>
@@ -674,6 +676,20 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
         </Card>
       </div>
 
+      <ConfirmDialog
+        open={approveModalOpen}
+        onOpenChange={setApproveModalOpen}
+        title="Approve swap?"
+        message="Are you sure you want to approve this swap request? This action cannot be undone."
+        confirmText="Approve"
+        cancelText="Cancel"
+        onConfirm={async () => {
+          if (pendingApproveId) {
+            await handleApprove(pendingApproveId);
+            setPendingApproveId(null);
+          }
+        }}
+      />
       <ConfirmDialog
         open={denyModalOpen}
         onOpenChange={setDenyModalOpen}

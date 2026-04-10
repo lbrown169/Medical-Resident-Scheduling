@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { Card } from "../../../components/ui/card";
+import { ConfirmDialog } from "../../../components/ui/confirm-dialog";
 import { CalendarRange, Users, Copy } from "lucide-react";
 import { config } from "../../../config";
 import {
@@ -123,6 +124,7 @@ export default function PGY12RotationPage() {
   const [copyableYears, setCopyableYears] = useState<number[]>([]);
   const [copyFromYear, setCopyFromYear] = useState<number | "">("");
   const [copying, setCopying] = useState(false);
+  const [copyConfirmOpen, setCopyConfirmOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -371,13 +373,23 @@ export default function PGY12RotationPage() {
                     )}
                   </select>
                   <button
-                    onClick={handleCopyRotations}
+                    onClick={() => setCopyConfirmOpen(true)}
                     disabled={copying || !copyFromYear || copyableYears.length === 0}
                     className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-500 hover:bg-blue-600 text-white shadow-md transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Copy className="w-3.5 h-3.5" />
                     {copying ? "Copying..." : "Copy"}
                   </button>
+                  <ConfirmDialog
+                    open={copyConfirmOpen}
+                    onOpenChange={setCopyConfirmOpen}
+                    title="Copy rotations?"
+                    message={`This will copy rotations from ${copyFromYear}–${Number(copyFromYear) + 1}. This action cannot be undone.`}
+                    confirmText="Copy"
+                    cancelText="Cancel"
+                    onConfirm={handleCopyRotations}
+                    loading={copying}
+                  />
                 </div>
                 <span className="text-xs text-gray-500">Copy from year</span>
               </>

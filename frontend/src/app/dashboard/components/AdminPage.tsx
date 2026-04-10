@@ -836,15 +836,16 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({
         <div className="overflow-x-auto">{invitationsTable}</div>
       </Modal>
 
-      <Modal open={confirmDelete.open} onClose={handleCancelDelete} title="Confirm Delete">
-        <div className="space-y-4">
-          <p>Are you sure you want to delete {confirmDelete.user?.first_name} {confirmDelete.user?.last_name}?</p>
-          <div className="flex gap-2 justify-end">
-            <Button variant="outline" onClick={handleCancelDelete}>Cancel</Button>
-            <Button className="bg-red-600 text-white hover:bg-red-700" onClick={handleConfirmDelete}>Delete</Button>
-          </div>
-        </div>
-      </Modal>
+      <ConfirmDialog
+        open={confirmDelete.open}
+        onOpenChange={(open) => { if (!open) handleCancelDelete(); }}
+        title="Delete user?"
+        message={`Are you sure you want to delete ${confirmDelete.user?.first_name} ${confirmDelete.user?.last_name}? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleConfirmDelete}
+        variant="danger"
+      />
     </>
   );
 };
@@ -1144,15 +1145,17 @@ const AdminPage: React.FC<AdminPageProps> = ({
                       <div className="text-gray-900 dark:text-gray-100 mb-1">{a.message}</div>
                       <div className="text-xs text-gray-500">{a.createdAt ? new Date(a.createdAt).toLocaleString() : ''}</div>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white ml-4"
-                      onClick={() => handleDeleteAnnouncement(a.announcementId)}
-                      disabled={deletingAnnouncement === a.announcementId}
-                    >
-                      <Trash2 className="h-4 w-4 mr-1 inline" />{deletingAnnouncement === a.announcementId ? 'Deleting...' : 'Delete'}
-                    </Button>
+                    <ConfirmDialog
+                      triggerText={<><Trash2 className="h-4 w-4 mr-1 inline" /><span>Delete</span></>}
+                      title="Delete this announcement?"
+                      message="This action cannot be undone."
+                      confirmText="Delete"
+                      cancelText="Cancel"
+                      onConfirm={() => handleDeleteAnnouncement(a.announcementId)}
+                      loading={deletingAnnouncement === a.announcementId}
+                      variant="danger"
+                      className="ml-4"
+                    />
                   </div>
                 </div>
               ))}
