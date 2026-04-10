@@ -160,7 +160,7 @@ public class DashboardController : ControllerBase
                     Id = swap.SwapRequestId.ToString(),
                     Type = "swap_pending",
                     Message =
-                        $"New swap request from {requesterName} received",
+                        $"New swap request from {requesterName}",
                     Date = new DateTimeOffset(swap.CreatedAt, TimeSpan.Zero).ToString("o")
                 });
             }
