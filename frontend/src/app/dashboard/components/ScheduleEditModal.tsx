@@ -442,7 +442,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
     <div>
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-semibold text-lg">{title}</h3>
-        <button onClick={onCancel} className="p-1 hover:bg-muted rounded">
+        <button onClick={onCancel} className="p-1 hover:bg-muted rounded cursor-pointer">
           <X className="w-4 h-4" />
         </button>
       </div>
@@ -450,7 +450,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
         <div>
           <label className="text-xs font-medium text-muted-foreground block mb-1">Resident</label>
           <select
-            className="w-full border rounded px-2 py-1.5 text-sm bg-background"
+            className="w-full border rounded px-2 py-1.5 text-sm bg-background cursor-pointer"
             value={formData.residentId}
             onChange={e => setFormData(f => ({ ...f, residentId: e.target.value }))}
           >
@@ -466,7 +466,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
           <label className="text-xs font-medium text-muted-foreground block mb-1">Date</label>
           <input
             type="date"
-            className="w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
             value={formData.shiftDate}
             min={dateMin}
             max={dateMax}
@@ -477,7 +477,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
         <div>
           <label className="text-xs font-medium text-muted-foreground block mb-1">Call Type</label>
           <select
-            className="w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-50"
+            className="w-full border rounded px-2 py-1.5 text-sm bg-background disabled:opacity-50 cursor-pointer"
             value={formData.callType}
             disabled={callTypeOptions.length === 0}
             onChange={e => setFormData(f => ({ ...f, callType: Number(e.target.value) }))}
@@ -508,14 +508,14 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
           <button
             onClick={onSave}
             disabled={saving || !formData.residentId || !formData.shiftDate || formData.callType === -1 || (formData.callType === 99 && !formData.hours)}
-            className="flex-1 px-3 py-1.5 text-sm font-medium bg-primary text-primary-foreground rounded hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex-1 px-3 py-1.5 text-sm font-medium bg-primary text-primary-foreground rounded cursor-pointer hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {saving ? "Saving..." : "Save"}
           </button>
           <button
             onClick={onCancel}
             disabled={saving}
-            className="flex-1 px-3 py-1.5 text-sm font-medium border rounded hover:bg-muted transition-colors"
+            className="flex-1 px-3 py-1.5 text-sm font-medium border rounded cursor-pointer hover:bg-muted transition-colors"
           >
             Cancel
           </button>
@@ -550,7 +550,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                   <button
                     onClick={() => navigateMonth('prev')}
                     disabled={!canNavigatePrev}
-                    className="p-2 hover:bg-muted rounded-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                    className="p-2 hover:bg-muted rounded-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent cursor-pointer"
                   >
                     <ChevronLeft className="w-5 h-5" />
                   </button>
@@ -565,7 +565,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                   <button
                     onClick={() => navigateMonth('next')}
                     disabled={!canNavigateNext}
-                    className="p-2 hover:bg-muted rounded-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+                    className="p-2 hover:bg-muted rounded-full transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent cursor-pointer"
                   >
                     <ChevronRight className="w-5 h-5" />
                   </button>
@@ -698,14 +698,14 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                         <div className="flex gap-2 mt-4">
                           <button
                             onClick={openEditMode}
-                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-blue-600 text-blue-600 rounded hover:bg-blue-500 hover:text-white transition-colors"
+                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm cursor-pointer font-medium border border-blue-600 text-blue-600 rounded hover:bg-blue-500 hover:text-white transition-colors"
                           >
                             <Pencil className="w-3.5 h-3.5" />
                             Edit
                           </button>
                           <button
                             onClick={() => setConfirmDialog("delete")}
-                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm font-medium border border-red-600 text-red-600 rounded hover:bg-red-500 hover:text-white transition-colors"
+                            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm cursor-pointer font-medium border border-red-600 text-red-600 rounded hover:bg-red-500 hover:text-white transition-colors"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                             Delete
@@ -713,7 +713,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                         </div>
                         <button
                           onClick={closePopup}
-                          className="absolute top-2 right-2 p-1 hover:bg-muted rounded"
+                          className="absolute top-2 right-2 p-1 hover:bg-muted rounded cursor-pointer"
                         >
                           <span className="sr-only">Close</span>
                           <X className="w-4 h-4" />
@@ -764,7 +764,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
         )}
 
         <AlertDialogFooter>
-          <AlertDialogCancel>Close</AlertDialogCancel>
+          <AlertDialogCancel className="cursor-pointer">Close</AlertDialogCancel>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

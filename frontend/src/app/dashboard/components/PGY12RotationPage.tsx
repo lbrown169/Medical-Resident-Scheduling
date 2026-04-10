@@ -296,7 +296,7 @@ export default function PGY12RotationPage() {
           <div className="flex flex-col items-center justify-center md:px-8">
             <div className="flex items-center gap-2 mb-1">
               <select
-                className="border rounded px-2 py-1 text-sm font-semibold dark:bg-neutral-800 dark:border-gray-600"
+                className="border rounded px-2 py-1 text-sm font-semibold dark:bg-neutral-800 dark:border-gray-600 cursor-pointer"
                 value={academicYear}
                 onChange={(e) => setAcademicYear(Number(e.target.value))}
               >
@@ -357,7 +357,7 @@ export default function PGY12RotationPage() {
               <>
                 <div className="flex items-center gap-2 mb-1">
                   <select
-                    className="border rounded px-2 py-1 text-xs dark:bg-neutral-800 dark:border-gray-600"
+                    className="border rounded px-2 py-1 text-xs dark:bg-neutral-800 dark:border-gray-600 cursor-pointer"
                     value={copyFromYear}
                     onChange={(e) => setCopyFromYear(Number(e.target.value))}
                     disabled={copyableYears.length === 0}

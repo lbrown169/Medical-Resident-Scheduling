@@ -1348,22 +1348,22 @@ case "Home":
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56">
                       <DropdownMenuItem
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 cursor-pointer"
                         onClick={() => setSelected("Settings")}
                       >
                         <UserIcon className="h-4 w-4" />
                         <span>Profile</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setTheme("light")} className="flex items-center gap-2">
+                      <DropdownMenuItem onClick={() => setTheme("light")} className="flex items-center gap-2 cursor-pointer">
                         <Sun className="h-4 w-4" />
                         <span>Light</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setTheme("dark")} className="flex items-center gap-2">
+                      <DropdownMenuItem onClick={() => setTheme("dark")} className="flex items-center gap-2 cursor-pointer">
                         <Moon className="h-4 w-4" />
                         <span>Dark</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        className="flex items-center gap-2 text-red-600 focus:text-red-600"
+                        className="flex items-center gap-2 text-red-600 focus:text-red-600 cursor-pointer"
                         onClick={handleLogout}
                       >
                         <LogOut className="h-4 w-4" />

@@ -105,7 +105,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                 />
                 <Button 
                   onClick={handleUpdateEmail}
-                  className="px-4 py-2 text-sm bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors whitespace-nowrap"
+                    className="px-4 py-2 text-sm bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors whitespace-nowrap cursor-pointer"
                 >
                   Update
                 </Button>
@@ -129,7 +129,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                 />
                 <Button 
                   onClick={handleUpdatePhoneNumber} 
-                  className="px-4 py-2 text-sm bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors whitespace-nowrap"
+                    className="px-4 py-2 text-sm bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors whitespace-nowrap cursor-pointer"
                 >
                   Update
                 </Button>
@@ -153,7 +153,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
               variant="outline"
               onClick={() => setTheme(isDark ? "light" : "dark")}
               disabled={!mounted}
-              className="flex items-center gap-3 px-4 py-3 border border-border rounded-lg bg-background hover:bg-muted text-foreground transition-colors"
+                className="flex items-center gap-3 px-4 py-3 border border-border rounded-lg bg-background hover:bg-muted text-foreground transition-colors cursor-pointer"
             >
             {!mounted ? (
               <>
@@ -202,7 +202,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
               />
               <Button 
                 onClick={() => window.open('https://www.youtube.com/watch?v=eUoo2_Zgknk')} // TODO: Replace with updated tutorial later
-                className="px-4 py-2 text-sm bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap"
+                className="px-4 py-2 text-sm bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap cursor-pointer"
               >
                 <ExternalLink className="h-4 w-4" />
                 Open Tutorial
@@ -226,7 +226,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
                 />
                 <Button 
                   onClick={() => window.open('https://www.youtube.com/watch?v=CQYruboTEgk')} // TODO: Replace with updated tutorial later
-                  className="px-4 py-2 text-sm bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap"
+                  className="px-4 py-2 text-sm bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap cursor-pointer"
                 >
                   <ExternalLink className="h-4 w-4" />
                   Open Admin Tutorial

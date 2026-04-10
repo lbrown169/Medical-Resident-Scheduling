@@ -828,7 +828,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                 {selectedEvent.extendedProps.pgyLevel}
               </div>
             )}
-            <button className="mt-4 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors shadow-sm" onClick={() => { setSelectedEvent(null); }}>
+            <button className="mt-4 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors shadow-sm cursor-pointer" onClick={() => { setSelectedEvent(null); }}>
               Close
             </button>
           </div>
@@ -860,7 +860,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
                 {eventPopover.event.extendedProps.pgyLevel}
               </div>
             )}
-            <button className="mt-4 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors shadow-sm" onClick={() => setEventPopover(null)}>
+            <button className="mt-4 px-6 py-3 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors shadow-sm cursor-pointer" onClick={() => setEventPopover(null)}>
               Close
             </button>
           </div>

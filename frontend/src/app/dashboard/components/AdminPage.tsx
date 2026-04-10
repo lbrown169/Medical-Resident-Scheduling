@@ -65,7 +65,7 @@ function Modal({ open, onClose, title, children }: { open: boolean; onClose: () 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-card p-8 rounded-xl shadow-lg max-w-2xl w-full relative">
-        <button onClick={onClose} className="absolute top-4 right-4 text-xl font-bold">&times;</button>
+        <button onClick={onClose} className="absolute top-4 right-4 text-xl font-bold cursor-pointer">&times;</button>
         <h2 className="text-2xl font-bold mb-4">{title}</h2>
         <div className="overflow-y-auto max-h-[60vh]">{children}</div>
       </div>
@@ -111,7 +111,7 @@ const AnnouncementForm: React.FC<{ userId: string; onPosted: () => void }> = ({ 
           rows={3}
           disabled={posting}
         />
-        <Button type="submit" disabled={posting || !text.trim()} className="self-end px-6 py-2">
+        <Button type="submit" disabled={posting || !text.trim()} className="self-end px-6 py-2 cursor-pointer">
           {posting ? 'Posting...' : 'Post Announcement'}
         </Button>
       </form>
@@ -567,7 +567,7 @@ const VacationRequestsTab: React.FC<VacationRequestsTabProps> = ({ handleApprove
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
           <h2 className="text-lg sm:text-xl font-bold">Time Off Requests</h2>
           <div className="flex gap-2">
-            <Button variant="outline" className="flex items-center gap-2 px-1 sm:px-6 py-1 sm:py-3 text-xs sm:text-sm lg:text-base"
+            <Button variant="outline" className="flex items-center gap-2 px-1 sm:px-6 py-1 sm:py-3 text-xs sm:text-sm lg:text-base cursor-pointer"
               onClick={() => setShowSearchModal(true)}>
               <Search className="h-4 w-4" />
               <span>Search</span>
@@ -595,7 +595,7 @@ const VacationRequestsTab: React.FC<VacationRequestsTabProps> = ({ handleApprove
               type="date"
               value={searchDate}
               onChange={e => setSearchDate(e.target.value)}
-              className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100"
+              className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 cursor-pointer"
             />
           </div>
           {searchDate && (() => {
@@ -719,7 +719,7 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 {invite.status === "Pending" && (
-                  <Button variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-500 hover:text-white" onClick={() => handleResendInvite(invite.id || '')}>
+                  <Button variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-500 hover:text-white cursor-pointer" onClick={() => handleResendInvite(invite.id || '')}>
                     Resend
                   </Button>
                 )}
@@ -749,7 +749,7 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
             />
-            <Button onClick={handleSendInvite} className="py-2 flex items-center justify-center gap-2">
+            <Button onClick={handleSendInvite} className="py-2 flex items-center justify-center gap-2 cursor-pointer">
               <Send className="h-5 w-5" />
               <span>Send Invitation</span>
             </Button>
@@ -785,14 +785,14 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({
                           value={user.role}
                           onChange={(e) => handleSwitchRole(user, e.target.value)}
                           disabled={switchingRole === user.id}
-                          className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                         >
-                          <option value="resident">{switchingRole === user.id ? 'Switching...' : 'Resident'}</option>
-                          <option value="admin">{switchingRole === user.id ? 'Switching...' : 'Admin'}</option>
+                          <option className="cursor-pointer" value="resident">{switchingRole === user.id ? 'Switching...' : 'Resident'}</option>
+                          <option className="cursor-pointer" value="admin">{switchingRole === user.id ? 'Switching...' : 'Admin'}</option>
                         </select>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white" onClick={() => handleDeleteUserWithConfirm(user)}>
+                        <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white cursor-pointer" onClick={() => handleDeleteUserWithConfirm(user)}>
                           <Trash2 className="h-4 w-4 mr-1 inline" />Delete
                         </Button>
                       </td>
