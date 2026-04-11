@@ -300,7 +300,7 @@ public class DatesController : ControllerBase
             return NotFound(DateValidationResponse.NonViolationFailure("Shift could not be found"));
         }
 
-        bool isResidentUpdate = !string.IsNullOrEmpty(dateUpdateRequest.ResidentId) && dateUpdateRequest.ResidentId == existingDate.ResidentId;
+        bool isResidentUpdate = !string.IsNullOrEmpty(dateUpdateRequest.ResidentId) && dateUpdateRequest.ResidentId != existingDate.ResidentId;
         bool isDateOnlyUpdate = dateUpdateRequest.ShiftDate.HasValue && existingDate.ShiftDate != dateUpdateRequest.ShiftDate;
 
         // Update fields
@@ -355,19 +355,6 @@ public class DatesController : ControllerBase
                 return Conflict(DateValidationResponse.ViolationFailure(response,
                     "The provided date violates non-overridable constraints"));
             }
-        }
-
-        if (dateUpdateRequest.Hours is not null)
-        {
-            existingDate.Hours = dateUpdateRequest.Hours.Value;
-        }
-        else if (CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(existingDate.ShiftDate, resident.GraduateYr.Value) is { } shiftType)
-        {
-            existingDate.Hours = shiftType.GetHours();
-        }
-        else
-        {
-            return BadRequest(DateValidationResponse.NonViolationFailure("Hours is required if the assigned shift is not an algorithm shift."));
         }
 
         await _context.SaveChangesAsync();

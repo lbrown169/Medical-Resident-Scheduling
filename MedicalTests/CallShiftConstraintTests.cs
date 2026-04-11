@@ -56,8 +56,7 @@ public static class CallShiftConstraintTests
     }
 
     private static CallShiftType ShiftType(DateOnly date, ResidentDto resident) =>
-        CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(date, resident.Pgy)
-        ?? CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(date, resident.Pgy == 1 ? 2 : 1)!.Value;
+        CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(date, resident.Pgy)!.Value;
 
     // Role that allows all call types
     private static HospitalRole AllowAllRole =>
@@ -416,7 +415,7 @@ public static class CallShiftConstraintTests
         public void Violation_WhenNoValidShiftTypeExistsForPgy1_OnSunday()
         {
             ResidentDto resident = CreateResident(1, UniformRoles(AllowAllRole));
-            ConstraintResult result = _constraint.Evaluate(resident, OctoberSunday, ShiftType(OctoberSunday, resident));
+            ConstraintResult result = _constraint.Evaluate(resident, OctoberSunday, CallShiftType.SundayHalfCall);
             Assert.True(result.IsViolated);
         }
 
@@ -440,7 +439,7 @@ public static class CallShiftConstraintTests
         public void Violation_WhenNoValidShiftTypeExistsForPgy2_OnWeekend()
         {
             ResidentDto resident = CreateResident(2, UniformRoles(AllowAllRole));
-            ConstraintResult result = _constraint.Evaluate(resident, ChristmasDay, ShiftType(ChristmasDay, resident));
+            ConstraintResult result = _constraint.Evaluate(resident, ChristmasDay, CallShiftType.ChristmasDay);
             Assert.True(result.IsViolated);
         }
     }
