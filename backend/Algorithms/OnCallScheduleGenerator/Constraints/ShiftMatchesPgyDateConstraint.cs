@@ -17,6 +17,6 @@ public class ShiftMatchesPgyDateConstraint : ICallShiftConstraint
         }
 
         // if shiftType is null, no valid call type found given PGYear and date
-        return ConstraintResult.Violation($"No valid call type shift assignment available for Resident {resident.Name}, PGY: {resident.Pgy}, on date {date}.", false);
+        return ConstraintResult.Violation($"No valid call type shift assignment available for Resident {resident.ResidentId}, PGY: {resident.Pgy}, on date {date}.", false);
     }
 }
