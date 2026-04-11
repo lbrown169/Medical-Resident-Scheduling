@@ -20,7 +20,6 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month' | 'year'>('month');
-  const [isUpcomingOpen, setIsUpcomingOpen] = useState(true);
   const [eventPopover, setEventPopover] = useState<{ event: CalendarEvent; x: number; y: number } | null>(null);
   const calendarGridRef = useRef<HTMLDivElement>(null);
 
@@ -340,18 +339,6 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
             >
               Year
             </button>
-            <button
-              className={`cursor-pointer flex items-center text-sm font-medium rounded-xl transition-colors duration-200 px-5 py-3 border border-border ${isUpcomingOpen ? 'bg-primary text-primary-foreground border-primary shadow-lg' : 'bg-card text-muted-foreground hover:bg-muted'}`}
-              onClick={() => setIsUpcomingOpen((open) => !open)}
-              aria-expanded={isUpcomingOpen}
-              aria-controls="upcoming-panel-content"
-              type="button"
-            >
-              <span className="mr-2">Upcoming</span>
-              <span className={`transition-transform duration-200 ${isUpcomingOpen ? '' : 'rotate-180'}`}>
-                <ChevronLeft className="w-4 h-4" style={{ transform: isUpcomingOpen ? 'rotate(-90deg)' : 'rotate(90deg)' }} />
-              </span>
-            </button>
           </div>
         </div>
       </div>
@@ -448,7 +435,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
       {/* Main Content: Calendar + Upcoming */}
       <div className="flex flex-1 w-full relative pt-24 md:pt-[9rem] md:justify-start">
         {/* Calendar Grid */}
-        <div className={`w-full md:flex-1 pl-0 pr-6 md:px-8 py-4 md:py-8 transition-all duration-300 ${isUpcomingOpen && viewMode !== 'year' ? 'mr-0 md:mr-[24rem]' : ''}`} ref={calendarGridRef}>
+        <div className={`w-full md:flex-1 pl-0 pr-6 md:px-8 py-4 md:py-8 transition-all duration-300 ${viewMode !== 'year' ? 'mr-0 md:mr-[24rem]' : ''}`} ref={calendarGridRef}>
           <div className="flex justify-center md:justify-start">
             <div className="calendar-print-area bg-card rounded-2xl shadow-xl border border-border overflow-hidden h-full w-full max-w-2xl md:max-w-none">
               {viewMode === 'day' ? (
@@ -758,16 +745,17 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
         </div>
         {/* Upcoming Section to the right (animated slide in/out) - Hidden on mobile */}
         <div
-          className={`max-w-xs w-[24rem] fixed right-0 bottom-0 z-10 border-l border-border bg-card p-6 flex flex-col transition-transform duration-300 ease-in-out ${isUpcomingOpen && viewMode !== 'year' ? 'translate-x-0' : 'translate-x-full'} pointer-events-auto hidden md:flex`}
-          style={{ top: 'calc(4.5rem + 4.5rem + 0.7rem)', boxShadow: isUpcomingOpen ? '0 0 24px 0 rgba(0,0,0,0.08)' : 'none' }}
+          className={`max-w-xs w-[24rem] fixed right-0 bottom-0 z-10 border-l border-border bg-card p-6 flex flex-col transition-transform duration-300 ease-in-out ${viewMode !== 'year' ? 'translate-x-0' : 'translate-x-full'} pointer-events-auto hidden md:flex`}
+          style={{ top: 'calc(4.5rem + 4.5rem + 0.7rem)', boxShadow: viewMode !== 'year' ? '0 0 24px 0 rgba(0,0,0,0.08)' : 'none' }}
         >
+          <h2 className="text-lg font-semibold mb-4">Upcoming Shifts</h2>
           <div id="upcoming-panel-content" className="flex-1 overflow-y-auto pb-32">
-            {events.length === 0 ? (
+            {visibleEvents.length === 0 ? (
               <div className="text-center py-12">
                 <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
                   <CalendarDays className="w-8 h-8 text-gray-400 dark:text-gray-500" />
                 </div>
-                <p className="text-gray-500 dark:text-gray-400">No upcoming events</p>
+                <p className="text-gray-500 dark:text-gray-400">No upcoming shifts</p>
               </div>
             ) : (
               <div className="space-y-4">
