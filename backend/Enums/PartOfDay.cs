@@ -4,7 +4,8 @@ namespace MedicalDemo.Enums;
 public enum PartOfDay
 {
     Morning = 1,
-    Afternoon = 2
+    Afternoon = 2,
+    AllDay = Morning | Afternoon,
 }
 
 public static class PartOfDayExtensions

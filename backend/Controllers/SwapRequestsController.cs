@@ -292,7 +292,7 @@ public class SwapRequestsController : ControllerBase
         {
             ViolationResult requesterViolationResult
                 = await _ruleViolationService.EvaluateConstraints(requesteeDate.ScheduleId,
-                    requester.ResidentId, requesteeDate.ShiftDate);
+                    requester.ResidentId, requesteeDate.ShiftDate, requesteeDate.CallType);
             ViolationResultResponse requesterViolationResultResponse = new(requesterViolationResult);
             requesterValidationResult = new IndividualValidationResult() { Message = requesterViolationResultResponse.IsViolation ? "Requester constraint violations" : "No Violations", Violations = requesterViolationResultResponse };
         }
@@ -304,7 +304,7 @@ public class SwapRequestsController : ControllerBase
         IndividualValidationResult requesteeValidationResult;
         try
         {
-            ViolationResult requesteeViolationResult = await _ruleViolationService.EvaluateConstraints(requesterDate.ScheduleId, requestee.ResidentId, requesterDate.ShiftDate);
+            ViolationResult requesteeViolationResult = await _ruleViolationService.EvaluateConstraints(requesterDate.ScheduleId, requestee.ResidentId, requesterDate.ShiftDate, requesterDate.CallType);
             ViolationResultResponse requesteeViolationResultResponse = new(requesteeViolationResult);
             requesteeValidationResult = new IndividualValidationResult() { Message = requesteeViolationResultResponse.IsViolation ? "Requestee constraint violations" : "No Violations", Violations = requesteeViolationResultResponse };
         }

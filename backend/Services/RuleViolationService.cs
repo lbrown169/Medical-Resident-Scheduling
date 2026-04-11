@@ -68,7 +68,7 @@ public class RuleViolationService
         return (true, null, resident);
     }
 
-    public async Task<ViolationResult> EvaluateConstraints(Guid scheduleId, string residentId, DateOnly date, bool isDateOnlyUpdate = true, bool isResidentUpdate = true)
+    public async Task<ViolationResult> EvaluateConstraints(Guid scheduleId, string residentId, DateOnly date, CallShiftType shiftType, bool isDateOnlyUpdate = true, bool isResidentUpdate = true)
     {
         //validate schedule
         Schedule? schedule = await _context.Schedules.FindAsync(scheduleId);
@@ -93,7 +93,7 @@ public class RuleViolationService
             {
                 continue;
             }
-            ConstraintResult result = constraint.Evaluate(residentInfo, date);
+            ConstraintResult result = constraint.Evaluate(residentInfo, date, shiftType);
             if (result.IsViolated)
             {
                 violations.Add(result);

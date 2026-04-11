@@ -31,7 +31,7 @@ public class DateValidationResponse : GenericResponse
         return new DateValidationResponse
         {
             Success = true,
-            Message = "",
+            Message = "No constraint violations",
             ViolationResultResponse = null
         };
     }

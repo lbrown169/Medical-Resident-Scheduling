@@ -7,16 +7,19 @@ namespace MedicalDemo.Algorithms.OnCallScheduleGenerator.Constraints;
 
 public class ShiftMatchesRotationConstraint : ICallShiftConstraint
 {
-    public ConstraintResult Evaluate(ResidentDto resident, DateOnly date)
+    public ConstraintResult Evaluate(ResidentDto resident, DateOnly date, CallShiftType shiftType)
     {
-        CallShiftType? shiftType = CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(date, resident.Pgy);
-
-        if (shiftType is not null && DoesRotationAllow(resident, date, shiftType.Value.GetLengthType()))
+        CallLengthType lengthType = shiftType switch
+        {
+            CallShiftType.Custom => CallLengthType.Long,
+            _ => shiftType.GetLengthType()
+        };
+        if (DoesRotationAllow(resident, date, lengthType))
         {
             return ConstraintResult.NoViolation();
         }
 
-        return ConstraintResult.Violation($"Resident {resident.ResidentId} shift disagrees with their rotation.", true);
+        return ConstraintResult.Violation($"Call shift \"{shiftType.GetDisplayName()}\" disagrees with rotation.", true);
     }
 
     private bool DoesRotationAllow(ResidentDto resident, DateOnly date, CallLengthType lengthType)

@@ -1,3 +1,4 @@
+using MedicalDemo.Enums;
 using MedicalDemo.Models;
 using MedicalDemo.Models.DTO.Scheduling;
 
@@ -5,7 +6,7 @@ namespace MedicalDemo.Algorithms.OnCallScheduleGenerator.Constraints;
 
 public class OneShiftADayConstraint : ICallShiftConstraint
 {
-    public ConstraintResult Evaluate(ResidentDto resident, DateOnly date)
+    public ConstraintResult Evaluate(ResidentDto resident, DateOnly date, CallShiftType shiftType)
     {
         if (IsWorking(resident, date))
         {

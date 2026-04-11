@@ -49,12 +49,18 @@ public class DatesController : ControllerBase
                 DateValidationResponse.NonViolationFailure("Resident with active PGY status not found"));
         }
 
+        if (request.Hours is null && request.CallType == CallShiftType.Custom)
+        {
+            return BadRequest(DateValidationResponse.NonViolationFailure("Hours is required if the assigned shift is custom."));
+        }
+        date.Hours = request.Hours ?? request.CallType.GetHours();
+
         // evaluate rule violations, adminOverride is true -> only admin create dates
         ViolationResult violationResult;
         try
         {
             violationResult = await _ruleViolationService.EvaluateConstraints(request.ScheduleId,
-                resident.ResidentId, date.ShiftDate);
+                resident.ResidentId, date.ShiftDate, request.CallType);
         }
         catch (ArgumentException ex)
         {
@@ -78,19 +84,6 @@ public class DatesController : ControllerBase
             }
         }
 
-        if (request.Hours is not null)
-        {
-            date.Hours = request.Hours.Value;
-        }
-        else if (CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(date.ShiftDate, resident.GraduateYr.Value) is { } shiftType)
-        {
-            date.Hours = shiftType.GetHours();
-        }
-        else
-        {
-            return BadRequest(DateValidationResponse.NonViolationFailure("Hours is required if the assigned shift is not an algorithm shift."));
-        }
-
         _context.Dates.Add(date);
         await _context.SaveChangesAsync();
 
@@ -109,12 +102,17 @@ public class DatesController : ControllerBase
                 DateValidationResponse.NonViolationFailure("Resident with active PGY status not found"));
         }
 
+        if (request.Hours is null && request.CallType == CallShiftType.Custom)
+        {
+            return BadRequest(DateValidationResponse.NonViolationFailure("Hours is required if the assigned shift is custom."));
+        }
+
         // evaluate rule violations, adminOverride is true -> only admin create dates
         ViolationResult violationResult;
         try
         {
             violationResult = await _ruleViolationService.EvaluateConstraints(request.ScheduleId,
-                resident.ResidentId, request.ShiftDate);
+                resident.ResidentId, request.ShiftDate, request.CallType);
         }
         catch (ArgumentException ex)
         {
@@ -236,11 +234,25 @@ public class DatesController : ControllerBase
             return NotFound(DateValidationResponse.NonViolationFailure("Shift could not be found"));
         }
 
-        bool isResidentUpdate = !string.IsNullOrEmpty(dateUpdateRequest.ResidentId) && dateUpdateRequest.ResidentId == existingDate.ResidentId;
+        bool isResidentUpdate = !string.IsNullOrEmpty(dateUpdateRequest.ResidentId) && dateUpdateRequest.ResidentId != existingDate.ResidentId;
         bool isDateOnlyUpdate = dateUpdateRequest.ShiftDate.HasValue && existingDate.ShiftDate != dateUpdateRequest.ShiftDate;
 
         // Update fields
         _dateConverter.UpdateDateFromDateUpdateRequest(existingDate, dateUpdateRequest);
+
+        if (dateUpdateRequest.Hours is null && dateUpdateRequest.CallType == CallShiftType.Custom)
+        {
+            return BadRequest(DateValidationResponse.NonViolationFailure("Hours is required if the updated shift is custom."));
+        }
+
+        if (dateUpdateRequest.Hours is not null)
+        {
+            existingDate.Hours = dateUpdateRequest.Hours.Value;
+        }
+        else if (dateUpdateRequest.CallType is not null)
+        {
+            existingDate.Hours = dateUpdateRequest.CallType.Value.GetHours();
+        }
 
         Resident? resident
             = await _context.Residents.FirstOrDefaultAsync(r =>
@@ -254,7 +266,7 @@ public class DatesController : ControllerBase
         ViolationResult violationResult;
         try
         {
-            violationResult = await _ruleViolationService.EvaluateConstraints(existingDate.ScheduleId, resident.ResidentId, existingDate.ShiftDate, isDateOnlyUpdate, isResidentUpdate);
+            violationResult = await _ruleViolationService.EvaluateConstraints(existingDate.ScheduleId, resident.ResidentId, existingDate.ShiftDate, existingDate.CallType, isDateOnlyUpdate, isResidentUpdate);
         }
         catch (ArgumentException ex)
         {
@@ -280,7 +292,7 @@ public class DatesController : ControllerBase
     // PUT: api/dates/{id}
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateDate(Guid id,
-        [FromQuery] DateUpdateRequest updatedDateRequest)
+        [FromQuery] DateUpdateRequest dateUpdateRequest)
     {
         Date? existingDate = await _context.Dates.Include(d => d.Resident).FirstOrDefaultAsync(d => d.DateId == id);
         if (existingDate == null)
@@ -288,11 +300,25 @@ public class DatesController : ControllerBase
             return NotFound(DateValidationResponse.NonViolationFailure("Shift could not be found"));
         }
 
-        bool isResidentUpdate = !string.IsNullOrEmpty(updatedDateRequest.ResidentId) && updatedDateRequest.ResidentId == existingDate.ResidentId;
-        bool isDateOnlyUpdate = updatedDateRequest.ShiftDate.HasValue && existingDate.ShiftDate != updatedDateRequest.ShiftDate;
+        bool isResidentUpdate = !string.IsNullOrEmpty(dateUpdateRequest.ResidentId) && dateUpdateRequest.ResidentId == existingDate.ResidentId;
+        bool isDateOnlyUpdate = dateUpdateRequest.ShiftDate.HasValue && existingDate.ShiftDate != dateUpdateRequest.ShiftDate;
 
         // Update fields
-        _dateConverter.UpdateDateFromDateUpdateRequest(existingDate, updatedDateRequest);
+        _dateConverter.UpdateDateFromDateUpdateRequest(existingDate, dateUpdateRequest);
+
+        if (dateUpdateRequest.Hours is null && dateUpdateRequest.CallType == CallShiftType.Custom)
+        {
+            return BadRequest(DateValidationResponse.NonViolationFailure("Hours is required if the updated shift is custom."));
+        }
+
+        if (dateUpdateRequest.Hours is not null)
+        {
+            existingDate.Hours = dateUpdateRequest.Hours.Value;
+        }
+        else if (dateUpdateRequest.CallType is not null)
+        {
+            existingDate.Hours = dateUpdateRequest.CallType.Value.GetHours();
+        }
 
         Resident? resident
             = await _context.Residents.FirstOrDefaultAsync(r =>
@@ -307,7 +333,7 @@ public class DatesController : ControllerBase
         ViolationResult violationResult;
         try
         {
-            violationResult = await _ruleViolationService.EvaluateConstraints(existingDate.ScheduleId, resident.ResidentId, existingDate.ShiftDate, isDateOnlyUpdate, isResidentUpdate);
+            violationResult = await _ruleViolationService.EvaluateConstraints(existingDate.ScheduleId, resident.ResidentId, existingDate.ShiftDate, existingDate.CallType, isDateOnlyUpdate, isResidentUpdate);
         }
         catch (ArgumentException ex)
         {
@@ -318,7 +344,7 @@ public class DatesController : ControllerBase
 
         if (violationResult.IsViolation)
         {
-            if (updatedDateRequest.AdminOverride != true)
+            if (dateUpdateRequest.AdminOverride != true)
             {
                 return Conflict(DateValidationResponse.ViolationFailure(response,
                     "The provided date violates constraints"));
@@ -331,9 +357,9 @@ public class DatesController : ControllerBase
             }
         }
 
-        if (updatedDateRequest.Hours is not null)
+        if (dateUpdateRequest.Hours is not null)
         {
-            existingDate.Hours = updatedDateRequest.Hours.Value;
+            existingDate.Hours = dateUpdateRequest.Hours.Value;
         }
         else if (CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(existingDate.ShiftDate, resident.GraduateYr.Value) is { } shiftType)
         {

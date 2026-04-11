@@ -7,11 +7,10 @@ namespace MedicalDemo.Algorithms.OnCallScheduleGenerator.Constraints;
 
 public class NotOnVacationConstraint : ICallShiftConstraint
 {
-    public ConstraintResult Evaluate(ResidentDto resident, DateOnly date)
+    public ConstraintResult Evaluate(ResidentDto resident, DateOnly date, CallShiftType shiftType)
     {
-        CallShiftType? shiftType = CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(date, resident.Pgy);
-
-        if (shiftType is not null && IsVacation(resident, date, shiftType.Value.GetPartsOfDay()))
+        PartOfDay partOfDay = shiftType is CallShiftType.Custom ? PartOfDay.AllDay : shiftType.GetPartsOfDay();
+        if (IsVacation(resident, date, partOfDay))
         {
             return ConstraintResult.Violation($"Resident {resident.ResidentId} is on vacation on {date}.", true);
         }
