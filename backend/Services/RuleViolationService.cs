@@ -33,41 +33,6 @@ public class RuleViolationService
         _schedulerService = schedulerService;
     }
 
-
-    public async Task<(bool Success, string? Error, Resident? resident)> CheckResidentScheduledOnDate(
-        Guid scheduleId,
-        string residentId,
-        DateOnly date
-        )
-    {
-        //validate schedule and resident
-        Schedule? schedule = await _context.Schedules.FindAsync(scheduleId);
-        if (schedule == null)
-        {
-            return (false, "Invalid ScheduleID.", null);
-        }
-
-        Resident? resident = await _context.Residents.FindAsync(residentId);
-        if (resident == null)
-        {
-            return (false, "Invalid ResidentID.", null);
-        }
-
-        // check if shift exists for this resident on this day
-        bool residentScheduled = await _context.Dates
-            .AnyAsync(d =>
-                d.ScheduleId == scheduleId &&
-                d.ResidentId == residentId &&
-                d.ShiftDate == date);
-
-        if (residentScheduled)
-        {
-            return (false, $"Resident is already scheduled on this date. Resident: {residentId}, Schedule:{scheduleId},Date:{date}", resident);
-        }
-
-        return (true, null, resident);
-    }
-
     public async Task<ViolationResult> EvaluateConstraints(Guid scheduleId, string residentId, DateOnly date, CallShiftType shiftType, bool isDateUpdate = true, bool isResidentUpdate = true)
     {
         //validate schedule
