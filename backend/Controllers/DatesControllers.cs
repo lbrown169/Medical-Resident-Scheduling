@@ -178,17 +178,17 @@ public class DatesController : ControllerBase
     [HttpGet("call-types")]
     public async Task<ActionResult<DateCallTypeShiftListResponse>>
         GetCallShiftType(
-            [FromQuery] Guid schedule_id,
             [FromQuery] string resident_id,
             [FromQuery] DateOnly date)
     {
-        (bool checkPassed, string? checkError, Resident? resident) = await _ruleViolationService.CheckResidentScheduledOnDate(schedule_id, resident_id, date);
-        if (!checkPassed || resident?.GraduateYr == null)
+        Resident? resident = await _context.Residents.FindAsync(resident_id);
+
+        if (resident?.GraduateYr is null)
         {
             return BadRequest(new GenericResponse()
             {
                 Success = false,
-                Message = checkError ?? "Failed to check if resident was scheduled on date"
+                Message = "Resident not found"
             });
         }
 
