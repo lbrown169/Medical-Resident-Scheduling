@@ -68,20 +68,20 @@ public class RuleViolationService
         return (true, null, resident);
     }
 
-    public async Task<(bool Success, string Error, ViolationResult? violationResult)> EvaluateConstraints(Guid scheduleId, string residentId, DateOnly date, bool isDateOnlyUpdate = false, bool isResidentUpdate = false)
+    public async Task<ViolationResult> EvaluateConstraints(Guid scheduleId, string residentId, DateOnly date, bool isDateOnlyUpdate = true, bool isResidentUpdate = true)
     {
         //validate schedule
         Schedule? schedule = await _context.Schedules.FindAsync(scheduleId);
         if (schedule == null)
         {
-            return (false, $"Invalid ScheduleID {scheduleId}.", null);
+            throw new ArgumentException($"Schedule {scheduleId} not found");
         }
 
-        ResidentDto? residentInfo = await _schedulerService.LoadResidentData(date.AcademicYear, date.Semester, residentId, scheduleId);
+        ResidentDto? residentInfo = await _schedulerService.LoadResidentData(date.Year, date.Semester, residentId, scheduleId);
 
         if (residentInfo == null)
         {
-            return (false, $"Resident {residentId} not found.", null);
+            throw new ArgumentException($"Resident {residentId} not found");
         }
 
         List<ConstraintResult> violations = [];
@@ -100,6 +100,6 @@ public class RuleViolationService
             }
         }
 
-        return (true, "", new ViolationResult(violations));
+        return new ViolationResult(violations);
     }
 }

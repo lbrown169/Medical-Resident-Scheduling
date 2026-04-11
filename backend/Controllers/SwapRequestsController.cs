@@ -287,53 +287,57 @@ public class SwapRequestsController : ControllerBase
         }
 
         // evaluate rule violations if swap occurs
-        (bool requesterSuccess, string requesterError, ViolationResult? requesterViolationResult) = await _ruleViolationService.EvaluateConstraints(requesteeDate.ScheduleId, requester.ResidentId, requesteeDate.ShiftDate);
-        (bool requesteeSuccess, string requesteeError, ViolationResult? requesteeViolationResult) = await _ruleViolationService.EvaluateConstraints(requesterDate.ScheduleId, requestee.ResidentId, requesterDate.ShiftDate);
-
-        if (!requesterSuccess || !requesteeSuccess)
+        IndividualValidationResult requesterValidationResult;
+        try
         {
-            return new SwapRequestValidateResponse()
+            ViolationResult requesterViolationResult
+                = await _ruleViolationService.EvaluateConstraints(requesteeDate.ScheduleId,
+                    requester.ResidentId, requesteeDate.ShiftDate);
+            ViolationResultResponse requesterViolationResultResponse = new(requesterViolationResult);
+            requesterValidationResult = new IndividualValidationResult() { Message = requesterViolationResultResponse.IsViolation ? "Requester constraint violations" : "No Violations", Violations = requesterViolationResultResponse };
+        }
+        catch (ArgumentException ex)
+        {
+            requesterValidationResult = new IndividualValidationResult() { Message = ex.Message, Violations = null };
+        }
+
+        IndividualValidationResult requesteeValidationResult;
+        try
+        {
+            ViolationResult requesteeViolationResult = await _ruleViolationService.EvaluateConstraints(requesterDate.ScheduleId, requestee.ResidentId, requesterDate.ShiftDate);
+            ViolationResultResponse requesteeViolationResultResponse = new(requesteeViolationResult);
+            requesteeValidationResult = new IndividualValidationResult() { Message = requesteeViolationResultResponse.IsViolation ? "Requestee constraint violations" : "No Violations", Violations = requesteeViolationResultResponse };
+        }
+        catch (ArgumentException ex)
+        {
+            requesteeValidationResult = new IndividualValidationResult() { Message = ex.Message, Violations = null };
+        }
+
+        if (requesterValidationResult.Violations == null ||
+            requesteeValidationResult.Violations == null)
+        {
+            return new SwapRequestValidateResponse
             {
                 Success = false,
-                Message = "Unable to retrieve Requester/Requestee data to validate SwapRequest.",
-                Requester = new RequesterValidationResult
-                {
-                    Success = requesterSuccess,
-                    Message = requesterError,
-                },
-                Requestee = new RequesteeValidationResult
-                {
-                    Success = requesteeSuccess,
-                    Message = requesteeError,
-                }
+                Message = "Failed to process rule violations",
+                Requester = requesterValidationResult,
+                Requestee = requesteeValidationResult
             };
         }
 
-        if (requesterViolationResult == null || requesteeViolationResult == null)
+        if (requesterValidationResult.Violations.IsViolation || requesteeValidationResult.Violations.IsViolation)
         {
-            return new SwapRequestValidateResponse()
-            {
-                Success = false,
-                Message = "Unable to pass list of violations."
-            };
-        }
-
-        ViolationResultResponse requesterViolationResponse = new ViolationResultResponse(requesterViolationResult);
-        ViolationResultResponse requesteeViolationResponse = new ViolationResultResponse(requesteeViolationResult);
-
-        if (requesterViolationResponse.IsViolation || requesteeViolationResponse.IsViolation)
-        {
-            return (new SwapRequestValidateResponse
+            return new SwapRequestValidateResponse
             {
                 Success = false,
                 Message = "SwapRequest will result in rule violation(s) for requestee or requester",
-                Requester = new RequesterValidationResult { Success = true, Message = null, ViolationResults = requesterViolationResponse },
-                Requestee = new RequesteeValidationResult { Success = true, Message = null, ViolationResults = requesteeViolationResponse }
-            });
+                Requester = requesterValidationResult,
+                Requestee = requesteeValidationResult
+            };
         }
 
         swapRequest.ScheduleId = requesterDate.ScheduleId;
 
-        return new SwapRequestValidateResponse() { Success = true };
+        return new SwapRequestValidateResponse { Success = true, Message = "No Constraint Violations", Requester = requesterValidationResult, Requestee = requesteeValidationResult };
     }
 }

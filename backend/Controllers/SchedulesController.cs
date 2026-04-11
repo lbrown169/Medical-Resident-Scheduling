@@ -22,14 +22,12 @@ public class SchedulesController : ControllerBase
     private readonly ILogger<SchedulesController> _logger;
     private readonly MedicalContext _context;
     private readonly ScheduleConverter _scheduleConverter;
-    private readonly RuleViolationService _ruleViolationService;
 
-    public SchedulesController(ILogger<SchedulesController> logger, MedicalContext context, ScheduleConverter scheduleConverter, RuleViolationService ruleViolationService)
+    public SchedulesController(ILogger<SchedulesController> logger, MedicalContext context, ScheduleConverter scheduleConverter)
     {
         _logger = logger;
         _context = context;
         _scheduleConverter = scheduleConverter;
-        _ruleViolationService = ruleViolationService;
     }
 
     // GET: api/schedules/
@@ -73,46 +71,6 @@ public class SchedulesController : ControllerBase
             .ToList();
 
         return Ok(scheduleResponses);
-    }
-
-    // POST: api/schedules/new/validate
-    [HttpPost("new/validate")]
-    public async Task<IActionResult> ValidateScheduleViolations(
-        [FromBody] DateCreateRequest dateCreateRequest)
-    {
-        Schedule? existingSchedule = await _context.Schedules.FindAsync(dateCreateRequest.ScheduleId);
-        if (existingSchedule == null)
-        {
-            return NotFound();
-        }
-
-        if (string.IsNullOrEmpty(dateCreateRequest.ResidentId))
-        {
-            return BadRequest();
-        }
-
-        (bool success, string? error, ViolationResult? violationResult) = await _ruleViolationService.EvaluateConstraints(dateCreateRequest.ScheduleId, dateCreateRequest.ResidentId, dateCreateRequest.ShiftDate, false);
-        if (!success)
-        {
-            return BadRequest(new GenericResponse
-            {
-                Success = success,
-                Message = error
-            });
-        }
-
-        if (violationResult == null)
-        {
-            return Conflict(new GenericResponse
-            {
-                Success = success,
-                Message = "Unable to pass list of violations."
-            });
-        }
-
-        ViolationResultResponse response = new ViolationResultResponse(violationResult, true);
-
-        return Ok(response);
     }
 
     // PUT: api/schedules/{id}
