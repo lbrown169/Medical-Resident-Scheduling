@@ -127,11 +127,6 @@ public class DatesController : ControllerBase
                 "The provided date violates constraints"));
         }
 
-        if (request.Hours is null && CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(request.ShiftDate, resident.GraduateYr.Value) is null)
-        {
-            return BadRequest(DateValidationResponse.NonViolationFailure("Hours is required if the assigned shift is not an algorithm shift."));
-        }
-
         return Ok(DateValidationResponse.NoViolations());
     }
 
@@ -279,11 +274,6 @@ public class DatesController : ControllerBase
         {
             return Ok(DateValidationResponse.ViolationFailure(response,
                 "The provided date violates constraints"));
-        }
-
-        if (dateUpdateRequest.Hours is null && CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(existingDate.ShiftDate, resident.GraduateYr.Value) is null)
-        {
-            return BadRequest(DateValidationResponse.NonViolationFailure("Hours is required if the assigned shift is not an algorithm shift."));
         }
 
         return Ok(DateValidationResponse.NoViolations());
