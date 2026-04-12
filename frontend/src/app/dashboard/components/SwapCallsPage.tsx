@@ -8,6 +8,7 @@ import { toast } from "../../../lib/use-toast";
 import { Calendar, Users, FileText, Repeat, Send, ArrowRightLeft, AlertTriangle, CornerDownRight } from "lucide-react";
 import { CalendarEvent } from "@/lib/models/CalendarEvent";
 import { ConfirmDialog } from "../../../components/ui/confirm-dialog";
+import { SwapValidationResponse } from "../../../lib/models/SwapValidationResponse";
 
 interface SwapCallsPageProps {
   userId: string;
@@ -22,7 +23,7 @@ interface SwapCallsPageProps {
   partnerShiftEvents: CalendarEvent[];
   onSelectUserShift: (date: string, callType: string) => void;
   onSelectPartnerShift: (date: string, callType: string) => void;
-  handleSubmitSwap: () => void;
+  handleSubmitSwap: () => Promise<SwapValidationResponse | null>;
   description: string;
   setDescription: (value: string) => void;
 }
@@ -84,6 +85,7 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
   handleSubmitSwap,
 }) => {
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [swapViolations, setSwapViolations] = useState<SwapValidationResponse | null>(null);
   const isFormValid = yourShiftDate && partnerShiftDate && selectedResident && selectedShift && partnerShift;
 
   const [loadingSwaps, setLoadingSwaps] = useState(false);
@@ -162,19 +164,26 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
   const handleSelect = (value: string, setter: (date: string, callType: string) => void) => {
     const idx = value.indexOf('|');
     if (idx === -1) return;
+    setSwapViolations(null);
     setter(value.slice(0, idx), value.slice(idx + 1));
   };
 
   const handleInitialSubmit = () => {
+    setSwapViolations(null);
     if (isFormValid) setShowConfirmation(true);
   };
 
-  const handleConfirmSubmit = () => {
-    handleSubmitSwap();
-    setTimeout(() => {
+  const handleConfirmSubmit = async () => {
+    const result = await handleSubmitSwap();
+    if (result) {
+      // Violations or error returned — display them
+      setSwapViolations(result);
+    } else {
+      // Success — close confirmation and refresh
+      setSwapViolations(null);
       setShowConfirmation(false);
       setRefreshKey((k) => k + 1);
-    }, 500);
+    }
   };
 
   const [denyModalOpen, setDenyModalOpen] = useState(false);
@@ -319,7 +328,7 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                 id="resident-select"
                 className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors appearance-none cursor-pointer"
                 value={selectedResident}
-                onChange={(e) => setSelectedResident(e.target.value)}
+                onChange={(e) => { setSwapViolations(null); setSelectedResident(e.target.value); }}
               >
                 <option value="" disabled>Choose a resident to swap with</option>
                 {residents.map((resident) => (
@@ -468,11 +477,37 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                     )}
                   </div>
                 </div>
+                {/* Swap violation display */}
+                {swapViolations && (
+                  <div className="rounded border border-red-300 bg-red-50 dark:bg-red-950/30 dark:border-red-800 p-3 space-y-2">
+                    {swapViolations.requester?.violations?.violations?.some(v => v.isViolated) || swapViolations.requestee?.violations?.violations?.some(v => v.isViolated) ? (
+                      <>
+                        <p className="text-sm font-medium text-red-700 dark:text-red-400">
+                          This swap cannot be completed due to scheduling conflicts:
+                        </p>
+                        {swapViolations.requester?.violations?.violations?.filter(v => v.isViolated).map((v, i) => (
+                          <div key={`req-${i}`} className="text-sm flex items-start gap-1.5 text-red-700 dark:text-red-400">
+                            <span className="mt-0.5 flex-shrink-0">{"\u2715"}</span>
+                            <span><strong>You:</strong> {v.message}</span>
+                          </div>
+                        ))}
+                        {swapViolations.requestee?.violations?.violations?.filter(v => v.isViolated).map((v, i) => (
+                          <div key={`ree-${i}`} className="text-sm flex items-start gap-1.5 text-red-700 dark:text-red-400">
+                            <span className="mt-0.5 flex-shrink-0">{"\u2715"}</span>
+                            <span><strong>{residents.find(r => r.id === selectedResident)?.name ?? "Partner"}:</strong> {v.message}</span>
+                          </div>
+                        ))}
+                      </>
+                    ) : (
+                      <p className="text-sm text-red-700 dark:text-red-400">{swapViolations.message}</p>
+                    )}
+                  </div>
+                )}
                 <div className="flex gap-2">
-                  <Button onClick={() => setShowConfirmation(false)} variant="outline" className="flex-1 py-2.5 text-sm">
+                  <Button onClick={() => { setShowConfirmation(false); setSwapViolations(null); }} variant="outline" className="flex-1 py-2.5 text-sm">
                     Cancel
                   </Button>
-                  <Button onClick={handleConfirmSubmit} className="flex-1 py-2.5 text-sm font-semibold flex items-center justify-center gap-2">
+                  <Button onClick={handleConfirmSubmit} disabled={!!swapViolations} className="flex-1 py-2.5 text-sm font-semibold flex items-center justify-center gap-2">
                     <Send className="h-4 w-4" />
                     Confirm & Send
                   </Button>
