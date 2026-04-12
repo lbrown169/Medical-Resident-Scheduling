@@ -9,11 +9,6 @@ public class NoConsecutiveShiftConstraint : ICallShiftConstraint
 {
     public ConstraintResult Evaluate(ResidentDto resident, DateOnly date, CallShiftType shiftType)
     {
-        if (shiftType is CallShiftType.Custom)
-        {
-            return ConstraintResult.NoViolation();
-        }
-
         if (IsBackToBackShift(resident, date))
         {
             return ConstraintResult.Violation($"Resident {resident.ResidentId} will be working a back-to-back shift", true);

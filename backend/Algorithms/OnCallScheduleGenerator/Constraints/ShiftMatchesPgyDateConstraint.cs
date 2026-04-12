@@ -9,7 +9,6 @@ public class ShiftMatchesPgyDateConstraint : ICallShiftConstraint
 {
     public ConstraintResult Evaluate(ResidentDto resident, DateOnly date, CallShiftType shiftType)
     {
-
         CallShiftType? applicableShiftType = CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(date, resident.Pgy);
 
         if (shiftType == CallShiftType.Custom || shiftType == applicableShiftType)
