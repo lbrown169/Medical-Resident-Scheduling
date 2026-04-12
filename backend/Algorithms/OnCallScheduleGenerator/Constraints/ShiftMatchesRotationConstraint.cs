@@ -14,17 +14,18 @@ public class ShiftMatchesRotationConstraint : ICallShiftConstraint
             CallShiftType.Custom => CallLengthType.Long,
             _ => shiftType.GetLengthType()
         };
-        if (DoesRotationAllow(resident, date, lengthType))
+        HospitalRole role = resident.GetHospitalRoleForCalendarMonth(date.Month);
+
+        if (DoesRotationAllow(role, date, lengthType))
         {
             return ConstraintResult.NoViolation();
         }
 
-        return ConstraintResult.Violation($"Call shift \"{shiftType.GetDisplayName()}\" disagrees with rotation.", true);
+        return ConstraintResult.Violation($"Call shift \"{shiftType.GetDisplayName()}\" disagrees with {resident.Name} ({resident.ResidentId})'s {role.Name} rotation.", true);
     }
 
-    private bool DoesRotationAllow(ResidentDto resident, DateOnly date, CallLengthType lengthType)
+    private bool DoesRotationAllow(HospitalRole role, DateOnly date, CallLengthType lengthType)
     {
-        HospitalRole role = resident.GetHospitalRoleForCalendarMonth(date.Month);
         if (lengthType == CallLengthType.Long)
         {
             if (date.Month is 7 or 8 && role is { DoesTrainingLong: false } ||

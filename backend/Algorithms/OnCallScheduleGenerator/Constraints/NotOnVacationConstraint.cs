@@ -12,7 +12,7 @@ public class NotOnVacationConstraint : ICallShiftConstraint
         PartOfDay partOfDay = shiftType is CallShiftType.Custom ? PartOfDay.AllDay : shiftType.GetPartsOfDay();
         if (IsVacation(resident, date, partOfDay))
         {
-            return ConstraintResult.Violation($"Resident {resident.ResidentId} is on vacation on {date}.", true);
+            return ConstraintResult.Violation($"Resident {resident.Name} ({resident.ResidentId}) is on vacation on {date}.", true);
         }
 
         return ConstraintResult.NoViolation();
