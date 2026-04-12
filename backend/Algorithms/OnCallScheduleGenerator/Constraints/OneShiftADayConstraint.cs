@@ -18,7 +18,7 @@ public class OneShiftADayConstraint : ICallShiftConstraint
 
     private bool IsWorking(ResidentDto resident, DateOnly curDay)
     {
-        return resident.IsWorking(curDay);
+        return resident.IsWorking(curDay) || resident.CommitedWorkDay(curDay);
     }
 
     public bool IsApplicable(bool isDateUpdate, bool isResidentUpdate) => isDateUpdate || isResidentUpdate;

@@ -79,7 +79,7 @@ public abstract class ResidentDto
 
     public bool IsWorking(DateOnly curDay)
     {
-        return WorkDays.Contains(curDay) || CommitedWorkDays.Contains(curDay);
+        return WorkDays.Contains(curDay);
     }
 
     public bool CanAddWorkDay(DateOnly curDay)
