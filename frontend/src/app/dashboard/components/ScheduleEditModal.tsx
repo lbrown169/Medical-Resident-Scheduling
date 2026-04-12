@@ -17,6 +17,7 @@ import { ConfirmDialog } from "../../../components/ui/confirm-dialog";
 import { toast } from "../../../lib/use-toast";
 import { CalendarEvent } from "../../../lib/models/CalendarEvent";
 import { Resident } from "../../../lib/models/Resident";
+import { DateValidationResponse } from "../../../lib/models/DateValidationResponse";
 
 interface ScheduleEditModalProps {
   open: boolean;
@@ -77,6 +78,11 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
   // Single state drives all three confirm dialogs
   const [confirmDialog, setConfirmDialog] = useState<null | "add" | "update" | "delete">(null);
   const [hoveredCellIndex, setHoveredCellIndex] = useState<number | null>(null);
+
+  // Validation state
+  const [validationResult, setValidationResult] = useState<DateValidationResponse | null>(null);
+  const [validating, setValidating] = useState(false);
+  const [overrideChecked, setOverrideChecked] = useState(false);
 
   const fetchResidents = useCallback(async () => {
     try {
@@ -178,6 +184,9 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
       setEditMode("view");
       setAddDay(null);
       setConfirmDialog(null);
+      setValidationResult(null);
+      setOverrideChecked(false);
+      setValidating(false);
     }
   }, [open]);
 
@@ -203,6 +212,72 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
       .catch(() => {});
     return () => controller.abort();
   }, [scheduleId, formData.residentId, formData.shiftDate]);
+
+  // Auto-validate when all required fields are set
+  useEffect(() => {
+    setValidationResult(null);
+    setOverrideChecked(false);
+
+    if (!scheduleId || !formData.residentId || !formData.shiftDate || formData.callType === -1) {
+      return;
+    }
+    if (formData.callType === 99 && !formData.hours) {
+      return;
+    }
+
+    const controller = new AbortController();
+    setValidating(true);
+
+    const isEdit = editMode === "edit" && selectedEvent?.extendedProps?.dateId;
+    const url = isEdit
+      ? `${config.apiUrl}/api/dates/${selectedEvent!.extendedProps!.dateId}/validate`
+      : `${config.apiUrl}/api/dates/new/validate`;
+
+    const body = isEdit
+      ? {
+          residentId: formData.residentId,
+          shiftDate: formData.shiftDate,
+          callType: formData.callType,
+          ...(formData.callType === 99 && { hours: Number(formData.hours) }),
+        }
+      : {
+          scheduleId,
+          residentId: formData.residentId,
+          shiftDate: formData.shiftDate,
+          callType: formData.callType,
+          ...(formData.callType === 99 && { hours: Number(formData.hours) }),
+        };
+
+    fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    })
+      .then(async (res) => {
+        const data: DateValidationResponse = await res.json();
+        setValidationResult(data);
+      })
+      .catch((err) => {
+        if (err.name !== "AbortError") {
+          setValidationResult({
+            success: false,
+            message: "Unable to validate. You may still save.",
+            violationResultResponse: null,
+          });
+        }
+      })
+      .finally(() => setValidating(false));
+
+    return () => controller.abort();
+  }, [scheduleId, formData.residentId, formData.shiftDate, formData.callType, formData.hours, editMode, selectedEvent]);
+
+  // Derived validation state
+  const hasViolations = validationResult?.violationResultResponse?.isViolation === true;
+  const isOverridable = validationResult?.violationResultResponse?.isOverridable === true;
+  const isNonOverridable = hasViolations && !isOverridable;
+  const violatedConstraints = validationResult?.violationResultResponse?.violations.filter(v => v.isViolated) ?? [];
+  const isNonViolationFailure = validationResult !== null && !validationResult.success && !validationResult.violationResultResponse;
 
   // --- Derived data ---
 
@@ -287,6 +362,8 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
     setSelectedEvent(null);
     setEditMode("view");
     setFormData({ residentId: "", shiftDate: toDateInputValue(date), callType: -1, hours: "" });
+    setValidationResult(null);
+    setOverrideChecked(false);
     setAddDay(date);
   };
 
@@ -298,6 +375,8 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
       callType: -1,
       hours: "",
     });
+    setValidationResult(null);
+    setOverrideChecked(false);
     setEditMode("edit");
   };
 
@@ -305,6 +384,8 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
     setSelectedEvent(null);
     setAddDay(null);
     setEditMode("view");
+    setValidationResult(null);
+    setOverrideChecked(false);
   };
 
   // Month range based on semester:
@@ -328,7 +409,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
       const response = await fetch(`${config.apiUrl}/api/dates`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scheduleId, residentId: formData.residentId, shiftDate: formData.shiftDate, callType: formData.callType, ...(formData.callType === 99 && { hours: Number(formData.hours) }) }),
+        body: JSON.stringify({ scheduleId, residentId: formData.residentId, shiftDate: formData.shiftDate, callType: formData.callType, ...(formData.callType === 99 && { hours: Number(formData.hours) }), ...(overrideChecked && { adminOverride: true }) }),
       });
       if (response.ok || response.status === 201) {
         toast({ variant: "success", title: "Date Added", description: "The date has been added to the schedule." });
@@ -353,7 +434,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
       const response = await fetch(`${config.apiUrl}/api/dates/${dateId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ residentId: formData.residentId, shiftDate: formData.shiftDate, callType: formData.callType, ...(formData.callType === 99 && { hours: Number(formData.hours) }) }),
+        body: JSON.stringify({ residentId: formData.residentId, shiftDate: formData.shiftDate, callType: formData.callType, ...(formData.callType === 99 && { hours: Number(formData.hours) }), ...(overrideChecked && { adminOverride: true }) }),
       });
       if (response.ok) {
         toast({ variant: "success", title: "Date Updated", description: "The date has been updated." });
@@ -502,10 +583,82 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
             />
           </div>
         )}
+        {/* Validation loading indicator */}
+        {validating && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground py-1">
+            <div className="w-3 h-3 border-2 border-muted-foreground border-t-transparent rounded-full animate-spin" />
+            Checking for rule violations...
+          </div>
+        )}
+
+        {/* Non-violation failure (bad request) */}
+        {!validating && isNonViolationFailure && (
+          <div className="rounded border border-red-300 bg-red-50 dark:bg-red-950/30 dark:border-red-800 p-3 text-sm text-red-700 dark:text-red-400">
+            {validationResult!.message}
+          </div>
+        )}
+
+        {/* Violation display */}
+        {!validating && hasViolations && (
+          <div className={`rounded border p-3 space-y-2 ${
+            isNonOverridable
+              ? "border-red-300 bg-red-50 dark:bg-red-950/30 dark:border-red-800"
+              : "border-yellow-300 bg-yellow-50 dark:bg-yellow-950/30 dark:border-yellow-800"
+          }`}>
+            <div className="space-y-1">
+              {violatedConstraints.map((v, i) => (
+                <div key={i} className={`text-sm flex items-start gap-1.5 ${
+                  v.isOverridable
+                    ? "text-yellow-700 dark:text-yellow-400"
+                    : "text-red-700 dark:text-red-400"
+                }`}>
+                  <span className="mt-0.5 flex-shrink-0">{v.isOverridable ? "\u26A0" : "\u2715"}</span>
+                  <span>{v.message}</span>
+                </div>
+              ))}
+            </div>
+            {isNonOverridable && (
+              <p className="text-xs font-medium text-red-600 dark:text-red-400">
+                This assignment is not allowed. One or more violations cannot be overridden.
+              </p>
+            )}
+            {isOverridable && (
+              <label className="flex items-center gap-2 text-sm cursor-pointer pt-1">
+                <input
+                  type="checkbox"
+                  checked={overrideChecked}
+                  onChange={(e) => setOverrideChecked(e.target.checked)}
+                  className="rounded border-yellow-400"
+                />
+                <span className="text-yellow-700 dark:text-yellow-400 font-medium">
+                  Override violations and save anyway
+                </span>
+              </label>
+            )}
+          </div>
+        )}
+
+        {/* No violations success indicator */}
+        {!validating && validationResult?.success && (
+          <div className="flex items-center gap-1.5 text-sm text-green-600 dark:text-green-400 py-1">
+            <span>&#10003;</span> No rule violations
+          </div>
+        )}
+
         <div className="flex gap-2 pt-1">
           <button
             onClick={onSave}
-            disabled={saving || !formData.residentId || !formData.shiftDate || formData.callType === -1 || (formData.callType === 99 && !formData.hours)}
+            disabled={
+              saving ||
+              validating ||
+              !formData.residentId ||
+              !formData.shiftDate ||
+              formData.callType === -1 ||
+              (formData.callType === 99 && !formData.hours) ||
+              isNonOverridable ||
+              isNonViolationFailure ||
+              (hasViolations && isOverridable && !overrideChecked)
+            }
             className="flex-1 px-3 py-1.5 text-sm font-medium bg-primary text-primary-foreground rounded hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {saving ? "Saving..." : "Save"}
