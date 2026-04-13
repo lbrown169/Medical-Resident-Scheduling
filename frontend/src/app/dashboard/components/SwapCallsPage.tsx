@@ -40,6 +40,10 @@ function academicYearOf(date: Date): number {
   return date.getMonth() >= 6 ? date.getFullYear() : date.getFullYear() - 1;
 }
 
+function semesterOf(date: Date): 'Fall' | 'Spring' {
+  return date.getMonth() >= 6 ? 'Fall' : 'Spring';
+}
+
 function eventToOption(e: CalendarEvent): { value: string; label: string } {
   const dateStr = e.start instanceof Date
     ? e.start.toISOString().split('T')[0]
@@ -332,11 +336,14 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
 
             {/* Partner's Shift */}
             {(() => {
-              const userShiftAcademicYear = yourShiftDate
-                ? academicYearOf(new Date(yourShiftDate))
-                : null;
-              const filteredPartnerEvents = userShiftAcademicYear !== null
-                ? partnerShiftEvents.filter(e => academicYearOf(e.start instanceof Date ? e.start : new Date(e.start)) === userShiftAcademicYear)
+              const userShiftDate = yourShiftDate ? new Date(yourShiftDate) : null;
+              const userShiftAcademicYear = userShiftDate ? academicYearOf(userShiftDate) : null;
+              const userShiftSemester = userShiftDate ? semesterOf(userShiftDate) : null;
+              const filteredPartnerEvents = userShiftAcademicYear !== null && userShiftSemester !== null
+                ? partnerShiftEvents.filter(e => {
+                    const d = e.start instanceof Date ? e.start : new Date(e.start);
+                    return academicYearOf(d) === userShiftAcademicYear && semesterOf(d) === userShiftSemester;
+                  })
                 : partnerShiftEvents;
               return (
                 <div className="space-y-2">
