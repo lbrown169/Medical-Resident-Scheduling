@@ -290,9 +290,11 @@ public class SwapRequestsController : ControllerBase
         IndividualValidationResult requesterValidationResult;
         try
         {
+            // For requester, check validity for requestee date details and exclude requester date
             ViolationResult requesterViolationResult
                 = await _ruleViolationService.EvaluateConstraints(requesteeDate.ScheduleId,
-                    requester.ResidentId, requesteeDate.ShiftDate, requesteeDate.CallType);
+                    requester.ResidentId, requesteeDate.ShiftDate, requesteeDate.CallType,
+                    excludedDatesForOverworkConstraints: [requesterDate.ShiftDate]);
             ViolationResultResponse requesterViolationResultResponse = new(requesterViolationResult);
             requesterValidationResult = new IndividualValidationResult() { Message = requesterViolationResultResponse.IsViolation ? "Requester constraint violations" : "No Violations", Violations = requesterViolationResultResponse };
         }
@@ -304,7 +306,8 @@ public class SwapRequestsController : ControllerBase
         IndividualValidationResult requesteeValidationResult;
         try
         {
-            ViolationResult requesteeViolationResult = await _ruleViolationService.EvaluateConstraints(requesterDate.ScheduleId, requestee.ResidentId, requesterDate.ShiftDate, requesterDate.CallType);
+            // For requestee, check validity for requester date details and exclude requestee date
+            ViolationResult requesteeViolationResult = await _ruleViolationService.EvaluateConstraints(requesterDate.ScheduleId, requestee.ResidentId, requesterDate.ShiftDate, requesterDate.CallType, excludedDatesForOverworkConstraints: [requesteeDate.ShiftDate]);
             ViolationResultResponse requesteeViolationResultResponse = new(requesteeViolationResult);
             requesteeValidationResult = new IndividualValidationResult() { Message = requesteeViolationResultResponse.IsViolation ? "Requestee constraint violations" : "No Violations", Violations = requesteeViolationResultResponse };
         }

@@ -27,7 +27,9 @@ public class NoConsecutiveShiftConstraint : ICallShiftConstraint
         DateOnly prevDay = date.AddDays(-1);
         DateOnly nextDay = date.AddDays(1);
 
-        return resident.IsWorking(prevDay) || resident.CommitedWorkDay(nextDay) || resident.IsWorking(nextDay) || resident.CommitedWorkDay(prevDay);
+        return
+            (resident.IsWorking(prevDay) || resident.CommitedWorkDay(prevDay)) && !resident.IsPendingRemoval(prevDay)
+            || (resident.IsWorking(nextDay) || resident.CommitedWorkDay(nextDay)) && !resident.IsPendingRemoval(nextDay);
     }
 
     private bool IsInARowShift(ResidentDto resident, DateOnly date, CallShiftType type)
@@ -39,7 +41,7 @@ public class NoConsecutiveShiftConstraint : ICallShiftConstraint
             CallShiftType? processingType = CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(processing, resident.Pgy);
             if (processingType == type)
             {
-                if (resident.IsWorking(processing) || resident.CommitedWorkDay(processing))
+                if ((resident.IsWorking(processing) || resident.CommitedWorkDay(processing)) && !resident.IsPendingRemoval(processing))
                 {
                     return true;
                 }
@@ -54,7 +56,7 @@ public class NoConsecutiveShiftConstraint : ICallShiftConstraint
             CallShiftType? processingType = CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(processing, resident.Pgy);
             if (processingType == type)
             {
-                if (resident.IsWorking(processing) || resident.CommitedWorkDay(processing))
+                if ((resident.IsWorking(processing) || resident.CommitedWorkDay(processing)) && !resident.IsPendingRemoval(processing))
                 {
                     return true;
                 }

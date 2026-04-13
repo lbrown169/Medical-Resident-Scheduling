@@ -231,6 +231,11 @@ public class DatesController : ControllerBase
 
         bool isResidentUpdate = !string.IsNullOrEmpty(dateUpdateRequest.ResidentId) && dateUpdateRequest.ResidentId != existingDate.ResidentId;
         bool isDateOnlyUpdate = dateUpdateRequest.ShiftDate.HasValue && existingDate.ShiftDate != dateUpdateRequest.ShiftDate;
+        List<DateOnly> excludedDates = [];
+        if (!isResidentUpdate && !isDateOnlyUpdate)
+        {
+            excludedDates.Add(existingDate.ShiftDate);
+        }
 
         // Update fields
         _dateConverter.UpdateDateFromDateUpdateRequest(existingDate, dateUpdateRequest);
@@ -261,7 +266,7 @@ public class DatesController : ControllerBase
         ViolationResult violationResult;
         try
         {
-            violationResult = await _ruleViolationService.EvaluateConstraints(existingDate.ScheduleId, resident.ResidentId, existingDate.ShiftDate, existingDate.CallType, isDateOnlyUpdate, isResidentUpdate);
+            violationResult = await _ruleViolationService.EvaluateConstraints(existingDate.ScheduleId, resident.ResidentId, existingDate.ShiftDate, existingDate.CallType, excludedDatesForOverworkConstraints: excludedDates);
         }
         catch (ArgumentException ex)
         {
@@ -292,6 +297,11 @@ public class DatesController : ControllerBase
 
         bool isResidentUpdate = !string.IsNullOrEmpty(dateUpdateRequest.ResidentId) && dateUpdateRequest.ResidentId != existingDate.ResidentId;
         bool isDateOnlyUpdate = dateUpdateRequest.ShiftDate.HasValue && existingDate.ShiftDate != dateUpdateRequest.ShiftDate;
+        List<DateOnly> excludedDates = [];
+        if (!isResidentUpdate && !isDateOnlyUpdate)
+        {
+            excludedDates.Add(existingDate.ShiftDate);
+        }
 
         // Update fields
         _dateConverter.UpdateDateFromDateUpdateRequest(existingDate, dateUpdateRequest);
@@ -323,7 +333,7 @@ public class DatesController : ControllerBase
         ViolationResult violationResult;
         try
         {
-            violationResult = await _ruleViolationService.EvaluateConstraints(existingDate.ScheduleId, resident.ResidentId, existingDate.ShiftDate, existingDate.CallType, isDateOnlyUpdate, isResidentUpdate);
+            violationResult = await _ruleViolationService.EvaluateConstraints(existingDate.ScheduleId, resident.ResidentId, existingDate.ShiftDate, existingDate.CallType, excludedDatesForOverworkConstraints: excludedDates);
         }
         catch (ArgumentException ex)
         {

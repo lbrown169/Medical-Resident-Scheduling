@@ -14,6 +14,7 @@ public abstract class ResidentDto
     public HashSet<DateOnly> WorkDays { get; set; } = new();
     public HashSet<DateOnly> CommitedWorkDays { get; set; } = new();
     public HashSet<DateOnly> PendingSaveWorkDays { get; set; } = new();
+    public HashSet<DateOnly> PendingRemovalWorkDays { get; set; } = new();
     public HashSet<DateOnly> AllPendingWorkDays => [.. PendingSaveWorkDays, .. WorkDays];
 
     public HospitalRole?[] RolePerMonth { get; set; } = new HospitalRole?[12];
@@ -85,6 +86,16 @@ public abstract class ResidentDto
     public bool CanAddWorkDay(DateOnly curDay)
     {
         return CanWork(curDay) && !IsWorking(curDay);
+    }
+
+    public void AddPendingRemovalWorkDay(DateOnly date)
+    {
+        PendingRemovalWorkDays.Add(date);
+    }
+
+    public bool IsPendingRemoval(DateOnly date)
+    {
+        return PendingRemovalWorkDays.Contains(date);
     }
 
     protected bool IsBackToBackShift(DateOnly date)

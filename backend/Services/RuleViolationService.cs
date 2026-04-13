@@ -33,8 +33,10 @@ public class RuleViolationService
         _schedulerService = schedulerService;
     }
 
-    public async Task<ViolationResult> EvaluateConstraints(Guid scheduleId, string residentId, DateOnly date, CallShiftType shiftType, bool isDateUpdate = true, bool isResidentUpdate = true)
+    public async Task<ViolationResult> EvaluateConstraints(Guid scheduleId, string residentId, DateOnly date, CallShiftType shiftType, IEnumerable<DateOnly>? excludedDatesForOverworkConstraints = null)
     {
+        excludedDatesForOverworkConstraints ??= [];
+
         //validate schedule
         Schedule? schedule = await _context.Schedules.FindAsync(scheduleId);
         if (schedule == null)
@@ -49,15 +51,15 @@ public class RuleViolationService
             throw new ArgumentException($"Resident {residentId} not found");
         }
 
+        foreach (DateOnly excludedDate in excludedDatesForOverworkConstraints)
+        {
+            residentInfo.AddPendingRemovalWorkDay(excludedDate);
+        }
+
         List<ConstraintResult> violations = [];
         // check through all constrains for any rule violations
         foreach (ICallShiftConstraint constraint in _constraints)
         {
-            // if updating date for same resident, bypass OneShiftADayConstraint
-            if (!constraint.IsApplicable(isDateUpdate, isResidentUpdate))
-            {
-                continue;
-            }
             ConstraintResult result = constraint.Evaluate(residentInfo, date, shiftType);
             if (result.IsViolated)
             {
