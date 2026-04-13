@@ -769,6 +769,7 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({
               <thead className="bg-gray-100 dark:bg-neutral-800">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">3-4 ID</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -779,6 +780,7 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({
                   [...users].sort((a, b) => a.first_name.localeCompare(b.first_name) || a.last_name.localeCompare(b.last_name)).map((user) => (
                     <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{user.first_name} {user.last_name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{user.id}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{user.email}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <select
@@ -800,7 +802,7 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={4} className="px-6 py-4 text-center text-gray-500 italic">No users found.</td>
+                    <td colSpan={5} className="px-6 py-4 text-center text-gray-500 italic">No users found.</td>
                   </tr>
                 )}
               </tbody>

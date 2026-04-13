@@ -536,7 +536,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
             onChange={e => setFormData(f => ({ ...f, residentId: e.target.value }))}
           >
             <option value="">Select a Resident</option>
-            {sortedResidents.filter(r => r.resident_id !== excludeResidentId).map(r => (
+            {sortedResidents.filter(r => r.resident_id !== excludeResidentId && (r.graduate_yr + pgyOffset) >= 1 && (r.graduate_yr + pgyOffset) <= 3).map(r => (
               <option key={r.resident_id} value={r.resident_id}>
                 {r.first_name} {r.last_name} (PGY{r.graduate_yr + pgyOffset})
               </option>
@@ -873,7 +873,7 @@ const ScheduleEditModal: React.FC<ScheduleEditModalProps> = ({
                         </button>
                       </>
                     ) : (
-                      renderForm(() => setConfirmDialog("update"), () => setEditMode("view"), "Edit Date", selectedEvent.extendedProps?.residentId)
+                      renderForm(() => setConfirmDialog("update"), () => setEditMode("view"), "Edit Date")
                     )}
                   </div>
                 </div>

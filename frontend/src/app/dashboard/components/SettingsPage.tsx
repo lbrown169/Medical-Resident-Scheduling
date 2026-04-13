@@ -8,6 +8,7 @@ import { useTheme } from "next-themes";
 interface SettingsPageProps {
   firstName: string;
   lastName: string;
+  userId: string;
   email: string;
   setEmail: (value: string) => void;
   handleUpdateEmail: () => void;
@@ -20,6 +21,7 @@ interface SettingsPageProps {
 const SettingsPage: React.FC<SettingsPageProps> = ({
   firstName,
   lastName,
+  userId,
   email,
   setEmail,
   handleUpdateEmail,
@@ -84,6 +86,19 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
               <input
                 type="text"
                 value={`${firstName} ${lastName}`}
+                disabled
+                className="w-full px-2 py-2 text-sm border border-border rounded-lg bg-muted text-muted-foreground cursor-not-allowed focus:outline-none"
+              />
+            </div>
+
+            {/* 3-4 ID */}
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                3-4 ID
+              </label>
+              <input
+                type="text"
+                value={userId}
                 disabled
                 className="w-full px-2 py-2 text-sm border border-border rounded-lg bg-muted text-muted-foreground cursor-not-allowed focus:outline-none"
               />

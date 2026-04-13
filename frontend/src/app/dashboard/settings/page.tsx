@@ -22,6 +22,7 @@ export default function Page() {
     <SettingsPage
       firstName={firstName}
       lastName={lastName}
+      userId=""
       email={email}
       setEmail={setEmail}
       handleUpdateEmail={handleUpdateEmail}
