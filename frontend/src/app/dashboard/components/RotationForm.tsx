@@ -454,11 +454,23 @@ const RotationForm: React.FC<RotationFormProps> = ({
                   required
                 />
                 <SelectField
+                  label="Fifth Priority (optional)"
+                  value={fifthPriority}
+                  onChange={setFifthPriority}
+                  options={getAvailablePriorityOptions(fifthPriority)}
+                />
+                <SelectField
                   label="Second Priority (required)"
                   value={secondPriority}
                   onChange={setSecondPriority}
                   options={getAvailablePriorityOptions(secondPriority)}
                   required
+                />
+                <SelectField
+                  label="Sixth Priority (optional)"
+                  value={sixthPriority}
+                  onChange={setSixthPriority}
+                  options={getAvailablePriorityOptions(sixthPriority)}
                 />
                 <SelectField
                   label="Third Priority (required)"
@@ -468,29 +480,17 @@ const RotationForm: React.FC<RotationFormProps> = ({
                   required
                 />
                 <SelectField
+                  label="Seventh Priority (optional)"
+                  value={seventhPriority}
+                  onChange={setSeventhPriority}
+                  options={getAvailablePriorityOptions(seventhPriority)}
+                />
+                <SelectField
                   label="Fourth Priority (required)"
                   value={fourthPriority}
                   onChange={setFourthPriority}
                   options={getAvailablePriorityOptions(fourthPriority)}
                   required
-                />
-                <SelectField
-                  label="Fifth Priority (optional)"
-                  value={fifthPriority}
-                  onChange={setFifthPriority}
-                  options={getAvailablePriorityOptions(fifthPriority)}
-                />
-                <SelectField
-                  label="Sixth Priority (optional)"
-                  value={sixthPriority}
-                  onChange={setSixthPriority}
-                  options={getAvailablePriorityOptions(sixthPriority)}
-                />
-                <SelectField
-                  label="Seventh Priority (optional)"
-                  value={seventhPriority}
-                  onChange={setSeventhPriority}
-                  options={getAvailablePriorityOptions(seventhPriority)}
                 />
                 <SelectField
                   label="Eighth Priority (optional)"
