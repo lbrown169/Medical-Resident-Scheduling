@@ -61,7 +61,7 @@ public enum CallShiftType
 
     // PGY1s in training need to do a Sunday shift, but they aren't allowed Sunday shifts outside...
     [CallShift(Hours = 12, CallLengthType = CallLengthType.Long, ApplicableDays = [DayOfWeek.Sunday], DateRule = CallShiftRule.SundayInTraining, Priority = 5)]
-    [Display(Name = "Sunday (12h)")]
+    [Display(Name = "Sunday (Training) (12h)")]
     SundayTrainingCall = 13,
 
     [Display(Name = "Custom Shift")]
