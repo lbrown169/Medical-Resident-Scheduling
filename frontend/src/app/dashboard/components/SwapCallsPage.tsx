@@ -124,7 +124,7 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
           const arr = Array.isArray(combinedData) ? combinedData : [combinedData];
           arr.sort(
             (a, b) =>
-              +new Date(b.updatedAt || b.createdAt) - +new Date(a.updatedAt || a.createdAt)
+              +new Date(a.requesterDate) - +new Date(b.requesterDate)
           );
           const filteredArr = arr.filter((swap) => (swap.requesterId === userId || (swap.requesteeId === userId && swap.status.description !== "Denied")));
           setSwapRequests(filteredArr);
