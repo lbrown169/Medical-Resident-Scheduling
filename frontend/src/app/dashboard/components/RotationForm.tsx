@@ -315,8 +315,10 @@ const RotationForm: React.FC<RotationFormProps> = ({
       };
 
       // Basically, if the id exists we update it, otherwise we make a new one
+      const [endpointPath, endpointQuery] = submitEndpoint.split("?");
+      const queryString = endpointQuery ? `?${endpointQuery}` : "";
       const url = existingRequestId
-        ? `${config.apiUrl}/${submitEndpoint}/${existingRequestId}`
+        ? `${config.apiUrl}/${endpointPath}/${existingRequestId}${queryString}`
         : `${config.apiUrl}/${submitEndpoint}`;
 
       // Use the url we selected
