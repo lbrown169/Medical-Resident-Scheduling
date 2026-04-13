@@ -452,6 +452,38 @@ const VacationRequestsTab: React.FC<VacationRequestsTabProps> = ({ handleApprove
     onPendingCountChange(groupedRequests.filter(r => r.status === 'Pending').length);
   }, [groupedRequests, onPendingCountChange]);
 
+  const handleDeleteDeniedRequests = async () => {
+    const vacationIds = requests.filter(r => r.status === 'Denied').map(r => r.id);
+    if (vacationIds.length === 0) {
+      toast({ title: 'No denied requests', description: 'There are no denied vacation requests to delete.' });
+      return;
+    }
+    try {
+      const response = await fetch(`${config.apiUrl}/api/vacations`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(vacationIds),
+      });
+      if (response.ok) {
+        const result = await response.json();
+        if (result.notDeleted && result.notDeleted.length > 0) {
+          toast({
+            title: 'Partial success',
+            description: `${vacationIds.length - result.notDeleted.length} requests deleted. ${result.notDeleted.length} failed to delete.`,
+            variant: 'destructive',
+          });
+        } else {
+          toast({ title: 'Success', description: 'All denied vacation requests have been deleted.' });
+        }
+        fetchVacations();
+      } else {
+        toast({ title: 'Error', description: 'Failed to delete denied requests.', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Error', description: 'An error occurred while deleting requests.', variant: 'destructive' });
+    }
+  };
+
   const handleClearAllRequests = async () => {
     const vacationIds = requests.filter(r => r.status !== 'Pending').map(r => r.id);
     if (vacationIds.length === 0) {
@@ -572,6 +604,15 @@ const VacationRequestsTab: React.FC<VacationRequestsTabProps> = ({ handleApprove
               <Search className="h-4 w-4" />
               <span>Search</span>
             </Button>
+            <ConfirmDialog
+              triggerText={<><Trash2 className="h-4 w-4" /><span>Delete Denied</span></>}
+              title="Delete all denied requests?"
+              message="All denied vacation requests will be deleted. This action cannot be undone."
+              confirmText="Delete"
+              cancelText="Cancel"
+              onConfirm={handleDeleteDeniedRequests}
+              variant="danger"
+            />
             <ConfirmDialog
               triggerText={<><Trash2 className="h-4 w-4" /><span>Delete Requests</span></>}
               title="Delete all vacation requests?"
