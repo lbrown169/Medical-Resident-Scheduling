@@ -11,12 +11,12 @@ public class NoConsecutiveShiftConstraint : ICallShiftConstraint
     {
         if (IsBackToBackShift(resident, date))
         {
-            return ConstraintResult.Violation($"Resident {resident.Name} ({resident.ResidentId}) will be working a back-to-back shift", true);
+            return ConstraintResult.Violation($"Resident {resident.Name} will be working a back-to-back shift", true);
         }
 
         if (IsInARowShift(resident, date, shiftType))
         {
-            return ConstraintResult.Violation($"Resident {resident.Name} ({resident.ResidentId}) will be working an in-a-row shift", true);
+            return ConstraintResult.Violation($"Resident {resident.Name} will be working an in-a-row shift", true);
         }
 
         return ConstraintResult.NoViolation();

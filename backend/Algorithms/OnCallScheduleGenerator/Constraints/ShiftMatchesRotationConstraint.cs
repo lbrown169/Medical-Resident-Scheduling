@@ -21,7 +21,7 @@ public class ShiftMatchesRotationConstraint : ICallShiftConstraint
             return ConstraintResult.NoViolation();
         }
 
-        return ConstraintResult.Violation($"Call shift \"{shiftType.GetDisplayName()}\" disagrees with {resident.Name} ({resident.ResidentId})'s {role.Name} rotation.", true);
+        return ConstraintResult.Violation($"Call shift \"{shiftType.GetDisplayName()}\" disagrees with {resident.Name}'s {role.Name} rotation.", true);
     }
 
     private bool DoesRotationAllow(HospitalRole role, DateOnly date, CallLengthType lengthType)
