@@ -4,6 +4,7 @@ using MedicalDemo.Models;
 using MedicalDemo.Models.DTO.Requests;
 using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.Entities;
+using MedicalDemo.Services;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,11 +17,13 @@ public class SwapRequestsController : ControllerBase
 {
     private readonly MedicalContext _context;
     private readonly SwapRequestConverter _swapRequestConverter;
+    private readonly RuleViolationService _ruleViolationService;
 
-    public SwapRequestsController(MedicalContext context, SwapRequestConverter swapRequestConverter)
+    public SwapRequestsController(MedicalContext context, SwapRequestConverter swapRequestConverter, RuleViolationService ruleViolationService)
     {
         _context = context;
         _swapRequestConverter = swapRequestConverter;
+        _ruleViolationService = ruleViolationService;
     }
 
     // POST: api/swaprequests
@@ -33,15 +36,11 @@ public class SwapRequestsController : ControllerBase
                 .CreateSwapRequestFromSwapRequestCreateRequest(
                     swapCreateRequest);
 
-        string? message = await ValidateSwapRequestAndAssignScheduleId(swapRequest);
+        SwapRequestValidateResponse swapRequestValidationResult = await ValidateSwapRequestAndAssignScheduleId(swapRequest);
 
-        if (message != null)
+        if (!swapRequestValidationResult.Success)
         {
-            return BadRequest(new GenericResponse
-            {
-                Success = false,
-                Message = message
-            });
+            return BadRequest(swapRequestValidationResult);
         }
 
         _context.SwapRequests.Add(swapRequest);
@@ -233,7 +232,7 @@ public class SwapRequestsController : ControllerBase
         return Ok(_swapRequestConverter.CreateSwapRequestResponseFromSwapRequest(swap));
     }
 
-    private async Task<string?> ValidateSwapRequestAndAssignScheduleId(SwapRequest swapRequest)
+    private async Task<SwapRequestValidateResponse> ValidateSwapRequestAndAssignScheduleId(SwapRequest swapRequest)
     {
         // Fetch residents
         Resident? requester =
@@ -243,7 +242,10 @@ public class SwapRequestsController : ControllerBase
 
         if (requester == null || requestee == null)
         {
-            return "Requester or requestee not found.";
+            return new SwapRequestValidateResponse()
+            {
+                Success = false, Message = "Requester or requestee not found."
+            };
         }
 
         // Fetch dates
@@ -261,23 +263,84 @@ public class SwapRequestsController : ControllerBase
                 d.Schedule.Status == ScheduleStatus.Published);
         if (requesterDate == null || requesteeDate == null)
         {
-            return "Could not find both shift dates for the swap.";
+            return new SwapRequestValidateResponse()
+            { Success = false, Message = "Could not find both shift dates for the swap." };
         }
 
         // Check shift type
         if (requesterDate.CallType != requesteeDate.CallType)
         {
-            return
-                "Both shifts must be the same type (e.g., Sunday with Sunday, Saturday with Saturday, Short with Short).";
+            return new SwapRequestValidateResponse()
+            {
+                Success = false,
+                Message = "Both shifts must be the same type (e.g., Sunday with Sunday, Saturday with Saturday, Short with Short)."
+            };
         }
 
         if (requesterDate.ScheduleId != requesteeDate.ScheduleId)
         {
-            return "Both shifts must belong to the same schedule.";
+            return new SwapRequestValidateResponse()
+            {
+                Success = false,
+                Message = "Both shifts must belong to the same schedule."
+            };
+        }
+
+        // evaluate rule violations if swap occurs
+        IndividualValidationResult requesterValidationResult;
+        try
+        {
+            // For requester, check validity for requestee date details and exclude requester date
+            ViolationResult requesterViolationResult
+                = await _ruleViolationService.EvaluateConstraints(requesteeDate.ScheduleId,
+                    requester.ResidentId, requesteeDate.ShiftDate, requesteeDate.CallType,
+                    excludedDatesForOverworkConstraints: [requesterDate.ShiftDate]);
+            ViolationResultResponse requesterViolationResultResponse = new(requesterViolationResult);
+            requesterValidationResult = new IndividualValidationResult() { Message = requesterViolationResultResponse.IsViolation ? "Requester constraint violations" : "No Violations", Violations = requesterViolationResultResponse };
+        }
+        catch (ArgumentException ex)
+        {
+            requesterValidationResult = new IndividualValidationResult() { Message = ex.Message, Violations = null };
+        }
+
+        IndividualValidationResult requesteeValidationResult;
+        try
+        {
+            // For requestee, check validity for requester date details and exclude requestee date
+            ViolationResult requesteeViolationResult = await _ruleViolationService.EvaluateConstraints(requesterDate.ScheduleId, requestee.ResidentId, requesterDate.ShiftDate, requesterDate.CallType, excludedDatesForOverworkConstraints: [requesteeDate.ShiftDate]);
+            ViolationResultResponse requesteeViolationResultResponse = new(requesteeViolationResult);
+            requesteeValidationResult = new IndividualValidationResult() { Message = requesteeViolationResultResponse.IsViolation ? "Requestee constraint violations" : "No Violations", Violations = requesteeViolationResultResponse };
+        }
+        catch (ArgumentException ex)
+        {
+            requesteeValidationResult = new IndividualValidationResult() { Message = ex.Message, Violations = null };
+        }
+
+        if (requesterValidationResult.Violations == null ||
+            requesteeValidationResult.Violations == null)
+        {
+            return new SwapRequestValidateResponse
+            {
+                Success = false,
+                Message = "Failed to process rule violations",
+                Requester = requesterValidationResult,
+                Requestee = requesteeValidationResult
+            };
+        }
+
+        if (requesterValidationResult.Violations.IsViolation || requesteeValidationResult.Violations.IsViolation)
+        {
+            return new SwapRequestValidateResponse
+            {
+                Success = false,
+                Message = "SwapRequest will result in rule violation(s) for requestee or requester",
+                Requester = requesterValidationResult,
+                Requestee = requesteeValidationResult
+            };
         }
 
         swapRequest.ScheduleId = requesterDate.ScheduleId;
 
-        return null;
+        return new SwapRequestValidateResponse { Success = true, Message = "No Constraint Violations", Requester = requesterValidationResult, Requestee = requesteeValidationResult };
     }
 }

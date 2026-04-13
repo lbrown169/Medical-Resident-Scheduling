@@ -7,16 +7,16 @@ namespace MedicalDemo.Algorithms.OnCallScheduleGenerator.Constraints;
 
 public class ShiftMatchesPgyDateConstraint : ICallShiftConstraint
 {
-    public ConstraintResult Evaluate(ResidentDto resident, DateOnly date)
+    public ConstraintResult Evaluate(ResidentDto resident, DateOnly date, CallShiftType shiftType)
     {
-        CallShiftType? shiftType = CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(date, resident.Pgy);
+        CallShiftType? applicableShiftType = CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(date, resident.Pgy);
 
-        if (shiftType is not null)
+        if (shiftType == CallShiftType.Custom || shiftType == applicableShiftType)
         {
             return ConstraintResult.NoViolation();
         }
 
         // if shiftType is null, no valid call type found given PGYear and date
-        return ConstraintResult.Violation($"No valid call type shift assignment available for Resident {resident.Name}, PGY: {resident.Pgy}, on date {date}.", false);
+        return ConstraintResult.Violation($"Call type \"{shiftType.GetDisplayName()}\" is not valid for Resident {resident.Name} (PGY{resident.Pgy}) on {date}.", false);
     }
 }

@@ -10,4 +10,5 @@ public class DateUpdateRequest
     public DateOnly? ShiftDate { get; set; }
     public CallShiftType? CallType { get; set; }
     public int? Hours { get; set; }
+    public bool? AdminOverride { get; set; }
 }

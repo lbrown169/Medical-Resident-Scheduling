@@ -10,6 +10,6 @@ public class ViolationResult
     {
         Violations = violations;
         IsViolation = Violations.Any(v => v.IsViolated);
-        IsOverridable = IsViolation ? null : Violations.All(v => v.IsOverridable == true);
+        IsOverridable = !IsViolation ? null : Violations.All(v => v.IsOverridable == true);
     }
 }

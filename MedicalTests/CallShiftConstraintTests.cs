@@ -1,4 +1,6 @@
 ﻿using MedicalDemo.Algorithms.OnCallScheduleGenerator.Constraints;
+using MedicalDemo.Enums;
+using MedicalDemo.Extensions;
 using MedicalDemo.Models;
 using MedicalDemo.Models.DTO.Scheduling;
 
@@ -52,6 +54,9 @@ public static class CallShiftConstraintTests
             _ => throw new ArgumentOutOfRangeException(nameof(pgy))
         };
     }
+
+    private static CallShiftType ShiftType(DateOnly date, ResidentDto resident) =>
+        CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(date, resident.Pgy)!.Value;
 
     // Role that allows all call types
     private static HospitalRole AllowAllRole =>
@@ -111,7 +116,7 @@ public static class CallShiftConstraintTests
         public void NoViolation_WhenResidentNotWorking()
         {
             ResidentDto resident = CreateResident(1, UniformRoles(AllowAllRole));
-            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday);
+            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday, ShiftType(OctoberWeekday, resident));
             Assert.False(result.IsViolated);
         }
 
@@ -123,7 +128,7 @@ public static class CallShiftConstraintTests
                 UniformRoles(AllowAllRole),
                 workDays: [OctoberWeekday]
             );
-            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday);
+            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday, ShiftType(OctoberWeekday, resident));
             Assert.True(result.IsViolated);
         }
 
@@ -135,7 +140,7 @@ public static class CallShiftConstraintTests
                 UniformRoles(AllowAllRole),
                 workDays: [OctoberWeekday.AddDays(1)]
             );
-            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday);
+            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday, ShiftType(OctoberWeekday, resident));
             Assert.False(result.IsViolated);
         }
     }
@@ -152,7 +157,7 @@ public static class CallShiftConstraintTests
         public void NoViolation_WhenNotOnVacation()
         {
             ResidentDto resident = CreateResident(1, UniformRoles(AllowAllRole));
-            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday);
+            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday, ShiftType(OctoberWeekday, resident));
             Assert.False(result.IsViolated);
         }
 
@@ -165,7 +170,7 @@ public static class CallShiftConstraintTests
                 UniformRoles(AllowAllRole),
                 morningVacation: [OctoberWeekday]
             );
-            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday);
+            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday, ShiftType(OctoberWeekday, resident));
             Assert.False(result.IsViolated);
         }
 
@@ -178,7 +183,7 @@ public static class CallShiftConstraintTests
                 UniformRoles(AllowAllRole),
                 morningVacation: [OctoberSaturday]
             );
-            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday);
+            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday, ShiftType(OctoberWeekday, resident));
             Assert.False(result.IsViolated);
         }
 
@@ -191,7 +196,7 @@ public static class CallShiftConstraintTests
                 UniformRoles(AllowAllRole),
                 afternoonVacation: [OctoberSaturday]
             );
-            ConstraintResult result = _constraint.Evaluate(resident, OctoberSaturday);
+            ConstraintResult result = _constraint.Evaluate(resident, OctoberSaturday, ShiftType(OctoberSaturday, resident));
             Assert.True(result.IsViolated);
         }
 
@@ -203,7 +208,7 @@ public static class CallShiftConstraintTests
                 UniformRoles(AllowAllRole),
                 morningVacation: [OctoberWeekday.AddDays(1)]
             );
-            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday);
+            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday, ShiftType(OctoberWeekday, resident));
             Assert.False(result.IsViolated);
         }
     }
@@ -221,7 +226,7 @@ public static class CallShiftConstraintTests
         public void NoViolation_WhenRotationAllowsAll_OnTrainingWeekday()
         {
             ResidentDto resident = CreateResident(1, UniformRoles(AllowAllRole));
-            ConstraintResult result = _constraint.Evaluate(resident, JulyWeekday);
+            ConstraintResult result = _constraint.Evaluate(resident, JulyWeekday, ShiftType(JulyWeekday, resident));
             Assert.False(result.IsViolated);
         }
 
@@ -229,7 +234,7 @@ public static class CallShiftConstraintTests
         public void NoViolation_WhenRotationAllowsAll_OnTrainingWeekend()
         {
             ResidentDto resident = CreateResident(2, UniformRoles(AllowAllRole));
-            ConstraintResult result = _constraint.Evaluate(resident, JulySaturday);
+            ConstraintResult result = _constraint.Evaluate(resident, JulySaturday, ShiftType(JulySaturday, resident));
             Assert.False(result.IsViolated);
         }
 
@@ -237,7 +242,7 @@ public static class CallShiftConstraintTests
         public void NoViolation_WhenRotationAllowsAll_OnNormalWeekday()
         {
             ResidentDto resident = CreateResident(1, UniformRoles(AllowAllRole));
-            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday);
+            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday, ShiftType(OctoberWeekday, resident));
             Assert.False(result.IsViolated);
         }
 
@@ -245,7 +250,7 @@ public static class CallShiftConstraintTests
         public void NoViolation_WhenRotationAllowsAll_OnNormalWeekend()
         {
             ResidentDto resident = CreateResident(1, UniformRoles(AllowAllRole));
-            ConstraintResult result = _constraint.Evaluate(resident, OctoberSaturday);
+            ConstraintResult result = _constraint.Evaluate(resident, OctoberSaturday, ShiftType(OctoberSaturday, resident));
             Assert.False(result.IsViolated);
         }
 
@@ -254,7 +259,7 @@ public static class CallShiftConstraintTests
         public void Violation_WhenRotationAllowsShort_OnTrainingWeekday()
         {
             ResidentDto resident = CreateResident(1, UniformRoles(ShortOnlyRole));
-            ConstraintResult result = _constraint.Evaluate(resident, JulyWeekday);
+            ConstraintResult result = _constraint.Evaluate(resident, JulyWeekday, ShiftType(JulyWeekday, resident));
             Assert.True(result.IsViolated);
         }
 
@@ -262,7 +267,7 @@ public static class CallShiftConstraintTests
         public void Violation_WhenRotationAllowsShort_OnTrainingWeekend()
         {
             ResidentDto resident = CreateResident(1, UniformRoles(ShortOnlyRole));
-            ConstraintResult result = _constraint.Evaluate(resident, JulySaturday);
+            ConstraintResult result = _constraint.Evaluate(resident, JulySaturday, ShiftType(JulySaturday, resident));
             Assert.True(result.IsViolated);
         }
 
@@ -270,7 +275,7 @@ public static class CallShiftConstraintTests
         public void NoViolation_WhenRotationAllowsShort_OnNormalWeekday()
         {
             ResidentDto resident = CreateResident(1, UniformRoles(ShortOnlyRole));
-            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday);
+            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday, ShiftType(OctoberWeekday, resident));
             Assert.False(result.IsViolated);
         }
 
@@ -278,7 +283,7 @@ public static class CallShiftConstraintTests
         public void Violation_WhenRotationAllowsShort_OnNormalWeekend()
         {
             ResidentDto resident = CreateResident(1, UniformRoles(ShortOnlyRole));
-            ConstraintResult result = _constraint.Evaluate(resident, OctoberSaturday);
+            ConstraintResult result = _constraint.Evaluate(resident, OctoberSaturday, ShiftType(OctoberSaturday, resident));
             Assert.True(result.IsViolated);
         }
 
@@ -287,7 +292,7 @@ public static class CallShiftConstraintTests
         public void NoViolation_WhenRotationAllowsTrainingShort_OnTrainingWeekday()
         {
             ResidentDto resident = CreateResident(1, UniformRoles(ShortTrainingOnly));
-            ConstraintResult result = _constraint.Evaluate(resident, JulyWeekday);
+            ConstraintResult result = _constraint.Evaluate(resident, JulyWeekday, ShiftType(JulyWeekday, resident));
             Assert.False(result.IsViolated);
         }
 
@@ -295,7 +300,7 @@ public static class CallShiftConstraintTests
         public void Violation_WhenRotationAllowsTrainingShort_OnTrainingWeekend()
         {
             ResidentDto resident = CreateResident(1, UniformRoles(ShortTrainingOnly));
-            ConstraintResult result = _constraint.Evaluate(resident, JulySaturday);
+            ConstraintResult result = _constraint.Evaluate(resident, JulySaturday, ShiftType(JulySaturday, resident));
             Assert.True(result.IsViolated);
         }
 
@@ -303,7 +308,7 @@ public static class CallShiftConstraintTests
         public void Violation_WhenRotationAllowsTrainingShort_OnNormalWeekday()
         {
             ResidentDto resident = CreateResident(1, UniformRoles(ShortTrainingOnly));
-            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday);
+            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday, ShiftType(OctoberWeekday, resident));
             Assert.True(result.IsViolated);
         }
 
@@ -311,7 +316,7 @@ public static class CallShiftConstraintTests
         public void Violation_WhenRotationAllowsTrainingShort_OnNormalWeekend()
         {
             ResidentDto resident = CreateResident(1, UniformRoles(ShortTrainingOnly));
-            ConstraintResult result = _constraint.Evaluate(resident, OctoberSaturday);
+            ConstraintResult result = _constraint.Evaluate(resident, OctoberSaturday, ShiftType(OctoberSaturday, resident));
             Assert.True(result.IsViolated);
         }
 
@@ -320,7 +325,7 @@ public static class CallShiftConstraintTests
         public void Violation_WhenRotationAllowsLong_OnTrainingWeekday()
         {
             ResidentDto resident = CreateResident(1, UniformRoles(LongOnlyRole));
-            ConstraintResult result = _constraint.Evaluate(resident, JulyWeekday);
+            ConstraintResult result = _constraint.Evaluate(resident, JulyWeekday, ShiftType(JulyWeekday, resident));
             Assert.True(result.IsViolated);
         }
 
@@ -328,7 +333,7 @@ public static class CallShiftConstraintTests
         public void Violation_WhenRotationAllowsLong_OnTrainingWeekend()
         {
             ResidentDto resident = CreateResident(1, UniformRoles(LongOnlyRole));
-            ConstraintResult result = _constraint.Evaluate(resident, JulySaturday);
+            ConstraintResult result = _constraint.Evaluate(resident, JulySaturday, ShiftType(JulySaturday, resident));
             Assert.True(result.IsViolated);
         }
 
@@ -336,7 +341,7 @@ public static class CallShiftConstraintTests
         public void Violation_WhenRotationAllowsLong_OnNormalWeekday()
         {
             ResidentDto resident = CreateResident(1, UniformRoles(LongOnlyRole));
-            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday);
+            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday, ShiftType(OctoberWeekday, resident));
             Assert.True(result.IsViolated);
         }
 
@@ -344,7 +349,7 @@ public static class CallShiftConstraintTests
         public void NoViolation_WhenRotationAllowsLong_OnNormalWeekend()
         {
             ResidentDto resident = CreateResident(1, UniformRoles(LongOnlyRole));
-            ConstraintResult result = _constraint.Evaluate(resident, OctoberSaturday);
+            ConstraintResult result = _constraint.Evaluate(resident, OctoberSaturday, ShiftType(OctoberSaturday, resident));
             Assert.False(result.IsViolated);
         }
 
@@ -353,7 +358,7 @@ public static class CallShiftConstraintTests
         public void Violation_WhenRotationAllowsTrainingLong_OnTrainingWeekday()
         {
             ResidentDto resident = CreateResident(1, UniformRoles(LongTrainingOnly));
-            ConstraintResult result = _constraint.Evaluate(resident, JulyWeekday);
+            ConstraintResult result = _constraint.Evaluate(resident, JulyWeekday, ShiftType(JulyWeekday, resident));
             Assert.True(result.IsViolated);
         }
 
@@ -361,7 +366,7 @@ public static class CallShiftConstraintTests
         public void NoViolation_WhenRotationAllowsTrainingLong_OnTrainingWeekend()
         {
             ResidentDto resident = CreateResident(1, UniformRoles(LongTrainingOnly));
-            ConstraintResult result = _constraint.Evaluate(resident, JulySaturday);
+            ConstraintResult result = _constraint.Evaluate(resident, JulySaturday, ShiftType(JulySaturday, resident));
             Assert.False(result.IsViolated);
         }
 
@@ -369,7 +374,7 @@ public static class CallShiftConstraintTests
         public void Violation_WhenRotationAllowsTrainingLong_OnNormalWeekday()
         {
             ResidentDto resident = CreateResident(1, UniformRoles(LongTrainingOnly));
-            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday);
+            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday, ShiftType(OctoberWeekday, resident));
             Assert.True(result.IsViolated);
         }
 
@@ -377,7 +382,7 @@ public static class CallShiftConstraintTests
         public void Violation_WWhenRotationAllowsTrainingLong_OnNormalWeekend()
         {
             ResidentDto resident = CreateResident(1, UniformRoles(LongTrainingOnly));
-            ConstraintResult result = _constraint.Evaluate(resident, OctoberSaturday);
+            ConstraintResult result = _constraint.Evaluate(resident, OctoberSaturday, ShiftType(OctoberSaturday, resident));
             Assert.True(result.IsViolated);
         }
     }
@@ -394,7 +399,7 @@ public static class CallShiftConstraintTests
         public void NoViolation_WhenValidShiftTypeExistsForPgy1_OnWeekday()
         {
             ResidentDto resident = CreateResident(1, UniformRoles(AllowAllRole));
-            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday);
+            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday, ShiftType(OctoberWeekday, resident));
             Assert.False(result.IsViolated);
         }
 
@@ -402,7 +407,7 @@ public static class CallShiftConstraintTests
         public void NoViolation_WhenValidShiftTypeExistsForPgy1_OnWeekend()
         {
             ResidentDto resident = CreateResident(1, UniformRoles(AllowAllRole));
-            ConstraintResult result = _constraint.Evaluate(resident, OctoberSaturday);
+            ConstraintResult result = _constraint.Evaluate(resident, OctoberSaturday, ShiftType(OctoberSaturday, resident));
             Assert.False(result.IsViolated);
         }
 
@@ -410,7 +415,7 @@ public static class CallShiftConstraintTests
         public void Violation_WhenNoValidShiftTypeExistsForPgy1_OnSunday()
         {
             ResidentDto resident = CreateResident(1, UniformRoles(AllowAllRole));
-            ConstraintResult result = _constraint.Evaluate(resident, OctoberSunday);
+            ConstraintResult result = _constraint.Evaluate(resident, OctoberSunday, CallShiftType.SundayHalfCall);
             Assert.True(result.IsViolated);
         }
 
@@ -418,7 +423,7 @@ public static class CallShiftConstraintTests
         public void NoViolation_WhenValidShiftTypeExistsForPgy2_OnWeekday()
         {
             ResidentDto resident = CreateResident(2, UniformRoles(AllowAllRole));
-            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday);
+            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday, ShiftType(OctoberWeekday, resident));
             Assert.False(result.IsViolated);
         }
 
@@ -426,7 +431,7 @@ public static class CallShiftConstraintTests
         public void NoViolation_WhenValidShiftTypeExistsForPgy2_OnWeekend()
         {
             ResidentDto resident = CreateResident(2, UniformRoles(AllowAllRole));
-            ConstraintResult result = _constraint.Evaluate(resident, OctoberSaturday);
+            ConstraintResult result = _constraint.Evaluate(resident, OctoberSaturday, ShiftType(OctoberSaturday, resident));
             Assert.False(result.IsViolated);
         }
 
@@ -434,7 +439,7 @@ public static class CallShiftConstraintTests
         public void Violation_WhenNoValidShiftTypeExistsForPgy2_OnWeekend()
         {
             ResidentDto resident = CreateResident(2, UniformRoles(AllowAllRole));
-            ConstraintResult result = _constraint.Evaluate(resident, ChristmasDay);
+            ConstraintResult result = _constraint.Evaluate(resident, ChristmasDay, CallShiftType.ChristmasDay);
             Assert.True(result.IsViolated);
         }
     }
@@ -451,7 +456,7 @@ public static class CallShiftConstraintTests
         public void NoViolation_WhenNoAdjacentShifts()
         {
             ResidentDto resident = CreateResident(1, UniformRoles(AllowAllRole));
-            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday);
+            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday, ShiftType(OctoberWeekday, resident));
             Assert.False(result.IsViolated);
         }
 
@@ -464,7 +469,7 @@ public static class CallShiftConstraintTests
                 UniformRoles(AllowAllRole),
                 workDays: [prevDay]
             );
-            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday);
+            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday, ShiftType(OctoberWeekday, resident));
             Assert.True(result.IsViolated);
         }
 
@@ -477,7 +482,7 @@ public static class CallShiftConstraintTests
                 UniformRoles(AllowAllRole),
                 workDays: [nextDay]
             );
-            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday);
+            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday, ShiftType(OctoberWeekday, resident));
             Assert.True(result.IsViolated);
         }
 
@@ -490,7 +495,7 @@ public static class CallShiftConstraintTests
                 UniformRoles(AllowAllRole),
                 committedWorkDays: [prevDay]
             );
-            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday);
+            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday, ShiftType(OctoberWeekday, resident));
             Assert.True(result.IsViolated);
         }
 
@@ -503,14 +508,13 @@ public static class CallShiftConstraintTests
                 UniformRoles(AllowAllRole),
                 committedWorkDays: [nextDay]
             );
-            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday);
+            ConstraintResult result = _constraint.Evaluate(resident, OctoberWeekday, ShiftType(OctoberWeekday, resident));
             Assert.True(result.IsViolated);
         }
 
         [Fact]
         public void Violation_WhenSameShiftTypeWorkedWithinWeek()
         {
-            // Two Saturdays (same long call type) within a week
             DateOnly saturday1 = OctoberSaturday;
             DateOnly saturday2 = OctoberSaturday.AddDays(7);
             ResidentDto resident = CreateResident(
@@ -518,14 +522,13 @@ public static class CallShiftConstraintTests
                 UniformRoles(AllowAllRole),
                 workDays: [saturday1]
             );
-            ConstraintResult result = _constraint.Evaluate(resident, saturday2);
+            ConstraintResult result = _constraint.Evaluate(resident, saturday2, ShiftType(saturday2, resident));
             Assert.True(result.IsViolated);
         }
 
         [Fact]
         public void NoViolation_WhenSameShiftTypeWorkedBeyondWeek()
         {
-            // Two Saturdays more than 7 days apart
             DateOnly saturday1 = OctoberSaturday;
             DateOnly saturday2 = OctoberSaturday.AddDays(14);
             ResidentDto resident = CreateResident(
@@ -533,21 +536,19 @@ public static class CallShiftConstraintTests
                 UniformRoles(AllowAllRole),
                 workDays: [saturday1]
             );
-            ConstraintResult result = _constraint.Evaluate(resident, saturday2);
+            ConstraintResult result = _constraint.Evaluate(resident, saturday2, ShiftType(saturday2, resident));
             Assert.False(result.IsViolated);
         }
 
         [Fact]
         public void NoViolation_WhenWorkingTwoDaysApart_DifferentShiftTypes()
         {
-            // Weekday and weekend are different shift types, so no in-a-row violation
             ResidentDto resident = CreateResident(
                 1,
                 UniformRoles(AllowAllRole),
                 workDays: [OctoberWeekday]
             );
-            // Saturday is 2+ days away and a different shift type
-            ConstraintResult result = _constraint.Evaluate(resident, OctoberSaturday);
+            ConstraintResult result = _constraint.Evaluate(resident, OctoberSaturday, ShiftType(OctoberSaturday, resident));
             Assert.False(result.IsViolated);
         }
     }

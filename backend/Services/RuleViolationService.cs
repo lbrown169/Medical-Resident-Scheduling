@@ -33,62 +33,34 @@ public class RuleViolationService
         _schedulerService = schedulerService;
     }
 
-
-    public async Task<(bool Success, string? Error, Resident? resident)> CheckResidentScheduledOnDate(
-        Guid scheduleId,
-        string residentId,
-        DateOnly date
-        )
+    public async Task<ViolationResult> EvaluateConstraints(Guid scheduleId, string residentId, DateOnly date, CallShiftType shiftType, IEnumerable<DateOnly>? excludedDatesForOverworkConstraints = null)
     {
-        //validate schedule and resident
-        Schedule? schedule = await _context.Schedules.FindAsync(scheduleId);
-        if (schedule == null)
-        {
-            return (false, "Invalid ScheduleID.", null);
-        }
+        excludedDatesForOverworkConstraints ??= [];
 
-        Resident? resident = await _context.Residents.FindAsync(residentId);
-        if (resident == null)
-        {
-            return (false, "Invalid ResidentID.", null);
-        }
-
-        // check if shift exists for this resident on this day
-        bool residentScheduled = await _context.Dates
-            .AnyAsync(d =>
-                d.ScheduleId == scheduleId &&
-                d.ResidentId == residentId &&
-                d.ShiftDate == date);
-
-        if (residentScheduled)
-        {
-            return (false, $"Resident is already scheduled on this date. Resident: {residentId}, Schedule:{scheduleId},Date:{date}", resident);
-        }
-
-        return (true, null, resident);
-    }
-
-    public async Task<ViolationResult> EvaluateConstraints(Guid scheduleId, string residentId, DateOnly date)
-    {
         //validate schedule
         Schedule? schedule = await _context.Schedules.FindAsync(scheduleId);
         if (schedule == null)
         {
-            throw new ArgumentException($"Invalid ScheduleID {scheduleId}.");
+            throw new ArgumentException($"Schedule {scheduleId} not found");
         }
 
-        ResidentDto? residentInfo = await _schedulerService.LoadResidentData(date.AcademicYear, date.Semester, residentId, scheduleId);
+        ResidentDto? residentInfo = await _schedulerService.LoadResidentData(date.Year, date.Semester, residentId, scheduleId);
 
         if (residentInfo == null)
         {
-            throw new Exception($"Resident {residentId} not found.");
+            throw new ArgumentException($"Resident {residentId} not found");
+        }
+
+        foreach (DateOnly excludedDate in excludedDatesForOverworkConstraints)
+        {
+            residentInfo.AddPendingRemovalWorkDay(excludedDate);
         }
 
         List<ConstraintResult> violations = [];
         // check through all constrains for any rule violations
         foreach (ICallShiftConstraint constraint in _constraints)
         {
-            ConstraintResult result = constraint.Evaluate(residentInfo, date);
+            ConstraintResult result = constraint.Evaluate(residentInfo, date, shiftType);
             if (result.IsViolated)
             {
                 violations.Add(result);

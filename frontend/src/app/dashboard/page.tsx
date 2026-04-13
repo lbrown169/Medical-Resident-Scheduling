@@ -48,6 +48,7 @@ import MobileUserMenu from "./components/MobileUserMenu";
 
 import { VacationResponse } from "@/lib/models/VacationResponse";
 import { CallType } from "@/lib/models/CallType";
+import { SwapValidationResponse } from "@/lib/models/SwapValidationResponse";
 import { DateResponse } from "@/lib/models/DateResponse";
 import { CalendarEvent } from "@/lib/models/CalendarEvent";
 
@@ -656,14 +657,14 @@ function Dashboard() {
   };
   
 
-  const handleSubmitSwap = async () => {
+  const handleSubmitSwap = async (): Promise<SwapValidationResponse | null> => {
     if (!selectedResident || !selectedShift || !yourShiftDate || !partnerShiftDate || !partnerShift) {
       toast({
         variant: "destructive",
         title: "Error",
         description: "Please select both residents, both shifts, and both dates.",
       });
-      return;
+      return null;
     }
 
     try {
@@ -683,7 +684,7 @@ function Dashboard() {
           title: "Error",
           description: "Could not find both shifts to swap.",
         });
-        return;
+        return null;
       }
       // Create a swap request (pending approval)
       const swapRequest = {
@@ -704,22 +705,19 @@ function Dashboard() {
           title: "Swap Request Sent",
           description: "Your swap request has been sent and is pending approval.",
         });
+        setSelectedResident("");
+        setSelectedShift("");
+        setYourShiftDate("");
+        setPartnerShiftDate("");
+        setPartnerShift("");
+        setSwapDescription("");
+        return null;
       } else {
-        const error = await response.text();
-        let message = "Failed to create swap request.";
-
-        try {
-          const parsed = JSON.parse(error);
-          message = parsed.message || message;
-        } catch {
-          message = error || message;
-        }
-
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: message,
-        });
+        const data: SwapValidationResponse = await response.json().catch(() => ({
+          success: false,
+          message: "Failed to create swap request.",
+        }));
+        return data;
       }
     } catch (error) {
       console.error('Error creating swap request:', error);
@@ -728,13 +726,8 @@ function Dashboard() {
         title: "Error",
         description: "Failed to create swap request. Please try again.",
       });
+      return null;
     }
-    setSelectedResident("");
-    setSelectedShift("");
-    setYourShiftDate("");
-    setPartnerShiftDate("");
-    setPartnerShift("");
-    setSwapDescription("");
   };
 
   const handleSubmitRequestOff = async () => {

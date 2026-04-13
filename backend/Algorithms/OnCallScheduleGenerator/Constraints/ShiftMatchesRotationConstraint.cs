@@ -7,21 +7,25 @@ namespace MedicalDemo.Algorithms.OnCallScheduleGenerator.Constraints;
 
 public class ShiftMatchesRotationConstraint : ICallShiftConstraint
 {
-    public ConstraintResult Evaluate(ResidentDto resident, DateOnly date)
+    public ConstraintResult Evaluate(ResidentDto resident, DateOnly date, CallShiftType shiftType)
     {
-        CallShiftType? shiftType = CallShiftTypeExtensions.GetAlgorithmCallShiftTypeForDate(date, resident.Pgy);
+        CallLengthType lengthType = shiftType switch
+        {
+            CallShiftType.Custom => CallLengthType.Long,
+            _ => shiftType.GetLengthType()
+        };
+        HospitalRole role = resident.GetHospitalRoleForCalendarMonth(date.Month);
 
-        if (shiftType is not null && DoesRotationAllow(resident, date, shiftType.Value.GetLengthType()))
+        if (DoesRotationAllow(role, date, lengthType))
         {
             return ConstraintResult.NoViolation();
         }
 
-        return ConstraintResult.Violation($"Resident {resident.Name} shift disagrees with their rotation.", true);
+        return ConstraintResult.Violation($"Call shift \"{shiftType.GetDisplayName()}\" disagrees with {resident.Name}'s {role.Name} rotation.", true);
     }
 
-    private bool DoesRotationAllow(ResidentDto resident, DateOnly date, CallLengthType lengthType)
+    private bool DoesRotationAllow(HospitalRole role, DateOnly date, CallLengthType lengthType)
     {
-        HospitalRole role = resident.GetHospitalRoleForCalendarMonth(date.Month);
         if (lengthType == CallLengthType.Long)
         {
             if (date.Month is 7 or 8 && role is { DoesTrainingLong: false } ||
