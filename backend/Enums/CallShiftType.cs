@@ -24,7 +24,7 @@ public enum CallShiftType
 
     // First Saturday of July is training-specific, because PGY1s get their first week off
     [CallShift(Hours = 12, CallLengthType = CallLengthType.Long, RequiredPgy = 2, DateRule = CallShiftRule.FirstSaturdayOfJuly, Priority = 5)]
-    [Display(Name = "Saturday (12h)")]
+    [Display(Name = "Saturday (Pre-Training) (12h)")]
     FirstTrainingSaturdayHalfCall = 4,
 
     [CallShift(Hours = 12, CallLengthType = CallLengthType.Long, RequiredPgy = 2, DateRule = CallShiftRule.JulyFourth, Priority = 10)]
@@ -61,7 +61,7 @@ public enum CallShiftType
 
     // PGY1s in training need to do a Sunday shift, but they aren't allowed Sunday shifts outside...
     [CallShift(Hours = 12, CallLengthType = CallLengthType.Long, ApplicableDays = [DayOfWeek.Sunday], DateRule = CallShiftRule.SundayInTraining, Priority = 5)]
-    [Display(Name = "Sunday (12h)")]
+    [Display(Name = "Sunday (Training) (12h)")]
     SundayTrainingCall = 13,
 
     [Display(Name = "Custom Shift")]

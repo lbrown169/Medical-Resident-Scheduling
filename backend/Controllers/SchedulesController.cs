@@ -1,3 +1,5 @@
+//testing
+using System.Text.Json;
 using MedicalDemo.Converters;
 using MedicalDemo.Enums;
 using MedicalDemo.Extensions;
@@ -6,9 +8,9 @@ using MedicalDemo.Models.DTO;
 using MedicalDemo.Models.DTO.Requests;
 using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.Entities;
+using MedicalDemo.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-
 // Adjust namespace based on your project
 
 namespace MedicalDemo.Controllers;

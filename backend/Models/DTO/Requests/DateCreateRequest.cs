@@ -19,4 +19,6 @@ public class DateCreateRequest
     public required CallShiftType CallType { get; set; }
 
     public int? Hours { get; set; }
+
+    public bool? AdminOverride { get; set; }
 }
