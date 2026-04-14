@@ -235,7 +235,7 @@ function Modal({
       <div className="bg-card p-8 rounded-xl shadow-lg max-w-2xl w-full relative">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-xl font-bold"
+          className="absolute top-4 right-4 text-xl font-bold cursor-pointer"
         >
           &times;
         </button>
@@ -287,7 +287,7 @@ function ConstraintViolationsPanel({
       {/* Header (expands and collapses so it isn't too annoying if they want to keep the violations present) */}
       <button
         onClick={() => setExpanded((prev) => !prev)}
-        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-red-100/50 dark:hover:bg-red-900/20 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-red-100/50 dark:hover:bg-red-900/20 transition-colors cursor-pointer"
       >
         <div className="flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400 shrink-0" />
@@ -378,7 +378,7 @@ function PendingChangesPanel({
     <div className="rounded-lg border border-yellow-200 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-950/20 overflow-hidden">
       <button
         onClick={() => setExpanded((prev) => !prev)}
-        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-yellow-100/50 dark:hover:bg-yellow-900/20 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-yellow-100/50 dark:hover:bg-yellow-900/20 transition-colors cursor-pointer"
       >
         <div className="flex items-center gap-2">
           <Save className="h-4 w-4 text-yellow-600 dark:text-yellow-400 shrink-0" />
@@ -425,7 +425,7 @@ function PendingChangesPanel({
                     handleRevert(o.resident.resident_id, o.academicMonthIndex)
                   }
                   disabled={isReverting}
-                  className="shrink-0 flex items-center gap-1 text-xs px-2 py-1 rounded border border-yellow-400 dark:border-yellow-600 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-200 dark:hover:bg-yellow-800/40 disabled:opacity-50 transition-colors"
+                  className="shrink-0 flex items-center gap-1 text-xs px-2 py-1 rounded border border-yellow-400 dark:border-yellow-600 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-200 dark:hover:bg-yellow-800/40 disabled:opacity-50 transition-colors cursor-pointer"
                 >
                   {isReverting ? (
                     <Loader2 className="h-3 w-3 animate-spin" />
@@ -748,6 +748,9 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
     setViewResident(submission);
     setViewDialogOpen(true);
   };
+
+  // State for generate schedule confirm dialog
+  const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
 
   // State for submission deletion, used in handleDeleteSubmission for loading tracking
   const [deletingSubmission, setDeletingSubmission] = useState<string | null>(
@@ -1248,15 +1251,26 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
             <div className="h-6 sm:h-10 border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-700 mx-0 sm:mx-4 lg:mx-6 hidden sm:block" />
             <div className="flex items-center">
               <Button
-                onClick={handleGenerate}
+                onClick={() => setGenerateDialogOpen(true)}
                 disabled={generating || schedules.length >= 5}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl shadow"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl shadow cursor-pointer"
               >
                 {generating
                   ? "Generating..."
                   : `Generate ${selectedYear} - ${selectedYear + 1} Schedule`}
               </Button>
             </div>
+
+            <ConfirmDialog
+              open={generateDialogOpen}
+              onOpenChange={setGenerateDialogOpen}
+              loading={generating}
+              title="Generate Schedule"
+              message={"Generate a new rotation schedule? This will add a new schedule to the list."}
+              confirmText="Generate"
+              cancelText="Cancel"
+              onConfirm={handleGenerate}
+            />
 
             {/* Delete Schedule */}
             <ConfirmDialog
@@ -1488,7 +1502,10 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
               <Button
                 disabled={!selectedScheduleId}
                 onClick={() => {
-                  window.open(`${config.apiUrl}/api/pgy4-rotation-schedule/export/${selectedScheduleId}`, "_blank");
+                  window.open(
+                    `${config.apiUrl}/api/pgy4-rotation-schedule/export/${selectedScheduleId}`,
+                    "_blank",
+                  );
                 }}
                 className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium
                           bg-green-600 hover:bg-green-700 text-white

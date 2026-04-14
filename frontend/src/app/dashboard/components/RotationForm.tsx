@@ -599,7 +599,7 @@ const RotationForm: React.FC<RotationFormProps> = ({
 
             {/* Submit */}
             <div className="flex justify-end gap-4">
-              <Button type="submit" disabled={loading} className="px-8 py-3">
+              <Button type="submit" disabled={loading} className="px-8 py-3 cursor-pointer">
                 {loading ? "Submitting..." : "Submit Preferences"}
               </Button>
             </div>
