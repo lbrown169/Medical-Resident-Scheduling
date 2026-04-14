@@ -1266,7 +1266,9 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
               onOpenChange={setGenerateDialogOpen}
               loading={generating}
               title="Generate Schedule"
-              message={"Generate a new rotation schedule? This will add a new schedule to the list."}
+              message={
+                "Generate a new rotation schedule? This will add a new schedule to the list."
+              }
               confirmText="Generate"
               cancelText="Cancel"
               onConfirm={handleGenerate}
@@ -1358,7 +1360,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                     <Button
                       onClick={handlePublish}
                       disabled={publishingSchedule}
-                      className={`text-white text-xs sm:text-sm px-3 py-2 ${
+                      className={`text-white text-xs sm:text-sm px-3 py-2 cursor-pointer ${
                         selectedSchedule?.isPublished
                           ? "bg-green-600 hover:bg-red-600"
                           : "bg-blue-600 hover:bg-blue-700"
@@ -1468,7 +1470,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                 className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium
                           border-red-500 text-red-600
                           hover:bg-red-500 hover:text-white
-                          disabled:opacity-40"
+                          disabled:opacity-40 cursor-pointer"
               >
                 {discardingOverrides ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -1488,7 +1490,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                 onClick={handleApplyOverrides}
                 className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium
                           bg-blue-600 hover:bg-blue-700 text-white
-                          disabled:opacity-40"
+                          disabled:opacity-40 cursor-pointer"
               >
                 {applyingOverrides ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -1509,7 +1511,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                 }}
                 className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium
                           bg-green-600 hover:bg-green-700 text-white
-                          disabled:opacity-40"
+                          disabled:opacity-40 cursor-pointer"
               >
                 <Download className="h-4 w-4" />
                 <span>Export</span>
@@ -1575,6 +1577,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                           <Button
                             variant="outline"
                             size="sm"
+                            className="cursor-pointer"
                             onClick={() => handleViewSubmission(submission)}
                           >
                             View
@@ -1585,7 +1588,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                           <Button
                             variant="outline"
                             size="sm"
-                            className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white"
+                            className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white cursor-pointer"
                             onClick={() => {
                               setDeleteTargetId(
                                 submission.rotationPrefRequestId,
@@ -1657,14 +1660,14 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                   disabled={
                     savingWindow || !windowAvailableDate || !windowDueDate
                   }
-                  className="py-2 flex items-center justify-center gap-2 bg-green-600 text-white hover:bg-green-700"
+                  className="py-2 flex items-center justify-center gap-2 bg-green-600 text-white hover:bg-green-700 cursor-pointer"
                 >
                   {savingWindow ? "Saving..." : "Save Window"}
                 </Button>
                 <Button
                   onClick={() => setShowRotationFormModal(true)}
                   disabled={showRotationFormModal == true}
-                  className="py-2 flex items-center justify-center gap-2 bg-blue-500 text-white hover:bg-blue-600"
+                  className="py-2 flex items-center justify-center gap-2 bg-blue-500 text-white hover:bg-blue-600 cursor-pointer"
                 >
                   <ClipboardList className="h-4 w-4" />
                   Create Rotation Form
