@@ -348,17 +348,20 @@ const RotationForm: React.FC<RotationFormProps> = ({
   };
 
   /**
-   * Gets available options for priority fields, excluding already selected priorities.
-   * Used to reduce dropdown options to avoid duplicates.
+   * Returns options excluding selected values
+   * Keeps the currently selected option so it looks right
    */
-  const getAvailablePriorityOptions = (
-    currentValue: string | null,
-  ): typeof rotationOptions => {
-    const selected = getPrioritiesArray().filter((v) => v !== currentValue);
-    return rotationOptions.filter((opt) => !selected.includes(opt.value));
+  const getOptions = (currentValue: string | null): typeof rotationOptions => {
+    const allSelected = new Set(
+      [
+        firstPriority, secondPriority, thirdPriority, fourthPriority,
+        fifthPriority, sixthPriority, seventhPriority, eighthPriority,
+        alternative1, alternative2, alternative3,
+        avoid1, avoid2, avoid3,
+      ].filter((v): v is string => v !== null && v !== currentValue),
+    );
+    return rotationOptions.filter((opt) => !allSelected.has(opt.value));
   };
-
-  const getAllOptions = (): typeof rotationOptions => rotationOptions;
 
   // Access check
   if (userPGY !== requiredPGY) {
@@ -452,53 +455,53 @@ const RotationForm: React.FC<RotationFormProps> = ({
                   label="First Priority (required)"
                   value={firstPriority}
                   onChange={setFirstPriority}
-                  options={getAvailablePriorityOptions(firstPriority)}
+                  options={getOptions(firstPriority)}
                   required
                 />
                 <SelectField
                   label="Fifth Priority (optional)"
                   value={fifthPriority}
                   onChange={setFifthPriority}
-                  options={getAvailablePriorityOptions(fifthPriority)}
+                  options={getOptions(fifthPriority)}
                 />
                 <SelectField
                   label="Second Priority (required)"
                   value={secondPriority}
                   onChange={setSecondPriority}
-                  options={getAvailablePriorityOptions(secondPriority)}
+                  options={getOptions(secondPriority)}
                   required
                 />
                 <SelectField
                   label="Sixth Priority (optional)"
                   value={sixthPriority}
                   onChange={setSixthPriority}
-                  options={getAvailablePriorityOptions(sixthPriority)}
+                  options={getOptions(sixthPriority)}
                 />
                 <SelectField
                   label="Third Priority (required)"
                   value={thirdPriority}
                   onChange={setThirdPriority}
-                  options={getAvailablePriorityOptions(thirdPriority)}
+                  options={getOptions(thirdPriority)}
                   required
                 />
                 <SelectField
                   label="Seventh Priority (optional)"
                   value={seventhPriority}
                   onChange={setSeventhPriority}
-                  options={getAvailablePriorityOptions(seventhPriority)}
+                  options={getOptions(seventhPriority)}
                 />
                 <SelectField
                   label="Fourth Priority (required)"
                   value={fourthPriority}
                   onChange={setFourthPriority}
-                  options={getAvailablePriorityOptions(fourthPriority)}
+                  options={getOptions(fourthPriority)}
                   required
                 />
                 <SelectField
                   label="Eighth Priority (optional)"
                   value={eighthPriority}
                   onChange={setEighthPriority}
-                  options={getAvailablePriorityOptions(eighthPriority)}
+                  options={getOptions(eighthPriority)}
                 />
               </div>
             </div>
@@ -516,19 +519,19 @@ const RotationForm: React.FC<RotationFormProps> = ({
                   label="Alternative 1"
                   value={alternative1}
                   onChange={setAlternative1}
-                  options={getAllOptions()}
+                  options={getOptions(alternative1)}
                 />
                 <SelectField
                   label="Alternative 2"
                   value={alternative2}
                   onChange={setAlternative2}
-                  options={getAllOptions()}
+                  options={getOptions(alternative2)}
                 />
                 <SelectField
                   label="Alternative 3"
                   value={alternative3}
                   onChange={setAlternative3}
-                  options={getAllOptions()}
+                  options={getOptions(alternative3)}
                 />
               </div>
             </div>
@@ -546,19 +549,19 @@ const RotationForm: React.FC<RotationFormProps> = ({
                   label="Avoid 1"
                   value={avoid1}
                   onChange={setAvoid1}
-                  options={getAllOptions()}
+                  options={getOptions(avoid1)}
                 />
                 <SelectField
                   label="Avoid 2"
                   value={avoid2}
                   onChange={setAvoid2}
-                  options={getAllOptions()}
+                  options={getOptions(avoid2)}
                 />
                 <SelectField
                   label="Avoid 3"
                   value={avoid3}
                   onChange={setAvoid3}
-                  options={getAllOptions()}
+                  options={getOptions(avoid3)}
                 />
               </div>
             </div>
