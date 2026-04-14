@@ -960,6 +960,7 @@ case "Home":
             onNavigateToSettings={() => setSelected("Settings")}
             onNavigateToHome={() => setSelected("Home")}
             onNavigateToSchedules={() => setSelected("Schedules")}
+            onNavigateToRotations={() => setSelected("Rotations")}
             isAdmin={isAdmin}
           />
         );

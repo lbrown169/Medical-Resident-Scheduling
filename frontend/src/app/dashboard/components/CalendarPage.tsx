@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { ChevronLeft, ChevronRight, CalendarDays, Home, Repeat2, UserCheck, CalendarX, Settings as SettingsIcon, LayoutList } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarDays, Home, Repeat2, UserCheck, CalendarX, Settings as SettingsIcon, LayoutList, CalendarRange } from "lucide-react";
 import { CalendarEvent } from "@/lib/models/CalendarEvent";
 
 interface CalendarPageProps {
@@ -12,11 +12,12 @@ interface CalendarPageProps {
   onNavigateToSettings?: () => void;
   onNavigateToHome?: () => void;
   onNavigateToSchedules?: () => void;
+  onNavigateToRotations?: () => void;
   onDateChange?: (month: number, year: number) => void;
   isAdmin?: boolean;
 }
 
-const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCalls, onNavigateToRequestOff, onNavigateToCheckSchedule, onNavigateToSettings, onNavigateToHome, onNavigateToSchedules, onDateChange, isAdmin }) => {
+const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCalls, onNavigateToRequestOff, onNavigateToCheckSchedule, onNavigateToSettings, onNavigateToHome, onNavigateToSchedules, onNavigateToRotations, onDateChange, isAdmin }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [viewMode, setViewMode] = useState<'day' | 'week' | 'month' | 'year'>('month');
@@ -423,6 +424,12 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ events, onNavigateToSwapCal
             {isAdmin && (
               <button onClick={onNavigateToSchedules} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground cursor-pointer">
                 <LayoutList className="w-5 h-5" /> Schedules
+              </button>
+            )}
+            {/* Rotations button: only show for admin */}
+            {isAdmin && (
+              <button onClick={onNavigateToRotations} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground cursor-pointer">
+                <CalendarRange className="w-5 h-5" /> Rotations
               </button>
             )}
             <button onClick={onNavigateToSettings} className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold hover:bg-muted transition text-foreground cursor-pointer">
