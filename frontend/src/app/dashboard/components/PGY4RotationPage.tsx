@@ -1290,6 +1290,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
               cancelText="Cancel"
               onConfirm={handleDelete}
               loading={deletingSchedule}
+              disabled={schedules.length === 0}
               variant="danger"
             />
           </div>
