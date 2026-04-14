@@ -390,9 +390,11 @@ public class RotationPrefRequestController(
                 (w) => w.AcademicYear == academicYear + 1
             );
 
-        DateTime localTime = DateTime.Now;
-        DateTime? availableDate = submissionWindow?.AvailableDate;
+        DateTime utcTime = DateTime.Now;
+        TimeZoneInfo targetTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
+        DateTime localTime = TimeZoneInfo.ConvertTime(utcTime, targetTimeZone);
 
+        DateTime? availableDate = submissionWindow?.AvailableDate;
         DateTime? dueDate = submissionWindow?.DueDate;
 
         // Check if submission window exists
@@ -410,17 +412,16 @@ public class RotationPrefRequestController(
         {
             ModelState.AddModelError(
                 "Before Available Date Time",
-                $"You can only submit a rotation preference request after {availableDate?.Month}/{availableDate?.Day}/{availableDate?.Year}"
+                $"You can only submit a rotation preference request after {availableDate}"
             );
             return false;
         }
 
-        DateTime? adjustedDueDate = dueDate?.AddDays(1);
-        if (localTime >= adjustedDueDate)
+        if (localTime >= dueDate)
         {
             ModelState.AddModelError(
                 "Due Date Passed",
-                $"You cannot submit a rotation preference request after {dueDate?.Month}/{dueDate?.Day}/{dueDate?.Year}"
+                $"You cannot submit a rotation preference request after {dueDate}"
             );
             return false;
         }

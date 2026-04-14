@@ -1,5 +1,4 @@
 using MedicalDemo.Converters;
-using MedicalDemo.Extensions;
 using MedicalDemo.Models.DTO.Requests;
 using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.Entities;
@@ -35,28 +34,8 @@ public class RotationPrefRequestSubmissionWindowController(
 
         int academicYear = pgy4RotationScheduleService.GetAcademicYear();
 
-        DateTime adjustedAvailableDate = new(
-            request.AvailableDate.Year,
-            request.AvailableDate.Month,
-            request.AvailableDate.Day,
-            0,
-            0,
-            0
-        );
-        DateTime adjustedDueDate = new(
-            request.DueDate.Year,
-            request.DueDate.Month,
-            request.DueDate.Day,
-            0,
-            0,
-            0
-        );
-
-        request.AvailableDate = adjustedAvailableDate;
-        request.DueDate = adjustedDueDate;
-
-        bool validAvailableDate = ValidateAvailableDate(adjustedAvailableDate, academicYear);
-        bool validDueDate = ValidateDueDate(adjustedAvailableDate, adjustedDueDate, academicYear);
+        bool validAvailableDate = ValidateAvailableDate(request.AvailableDate, academicYear);
+        bool validDueDate = ValidateDueDate(request.AvailableDate, request.DueDate, academicYear);
         if (!validAvailableDate || !validDueDate)
         {
             return BadRequest(ModelState);
