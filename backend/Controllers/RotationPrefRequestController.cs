@@ -390,9 +390,7 @@ public class RotationPrefRequestController(
                 (w) => w.AcademicYear == academicYear + 1
             );
 
-        DateTime utcTime = DateTime.Now;
-        TimeZoneInfo targetTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Eastern Standard Time");
-        DateTime localTime = TimeZoneInfo.ConvertTime(utcTime, targetTimeZone);
+        DateTime utcTime = DateTime.UtcNow;
 
         DateTime? availableDate = submissionWindow?.AvailableDate;
         DateTime? dueDate = submissionWindow?.DueDate;
@@ -408,7 +406,7 @@ public class RotationPrefRequestController(
         }
 
         // Check if time is in between start date and due date
-        if (localTime <= availableDate)
+        if (utcTime <= availableDate)
         {
             ModelState.AddModelError(
                 "Before Available Date Time",
@@ -417,7 +415,7 @@ public class RotationPrefRequestController(
             return false;
         }
 
-        if (localTime >= dueDate)
+        if (utcTime >= dueDate)
         {
             ModelState.AddModelError(
                 "Due Date Passed",
