@@ -769,7 +769,7 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({
           ))
         ) : (
           <tr>
-            <td colSpan={3} className="px-6 py-4 text-center text-gray-500 italic">No recent invitations.</td>
+            <td colSpan={3} className="px-6 py-4 text-center text-gray-500 italic">No pending invitations.</td>
           </tr>
         )}
       </tbody>
@@ -781,11 +781,11 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({
       <Card className="p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-8 mb-8 border border-gray-200 dark:border-gray-800">
         {/* User Invitations Section */}
         <div>
-          <h2 className="text-xl font-bold mb-2">Invite User</h2>
+          <h2 className="text-xl font-bold mb-2">User Invitations</h2>
           <div className="flex flex-col sm:flex-row gap-4 mb-4">
             <input
               type="email"
-              placeholder="Enter email address"
+              placeholder="Enter resident email address"
               className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100"
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
@@ -852,7 +852,7 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({
         </div>
       </Card>
 
-      <Modal open={showInvitationsModal} onClose={() => setShowInvitationsModal(false)} title="Recent Invitations">
+      <Modal open={showInvitationsModal} onClose={() => setShowInvitationsModal(false)} title="All User Invitations">
         <div className="overflow-x-auto">{invitationsTable}</div>
       </Modal>
 
