@@ -354,10 +354,20 @@ const RotationForm: React.FC<RotationFormProps> = ({
   const getOptions = (currentValue: string | null): typeof rotationOptions => {
     const allSelected = new Set(
       [
-        firstPriority, secondPriority, thirdPriority, fourthPriority,
-        fifthPriority, sixthPriority, seventhPriority, eighthPriority,
-        alternative1, alternative2, alternative3,
-        avoid1, avoid2, avoid3,
+        firstPriority,
+        secondPriority,
+        thirdPriority,
+        fourthPriority,
+        fifthPriority,
+        sixthPriority,
+        seventhPriority,
+        eighthPriority,
+        alternative1,
+        alternative2,
+        alternative3,
+        avoid1,
+        avoid2,
+        avoid3,
       ].filter((v): v is string => v !== null && v !== currentValue),
     );
     return rotationOptions.filter((opt) => !allSelected.has(opt.value));
