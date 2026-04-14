@@ -17,5 +17,6 @@ public class AuthLoginResponse
         public required string firstName { get; set; }
         public required string lastName { get; set; }
         public required string phoneNum { get; set; }
+        public string? role { get; set; }
     }
 }

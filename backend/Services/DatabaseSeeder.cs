@@ -54,13 +54,22 @@ public class DatabaseSeeder
                 },
                 new Admin
                 {
-                    AdminId = "004",
+                    AdminId = "0004",
                     FirstName = "Scarlett",
                     LastName = "Johansson",
                     Email = "scarlett.johansson@example.com",
-                    Password
-                        = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
+                    Password = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
                     PhoneNum = "201-555-0104"
+                },
+                new Admin
+                {
+                    AdminId = "0005",
+                    FirstName = "Faculty",
+                    LastName = "User",
+                    Email = "faculty@hcahealthcare.com",
+                    Password = "$2b$12$KqebvwNbxyuEg1OIOSjYZuMdXEDtEcbnsYwB9MHmSQgVsr.kHPWa.",
+                    PhoneNum = "201-555-0105",
+                    Role = AdminRole.Faculty
                 }
             );
         }

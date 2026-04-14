@@ -98,7 +98,8 @@ public class AuthController : ControllerBase
                         email = admin.Email,
                         firstName = admin.FirstName,
                         lastName = admin.LastName,
-                        phoneNum = admin.PhoneNum
+                        phoneNum = admin.PhoneNum,
+                        role = admin.Role.ToString()
                     }
                 });
             }
