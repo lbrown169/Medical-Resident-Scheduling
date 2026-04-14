@@ -43,6 +43,10 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}
+
 :root {
   --radius: 0.625rem;
   --card: oklch(1 0 0);

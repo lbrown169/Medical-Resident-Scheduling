@@ -636,7 +636,7 @@ const VacationRequestsTab: React.FC<VacationRequestsTabProps> = ({ handleApprove
               type="date"
               value={searchDate}
               onChange={e => setSearchDate(e.target.value)}
-              className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 cursor-pointer"
+              className="border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1.5 text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100"
             />
           </div>
           {searchDate && (() => {
