@@ -19,8 +19,9 @@ interface ConfirmDialogProps {
   cancelText?: React.ReactNode;
   title?: React.ReactNode;
   message?: React.ReactNode;
-  onConfirm: () => Promise<void> | void; 
+  onConfirm: () => Promise<void> | void;
   loading?: boolean;
+  disabled?: boolean;
   variant?: "default" | "danger" | "outline";
   className?: string;
   open?: boolean;
@@ -35,6 +36,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   message = "This action cannot be undone.",
   onConfirm,
   loading = false,
+  disabled = false,
   variant = "default",
   className,
   open,
@@ -65,7 +67,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           <Button
             className={`${baseBtnClass} ${colorClass} cursor-pointer ${className ?? ""}`}
             onClick={() => setDialogOpen(true)}
-            disabled={loading}
+            disabled={loading || disabled}
           >
             {triggerText}
           </Button>

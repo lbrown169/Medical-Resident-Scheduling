@@ -1290,6 +1290,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
               cancelText="Cancel"
               onConfirm={handleDelete}
               loading={deletingSchedule}
+              disabled={!selectedScheduleId}
               variant="danger"
             />
           </div>
@@ -1711,6 +1712,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                               handleSwitchChiefType(r, e.target.value)
                             }
                             disabled={switchingChiefType === r.id}
+                            className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           >
                             <option value="">None</option>
                             <option value="Admin">Admin</option>
