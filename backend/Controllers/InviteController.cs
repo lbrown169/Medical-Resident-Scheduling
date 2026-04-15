@@ -96,10 +96,7 @@ namespace MedicalDemo.Controllers
         [HttpGet]
         public async Task<ActionResult<List<InviteResponse>>> GetAllInvitations()
         {
-            // Only return invites within the past week
-            DateTime windowCutoff = DateTime.UtcNow.AddDays(-7);
             List<Invitation> invitations = await _context.Invitations
-                .Where(i => i.Expires > windowCutoff && !i.Used)
                 .ToListAsync();
 
             IEnumerable<string> residentIds
@@ -109,11 +106,11 @@ namespace MedicalDemo.Controllers
                 .Where(r => residentIds.Contains(r.ResidentId))
                 .ToDictionaryAsync(r => r.ResidentId);
 
-            Resident? ResidetnSelector(string? id) => id == null ? null : residents.GetValueOrDefault(id);
+            Resident? ResidentSelector(string? id) => id == null ? null : residents.GetValueOrDefault(id);
 
             return Ok(
                 invitations.Select(
-                    invitation => _invitationConverter.CreateInvitationResponseFromModel(invitation, ResidetnSelector(invitation.ResidentId))
+                    invitation => _invitationConverter.CreateInvitationResponseFromModel(invitation, ResidentSelector(invitation.ResidentId))
                 )
             );
         }
