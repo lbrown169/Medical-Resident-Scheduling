@@ -19,11 +19,13 @@ interface AdminPageProps {
   shifts: { id: string; name: string }[];
   handleApproveRequest: (id: string) => void;
   handleDenyRequest: (id: string) => void;
-  userInvitations: { id: string; email: string; status: "Pending" | "Member" | "Not Invited"; }[];
+  userInvitations: { id: string; email: string; status: "Pending" | "Member" | "Expired"; }[];
   inviteEmail: string;
   setInviteEmail: (value: string) => void;
   handleSendInvite: () => void;
-  handleResendInvite: (id: string) => void;
+  handleResendInvite: (email: string) => void;
+  handleDeleteInvite?: (email: string) => void;
+  onRefreshInvitations?: () => void;
   inviteRole: string;
   setInviteRole: (value: string) => void;
   users: { id: string; first_name: string; last_name: string; email: string; role: string }[];
@@ -687,11 +689,12 @@ type UserRecord = { id: string; first_name: string; last_name: string; email: st
 
 interface UserManagementTabProps {
   users: UserRecord[];
-  userInvitations: { id: string; email: string; status: "Pending" | "Member" | "Not Invited"; }[];
+  userInvitations: { id: string; email: string; status: "Pending" | "Member" | "Expired"; }[];
   inviteEmail: string;
   setInviteEmail: (value: string) => void;
   handleSendInvite: () => void;
-  handleResendInvite: (id: string) => void;
+  handleResendInvite: (email: string) => void;
+  handleDeleteInvite?: (email: string) => void;
   handleDeleteUser: (user: UserRecord) => void;
 }
 
@@ -702,6 +705,7 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({
   setInviteEmail,
   handleSendInvite,
   handleResendInvite,
+  handleDeleteInvite,
   handleDeleteUser,
 }) => {
   const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; user: UserRecord | null }>({ open: false, user: null });
@@ -755,21 +759,35 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({
           userInvitations.map((invite) => (
             <tr key={invite.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{invite.email}</td>
-              <td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold ${invite.status === "Pending" ? "text-yellow-600" : invite.status === "Member" ? "text-green-600" : "text-gray-500"}`}>
+              <td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold ${invite.status === "Pending" ? "text-yellow-600" : invite.status === "Member" ? "text-green-600" : "text-red-500"}`}>
                 {invite.status}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                {invite.status === "Pending" && (
-                  <Button variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-500 hover:text-white cursor-pointer" onClick={() => handleResendInvite(invite.id || '')}>
+              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex gap-2 justify-end">
+                {(invite.status === "Pending" || invite.status === "Expired") && (
+                  <Button variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-500 hover:text-white cursor-pointer" onClick={() => handleResendInvite(invite.email)}>
                     Resend
                   </Button>
+                )}
+                {handleDeleteInvite && (
+                  <ConfirmDialog
+                    triggerText={<><Trash2 className="h-4 w-4 mr-1 inline" />Delete</>}
+                    className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md border border-red-600 text-red-600 hover:bg-red-500 hover:text-white bg-transparent shadow-none cursor-pointer"
+                    title="Delete invitation?"
+                    message={invite.status === "Pending"
+                      ? `Are you sure you want to delete the invitation for ${invite.email}? They will no longer be able to accept it. This action cannot be undone.`
+                      : `Are you sure you want to delete the invitation record for ${invite.email}? This action cannot be undone.`}
+                    confirmText="Delete"
+                    cancelText="Cancel"
+                    onConfirm={() => handleDeleteInvite(invite.email)}
+                    variant="danger"
+                  />
                 )}
               </td>
             </tr>
           ))
         ) : (
           <tr>
-            <td colSpan={3} className="px-6 py-4 text-center text-gray-500 italic">No pending invitations.</td>
+            <td colSpan={3} className="px-6 py-4 text-center text-gray-500 italic">No invitation history.</td>
           </tr>
         )}
       </tbody>
@@ -781,7 +799,7 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({
       <Card className="p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-8 mb-8 border border-gray-200 dark:border-gray-800">
         {/* User Invitations Section */}
         <div>
-          <h2 className="text-xl font-bold mb-2">User Invitations</h2>
+          <h2 className="text-xl font-bold mb-2">User Invitation History</h2>
           <div className="flex flex-col sm:flex-row gap-4 mb-4">
             <input
               type="email"
@@ -987,6 +1005,8 @@ const AdminPage: React.FC<AdminPageProps> = ({
   setInviteEmail,
   handleSendInvite,
   handleResendInvite,
+  handleDeleteInvite,
+  onRefreshInvitations,
   users,
   handleDeleteUser,
   userId,
@@ -1025,7 +1045,10 @@ const AdminPage: React.FC<AdminPageProps> = ({
         .then(setAnnouncements)
         .catch(() => {});
     }
-  }, [activeTab]);
+    if (activeTab === 'users') {
+      onRefreshInvitations?.();
+    }
+  }, [activeTab, onRefreshInvitations]);
 
   const refreshAnnouncements = async () => {
     const data = await fetch(`${config.apiUrl}/api/announcements`).then(r => r.json());
@@ -1144,6 +1167,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
             setInviteEmail={setInviteEmail}
             handleSendInvite={handleSendInvite}
             handleResendInvite={handleResendInvite}
+            handleDeleteInvite={handleDeleteInvite}
             handleDeleteUser={handleDeleteUser}
           />
         )}

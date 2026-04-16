@@ -7,7 +7,7 @@ import { VacationResponse } from '@/lib/models/VacationResponse';
 // Types
 interface Resident { id: string; name: string; email: string; pgyLevel: number | string; hours: number; }
 interface Shift { id: string; name: string; }
-interface UserInvitation { id: string; email: string; status: "Pending" | "Member" | "Not Invited"; }
+interface UserInvitation { id: string; email: string; status: "Pending" | "Member" | "Expired"; }
 interface User { id: string; first_name: string; last_name: string; email: string; role: string; }
 
 // API Response types
@@ -40,7 +40,7 @@ export default function Page() {
   const [residents, setResidents] = useState<Resident[]>([]);
   const [myTimeOffRequests, setMyTimeOffRequests] = useState<VacationResponse[]>([]);
   const [shifts, setShifts] = useState<Shift[]>([]);
-  const [userInvitations] = useState<UserInvitation[]>([]); // Not used, but required by AdminPage
+  const [userInvitations, setUserInvitations] = useState<UserInvitation[]>([]);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'resident' | 'admin'>('resident');
   const [users, setUsers] = useState<User[]>([]);
@@ -68,6 +68,20 @@ export default function Page() {
     if (response.ok) {
       const data: ShiftResponse[] = await response.json();
       setShifts(data.map((s) => ({ id: s.id || s.rotation_id || '', name: s.name || s.rotation_name || s.rotation || '' })));
+    }
+  }, []);
+
+  // Fetch invitations
+  const fetchInvitations = useCallback(async () => {
+    const response = await fetch(`${config.apiUrl}/api/invite`);
+    if (response.ok) {
+      const data: { email: string; expires: string; used: boolean }[] = await response.json();
+      const now = new Date();
+      setUserInvitations(data.map((inv) => ({
+        id: inv.email,
+        email: inv.email,
+        status: inv.used ? "Member" as const : new Date(inv.expires) < now ? "Expired" as const : "Pending" as const,
+      })));
     }
   }, []);
 
@@ -101,14 +115,31 @@ export default function Page() {
     fetchMyTimeOffRequests();
     fetchShifts();
     fetchUsers();
-  }, [fetchResidents, fetchMyTimeOffRequests, fetchShifts, fetchUsers]);
+    fetchInvitations();
+  }, [fetchResidents, fetchMyTimeOffRequests, fetchShifts, fetchUsers, fetchInvitations]);
 
   // Handlers (no-ops for now)
   const handleApproveRequest = () => {};
   const handleDenyRequest = () => {};
   const handleSendInvite = () => {};
-  const handleResendInvite = () => {};
+  const handleResendInvite = async (email: string) => {
+    const deleteRes = await fetch(`${config.apiUrl}/api/invite/${encodeURIComponent(email)}`, { method: "DELETE" });
+    if (!deleteRes.ok) return;
+    await fetch(`${config.apiUrl}/api/invite/send`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    await fetchInvitations();
+  };
   const handleDeleteUser = () => {};
+
+  const handleDeleteInvite = async (email: string) => {
+    const response = await fetch(`${config.apiUrl}/api/invite/${encodeURIComponent(email)}`, { method: "DELETE" });
+    if (response.ok) {
+      await fetchInvitations();
+    }
+  };
 
   // Wrapper function to handle type mismatch
   const handleSetInviteRole = (value: string) => {
@@ -127,6 +158,8 @@ export default function Page() {
       setInviteEmail={setInviteEmail}
       handleSendInvite={handleSendInvite}
       handleResendInvite={handleResendInvite}
+      handleDeleteInvite={handleDeleteInvite}
+      onRefreshInvitations={fetchInvitations}
       users={users}
       handleDeleteUser={handleDeleteUser}
       inviteRole={inviteRole}

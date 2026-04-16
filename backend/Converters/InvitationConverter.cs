@@ -14,6 +14,7 @@ public class InvitationConverter
             LastName = resident?.LastName,
             Email = invitation.Email,
             Expires = new DateTimeOffset(invitation.Expires, TimeSpan.Zero),
+            Used = invitation.Used,
         };
     }
 }
