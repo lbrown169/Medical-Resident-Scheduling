@@ -453,24 +453,12 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
   const [windowAvailableDate, setWindowAvailableDate] = useState<string>("");
   const [windowDueDate, setWindowDueDate] = useState<string>("");
   const [savingWindow, setSavingWindow] = useState(false);
-  const [windowSaveError, setWindowSaveError] = useState<string | null>(null);
   const currentYear = new Date().getFullYear();
   const selectedYear = currentYear;
 
   let deadline = null;
   if (windowDueDate) {
-    deadline = parseLocalDate(windowDueDate);
-    deadline = new Date(
-      Date.UTC(
-        deadline.getFullYear(),
-        deadline.getMonth(),
-        deadline.getDate() + 1,
-        0,
-        0,
-        0,
-        0,
-      ),
-    );
+    deadline = new Date(windowDueDate);
   }
 
   // Schedule state
@@ -777,7 +765,16 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
     // Don't do anything if the role hasn't actually changed
     const currentChiefType =
       chiefTypeOverrides[resident.id] ?? resident.chiefType;
+
     if (currentChiefType === newChiefType) return;
+
+    const prevChiefType = currentChiefType;
+
+    // Optimistic update
+    setChiefTypeOverrides((prev) => ({
+      ...prev,
+      [resident.id]: newChiefType,
+    }));
 
     setSwitchingChiefType(resident.id);
     try {
@@ -796,13 +793,14 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
           title: "Chief Type Updated",
           description: `${resident.name} has been set to ${newChiefType || "None"}.`,
         });
-        // Update local override so dropdown reflects immediately
-        setChiefTypeOverrides((prev) => ({
-          ...prev,
-          [resident.id]: newChiefType,
-        }));
       } else {
         const error = await res.text();
+        // Rollback on failure
+        setChiefTypeOverrides((prev) => ({
+          ...prev,
+          [resident.id]: prevChiefType,
+        }));
+
         toast({
           variant: "destructive",
           title: "Error",
@@ -848,6 +846,16 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
   const PGY3Residents = residents.filter(
     (resident) => resident.pgyLevel === 3 || resident.pgyLevel === "3",
   );
+
+  // Helper to convert to UTC String
+  const toLocalInputValue = (utcString) => {
+    if (!utcString) return "";
+
+    const date = new Date(utcString);
+    const pad = (n) => String(n).padStart(2, "0");
+
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  };
 
   // Submission tracking
   const submittedCount = submissions.length;
@@ -906,10 +914,12 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
         );
         if (!res.ok) return;
         const data = await res.json();
-        // Splice iso strings
-        if (data.availableDate)
-          setWindowAvailableDate(data.availableDate.slice(0, 10));
-        if (data.dueDate) setWindowDueDate(data.dueDate.slice(0, 10));
+        if (data.availableDate) {
+          setWindowAvailableDate(new Date(data.availableDate + "Z").toISOString());
+        }
+        if (data.dueDate) {
+          setWindowDueDate(new Date(data.dueDate + "Z").toISOString());
+        }
       } catch {
         // Stay empty
       }
@@ -1133,7 +1143,6 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 
   const handleSaveSubmissionWindow = async () => {
     setSavingWindow(true);
-    setWindowSaveError(null);
     try {
       const res = await fetch(
         `${config.apiUrl}/api/rotation-request-submission-window`,
@@ -1147,11 +1156,15 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
         },
       );
       if (!res.ok) {
+        let errorMessage = "Error unknown. Try again later."
         const err = await res.json();
-        const messages = Object.values(err.errors ?? {})
-          .flat()
-          .join(" ");
-        setWindowSaveError(messages || "Failed to save submission window.");
+        errorMessage = Object.values(err).flat().join(" ") || errorMessage;
+
+        toast({
+          variant: "destructive",
+          title: "Error Saving Dates",
+          description: errorMessage,
+        });
         return;
       }
       toast({
@@ -1160,7 +1173,11 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
         description: "Submission window updated.",
       });
     } catch {
-      setWindowSaveError("Failed to save submission window.");
+      toast({
+          variant: "destructive",
+          title: "Error Saving Dates",
+          description: "Error unknown. Try again later.",
+        });
     } finally {
       setSavingWindow(false);
     }
@@ -1458,65 +1475,75 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
             )}
 
             {/* Footer */}
-            <div className="flex justify-end gap-2 pt-4">
-              {/* Discard */}
+            <div className="flex justify-between gap-2 pt-4">
               <Button
-                variant="outline"
-                disabled={
-                  !hasPendingOverrides ||
-                  discardingOverrides ||
-                  applyingOverrides
-                }
-                onClick={handleDiscardOverrides}
-                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium
-                          border-red-500 text-red-600
-                          hover:bg-red-500 hover:text-white
-                          disabled:opacity-40 cursor-pointer"
+                onClick={() => setShowRotationFormModal(true)}
+                disabled={showRotationFormModal == true}
+                className="py-2 flex items-center justify-center gap-2 bg-blue-500 text-white hover:bg-blue-600 cursor-pointer"
               >
-                {discardingOverrides ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <X className="h-4 w-4" />
-                )}
-                <span>Discard</span>
+                <ClipboardList className="h-4 w-4" />
+                Rotation Form Override
               </Button>
+              <div className="flex justify-end gap-2">
+                {/* Discard */}
+                <Button
+                  variant="outline"
+                  disabled={
+                    !hasPendingOverrides ||
+                    discardingOverrides ||
+                    applyingOverrides
+                  }
+                  onClick={handleDiscardOverrides}
+                  className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium
+                            border-red-500 text-red-600
+                            hover:bg-red-500 hover:text-white
+                            disabled:opacity-40 cursor-pointer"
+                >
+                  {discardingOverrides ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <X className="h-4 w-4" />
+                  )}
+                  <span>Discard</span>
+                </Button>
 
-              {/* Apply */}
-              <Button
-                disabled={
-                  !hasPendingOverrides ||
-                  applyingOverrides ||
-                  discardingOverrides
-                }
-                onClick={handleApplyOverrides}
-                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium
-                          bg-blue-600 hover:bg-blue-700 text-white
-                          disabled:opacity-40 cursor-pointer"
-              >
-                {applyingOverrides ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4" />
-                )}
-                <span>Apply</span>
-              </Button>
+                {/* Apply */}
+                <Button
+                  disabled={
+                    !hasPendingOverrides ||
+                    applyingOverrides ||
+                    discardingOverrides
+                  }
+                  onClick={handleApplyOverrides}
+                  className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium
+                            bg-blue-600 hover:bg-blue-700 text-white
+                            disabled:opacity-40 cursor-pointer"
+                >
+                  {applyingOverrides ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  <span>Apply</span>
+                </Button>
 
-              {/* Export */}
-              <Button
-                disabled={!selectedScheduleId}
-                onClick={() => {
-                  window.open(
-                    `${config.apiUrl}/api/pgy4-rotation-schedule/export/${selectedScheduleId}`,
-                    "_blank",
-                  );
-                }}
-                className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium
-                          bg-green-600 hover:bg-green-700 text-white
-                          disabled:opacity-40 cursor-pointer"
-              >
-                <Download className="h-4 w-4" />
-                <span>Export</span>
-              </Button>
+                {/* Export */}
+                <Button
+                  disabled={!selectedScheduleId}
+                  onClick={() => {
+                    window.open(
+                      `${config.apiUrl}/api/pgy4-rotation-schedule/export/${selectedScheduleId}`,
+                      "_blank",
+                    );
+                  }}
+                  className="flex items-center gap-2 px-5 py-2.5 text-sm font-medium
+                            bg-green-600 hover:bg-green-700 text-white
+                            disabled:opacity-40 cursor-pointer"
+                >
+                  <Download className="h-4 w-4" />
+                  <span>Export</span>
+                </Button>
+              </div>
             </div>
           </Card>
         )}
@@ -1624,54 +1651,45 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
 
         {activeTab === "configure" && (
           <Card className="p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-4 mb-6 sm:mb-8 border border-gray-200 dark:border-gray-800">
-            <h2 className="text-lg sm:text-xl font-bold">Settings</h2>
+            <h2 className="text-lg sm:text-xl font-bold">Configure</h2>
             {/*Form Availabity Selection */}
             <div className="grid grid-cols-2 items-start sm:items-end gap-6">
               <div>
                 <label className="flex items-center text-sm font-semibold gap-2 mb-2">
-                  Available Date
+                  Rotation Form Opens
                 </label>
                 <input
-                  type="date"
+                  type="datetime-local"
                   className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
-                  value={windowAvailableDate}
-                  onChange={(e) => setWindowAvailableDate(e.target.value)}
+                  value={toLocalInputValue(windowAvailableDate)}
+                  onChange={(e) => setWindowAvailableDate(new Date(e.target.value).toISOString())}
                 />
               </div>
               <div>
                 <label className="flex items-center text-sm font-semibold gap-2 mb-2">
-                  Due Date
+                  Rotation Form Deadline
                 </label>
                 <input
-                  type="date"
+                  type="datetime-local"
                   className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
-                  value={windowDueDate}
-                  onChange={(e) => setWindowDueDate(e.target.value)}
+                  value={toLocalInputValue(windowDueDate)}
+                  onChange={(e) => setWindowDueDate(new Date(e.target.value).toISOString())}
                   min={windowAvailableDate}
                 />
               </div>
-              {windowSaveError && (
-                <p className="col-span-2 text-sm text-red-600 dark:text-red-400">
-                  {windowSaveError}
-                </p>
-              )}
               <div className="flex flex-row gap-2">
                 <Button
                   onClick={handleSaveSubmissionWindow}
                   disabled={
                     savingWindow || !windowAvailableDate || !windowDueDate
                   }
-                  className="py-2 flex items-center justify-center gap-2 bg-green-600 text-white hover:bg-green-700 cursor-pointer"
-                >
+                  className="py-2 flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700 cursor-pointer">
+                  {savingWindow ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
                   {savingWindow ? "Saving..." : "Save Window"}
-                </Button>
-                <Button
-                  onClick={() => setShowRotationFormModal(true)}
-                  disabled={showRotationFormModal == true}
-                  className="py-2 flex items-center justify-center gap-2 bg-blue-500 text-white hover:bg-blue-600 cursor-pointer"
-                >
-                  <ClipboardList className="h-4 w-4" />
-                  Create Rotation Form
                 </Button>
               </div>
             </div>
@@ -1703,14 +1721,9 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                           {r.name}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          {/* Dropdown is briefly disabled */}
                           <select
-                            value={
-                              chiefTypeOverrides[r.id] ?? r.chiefType ?? ""
-                            }
-                            onChange={(e) =>
-                              handleSwitchChiefType(r, e.target.value)
-                            }
+                            value={chiefTypeOverrides[r.id] ?? r.chiefType ?? ""}
+                            onChange={(e) => handleSwitchChiefType(r, e.target.value)}
                             disabled={switchingChiefType === r.id}
                             className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           >
