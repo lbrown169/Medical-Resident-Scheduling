@@ -53,7 +53,7 @@ public class Pgy4RotationScheduleOverrideController(
             return NotFound("Resident not found!");
         }
 
-        if (foundResident.GraduateYr != 3)
+        if (foundResident.GraduateYr < 3)
         {
             ModelState.AddModelError(
                 "Non-PGY3 Resident",
