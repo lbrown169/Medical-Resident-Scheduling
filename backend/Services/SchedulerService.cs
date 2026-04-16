@@ -81,27 +81,27 @@ public class SchedulerService
 
         if (!hasRequiredPgy1)
         {
-            return (false, $"Invalid Input - Cannot generate schedules: Missing {8 - pgy1Count} PGY-1(s). Minimum 8 PGY-1s required to generate schedule.");
+            return (false, $"Error generating schedules: Missing {8 - pgy1Count} PGY-1(s). Minimum 8 PGY-1s required.");
         }
 
         if (!hasHospitalProfilePgy1)
         {
             return (false,
-                $"Invalid Input - Cannot generate schedules: All PGY1s required to have rotations assigned, {pgy1Count - pgy1HospitalRoleCount} resident(s) missing rotations."
+                $"Error generating schedules: {pgy1Count - pgy1HospitalRoleCount} PGY-1 resident(s) not assigned rotation(s)."
             );
         }
 
         if (!hasRequiredPgy2)
         {
             return (false,
-                    $"Invalid Input - Cannot generate schedules: Missing {8 - pgy2Count} PGY-2(s). Minimum 8 PGY-2s required to generate schedule."
+                    $"Error generating schedules: Missing {8 - pgy2Count} PGY-2(s). Minimum 8 PGY-2s required."
             );
         }
 
         if (!hasHospitalProfilePgy2)
         {
             return (false,
-                $"Invalid Input - Cannot generate schedules: All PGY2s required to have rotations assigned, {pgy2Count - pgy2HospitalRoleCount} resident(s) missing rotations."
+                $"Error generating schedules: {pgy2Count - pgy2HospitalRoleCount} PGY-2 resident(s) not assigned rotation(s)."
             );
         }
 
@@ -121,7 +121,7 @@ public class SchedulerService
         }
 
         return (false,
-                $"Invalid Input - Cannot generate schedules: Missing {8 - pgy3Count} PGY-3(s). Minimum 8 PGY-3s required to generate Fall Schedule."
+                $"Error generating schedules: Missing {8 - pgy3Count} PGY-3(s). Minimum 8 PGY-3s required."
         );
     }
 

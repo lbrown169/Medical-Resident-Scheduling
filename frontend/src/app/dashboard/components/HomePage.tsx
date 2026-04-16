@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Card } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
-import { CalendarX, Clock, UserCheck, RotateCcw, Repeat, CalendarCheck, Bell, Users } from "lucide-react";
+import { CalendarX, Clock, UserCheck, Repeat, CalendarCheck, Bell, Users, AlertCircle } from "lucide-react";
 import { config } from "../../../config";
 import { CalendarEvent } from "@/lib/models/CalendarEvent";
 
@@ -184,7 +184,7 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
           <div className="flex flex-col items-center md:flex-row md:justify-center md:items-center gap-4 mt-2">
             <Button 
               onClick={onNavigateToSwapCalls}
-              className="p-8 w-full max-w-55 bg-card text-card-foreground border border-border hover:bg-accent hover:text-accent-foreground rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
+              className="p-8 w-full max-w-55 bg-card text-card-foreground border border-border hover:bg-accent hover:text-accent-foreground rounded-xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
               variant="outline"
             >
               <div className="text-left w-full">
@@ -198,7 +198,7 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
             
             <Button 
               onClick={onNavigateToRequestOff}
-              className="p-8 w-full max-w-55 bg-card text-card-foreground border border-border hover:bg-accent hover:text-accent-foreground rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
+              className="p-8 w-full max-w-55 bg-card text-card-foreground border border-border hover:bg-accent hover:text-accent-foreground rounded-xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
               variant="outline"
             >
               <div className="text-left w-full">
@@ -214,7 +214,7 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
             {!isAdmin && (
               <Button 
                 onClick={onNavigateToSchedule}
-                className="p-8 w-full max-w-55 bg-card text-card-foreground border border-border hover:bg-accent hover:text-accent-foreground rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
+                className="p-8 w-full max-w-55 bg-card text-card-foreground border border-border hover:bg-accent hover:text-accent-foreground rounded-xl shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
                 variant="outline"
               >
                 <div className="text-left w-full">
@@ -241,9 +241,9 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
               {filteredRecentActivity.length > 0 ? (
                 <>
                   {filteredRecentActivity.map((activity) => (
-                    <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                      <div className="p-2 bg-primary/10 rounded-full">
-                        <RotateCcw className="h-4 w-4 text-primary" />
+                    <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
+                      <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-full">
+                        <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
                       </div>
                       <div className="flex-1">
                         <p className="text-sm font-medium">{activity.message}</p>
@@ -251,7 +251,7 @@ const HomePage: React.FC<HomeProps & { calendarEvents?: CalendarEvent[]; userId:
                       </div>
                     </div>
                   ))}
-                  <Button size="sm" variant="outline" onClick={onNavigateToSwapCalls} className="w-full mt-2">
+                  <Button size="sm" variant="outline" onClick={onNavigateToSwapCalls} className="w-full mt-2 cursor-pointer">
                     Respond in Swap Calls
                   </Button>
                 </>
