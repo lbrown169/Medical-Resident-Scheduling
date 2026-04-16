@@ -17,6 +17,12 @@ public class AuthLoginResponse
         public required string firstName { get; set; }
         public required string lastName { get; set; }
         public required string phoneNum { get; set; }
-        public string? role { get; set; }
+        public AdminRoleInfo? role { get; set; }
+    }
+
+    public class AdminRoleInfo
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
     }
 }

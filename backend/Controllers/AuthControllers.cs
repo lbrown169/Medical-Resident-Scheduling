@@ -99,7 +99,11 @@ public class AuthController : ControllerBase
                         firstName = admin.FirstName,
                         lastName = admin.LastName,
                         phoneNum = admin.PhoneNum,
-                        role = admin.Role.ToString()
+                        role = new AuthLoginResponse.AdminRoleInfo
+                        {
+                            Id = (int)admin.Role,
+                            Name = admin.Role.ToString()
+                        }
                     }
                 });
             }
