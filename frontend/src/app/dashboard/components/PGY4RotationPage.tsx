@@ -1479,7 +1479,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
               <Button
                 onClick={() => setShowRotationFormModal(true)}
                 disabled={showRotationFormModal == true}
-                className="py-2 flex items-center justify-center gap-2 bg-blue-500 text-white hover:bg-blue-600 cursor-pointer"
+                className="py-2 flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
               >
                 <ClipboardList className="h-4 w-4" />
                 Rotation Form Override
