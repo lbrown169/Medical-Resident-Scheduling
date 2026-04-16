@@ -15,30 +15,6 @@ interface SubmissionWindow {
   dueDate: string | null;
 }
 
-const parseLocalDate = (iso: string | null | undefined) => {
-  if (typeof iso !== "string") return new Date(NaN);
-
-  const match = iso.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (!match) return new Date(NaN);
-
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-
-  const parsed = new Date(year, month - 1, day);
-
-  // Reject overflowed values like 2026-99-99 that JS Date auto-normalizes.
-  if (
-    parsed.getFullYear() !== year ||
-    parsed.getMonth() !== month - 1 ||
-    parsed.getDate() !== day
-  ) {
-    return new Date(NaN);
-  }
-
-  return parsed;
-};
-
 const isInvalidDate = (d: Date) => Number.isNaN(d.getTime());
 
 const PGY3RotationFormPage: React.FC<PGY3RotationFormPageProps> = ({
@@ -115,8 +91,8 @@ const PGY3RotationFormPage: React.FC<PGY3RotationFormPageProps> = ({
   }
 
   const now = new Date();
-  const availableDate = parseLocalDate(submissionWindow.availableDate);
-  const dueDate = parseLocalDate(submissionWindow.dueDate);
+  const availableDate = new Date(submissionWindow.availableDate + "Z");
+  const dueDate = new Date(submissionWindow.dueDate + "Z");
 
   if (isInvalidDate(availableDate) || isInvalidDate(dueDate)) {
     return (
@@ -133,18 +109,6 @@ const PGY3RotationFormPage: React.FC<PGY3RotationFormPageProps> = ({
       </div>
     );
   }
-
-  const adjustedDueDate = new Date(
-    Date.UTC(
-      dueDate.getFullYear(),
-      dueDate.getMonth(),
-      dueDate.getDate() + 1,
-      0,
-      0,
-      0,
-      0,
-    ),
-  );
 
   const formatDate = (d: Date) =>
     d.toLocaleDateString("en-US", {
@@ -170,7 +134,7 @@ const PGY3RotationFormPage: React.FC<PGY3RotationFormPageProps> = ({
   }
 
   // Check if deadline has passed
-  if (now >= adjustedDueDate) {
+  if (now >= dueDate) {
     return (
       <div className="max-w-4xl mx-auto">
         <div className="bg-card rounded-xl shadow-lg border border-border p-8 text-center">
@@ -206,7 +170,7 @@ const PGY3RotationFormPage: React.FC<PGY3RotationFormPageProps> = ({
         </p>
         <p className="text-red-600 dark:text-red-400 font-semibold">
           Due:{" "}
-          {adjustedDueDate.toLocaleString("en-US", {
+          {dueDate.toLocaleString("en-US", {
             month: "long",
             day: "numeric",
             year: "numeric",
@@ -221,7 +185,7 @@ const PGY3RotationFormPage: React.FC<PGY3RotationFormPageProps> = ({
         userPGY={userPGY}
         requiredPGY={3}
         rotationPgyYear={4}
-        deadline={adjustedDueDate}
+        deadline={dueDate}
         submitEndpoint="api/rotation-pref-request"
         fetchEndpoint="api/rotation-pref-request/resident"
       />
