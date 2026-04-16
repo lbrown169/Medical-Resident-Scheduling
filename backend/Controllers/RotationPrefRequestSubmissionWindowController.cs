@@ -1,4 +1,5 @@
 using MedicalDemo.Converters;
+using MedicalDemo.Extensions;
 using MedicalDemo.Models.DTO.Requests;
 using MedicalDemo.Models.DTO.Responses;
 using MedicalDemo.Models.Entities;
@@ -34,8 +35,28 @@ public class RotationPrefRequestSubmissionWindowController(
 
         int academicYear = pgy4RotationScheduleService.GetAcademicYear();
 
-        bool validAvailableDate = ValidateAvailableDate(request.AvailableDate, academicYear);
-        bool validDueDate = ValidateDueDate(request.AvailableDate, request.DueDate, academicYear);
+        DateTime adjustedAvailableDate = new(
+            request.AvailableDate.Year,
+            request.AvailableDate.Month,
+            request.AvailableDate.Day,
+            0,
+            0,
+            0
+        );
+        DateTime adjustedDueDate = new(
+            request.DueDate.Year,
+            request.DueDate.Month,
+            request.DueDate.Day,
+            0,
+            0,
+            0
+        );
+
+        request.AvailableDate = adjustedAvailableDate;
+        request.DueDate = adjustedDueDate;
+
+        bool validAvailableDate = ValidateAvailableDate(adjustedAvailableDate, academicYear);
+        bool validDueDate = ValidateDueDate(adjustedAvailableDate, adjustedDueDate, academicYear);
         if (!validAvailableDate || !validDueDate)
         {
             return BadRequest(ModelState);
@@ -117,6 +138,16 @@ public class RotationPrefRequestSubmissionWindowController(
 
     private bool ValidateDueDate(DateTime availableDate, DateTime dueDate, int academicYear)
     {
+        availableDate = new DateTime(
+            availableDate.Year,
+            availableDate.Month,
+            availableDate.Day,
+            0,
+            0,
+            0
+        );
+        dueDate = new DateTime(dueDate.Year, dueDate.Month, dueDate.Day, 0, 0, 0);
+
         int dueDateYear = dueDate.Year;
         int dueDateMonth = dueDate.Month;
         bool hasError = false;

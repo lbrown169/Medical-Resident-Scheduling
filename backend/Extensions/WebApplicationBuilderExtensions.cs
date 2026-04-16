@@ -49,7 +49,6 @@ public static class WebApplicationBuilderExtensions
         builder.Services.AddScoped<AnnouncementConverter>();
         builder.Services.AddScoped<BlackoutConverter>();
         builder.Services.AddScoped<DateConverter>();
-        builder.Services.AddScoped<InvitationConverter>();
         builder.Services.AddScoped<ResidentConverter>();
         builder.Services.AddScoped<ScheduleConverter>();
         builder.Services.AddScoped<SwapRequestConverter>();

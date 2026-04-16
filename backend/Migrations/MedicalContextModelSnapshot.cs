@@ -183,11 +183,7 @@ namespace MedicalDemo.Migrations
                         .HasColumnType("varchar(255)")
                         .HasColumnName("token");
 
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<DateTime>("Expires")
+                    b.Property<DateTime?>("Expires")
                         .HasColumnType("datetime")
                         .HasColumnName("expires");
 

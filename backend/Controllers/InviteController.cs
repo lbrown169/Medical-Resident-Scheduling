@@ -1,5 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-using MedicalDemo.Converters;
 using MedicalDemo.Interfaces;
 using MedicalDemo.Models;
 using MedicalDemo.Models.DTO.Requests;
@@ -16,18 +14,15 @@ namespace MedicalDemo.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [SuppressMessage("Performance", "CA1862:Use the \'StringComparison\' method overloads to perform case-insensitive string comparisons")]
     public class InviteController : ControllerBase
     {
         private readonly MedicalContext _context;
         private readonly IEmailSendService _emailSendService;
-        private readonly InvitationConverter _invitationConverter;
 
-        public InviteController(MedicalContext context, IEmailSendService emailSendService, InvitationConverter invitationConverter)
+        public InviteController(MedicalContext context, IEmailSendService emailSendService)
         {
             _context = context;
             _emailSendService = emailSendService;
-            _invitationConverter = invitationConverter;
         }
 
         [HttpPost("send")]
@@ -42,18 +37,11 @@ namespace MedicalDemo.Controllers
             string token = Guid.NewGuid().ToString();
             DateTime expires = DateTime.UtcNow.AddHours(24);
 
-            if (await _context.Invitations.AnyAsync(i => i.Email.ToLower() == createRequest.Email.ToLower()))
-            {
-                return BadRequest(
-                    GenericResponse.Failure("An invitation for that email already exists"));
-            }
-
             //Save token to Invitations table
             Invitation invitation = new()
             {
                 Token = token,
                 ResidentId = resident?.ResidentId,
-                Email = createRequest.Email,
                 Expires = expires,
                 Used = false
             };
@@ -80,53 +68,17 @@ namespace MedicalDemo.Controllers
 
             if (!success)
             {
-                return StatusCode(500, new GenericResponse
+                return StatusCode(500, new InviteResponse
                 {
                     Success = false,
                     Message = "Email sending failed."
                 });
             }
 
-            return Ok(new GenericResponse
+            return Ok(new InviteResponse
             {
                 Success = true
             });
-        }
-
-        [HttpGet]
-        public async Task<ActionResult<List<InviteResponse>>> GetAllInvitations()
-        {
-            List<Invitation> invitations = await _context.Invitations
-                .ToListAsync();
-
-            IEnumerable<string> residentIds
-                = invitations.Where(i => i.ResidentId != null).Select(i => i.ResidentId!);
-
-            Dictionary<string, Resident> residents = await _context.Residents
-                .Where(r => residentIds.Contains(r.ResidentId))
-                .ToDictionaryAsync(r => r.ResidentId);
-
-            Resident? ResidentSelector(string? id) => id == null ? null : residents.GetValueOrDefault(id);
-
-            return Ok(
-                invitations.Select(
-                    invitation => _invitationConverter.CreateInvitationResponseFromModel(invitation, ResidentSelector(invitation.ResidentId))
-                )
-            );
-        }
-
-        [HttpDelete("{email}")]
-        public async Task<ActionResult> DeleteInvitation([FromRoute] string email)
-        {
-            Invitation? invitation = await _context.Invitations.FirstOrDefaultAsync(i => i.Email.ToLower() == email.ToLower());
-            if (invitation == null)
-            {
-                return BadRequest(GenericResponse.Failure("No invitation with that email exists"));
-            }
-
-            _context.Invitations.Remove(invitation);
-            await _context.SaveChangesAsync();
-            return NoContent();
         }
     }
 }
