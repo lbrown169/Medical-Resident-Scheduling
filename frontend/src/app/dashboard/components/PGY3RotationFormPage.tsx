@@ -115,6 +115,9 @@ const PGY3RotationFormPage: React.FC<PGY3RotationFormPageProps> = ({
       day: "numeric",
       month: "long",
       year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
     });
 
   if (now < availableDate) {
