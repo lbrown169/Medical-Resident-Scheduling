@@ -180,7 +180,7 @@ function Dashboard() {
   const [userInvitations, setUserInvitations] = useState<{
     id: string;
     email: string;
-    status: "Pending" | "Member" | "Not Invited";
+    status: "Pending" | "Member" | "Expired";
   }[]>([]);
 
   // Data state
@@ -533,6 +533,23 @@ function Dashboard() {
     }
   };
 
+  const fetchInvitations = useCallback(async () => {
+    try {
+      const response = await fetch(`${config.apiUrl}/api/invite`);
+      if (response.ok) {
+        const data: { email: string; expires: string; used: boolean }[] = await response.json();
+        const now = new Date();
+        setUserInvitations(data.map((inv) => ({
+          id: inv.email,
+          email: inv.email,
+          status: inv.used ? "Member" as const : new Date(inv.expires) < now ? "Expired" as const : "Pending" as const,
+        })));
+      }
+    } catch (error) {
+      console.error("Failed to fetch invitations:", error);
+    }
+  }, []);
+
   const handleSendInvite = async () => {
     if (!inviteEmail.trim()) {
       toast({
@@ -555,12 +572,7 @@ function Dashboard() {
       });
   
       if (response.ok) {
-        const newInvitation = {
-          id: Date.now().toString(),
-          email: inviteEmail.trim(),
-          status: "Pending" as const,
-        };
-        setUserInvitations((prev) => [...prev, newInvitation]);
+        await fetchInvitations();
         setInviteEmail("");
         toast({
           variant: "success",
@@ -568,7 +580,13 @@ function Dashboard() {
           description: `Invitation sent to ${inviteEmail.trim()}.`,
         });
       } else {
-        throw new Error('Failed to send invitation');
+        const body = await response.json().catch(() => null);
+        const message = body?.message || body?.Message || "Failed to send invitation. Please check the email or try again.";
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: message,
+        });
       }
     } catch (error) {
       console.error("Send invitation error:", error);
@@ -581,12 +599,41 @@ function Dashboard() {
   };
   
 
-  const handleResendInvite = (id: string) => {
-    toast({
-      variant: "default",
-      title: "Invitation Resent",
-      description: `Invitation ${id} has been resent.`, 
-    });
+  const handleResendInvite = async (email: string) => {
+    try {
+      const deleteRes = await fetch(`${config.apiUrl}/api/invite/${encodeURIComponent(email)}`, { method: "DELETE" });
+      if (!deleteRes.ok) throw new Error("Failed to delete old invitation");
+
+      const sendRes = await fetch(`${config.apiUrl}/api/invite/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (!sendRes.ok) throw new Error("Failed to send new invitation");
+
+      await fetchInvitations();
+      toast({ variant: "success", title: "Invitation Resent", description: `A new invitation has been sent to ${email}.` });
+    } catch (error) {
+      console.error("Resend invite error:", error);
+      toast({ variant: "destructive", title: "Error", description: "Failed to resend invitation. Please try again." });
+    }
+  };
+
+  const handleDeleteInvite = async (email: string) => {
+    try {
+      const response = await fetch(`${config.apiUrl}/api/invite/${encodeURIComponent(email)}`, {
+        method: "DELETE",
+      });
+      if (response.ok) {
+        await fetchInvitations();
+        toast({ variant: "success", title: "Invitation Deleted", description: `Invitation for ${email} has been deleted.` });
+      } else {
+        throw new Error("Failed to delete invitation");
+      }
+    } catch (error) {
+      console.error("Delete invitation error:", error);
+      toast({ variant: "destructive", title: "Error", description: "Failed to delete invitation. Please try again." });
+    }
   };
 
   const handleApproveRequest = async (groupId: string) => {
@@ -921,6 +968,8 @@ case "Home":
         setInviteEmail={setInviteEmail}
         handleSendInvite={handleSendInvite}
         handleResendInvite={handleResendInvite}
+        handleDeleteInvite={handleDeleteInvite}
+        onRefreshInvitations={fetchInvitations}
         users={users}
         handleDeleteUser={handleDeleteUser}
         inviteRole={inviteRole}
@@ -960,6 +1009,7 @@ case "Home":
             onNavigateToSettings={() => setSelected("Settings")}
             onNavigateToHome={() => setSelected("Home")}
             onNavigateToSchedules={() => setSelected("Schedules")}
+            onNavigateToRotations={() => setSelected("Rotations")}
             isAdmin={isAdmin}
           />
         );
@@ -969,6 +1019,7 @@ case "Home":
           <SettingsPage
             firstName={user?.firstName || ""}
             lastName={user?.lastName || ""}
+            userId={user?.id || ""}
             email={email}
             setEmail={setEmail}
             handleUpdateEmail={handleUpdateEmail}
@@ -1064,6 +1115,8 @@ case "Home":
             setInviteEmail={setInviteEmail}
             handleSendInvite={handleSendInvite}
             handleResendInvite={handleResendInvite}
+            handleDeleteInvite={handleDeleteInvite}
+            onRefreshInvitations={fetchInvitations}
             users={users}
             handleDeleteUser={handleDeleteUser}
             inviteRole={inviteRole}
@@ -1197,12 +1250,12 @@ case "Home":
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected]);
 
-
   // Fetch data when Admin page is selected
   useEffect(() => {
     if (selected === "Admin") {
       fetchMyTimeOffRequests();
       fetchShifts();
+      fetchInvitations();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected]);
@@ -1341,22 +1394,22 @@ case "Home":
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56">
                       <DropdownMenuItem
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 cursor-pointer"
                         onClick={() => setSelected("Settings")}
                       >
                         <UserIcon className="h-4 w-4" />
                         <span>Profile</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setTheme("light")} className="flex items-center gap-2">
+                      <DropdownMenuItem onClick={() => setTheme("light")} className="flex items-center gap-2 cursor-pointer">
                         <Sun className="h-4 w-4" />
                         <span>Light</span>
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setTheme("dark")} className="flex items-center gap-2">
+                      <DropdownMenuItem onClick={() => setTheme("dark")} className="flex items-center gap-2 cursor-pointer">
                         <Moon className="h-4 w-4" />
                         <span>Dark</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        className="flex items-center gap-2 text-red-600 focus:text-red-600"
+                        className="flex items-center gap-2 text-red-600 focus:text-red-600 cursor-pointer"
                         onClick={handleLogout}
                       >
                         <LogOut className="h-4 w-4" />

@@ -351,7 +351,7 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
               <>
                 <Button 
                   onClick={handleInitialSubmit} 
-                  className="w-full py-2 text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200"
+                  className="w-full py-2 text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer disabled:cursor-not-allowed"
                   disabled={!isFormValid}
                 >
                   <Send className="h-3.5 w-3.5" />
@@ -390,13 +390,13 @@ const RequestOffPage: React.FC<RequestOffPageProps> = ({
                   <Button 
                     onClick={handleCancelSubmit}
                     variant="outline"
-                    className="flex-1 py-2 text-sm"
+                    className="flex-1 py-2 text-sm cursor-pointer"
                   >
                     Cancel
                   </Button>
                   <Button 
                     onClick={handleConfirmSubmit}
-                    className="flex-1 py-2 text-sm font-semibold flex items-center justify-center gap-2"
+                    className="flex-1 py-2 text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <Send className="h-3.5 w-3.5" />
                     Confirm & Send

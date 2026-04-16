@@ -8,6 +8,8 @@ import { CalendarX, Send, Check, X, Shield, Users, Repeat, Search, Trash2 } from
 import { config } from '../../../config';
 import { toast } from "../../../lib/use-toast";
 import { VacationResponse } from "@/lib/models/VacationResponse";
+import { SwapRequest } from "@/lib/models/SwapRequest";
+import { Announcement } from "@/lib/models/Announcement";
 
 // Interfaces
 
@@ -17,11 +19,13 @@ interface AdminPageProps {
   shifts: { id: string; name: string }[];
   handleApproveRequest: (id: string) => void;
   handleDenyRequest: (id: string) => void;
-  userInvitations: { id: string; email: string; status: "Pending" | "Member" | "Not Invited"; }[];
+  userInvitations: { id: string; email: string; status: "Pending" | "Member" | "Expired"; }[];
   inviteEmail: string;
   setInviteEmail: (value: string) => void;
   handleSendInvite: () => void;
-  handleResendInvite: (id: string) => void;
+  handleResendInvite: (email: string) => void;
+  handleDeleteInvite?: (email: string) => void;
+  onRefreshInvitations?: () => void;
   inviteRole: string;
   setInviteRole: (value: string) => void;
   users: { id: string; first_name: string; last_name: string; email: string; role: string }[];
@@ -46,31 +50,6 @@ interface Request {
   groupId: string;
 }
 
-interface SwapRequest {
-  swapRequestId: string;
-  scheduleId: string;
-  requesterId: string;
-  requesteeId: string;
-  requesterDate: string;
-  requesteeDate: string;
-  status: SwapRequestStatus;
-  createdAt: string;
-  updatedAt: string;
-  isRead: boolean;
-  details?: string;
-}
-
-interface SwapRequestStatus {
-  id: number;
-  description: string;
-}
-
-interface Announcement {
-  announcementId: string;
-  message: string;
-  createdAt?: string;
-}
-
 // Shared helpers
 
 function formatDate(dateStr: string) {
@@ -88,7 +67,7 @@ function Modal({ open, onClose, title, children }: { open: boolean; onClose: () 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-card p-8 rounded-xl shadow-lg max-w-2xl w-full relative">
-        <button onClick={onClose} className="absolute top-4 right-4 text-xl font-bold">&times;</button>
+        <button onClick={onClose} className="absolute top-4 right-4 text-xl font-bold cursor-pointer">&times;</button>
         <h2 className="text-2xl font-bold mb-4">{title}</h2>
         <div className="overflow-y-auto max-h-[60vh]">{children}</div>
       </div>
@@ -134,7 +113,7 @@ const AnnouncementForm: React.FC<{ userId: string; onPosted: () => void }> = ({ 
           rows={3}
           disabled={posting}
         />
-        <Button type="submit" disabled={posting || !text.trim()} className="self-end px-6 py-2">
+        <Button type="submit" disabled={posting || !text.trim()} className="self-end px-6 py-2 cursor-pointer">
           {posting ? 'Posting...' : 'Post Announcement'}
         </Button>
       </form>
@@ -306,7 +285,7 @@ const SwapHistoryTab: React.FC<SwapHistoryTabProps> = ({ idToName, onPendingCoun
               <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
               <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requester</th>
               <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requestee</th>
-              <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Partner</th>
+              <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Partner Date</th>
               <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
               <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
               <th className="px-1 sm:px-3 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -475,6 +454,38 @@ const VacationRequestsTab: React.FC<VacationRequestsTabProps> = ({ handleApprove
     onPendingCountChange(groupedRequests.filter(r => r.status === 'Pending').length);
   }, [groupedRequests, onPendingCountChange]);
 
+  const handleDeleteDeniedRequests = async () => {
+    const vacationIds = requests.filter(r => r.status === 'Denied').map(r => r.id);
+    if (vacationIds.length === 0) {
+      toast({ title: 'No denied requests', description: 'There are no denied vacation requests to delete.' });
+      return;
+    }
+    try {
+      const response = await fetch(`${config.apiUrl}/api/vacations`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(vacationIds),
+      });
+      if (response.ok) {
+        const result = await response.json();
+        if (result.notDeleted && result.notDeleted.length > 0) {
+          toast({
+            title: 'Partial success',
+            description: `${vacationIds.length - result.notDeleted.length} requests deleted. ${result.notDeleted.length} failed to delete.`,
+            variant: 'destructive',
+          });
+        } else {
+          toast({ title: 'Success', description: 'All denied vacation requests have been deleted.' });
+        }
+        fetchVacations();
+      } else {
+        toast({ title: 'Error', description: 'Failed to delete denied requests.', variant: 'destructive' });
+      }
+    } catch {
+      toast({ title: 'Error', description: 'An error occurred while deleting requests.', variant: 'destructive' });
+    }
+  };
+
   const handleClearAllRequests = async () => {
     const vacationIds = requests.filter(r => r.status !== 'Pending').map(r => r.id);
     if (vacationIds.length === 0) {
@@ -590,11 +601,20 @@ const VacationRequestsTab: React.FC<VacationRequestsTabProps> = ({ handleApprove
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
           <h2 className="text-lg sm:text-xl font-bold">Time Off Requests</h2>
           <div className="flex gap-2">
-            <Button variant="outline" className="flex items-center gap-2 px-1 sm:px-6 py-1 sm:py-3 text-xs sm:text-sm lg:text-base"
+            <Button variant="outline" className="flex items-center gap-2 px-1 sm:px-6 py-1 sm:py-3 text-xs sm:text-sm lg:text-base cursor-pointer"
               onClick={() => setShowSearchModal(true)}>
               <Search className="h-4 w-4" />
               <span>Search</span>
             </Button>
+            <ConfirmDialog
+              triggerText={<><Trash2 className="h-4 w-4" /><span>Delete Denied</span></>}
+              title="Delete all denied requests?"
+              message="All denied vacation requests will be deleted. This action cannot be undone."
+              confirmText="Delete"
+              cancelText="Cancel"
+              onConfirm={handleDeleteDeniedRequests}
+              variant="danger"
+            />
             <ConfirmDialog
               triggerText={<><Trash2 className="h-4 w-4" /><span>Delete Requests</span></>}
               title="Delete all vacation requests?"
@@ -669,11 +689,12 @@ type UserRecord = { id: string; first_name: string; last_name: string; email: st
 
 interface UserManagementTabProps {
   users: UserRecord[];
-  userInvitations: { id: string; email: string; status: "Pending" | "Member" | "Not Invited"; }[];
+  userInvitations: { id: string; email: string; status: "Pending" | "Member" | "Expired"; }[];
   inviteEmail: string;
   setInviteEmail: (value: string) => void;
   handleSendInvite: () => void;
-  handleResendInvite: (id: string) => void;
+  handleResendInvite: (email: string) => void;
+  handleDeleteInvite?: (email: string) => void;
   handleDeleteUser: (user: UserRecord) => void;
 }
 
@@ -684,6 +705,7 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({
   setInviteEmail,
   handleSendInvite,
   handleResendInvite,
+  handleDeleteInvite,
   handleDeleteUser,
 }) => {
   const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; user: UserRecord | null }>({ open: false, user: null });
@@ -737,21 +759,35 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({
           userInvitations.map((invite) => (
             <tr key={invite.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{invite.email}</td>
-              <td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold ${invite.status === "Pending" ? "text-yellow-600" : invite.status === "Member" ? "text-green-600" : "text-gray-500"}`}>
+              <td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold ${invite.status === "Pending" ? "text-yellow-600" : invite.status === "Member" ? "text-green-600" : "text-red-500"}`}>
                 {invite.status}
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                {invite.status === "Pending" && (
-                  <Button variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-500 hover:text-white" onClick={() => handleResendInvite(invite.id || '')}>
+              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex gap-2 justify-end">
+                {(invite.status === "Pending" || invite.status === "Expired") && (
+                  <Button variant="outline" size="sm" className="text-blue-600 border-blue-600 hover:bg-blue-500 hover:text-white cursor-pointer" onClick={() => handleResendInvite(invite.email)}>
                     Resend
                   </Button>
+                )}
+                {handleDeleteInvite && (
+                  <ConfirmDialog
+                    triggerText={<><Trash2 className="h-4 w-4 mr-1 inline" />Delete</>}
+                    className="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-md border border-red-600 text-red-600 hover:bg-red-500 hover:text-white bg-transparent shadow-none cursor-pointer"
+                    title="Delete invitation?"
+                    message={invite.status === "Pending"
+                      ? `Are you sure you want to delete the invitation for ${invite.email}? They will no longer be able to accept it. This action cannot be undone.`
+                      : `Are you sure you want to delete the invitation record for ${invite.email}? This action cannot be undone.`}
+                    confirmText="Delete"
+                    cancelText="Cancel"
+                    onConfirm={() => handleDeleteInvite(invite.email)}
+                    variant="danger"
+                  />
                 )}
               </td>
             </tr>
           ))
         ) : (
           <tr>
-            <td colSpan={3} className="px-6 py-4 text-center text-gray-500 italic">No pending invitations.</td>
+            <td colSpan={3} className="px-6 py-4 text-center text-gray-500 italic">No invitation history.</td>
           </tr>
         )}
       </tbody>
@@ -763,7 +799,7 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({
       <Card className="p-8 bg-gray-50 dark:bg-neutral-900 shadow-lg rounded-2xl w-full flex flex-col gap-8 mb-8 border border-gray-200 dark:border-gray-800">
         {/* User Invitations Section */}
         <div>
-          <h2 className="text-xl font-bold mb-2">User Invitations</h2>
+          <h2 className="text-xl font-bold mb-2">User Invitation History</h2>
           <div className="flex flex-col sm:flex-row gap-4 mb-4">
             <input
               type="email"
@@ -772,7 +808,7 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
             />
-            <Button onClick={handleSendInvite} className="py-2 flex items-center justify-center gap-2">
+            <Button onClick={handleSendInvite} className="py-2 flex items-center justify-center gap-2 cursor-pointer">
               <Send className="h-5 w-5" />
               <span>Send Invitation</span>
             </Button>
@@ -792,6 +828,7 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({
               <thead className="bg-gray-100 dark:bg-neutral-800">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">3-4 ID</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -802,20 +839,21 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({
                   [...users].sort((a, b) => a.first_name.localeCompare(b.first_name) || a.last_name.localeCompare(b.last_name)).map((user) => (
                     <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-neutral-800">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{user.first_name} {user.last_name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{user.id}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{user.email}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <select
                           value={user.role}
                           onChange={(e) => handleSwitchRole(user, e.target.value)}
                           disabled={switchingRole === user.id}
-                          className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
                         >
-                          <option value="resident">{switchingRole === user.id ? 'Switching...' : 'Resident'}</option>
-                          <option value="admin">{switchingRole === user.id ? 'Switching...' : 'Admin'}</option>
+                          <option className="cursor-pointer" value="resident">{switchingRole === user.id ? 'Switching...' : 'Resident'}</option>
+                          <option className="cursor-pointer" value="admin">{switchingRole === user.id ? 'Switching...' : 'Admin'}</option>
                         </select>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white" onClick={() => handleDeleteUserWithConfirm(user)}>
+                        <Button variant="outline" size="sm" className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white cursor-pointer" onClick={() => handleDeleteUserWithConfirm(user)}>
                           <Trash2 className="h-4 w-4 mr-1 inline" />Delete
                         </Button>
                       </td>
@@ -823,7 +861,7 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={4} className="px-6 py-4 text-center text-gray-500 italic">No users found.</td>
+                    <td colSpan={5} className="px-6 py-4 text-center text-gray-500 italic">No users found.</td>
                   </tr>
                 )}
               </tbody>
@@ -836,15 +874,16 @@ const UserManagementTab: React.FC<UserManagementTabProps> = ({
         <div className="overflow-x-auto">{invitationsTable}</div>
       </Modal>
 
-      <Modal open={confirmDelete.open} onClose={handleCancelDelete} title="Confirm Delete">
-        <div className="space-y-4">
-          <p>Are you sure you want to delete {confirmDelete.user?.first_name} {confirmDelete.user?.last_name}?</p>
-          <div className="flex gap-2 justify-end">
-            <Button variant="outline" onClick={handleCancelDelete}>Cancel</Button>
-            <Button className="bg-red-600 text-white hover:bg-red-700" onClick={handleConfirmDelete}>Delete</Button>
-          </div>
-        </div>
-      </Modal>
+      <ConfirmDialog
+        open={confirmDelete.open}
+        onOpenChange={(open) => { if (!open) handleCancelDelete(); }}
+        title="Delete user?"
+        message={`Are you sure you want to delete ${confirmDelete.user?.first_name} ${confirmDelete.user?.last_name}? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleConfirmDelete}
+        variant="danger"
+      />
     </>
   );
 };
@@ -966,6 +1005,8 @@ const AdminPage: React.FC<AdminPageProps> = ({
   setInviteEmail,
   handleSendInvite,
   handleResendInvite,
+  handleDeleteInvite,
+  onRefreshInvitations,
   users,
   handleDeleteUser,
   userId,
@@ -1004,7 +1045,10 @@ const AdminPage: React.FC<AdminPageProps> = ({
         .then(setAnnouncements)
         .catch(() => {});
     }
-  }, [activeTab]);
+    if (activeTab === 'users') {
+      onRefreshInvitations?.();
+    }
+  }, [activeTab, onRefreshInvitations]);
 
   const refreshAnnouncements = async () => {
     const data = await fetch(`${config.apiUrl}/api/announcements`).then(r => r.json());
@@ -1123,6 +1167,7 @@ const AdminPage: React.FC<AdminPageProps> = ({
             setInviteEmail={setInviteEmail}
             handleSendInvite={handleSendInvite}
             handleResendInvite={handleResendInvite}
+            handleDeleteInvite={handleDeleteInvite}
             handleDeleteUser={handleDeleteUser}
           />
         )}
@@ -1144,15 +1189,17 @@ const AdminPage: React.FC<AdminPageProps> = ({
                       <div className="text-gray-900 dark:text-gray-100 mb-1">{a.message}</div>
                       <div className="text-xs text-gray-500">{a.createdAt ? new Date(a.createdAt).toLocaleString() : ''}</div>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-red-600 border-red-600 hover:bg-red-500 hover:text-white ml-4"
-                      onClick={() => handleDeleteAnnouncement(a.announcementId)}
-                      disabled={deletingAnnouncement === a.announcementId}
-                    >
-                      <Trash2 className="h-4 w-4 mr-1 inline" />{deletingAnnouncement === a.announcementId ? 'Deleting...' : 'Delete'}
-                    </Button>
+                    <ConfirmDialog
+                      triggerText={<><Trash2 className="h-4 w-4 mr-1 inline" /><span>Delete</span></>}
+                      title="Delete this announcement?"
+                      message="This action cannot be undone."
+                      confirmText="Delete"
+                      cancelText="Cancel"
+                      onConfirm={() => handleDeleteAnnouncement(a.announcementId)}
+                      loading={deletingAnnouncement === a.announcementId}
+                      variant="danger"
+                      className="ml-4"
+                    />
                   </div>
                 </div>
               ))}

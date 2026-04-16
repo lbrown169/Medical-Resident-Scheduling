@@ -8,6 +8,7 @@ import { toast } from "../../../lib/use-toast";
 import { Calendar, Users, FileText, Repeat, Send, ArrowRightLeft, AlertTriangle, CornerDownRight } from "lucide-react";
 import { CalendarEvent } from "@/lib/models/CalendarEvent";
 import { ConfirmDialog } from "../../../components/ui/confirm-dialog";
+import { SwapRequest } from "@/lib/models/SwapRequest";
 import { SwapValidationResponse } from "../../../lib/models/SwapValidationResponse";
 
 interface SwapCallsPageProps {
@@ -28,23 +29,6 @@ interface SwapCallsPageProps {
   setDescription: (value: string) => void;
 }
 
-type SwapRequestStatus = {
-  id: number;
-  description: string;
-};
-
-type ApiSwaps = {
-  swapRequestId: string;
-  scheduleId: string;
-  requesterId: string;
-  requesteeId: string;
-  requesterDate: string;
-  requesteeDate: string;
-  status: SwapRequestStatus;
-  createdAt: string;
-  updatedAt: string;
-  details?: string | null;
-};
 
 function formatDate(dateStr: string, opts: Intl.DateTimeFormatOptions) {
   if (!dateStr) return '';
@@ -54,6 +38,10 @@ function formatDate(dateStr: string, opts: Intl.DateTimeFormatOptions) {
 
 function academicYearOf(date: Date): number {
   return date.getMonth() >= 6 ? date.getFullYear() : date.getFullYear() - 1;
+}
+
+function semesterOf(date: Date): 'Fall' | 'Spring' {
+  return date.getMonth() >= 6 ? 'Fall' : 'Spring';
 }
 
 function eventToOption(e: CalendarEvent): { value: string; label: string } {
@@ -89,8 +77,8 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
   const isFormValid = yourShiftDate && partnerShiftDate && selectedResident && selectedShift && partnerShift;
 
   const [loadingSwaps, setLoadingSwaps] = useState(false);
-  const [swapRequests, setSwapRequests] = useState<ApiSwaps[]>([]);
-  const [pendingSwapRequests, setPendingSwapRequests] = useState<ApiSwaps[]>([]);
+  const [swapRequests, setSwapRequests] = useState<SwapRequest[]>([]);
+  const [pendingSwapRequests, setPendingSwapRequests] = useState<SwapRequest[]>([]);
   const [errorSwaps, setErrorSwaps] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -128,15 +116,15 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
           throw new Error(txt || `HTTP ${bRes.status}`);
         }
 
-        const data: ApiSwaps[] = await res.json();
-        const bData: ApiSwaps[] = await bRes.json();
-        const combinedData: ApiSwaps[] = [...data, ...bData];
+        const data: SwapRequest[] = await res.json();
+        const bData: SwapRequest[] = await bRes.json();
+        const combinedData: SwapRequest[] = [...data, ...bData];
 
         if (!abort) {
           const arr = Array.isArray(combinedData) ? combinedData : [combinedData];
           arr.sort(
             (a, b) =>
-              +new Date(b.updatedAt || b.createdAt) - +new Date(a.updatedAt || a.createdAt)
+              +new Date(a.requesterDate) - +new Date(b.requesterDate)
           );
           const filteredArr = arr.filter((swap) => (swap.requesterId === userId || (swap.requesteeId === userId && swap.status.description !== "Denied")));
           setSwapRequests(filteredArr);
@@ -186,6 +174,8 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
     }
   };
 
+  const [approveModalOpen, setApproveModalOpen] = useState(false);
+  const [pendingApproveId, setPendingApproveId] = useState<string | null>(null);
   const [denyModalOpen, setDenyModalOpen] = useState(false);
   const [pendingDenyId, setPendingDenyId] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
@@ -199,6 +189,13 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
           title: "Swap Approved",
           description: "The swap request has been approved successfully.",
           variant: "success"
+        });
+      } else {
+        const body = await response.json().catch(() => null);
+        toast({
+          title: "Could not approve swap",
+          description: body?.message ?? "Failed to approve swap request.",
+          variant: "destructive"
         });
       }
     } catch (error) {
@@ -339,11 +336,14 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
 
             {/* Partner's Shift */}
             {(() => {
-              const userShiftAcademicYear = yourShiftDate
-                ? academicYearOf(new Date(yourShiftDate))
-                : null;
-              const filteredPartnerEvents = userShiftAcademicYear !== null
-                ? partnerShiftEvents.filter(e => academicYearOf(e.start instanceof Date ? e.start : new Date(e.start)) === userShiftAcademicYear)
+              const userShiftDate = yourShiftDate ? new Date(yourShiftDate) : null;
+              const userShiftAcademicYear = userShiftDate ? academicYearOf(userShiftDate) : null;
+              const userShiftSemester = userShiftDate ? semesterOf(userShiftDate) : null;
+              const filteredPartnerEvents = userShiftAcademicYear !== null && userShiftSemester !== null
+                ? partnerShiftEvents.filter(e => {
+                    const d = e.start instanceof Date ? e.start : new Date(e.start);
+                    return academicYearOf(d) === userShiftAcademicYear && semesterOf(d) === userShiftSemester;
+                  })
                 : partnerShiftEvents;
               return (
                 <div className="space-y-2">
@@ -353,7 +353,7 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                   </div>
                   <select
                     id="partner-shift"
-                    className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors appearance-none cursor-pointer disabled:opacity-50"
+                    className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                     value={partnerShiftValue}
                     onChange={(e) => handleSelect(e.target.value, onSelectPartnerShift)}
                     disabled={!selectedResident || filteredPartnerEvents.length === 0}
@@ -443,8 +443,8 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
               <>
                 <Button
                   onClick={handleInitialSubmit}
-                  className="w-full py-2.5 text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200"
                   disabled={!isFormValid}
+                  className="w-full py-2.5 text-sm font-semibold flex items-center justify-center gap-2 transition-all duration-200 cursor-pointer disabled:cursor-not-allowed"
                 >
                   <Send className="h-4 w-4" />
                   <span>Submit Swap Request</span>
@@ -598,7 +598,7 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
                             <StatusPill status={swap.status.description} />
 
                             <div className="flex gap-2 mt-auto">
-                              <Button size="sm" disabled={actionLoading} onClick={() => handleApprove(swap.swapRequestId)} className="bg-green-600 text-white hover:bg-green-700 cursor-pointer">Approve</Button>
+                              <Button size="sm" disabled={actionLoading} onClick={() => { setPendingApproveId(swap.swapRequestId); setApproveModalOpen(true); }} className="bg-green-600 text-white hover:bg-green-700 cursor-pointer">Approve</Button>
                               <Button size="sm" disabled={actionLoading} onClick={() => handleDeny(swap.swapRequestId)} className="bg-red-600 text-white hover:bg-red-700 cursor-pointer">Deny</Button>
                             </div>
                           </div>
@@ -709,6 +709,20 @@ const SwapCallsPage: React.FC<SwapCallsPageProps> = ({
         </Card>
       </div>
 
+      <ConfirmDialog
+        open={approveModalOpen}
+        onOpenChange={setApproveModalOpen}
+        title="Approve swap?"
+        message="Are you sure you want to approve this swap request? This action cannot be undone."
+        confirmText="Approve"
+        cancelText="Cancel"
+        onConfirm={async () => {
+          if (pendingApproveId) {
+            await handleApprove(pendingApproveId);
+            setPendingApproveId(null);
+          }
+        }}
+      />
       <ConfirmDialog
         open={denyModalOpen}
         onOpenChange={setDenyModalOpen}
