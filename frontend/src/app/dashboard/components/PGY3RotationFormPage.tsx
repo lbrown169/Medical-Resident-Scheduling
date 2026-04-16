@@ -15,30 +15,6 @@ interface SubmissionWindow {
   dueDate: string | null;
 }
 
-const parseLocalDate = (iso: string | null | undefined) => {
-  if (typeof iso !== "string") return new Date(NaN);
-
-  const match = iso.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (!match) return new Date(NaN);
-
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-
-  const parsed = new Date(year, month - 1, day);
-
-  // Reject overflowed values like 2026-99-99 that JS Date auto-normalizes.
-  if (
-    parsed.getFullYear() !== year ||
-    parsed.getMonth() !== month - 1 ||
-    parsed.getDate() !== day
-  ) {
-    return new Date(NaN);
-  }
-
-  return parsed;
-};
-
 const isInvalidDate = (d: Date) => Number.isNaN(d.getTime());
 
 const PGY3RotationFormPage: React.FC<PGY3RotationFormPageProps> = ({

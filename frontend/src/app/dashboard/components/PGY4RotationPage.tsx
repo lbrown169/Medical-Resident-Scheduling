@@ -203,11 +203,6 @@ const rotationDisplayNames: Record<string, string> = {
   "Community Psy": "Comm",
 };
 
-const parseLocalDate = (iso: string) => {
-  const [year, month, day] = iso.slice(0, 10).split("-").map(Number);
-  return new Date(year, month - 1, day);
-};
-
 interface PGY4RotationScheduleProps {
   residents: {
     id: string;
