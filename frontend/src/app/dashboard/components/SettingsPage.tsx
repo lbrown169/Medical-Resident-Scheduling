@@ -73,7 +73,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
         {/* Basic Info Section */}
         <div className="flex-1 lg:flex-[2.2] bg-card rounded-lg border border-border p-4 lg:p-6 shadow-sm">
           <div className="border-b border-border pb-4 mb-6">
-            <h2 className="text-xl font-semibold text-foreground">Basic info</h2>
+            <h2 className="text-xl font-semibold text-foreground">Basic Info</h2>
             <p className="text-muted-foreground text-sm mt-1">Tell us your basic info details</p>
           </div>
 
@@ -202,25 +202,25 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
 
         <div className="space-y-4">
-          {/* Tutorial Link */}
+          {/* Resident Tutorial */}
           <div>
             <label className="block text-sm font-medium text-foreground mb-2">
-              Website Tutorial
+              Resident Tutorials
             </label>
             <div className="flex flex-col sm:flex-row gap-3">
               <input
                 type="text"
-                value="https://www.youtube.com/watch?v=eUoo2_Zgknk" // TODO: Replace with updated tutorial later
+                value="https://youtube.com/playlist?list=PLBn3VIODcWot8aWONB923IV4mohczMiNI&si=dHaJE-yovXU7oPy2"
                 disabled
                 className="flex-1 px-3 py-2 text-sm border border-border rounded-lg bg-muted text-muted-foreground cursor-not-allowed focus:outline-none"
                 placeholder=""
               />
-              <Button 
-                onClick={() => window.open('https://www.youtube.com/watch?v=eUoo2_Zgknk')} // TODO: Replace with updated tutorial later
+              <Button
+                onClick={() => window.open('https://youtube.com/playlist?list=PLBn3VIODcWot8aWONB923IV4mohczMiNI&si=dHaJE-yovXU7oPy2')}
                 className="px-4 py-2 text-sm bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap cursor-pointer"
               >
                 <ExternalLink className="h-4 w-4" />
-                Open Tutorial
+                Open Link
               </Button>
             </div>
           </div>
@@ -229,22 +229,22 @@ const SettingsPage: React.FC<SettingsPageProps> = ({
           {isAdmin && (
             <div className="border-t border-border pt-4">
               <label className="block text-sm font-medium text-foreground mb-2">
-                Admin Tutorial
+                Admin Tutorials
               </label>
               <div className="flex flex-col sm:flex-row gap-3">
                 <input
                   type="text"
-                  value="https://www.youtube.com/watch?v=CQYruboTEgk" // TODO: Replace with updated tutorial later
+                  value="https://youtube.com/playlist?list=PLBn3VIODcWosVLRDmULt3_TYYOZfnEIwl&si=rbVeWfcnYGQS5H2U"
                   disabled
                   className="flex-1 px-3 py-2 text-sm border border-border rounded-lg bg-muted text-muted-foreground cursor-not-allowed focus:outline-none"
                   placeholder=""
                 />
-                <Button 
-                  onClick={() => window.open('https://www.youtube.com/watch?v=CQYruboTEgk')} // TODO: Replace with updated tutorial later
+                <Button
+                  onClick={() => window.open('https://youtube.com/playlist?list=PLBn3VIODcWosVLRDmULt3_TYYOZfnEIwl&si=rbVeWfcnYGQS5H2U')}
                   className="px-4 py-2 text-sm bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors flex items-center gap-2 whitespace-nowrap cursor-pointer"
                 >
                   <ExternalLink className="h-4 w-4" />
-                  Open Admin Tutorial
+                  Open Link
                 </Button>
               </div>
             </div>
