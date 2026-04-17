@@ -910,7 +910,9 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
         if (!res.ok) return;
         const data = await res.json();
         if (data.availableDate) {
-          setWindowAvailableDate(new Date(data.availableDate + "Z").toISOString());
+          setWindowAvailableDate(
+            new Date(data.availableDate + "Z").toISOString(),
+          );
         }
         if (data.dueDate) {
           setWindowDueDate(new Date(data.dueDate + "Z").toISOString());
@@ -1151,7 +1153,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
         },
       );
       if (!res.ok) {
-        let errorMessage = "Error unknown. Try again later."
+        let errorMessage = "Error unknown. Try again later.";
         const err = await res.json();
         errorMessage = Object.values(err).flat().join(" ") || errorMessage;
 
@@ -1169,10 +1171,10 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
       });
     } catch {
       toast({
-          variant: "destructive",
-          title: "Error Saving Dates",
-          description: "Error unknown. Try again later.",
-        });
+        variant: "destructive",
+        title: "Error Saving Dates",
+        description: "Error unknown. Try again later.",
+      });
     } finally {
       setSavingWindow(false);
     }
@@ -1657,7 +1659,11 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                   type="datetime-local"
                   className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
                   value={toLocalInputValue(windowAvailableDate)}
-                  onChange={(e) => setWindowAvailableDate(new Date(e.target.value).toISOString())}
+                  onChange={(e) =>
+                    setWindowAvailableDate(
+                      new Date(e.target.value).toISOString(),
+                    )
+                  }
                 />
               </div>
               <div>
@@ -1668,7 +1674,9 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                   type="datetime-local"
                   className="w-full px-3 py-2.5 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-colors"
                   value={toLocalInputValue(windowDueDate)}
-                  onChange={(e) => setWindowDueDate(new Date(e.target.value).toISOString())}
+                  onChange={(e) =>
+                    setWindowDueDate(new Date(e.target.value).toISOString())
+                  }
                   min={windowAvailableDate}
                 />
               </div>
@@ -1678,7 +1686,8 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                   disabled={
                     savingWindow || !windowAvailableDate || !windowDueDate
                   }
-                  className="py-2 flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700 cursor-pointer">
+                  className="py-2 flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
+                >
                   {savingWindow ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
@@ -1717,8 +1726,12 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <select
-                            value={chiefTypeOverrides[r.id] ?? r.chiefType ?? ""}
-                            onChange={(e) => handleSwitchChiefType(r, e.target.value)}
+                            value={
+                              chiefTypeOverrides[r.id] ?? r.chiefType ?? ""
+                            }
+                            onChange={(e) =>
+                              handleSwitchChiefType(r, e.target.value)
+                            }
                             disabled={switchingChiefType === r.id}
                             className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-neutral-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           >
