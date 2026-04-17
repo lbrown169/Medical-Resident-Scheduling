@@ -568,7 +568,11 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
         const hasAny = (data.count ?? 0) > 0;
         setHasPendingOverrides(hasAny);
         setPendingOverrides(data.overrides ?? []);
-        if (hasAny) await fetchScheduleWithOverrides(scheduleId);
+        if (hasAny) {
+          await fetchScheduleWithOverrides(scheduleId);
+        } else {
+          await fetchScheduleWithoutOverrides(scheduleId);
+        }
       } catch (err) {
         console.error("Failed to sync override state:", err);
         setHasPendingOverrides(false);
