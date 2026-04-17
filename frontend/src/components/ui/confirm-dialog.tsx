@@ -46,7 +46,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   const controlled = open !== undefined;
 
   const dialogOpen = controlled ? (open as boolean) : internalOpen;
-  const setDialogOpen = controlled ? (onOpenChange ?? setInternalOpen) : setInternalOpen;
+  const setDialogOpen = controlled ? (onOpenChange as (o: boolean) => void) : setInternalOpen;
 
   const baseBtnClass =
     "px-1 sm:px-6 py-1 sm:py-3 font-semibold rounded-xl shadow transition " +
@@ -88,11 +88,8 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           </AlertDialogCancel>
           <AlertDialogAction
             onClick={async () => {
-              try {
-                await onConfirm();
-              } finally {
-                setDialogOpen(false);
-              }
+              await onConfirm();
+              setDialogOpen(false);
             }}
             disabled={loading}
             className="cursor-pointer disabled:cursor-not-allowed"
