@@ -843,11 +843,11 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
   );
 
   // Helper to convert to UTC String
-  const toLocalInputValue = (utcString) => {
+  const toLocalInputValue = (utcString: string) => {
     if (!utcString) return "";
 
     const date = new Date(utcString);
-    const pad = (n) => String(n).padStart(2, "0");
+    const pad = (n: number) => String(n).padStart(2, "0");
 
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
   };
@@ -1475,7 +1475,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
             <div className="flex justify-between gap-2 pt-4">
               <Button
                 onClick={() => setShowRotationFormModal(true)}
-                disabled={showRotationFormModal == true}
+                disabled={showRotationFormModal}
                 className="py-2 flex items-center justify-center gap-2 bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
               >
                 <ClipboardList className="h-4 w-4" />
@@ -1677,7 +1677,7 @@ const PGY4RotationSchedulePage: React.FC<PGY4RotationScheduleProps> = ({
                   onChange={(e) =>
                     setWindowDueDate(new Date(e.target.value).toISOString())
                   }
-                  min={windowAvailableDate}
+                  min={toLocalInputValue(windowAvailableDate)}
                 />
               </div>
               <div className="flex flex-row gap-2">
