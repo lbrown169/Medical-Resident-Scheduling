@@ -56,8 +56,8 @@ public class Pgy4RotationScheduleOverrideController(
         if (foundResident.GraduateYr < 3)
         {
             ModelState.AddModelError(
-                "Non-PGY3 Resident",
-                "The resident ID passed in is not a PGY3 resident"
+                "Non-PGY3 or above Resident",
+                "The resident ID passed in is not at least a PGY3 resident"
             );
             return BadRequest(ModelState);
         }
