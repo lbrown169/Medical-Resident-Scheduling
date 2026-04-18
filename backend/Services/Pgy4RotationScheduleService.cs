@@ -100,8 +100,7 @@ public class Pgy4RotationScheduleService(
             .RotationPrefRequests.IncludeAllRotationPrefRequestProperties()
             .Include(request => request.Resident)
             .Where(request =>
-                request.Resident.GraduateYr == 3 ||
-                request.Resident.GraduateYr == 4
+                request.Resident.GraduateYr == 3
             )
             .ToListAsync();
     }
